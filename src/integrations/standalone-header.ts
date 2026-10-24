@@ -64,7 +64,7 @@ export default function standaloneHeader(): AstroIntegration {
 						const html = await readFile(file, "utf8");
 						const client = '<script type="module" src="/@vite/client"></script>';
 						res.setHeader("Content-Type", "text/html; charset=utf-8");
-						res.end(transform(html, script, client, buildLicenseScript(base), pathname, base, site));
+						res.end(transform(html, script, client, buildLicenseScript(base, siteConfig.themeColor.hue), pathname, base, site));
 					} catch {
 						next();
 					}
@@ -73,7 +73,7 @@ export default function standaloneHeader(): AstroIntegration {
 			"astro:build:done": async ({ dir }) => {
 				const outDir = fileURLToPath(dir);
 				const script = buildScript(navItems(base), siteConfig.title, siteConfig.themeColor.hue);
-				const licenseScript = buildLicenseScript(base);
+				const licenseScript = buildLicenseScript(base, siteConfig.themeColor.hue);
 				for (const rel of await htmlFiles(publicDir)) {
 					const target = path.join(outDir, rel);
 					const html = await readFile(target, "utf8");
@@ -272,20 +272,37 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 
 // Copyright footer for every standalone page: research here may not be reused without permission.
 // Mounted on <html> after <body> (like the navbar), so page styling can't offset or hide it.
-function buildLicenseScript(base: string): string {
+// Follows <html data-theme> and the navbar hue. Look kept in step with src/components/LicenseNote.astro.
+function buildLicenseScript(base: string, hue: number): string {
 	const prefix = base.replace(/\/$/, "");
 	const css =
-		":host{all:initial;display:block}" +
-		"footer{box-sizing:border-box;padding:16px max(16px,calc((100% - 1200px)/2));background:#15212b;color:rgba(255,255,255,.8);" +
-		"font:400 13px/1.6 system-ui,-apple-system,Segoe UI,sans-serif}" +
-		"strong{color:#fff}a{color:#9ec5ff}";
+		`:host{all:initial;display:block;--hue:${hue};--bg:#fff;--rule:rgba(0,0,0,.12);--strong:#1d2228;--body:#3d444d;--muted:#5b626b;--accent:oklch(.5 .12 var(--hue));--hover:oklch(.95 .03 var(--hue))}` +
+		":host([data-theme=dark]){--bg:oklch(.2 .015 var(--hue));--rule:rgba(255,255,255,.14);--strong:rgba(255,255,255,.92);--body:#c9ced6;--muted:#a7aeb8;--accent:oklch(.75 .1 var(--hue));--hover:oklch(.3 .04 var(--hue))}" +
+		"footer{box-sizing:border-box;position:relative;padding:1.5rem max(1rem,calc((100% - 54.5rem)/2)) 1.75rem;background:var(--bg);border-top:1px solid var(--rule);" +
+		"font:400 0.9375rem/1.6 Roboto,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--body);overflow-wrap:anywhere}" +
+		'footer::before{content:"";position:absolute;top:-1px;left:max(1rem,calc((100% - 54.5rem)/2));width:3rem;height:2px;background:var(--accent)}' +
+		"p{margin:0;max-width:60ch}p+p{margin-top:.5rem}" +
+		".copy{font-weight:600;font-size:1rem;color:var(--strong)}" +
+		".quote{font-size:.875rem;color:var(--muted)}" +
+		"a{display:inline-flex;align-items:center;gap:.5rem;margin-top:1rem;min-height:2.75rem;box-sizing:border-box;padding:.5rem 1rem;border:1px solid var(--accent);border-radius:.5rem;color:var(--strong);font-weight:500;text-decoration:none}" +
+		"a:hover{background:var(--hover)}a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}" +
+		"svg{width:1.125rem;height:1.125rem;flex:none;color:var(--accent)}";
+	const icon =
+		'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+		'<path d="M12 3v18m7-13l3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2a17 17 0 0 0 8 2h1M5 8l3 8a5 5 0 0 1-6 0zV7m2 14h10"/></svg>';
 	const markup =
-		`<style>${css}</style><footer><strong>\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</strong> ` +
-		`Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission. ` +
-		`Short quotes with attribution and a link are fine. <a href="${esc(prefix)}/license/">License</a></footer>`;
+		`<style>${css}</style><footer>` +
+		`<p class="copy">\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</p>` +
+		`<p class="perm">Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission.</p>` +
+		`<p class="quote">Short quotes with attribution and a link are fine.</p>` +
+		`<a href="${esc(prefix)}/license/">${icon}License</a></footer>`;
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 	return (
-		`<script ${LICENSE_MARKER}>(function(){var h=document.createElement("div");h.setAttribute("${LICENSE_MARKER}","");` +
-		`h.attachShadow({mode:"open"}).innerHTML=${html};document.documentElement.appendChild(h)})()</script>`
+		`<script ${LICENSE_MARKER}>(function(){var d=document.documentElement,h=document.createElement("div");h.setAttribute("${LICENSE_MARKER}","");` +
+		`h.attachShadow({mode:"open"}).innerHTML=${html};` +
+		`function get(k,v){try{return localStorage.getItem(k)||v}catch(e){return v}}` +
+		`function sync(){h.setAttribute("data-theme",d.getAttribute("data-theme")==="dark"?"dark":"light");h.style.setProperty("--hue",get("hue","${hue}"))}` +
+		`sync();new MutationObserver(sync).observe(d,{attributes:true,attributeFilter:["data-theme"]});addEventListener("storage",sync);` +
+		`d.appendChild(h)})()</script>`
 	);
 }
