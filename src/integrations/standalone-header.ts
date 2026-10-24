@@ -8,7 +8,9 @@ import { LinkPreset } from "../types/config";
 
 // Same Roboto Bold the main site ships, inlined so link widths (and so positions) match exactly.
 const ROBOTO_700 = readFileSync(path.resolve("node_modules/@fontsource/roboto/files/roboto-latin-700-normal.woff2")).toString("base64");
-const FONT_FACE = `@font-face{font-family:"RobotoNav";font-weight:700;font-display:block;src:url(data:font/woff2;base64,${ROBOTO_700}) format("woff2")}`;
+const ROBOTO_400 = readFileSync(path.resolve("node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff2")).toString("base64");
+const face = (w: number, b64: string) => `@font-face{font-family:"RobotoNav";font-weight:${w};font-display:block;src:url(data:font/woff2;base64,${b64}) format("woff2")}`;
+const FONT_FACE = face(700, ROBOTO_700) + face(400, ROBOTO_400);
 
 const MARKER = "data-site-navbar";
 const LICENSE_MARKER = "data-site-license";
@@ -135,7 +137,20 @@ nav::-webkit-scrollbar{display:none}
 .end{display:flex;flex:none;margin-left:auto;align-items:center}
 .search{display:none;align-items:center;gap:8px;width:160px;height:44px;margin-right:8px;padding:0 12px;box-sizing:border-box;border-radius:8px;background:oklch(.95 .01 var(--hue));color:var(--muted);font-weight:400;font-size:14px}
 :host([data-theme=dark]) .search{background:oklch(.3 .035 var(--hue))}
-.search svg{width:20px;height:20px}
+.search svg{width:20px;height:20px;flex:none}
+.q{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--fg);font:400 14px/1 inherit;font-family:inherit}
+.q::placeholder{color:var(--muted)}
+.sbtn{display:inline-flex}
+@media(min-width:1024px){.sbtn{display:none}.q2{display:none}}
+.sp{position:absolute;top:76px;right:16px;width:min(30rem,calc(100% - 32px));max-height:70vh;overflow:auto;padding:12px;border-radius:16px;background:var(--bg);box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:1}
+.sp[hidden]{display:none}
+.q2{box-sizing:border-box;width:100%;height:44px;padding:0 12px;margin-bottom:8px;border-radius:8px;background:oklch(.95 .01 var(--hue))}
+:host([data-theme=dark]) .q2{background:oklch(.3 .035 var(--hue))}
+.res a{display:block;padding:10px 12px;border-radius:8px;font-weight:400;font-size:14px;line-height:1.4}
+.res a:hover{background:var(--hover)}
+.res b{display:block;color:var(--prime);font-size:15px}
+.res mark{background:transparent;color:var(--prime);font-weight:700}
+.res p{margin:0;padding:8px 12px;color:var(--muted);font-size:14px}
 @media(min-width:1024px){.search{display:flex}}
 .ext{width:14px;height:14px;margin-left:4px;opacity:.25}
 header{position:relative}
@@ -197,9 +212,10 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		.join("");
 	const markup =
 		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${HOME}${esc(title)}</a>` +
-		`<nav>${links}</nav><span class="end"><a class="search" href="${esc((items[0]?.url ?? "/") + "?search=1")}">${SEARCH}Search</a>` +
+		`<nav>${links}</nav><span class="end"><label class="search">${SEARCH}<input class="q" type="search" placeholder="Search" aria-label="Search" autocomplete="off"></label><button type="button" class="sbtn" aria-label="Search">${SEARCH}</button>` +
 		`<button type="button" class="pal" aria-label="Display settings">${PALETTE}</button><button type="button" class="theme" aria-label="Toggle light/dark theme">${ICONS}</button></span>` +
-		`<div class="panel" hidden><label>Theme color <output></output></label><input type="range" min="0" max="360" aria-label="Theme color"></div></header>`;
+		`<div class="sp" hidden><input class="q q2" type="search" placeholder="Search" aria-label="Search" autocomplete="off"><div class="res"></div></div><div class="panel" hidden><label>Theme color <output></output></label><input type="range" min="0" max="360" aria-label="Theme color"></div></header>`;
+	const pfUrl = (items[0]?.url ?? "/") + "pagefind/pagefind.js";
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 
 	return (
@@ -217,6 +233,17 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`function setHue(h){host.style.setProperty("--hue",h);rg.value=h;ou.textContent=h}setHue(get("hue","${hue}"));` +
 		`root.querySelector(".pal").addEventListener("click",function(){pn.hidden=!pn.hidden});` +
 		`rg.addEventListener("input",function(){setHue(rg.value);try{localStorage.setItem("hue",rg.value)}catch(e){}});` +
+		`var sp=root.querySelector(".sp"),res=sp.querySelector(".res"),qs=root.querySelectorAll(".q"),pf=null,tm=0;` +
+		`function E(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}` +
+		`function run(q){clearTimeout(tm);tm=setTimeout(async function(){if(!q.trim()){sp.hidden=true;return}sp.hidden=false;res.innerHTML="<p>Searching…</p>";` +
+		`try{pf=pf||await import(${JSON.stringify(pfUrl)});var r=await pf.search(q),d=await Promise.all(r.results.slice(0,6).map(function(x){return x.data()}));` +
+		`res.innerHTML=d.length?d.map(function(x){return'<a href="'+E(x.url)+'"><b>'+E((x.meta&&x.meta.title)||x.url)+'</b>'+x.excerpt+'</a>'}).join(""):"<p>No results</p>"}` +
+		`catch(e){res.innerHTML="<p>Search is only available on the built site.</p>"}},150)}` +
+		`qs.forEach(function(i){i.addEventListener("input",function(){qs.forEach(function(o){if(o!==i)o.value=i.value});run(i.value)});i.addEventListener("focus",function(){if(i.value)run(i.value)})});` +
+		`root.querySelector(".sbtn").addEventListener("click",function(){pn.hidden=true;sp.hidden=!sp.hidden;if(!sp.hidden){var q2=sp.querySelector(".q2");q2.focus()}});` +
+		`root.querySelector(".pal").addEventListener("click",function(){sp.hidden=true});` +
+		`addEventListener("keydown",function(e){if(e.key==="Escape"){sp.hidden=true;pn.hidden=true}});` +
+		`document.addEventListener("click",function(e){if(e.composedPath().indexOf(host)<0){sp.hidden=true;pn.hidden=true}});` +
 		`addEventListener("storage",function(e){if(e.key==="theme")apply(e.newValue||"light")});` +
 		// Mount on <html>, before <body>: the page's own body margin/padding/max-width can then never offset the bar.
 		`document.documentElement.insertBefore(host,document.body)})()</script>`
