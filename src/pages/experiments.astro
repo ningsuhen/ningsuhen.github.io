@@ -1,0 +1,50 @@
+---
+import ButtonTag from "@components/control/ButtonTag.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { url } from "@utils/url-utils";
+import data from "../data/experiments.json";
+
+type Experiment = {
+	title: string;
+	summary: string;
+	href: string;
+	post?: string;
+	started: string;
+	updated?: string;
+	status: string;
+	tags: string[];
+};
+
+const sorted = (data.items as Experiment[])
+	.slice()
+	.sort((a, b) => (b.updated ?? b.started).localeCompare(a.updated ?? a.started));
+---
+
+<MainGridLayout title="Experiments" description="Things I build to find out how they behave.">
+    <div class="card-base px-9 py-6 w-full">
+        <h1 class="text-3xl font-bold text-90 mb-1">Experiments</h1>
+        <p class="text-50 mb-6">Things I build to find out how they behave. Each one is a live page you can poke at.</p>
+
+        <div class="flex flex-col gap-6">
+            {sorted.map((e) => (
+                <article class="border-t border-dashed border-[var(--line-divider)] pt-5 first:border-t-0 first:pt-0">
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h2 class="text-2xl font-bold text-90">
+                            <a href={url(e.href)} class="transition hover:text-[var(--primary)]">{e.title}</a>
+                        </h2>
+                        <span class="btn-regular h-6 text-xs px-2 rounded-md">{e.status}</span>
+                    </div>
+                    <p class="text-50 text-sm mt-1">
+                        Started {e.started}{e.updated ? ` · updated ${e.updated}` : ""}
+                    </p>
+                    <p class="mt-3 text-75">{e.summary}</p>
+                    <div class="flex flex-wrap gap-2 mt-3 items-center">
+                        {e.tags.map((t) => <ButtonTag href={url(`/archive/?tag=${encodeURIComponent(t)}`)} label={t}>{t}</ButtonTag>)}
+                        <a href={url(e.href)} class="btn-plain h-8 px-3 rounded-lg text-[var(--primary)] font-medium">Open →</a>
+                        {e.post && <a href={url(e.post)} class="btn-plain h-8 px-3 rounded-lg text-[var(--primary)] font-medium">Read the write-up →</a>}
+                    </div>
+                </article>
+            ))}
+        </div>
+    </div>
+</MainGridLayout>
