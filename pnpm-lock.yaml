@@ -38,18 +38,12 @@ importers:
       '@fontsource/roboto':
         specifier: ^5.2.9
         version: 5.2.9
-      '@iconify-json/fa6-brands':
-        specifier: ^1.2.6
-        version: 1.2.6
-      '@iconify-json/fa6-regular':
-        specifier: ^1.2.4
-        version: 1.2.4
-      '@iconify-json/fa6-solid':
-        specifier: ^1.2.4
-        version: 1.2.4
-      '@iconify-json/material-symbols':
-        specifier: ^1.2.50
-        version: 1.2.50
+      '@iconify-icons/lucide':
+        specifier: ^2.0.23
+        version: 2.0.23
+      '@iconify-json/lucide':
+        specifier: ^1.2.147
+        version: 1.2.147
       '@iconify/svelte':
         specifier: ^4.2.0
         version: 4.2.0(svelte@5.39.8)
@@ -147,9 +141,6 @@ importers:
       '@biomejs/biome':
         specifier: 2.2.5
         version: 2.2.5
-      '@iconify-json/lucide':
-        specifier: ^1.2.147
-        version: 1.2.147
       '@rollup/plugin-yaml':
         specifier: ^4.1.2
         version: 4.1.2(rollup@2.79.2)
@@ -1260,20 +1251,11 @@ packages:
   '@fontsource/roboto@5.2.9':
     resolution: {integrity: sha512-ZTkyHiPk74B/aj8BZWbsxD5Yu+Lq+nR64eV4wirlrac2qXR7jYk2h6JlLYuOuoruTkGQWNw2fMuKNavw7/rg0w==}
 
-  '@iconify-json/fa6-brands@1.2.6':
-    resolution: {integrity: sha512-twL3X4KWcxAhbc1vz/mIDsVr+CAItk1/EIfxKUVQtpv6O4eydk5KNYqTZWdvJNHGInUgd6vKg21aWfVgb5DXEg==}
-
-  '@iconify-json/fa6-regular@1.2.4':
-    resolution: {integrity: sha512-fnUS/MLj3ZAp29oRsC8/aY8Wau7NIg7VesTz3jCcE6VJBzcz95Yxp/Dl5yHvkP+aQxrNw5Lj3nrOXB4nQh+oNA==}
-
-  '@iconify-json/fa6-solid@1.2.4':
-    resolution: {integrity: sha512-LmDNNdJVyvF5mPm1yxWvL8KjCc/E8LzoqnF1LNTVpyY2ZJRUlGOWuPIThdbuFBF2IovgttkIyumhyqfmlHdwKg==}
+  '@iconify-icons/lucide@2.0.23':
+    resolution: {integrity: sha512-WKUum2zGelWfegxYkqkckfT+wGwfhbngzFzADlX9lChoqb5CTBaxipzlX6/GADCyFeL7cQ3MtcGGAzsh2wtscA==}
 
   '@iconify-json/lucide@1.2.147':
     resolution: {integrity: sha512-7Qqa/joSBeUxihWsQJx5nKcqMWtV3YrH90Jldxcx4J9ciTLavRUlpexQwRTcx9dcb7CJpISfjZTj42zD/30sqA==}
-
-  '@iconify-json/material-symbols@1.2.50':
-    resolution: {integrity: sha512-71tjHR70h46LHtBFab3fAd2V/wPTO7JMV5lKnRn3IcF303LaFgAlO0BZeTJDcmCv9d0snRZmnoLZAJVD7/eisw==}
 
   '@iconify/svelte@4.2.0':
     resolution: {integrity: sha512-fEl0T7SAPonK7xk6xUlRPDmFDZVDe2Z7ZstlqeDS/sS8ve2uyU+Qa8rTWbIqzZJlRvONkK5kVXiUf9nIc+6OOQ==}
@@ -6774,23 +6756,11 @@ snapshots:
 
   '@fontsource/roboto@5.2.9': {}
 
-  '@iconify-json/fa6-brands@1.2.6':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify-json/fa6-regular@1.2.4':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify-json/fa6-solid@1.2.4':
+  '@iconify-icons/lucide@2.0.23':
     dependencies:
       '@iconify/types': 2.0.0
 
   '@iconify-json/lucide@1.2.147':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify-json/material-symbols@1.2.50':
     dependencies:
       '@iconify/types': 2.0.0
 

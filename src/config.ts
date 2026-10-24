@@ -64,17 +64,17 @@ export const profileConfig: ProfileConfig = {
 	links: [
 		{
 			name: "GitHub",
-			icon: "fa6-brands:github",
+			icon: "lucide:github",
 			url: "https://github.com/ningsuhen",
 		},
 		{
 			name: "LinkedIn",
-			icon: "fa6-brands:linkedin",
+			icon: "lucide:linkedin",
 			url: "https://www.linkedin.com/in/ningsuhen/",
 		},
 		{
 			name: "X (Twitter)",
-			icon: "fa6-brands:x-twitter",
+			icon: "lucide:twitter",
 			url: "https://twitter.com/ningsuhen",
 		},
 	],

@@ -25,9 +25,11 @@ export function firstLocalImage(body = ""): string {
 	return found && !found.startsWith("/") && !found.startsWith("http") ? (found.startsWith(".") ? found : `./${found}`) : "";
 }
 
-/** Thumbnail for listing cards: explicit thumbnail, else cover image, else the first image in the body. */
+export const DEFAULT_THUMBNAIL = "/images/default-thumbnail.webp";
+
+/** Thumbnail for listing cards: explicit thumbnail, else cover image, else the first body image, else the site default. */
 export function postThumbnail(entry: CollectionEntry<"posts">): string {
-	return entry.data.thumbnail || entry.data.image || firstLocalImage(entry.body);
+	return entry.data.thumbnail || entry.data.image || firstLocalImage(entry.body) || DEFAULT_THUMBNAIL;
 }
 
 export async function getSortedPosts() {
