@@ -37,7 +37,13 @@ function idsOf(file) {
 	return ids;
 }
 
+// Markup that only looks like links: comments, scripts, styles, and code samples (their href="..." is text).
+const INERT = /<!--[\s\S]*?-->|<(script|style|pre|code)\b[\s\S]*?<\/\1>|<link\b[^>]*rel=["']canonical["'][^>]*>/gi;
+// Pages whose same-page #links are routed by their own script, not by element ids (checked by hand).
+const SCRIPT_ROUTED_HASHES = new Set(["/research/ai-economy/"]);
+
 function targetsOf(html) {
+	html = html.replace(INERT, "");
 	const out = [];
 	for (const m of html.matchAll(ATTR)) {
 		const raw = m[3] ?? m[4] ?? "";
@@ -80,6 +86,7 @@ for (const [urlPath, file] of pages) {
 	const html = readFileSync(file, "utf8");
 	for (const raw of new Set(targetsOf(html))) {
 		if (/^(mailto:|tel:|data:|javascript:)/i.test(raw) || raw === "") continue;
+		if (raw.startsWith("#") && SCRIPT_ROUTED_HASHES.has(urlPath)) continue;
 		checked++;
 		const problem = check(urlPath, raw);
 		if (problem) failures.push(`${urlPath} -> ${raw}: ${problem}`);
