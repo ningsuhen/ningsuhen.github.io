@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="light" data-density="compact">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +9,7 @@
 <style>
 .sw{display:flex;align-items:center;gap:.6rem;margin:.35rem 0;font-size:.85rem}
 .sw span{width:2.2rem;height:1.4rem;border-radius:.4rem;border:1px solid var(--rd-line);flex:none}
-.sw small{color:var(--rd-text-muted)}
+.sw small{color:var(--rd-text-muted);font-size:1em}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.25rem 1.5rem}
 .bar{height:.9rem;border-radius:.45rem;margin:.3rem 0}
 </style>
@@ -34,6 +34,7 @@
 <symbol id="i-gauge" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
 <symbol id="i-git-branch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/></g></symbol>
 <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></g></symbol>
 <symbol id="i-layout-dashboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></g></symbol>
 <symbol id="i-lightbulb" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 14c.2-1 .7-1.7 1.5-2.5c1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5c.7.7 1.3 1.5 1.5 2.5m0 4h6m-5 4h4"/></symbol>
 <symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></symbol>
@@ -60,6 +61,7 @@
 <!-- Experiment navbar (live): the same markup and scroll-spy script a report uses. -->
 <nav class="rd-expnav" aria-label="Sections">
 <a href="#use" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg>Use it</a>
+<a href="#density"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Density</a>
 <a href="#width"><svg class="rd-icon" aria-hidden="true"><use href="#i-ruler"/></svg>Width</a>
 <a href="#colour"><svg class="rd-icon" aria-hidden="true"><use href="#i-palette"/></svg>Colour</a>
 <a href="#icons"><svg class="rd-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>Icons</a>
@@ -72,7 +74,8 @@
 <div class="rd-hero">
 <p class="rd-eyebrow">Research · design system</p>
 <h1>Research Design System · created 2026-10-24 · updated 2026-10-24</h1>
-<p class="rd-hero__lede">Every research report, analysis page and exported artifact uses this. It is the ningsuhen.github.io theme: same palette, radius, type and width, light by default with dark support.</p>
+<p class="rd-hero__lede">Every research report, analysis page and exported artifact uses this. It is the ningsuhen.github.io theme: same palette, radius and width, light by default with dark support. Type and spacing are denser by default (see Density).</p>
+<p class="rd-meta">Compact is the default on purpose: this system is for technical papers and experiments, where density helps, while the main site stays reading-sized (16px, 1.7 line height).</p>
 </div>
 
 <header class="rd-section__head" id="use"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Use it</h2></header>
@@ -80,6 +83,47 @@
 &lt;html lang="en" data-theme="light"&gt;  &lt;body class="rd-body"&gt;
   &lt;main class="rd-container rd-prose"&gt; ... &lt;/main&gt;</code></pre>
 <p>Self-contained exports: inline the file's contents in a <code>&lt;style&gt;</code> tag instead of linking, and paste the page's <code>lucide-sprite</code> block (see Icons). Canonical source: <code>public/design-system/research.css</code> in the site repo. Everything is prefixed <code>rd-</code>, and type styles apply only inside <code>.rd-prose</code>, so it can't fight a report's own CSS.</p>
+
+<header class="rd-section__head" id="density"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2>Density</h2></header>
+<p>Three densities, one switch. Every size and spacing in the components reads a density token, so setting <code>data-density</code> retunes the whole page: <code>compact</code> (the default, on <code>&lt;html&gt;</code> or any wrapper), <code>comfortable</code> (roomier, close to the main site), <code>dense</code> (for wide data tables). Colours and radii do not change with density. The demo below is live: two wrappers, each with its own <code>data-density</code>, no reload.</p>
+<div class="rd-demos">
+<div class="rd-demo" data-density="compact"><p class="rd-eyebrow">compact (default)</p>
+<div class="rd-card"><h3>Figure 2: misses by run</h3><p>Errors are counted on the clean rows; lower is better.</p></div>
+<div class="rd-stats"><div class="rd-stat rd-stat--candidate"><div class="rd-stat__value">23</div><div class="rd-stat__label">candidate misses</div><div class="rd-stat__delta rd-stat__delta--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg> fewer than reference</div></div></div>
+<div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Run</th><th class="rd-num">Misses</th><th class="rd-num">False alarms</th></tr></thead>
+<tbody><tr><td>Candidate</td><td class="rd-num rd-best">23</td><td class="rd-num">37</td></tr><tr class="rd-table__ref"><td>Reference</td><td class="rd-num">34</td><td class="rd-num">26</td></tr></tbody></table></div>
+</div>
+<div class="rd-demo" data-density="comfortable"><p class="rd-eyebrow">comfortable</p>
+<div class="rd-card"><h3>Figure 2: misses by run</h3><p>Errors are counted on the clean rows; lower is better.</p></div>
+<div class="rd-stats"><div class="rd-stat rd-stat--candidate"><div class="rd-stat__value">23</div><div class="rd-stat__label">candidate misses</div><div class="rd-stat__delta rd-stat__delta--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg> fewer than reference</div></div></div>
+<div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Run</th><th class="rd-num">Misses</th><th class="rd-num">False alarms</th></tr></thead>
+<tbody><tr><td>Candidate</td><td class="rd-num rd-best">23</td><td class="rd-num">37</td></tr><tr class="rd-table__ref"><td>Reference</td><td class="rd-num">34</td><td class="rd-num">26</td></tr></tbody></table></div>
+</div>
+</div>
+<h3>Density tokens</h3>
+<p>Values are the rendered sizes (1rem = 16px). Components use the token, never a literal size; only borders and 1px lines are fixed.</p>
+<div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Token</th><th class="rd-num">compact</th><th class="rd-num">comfortable</th><th class="rd-num">dense</th><th>Used for</th></tr></thead>
+<tbody><tr><td><code>--rd-fs-base</code></td><td class="rd-num">14px</td><td class="rd-num">16px</td><td class="rd-num">13px</td><td>body text</td></tr>
+<tr><td><code>--rd-fs-sm</code></td><td class="rd-num">13px</td><td class="rd-num">14px</td><td class="rd-num">12px</td><td>captions, labels, legends</td></tr>
+<tr><td><code>--rd-fs-xs</code></td><td class="rd-num">12px</td><td class="rd-num">13px</td><td class="rd-num">11px</td><td>eyebrows, meta, sources (floor: 11px)</td></tr>
+<tr><td><code>--rd-fs-table</code></td><td class="rd-num">12.8px</td><td class="rd-num">14.4px</td><td class="rd-num">12px</td><td>table cells</td></tr>
+<tr><td><code>--rd-fs-lede</code></td><td class="rd-num">15.2px</td><td class="rd-num">18px</td><td class="rd-num">14px</td><td>hero lede</td></tr>
+<tr><td><code>--rd-fs-h1 / h2 / h3</code></td><td class="rd-num">25.6 / 19.2 / 16px</td><td class="rd-num">36 / 24 / 19.2px</td><td class="rd-num">22.4 / 16.8 / 14.4px</td><td>headings</td></tr>
+<tr><td><code>--rd-fs-stat</code></td><td class="rd-num">25.6px</td><td class="rd-num">32px</td><td class="rd-num">21.6px</td><td>KPI values</td></tr>
+<tr><td><code>--rd-lh</code></td><td class="rd-num">1.5</td><td class="rd-num">1.7</td><td class="rd-num">1.4</td><td>line height (prose >= 1.4)</td></tr>
+<tr><td><code>--rd-space-1 … 6</code></td><td class="rd-num">4, 8, 12, 16, 20, 24px</td><td class="rd-num">8, 12, 16, 20, 24, 32px</td><td class="rd-num">4, 8, 12, 16, 20, 24px</td><td>4px-based scale</td></tr>
+<tr><td><code>--rd-pad-card</code></td><td class="rd-num">16px</td><td class="rd-num">24px</td><td class="rd-num">12px</td><td>cards, stats, figures</td></tr>
+<tr><td><code>--rd-pad-cell-y / x</code></td><td class="rd-num">6px / 10px</td><td class="rd-num">10px / 12px</td><td class="rd-num">4px / 8px</td><td>table cells</td></tr>
+<tr><td><code>--rd-gap-section</code></td><td class="rd-num">32px</td><td class="rd-num">48px</td><td class="rd-num">20px</td><td>space above a section</td></tr>
+<tr><td><code>--rd-gap-block</code></td><td class="rd-num">12px</td><td class="rd-num">20px</td><td class="rd-num">8px</td><td>space between blocks</td></tr>
+<tr><td><code>--rd-control-h</code></td><td class="rd-num">28px</td><td class="rd-num">40px</td><td class="rd-num">24px</td><td>buttons, summaries (tap target)</td></tr>
+<tr><td><code>--rd-expnav-h</code></td><td class="rd-num">40px</td><td class="rd-num">48px</td><td class="rd-num">36px</td><td>experiment navbar height</td></tr>
+<tr><td><code>--rd-measure</code></td><td class="rd-num">75ch</td><td class="rd-num">70ch</td><td class="rd-num">none</td><td>prose line length</td></tr></tbody></table></div>
+<h3>Which density to use</h3>
+<ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg><span><strong>compact</strong> (default): technical papers, benchmarks, experiments and dashboards. Most of the page is data; the default fits more of it on screen.</span></li>
+<li><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg><span><strong>comfortable</strong>: essays, long-form reading and public write-ups, where the main site's 16px / 1.7 is the right feel.</span></li>
+<li><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg><span><strong>dense</strong>: wide tables and data-heavy dashboards, where a 12px table is still legible (the floor is 11px). Pair it with <code>rd-table-wrap--tall</code> for long tables.</span></li></ul>
+<p>Put the switch on <code>&lt;html&gt;</code> for a whole page: <code>&lt;html data-density="comfortable"&gt;</code>. Put it on a wrapper to change one block only.</p>
 
 <header class="rd-section__head" id="width"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-ruler"/></svg></span><h2>Width</h2></header>
 <p>Default is the main site's content column: <code>--rd-content-width: 54.5rem</code> (872px, measured on the live site at a 1440px viewport; the site page is 75rem). That is <code>.rd-container</code>. Use <code>.rd-container--wide</code> (the full 75rem site page width) <strong>only when the content needs it</strong>: wide charts, dense tables, dashboards. Tables scroll inside their wrapper and never widen the page.</p>
