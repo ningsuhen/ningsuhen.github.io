@@ -1,5 +1,6 @@
 ---
 import ButtonTag from "@components/control/ButtonTag.astro";
+import LicenseNote from "@components/LicenseNote.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { url } from "@utils/url-utils";
 import data from "../data/experiments.json";
@@ -16,7 +17,7 @@ type Experiment = {
 };
 
 const sorted = (data.items as Experiment[])
-	.slice()
+	.filter((e) => e.status.toLowerCase() !== "draft")
 	.sort((a, b) => (b.updated ?? b.started).localeCompare(a.updated ?? a.started));
 ---
 
@@ -38,6 +39,7 @@ const sorted = (data.items as Experiment[])
                         Started {e.started}{e.updated ? ` · updated ${e.updated}` : ""}
                     </p>
                     <p class="mt-3 text-75">{e.summary}</p>
+                    <p class="mt-1 text-xs text-50">All rights reserved. Not for reuse without my permission.</p>
                     <div class="flex flex-wrap gap-2 mt-3 items-center">
                         {e.tags.map((t) => <ButtonTag href={url(`/archive/?tag=${encodeURIComponent(t)}`)} label={t}>{t}</ButtonTag>)}
                         <a href={url(e.href)} class="btn-plain h-8 px-3 rounded-lg text-[var(--primary)] font-medium">Open →</a>
@@ -47,4 +49,5 @@ const sorted = (data.items as Experiment[])
             ))}
         </div>
     </div>
+    <LicenseNote class="mt-4" />
 </MainGridLayout>

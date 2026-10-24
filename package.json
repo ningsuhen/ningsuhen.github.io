@@ -14,7 +14,10 @@
     "new-post": "node scripts/new-post.js",
     "format": "biome format --write ./src",
     "lint": "biome check --write ./src",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "prepare": "sh scripts/install-hooks.sh",
+    "check:standalone": "node scripts/check-standalone-pages.mjs",
+    "new-experiment": "node scripts/new-experiment.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -70,6 +73,7 @@
     "@types/markdown-it": "^14.1.2",
     "@types/mdast": "^4.0.4",
     "@types/sanitize-html": "^2.16.0",
+    "playwright-core": "^1.64.1",
     "postcss-import": "^16.1.1",
     "postcss-nesting": "^13.0.2"
   },

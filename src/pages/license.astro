@@ -1,0 +1,12 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import licenseText from "../../LICENSE?raw";
+---
+
+<MainGridLayout title="License" description="License for the research and content on this site.">
+    <div class="card-base px-9 py-6 w-full">
+        <h1 class="text-3xl font-bold text-90 mb-4">License</h1>
+        <pre class="whitespace-pre-wrap text-75 text-sm leading-relaxed font-sans">{licenseText}</pre>
+        <p class="text-50 text-sm mt-4">Third-party components keep their own licenses; see <code>THIRD_PARTY_LICENSES.md</code> in the repository.</p>
+    </div>
+</MainGridLayout>
