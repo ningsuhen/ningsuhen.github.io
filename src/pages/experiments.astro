@@ -17,7 +17,7 @@ type Experiment = {
 };
 
 const sorted = (data.items as Experiment[])
-	.slice()
+	.filter((e) => e.status.toLowerCase() !== "draft")
 	.sort((a, b) => (b.updated ?? b.started).localeCompare(a.updated ?? a.started));
 ---
 

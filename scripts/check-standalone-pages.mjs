@@ -67,9 +67,9 @@ for (const rel of pages) {
 		const page = await ctx.newPage();
 		await page.goto(base + urlPath, { waitUntil: "load" });
 		const m = await page.evaluate(() => {
-			const lic = document.querySelector("[data-site-license]");
+			const lic = document.querySelector("div[data-site-license]");
 			const lr = lic?.getBoundingClientRect();
-			const host = document.querySelector("[data-site-navbar]");
+			const host = document.querySelector("div[data-site-navbar]");
 			const r = host?.getBoundingClientRect();
 			const doc = document.documentElement;
 			return {

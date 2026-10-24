@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}} · created {{DATE}} · updated {{DATE}}</title>
+<meta name="description" content="{{SUMMARY}}">
+<!-- Experiment template. Start new experiments with:  pnpm new-experiment <slug> "<Title>"
+     The site build injects, on every page under public/, with no markup needed here:
+       - the site navbar + light/dark toggle (mounted on <html> before <body>, so nothing here can offset it)
+       - the "All rights reserved, no reuse without permission" footer
+     Do not add your own navbar, theme toggle or license footer. `pnpm check:standalone` fails the PR if either is missing,
+     misplaced, or the page overflows horizontally at 1440px or 375px.
+     Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Use only --rd-* colors.
+     Width: .rd-container is the site's post column (54.5rem). Use .rd-container--wide (75rem) only if the content needs it. -->
+<link rel="stylesheet" href="https://ningsuhen.github.io/design-system/research.css">
+<!-- Self-contained export? Inline research.css here instead of linking, and keep fonts embedded (no external requests). -->
+<!-- Math? Add: <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.27/dist/katex.min.css"> and pre-render with katex.renderToString. -->
+</head>
+<body class="rd-body">
+<main class="rd-container rd-prose">
+  <p class="rd-eyebrow">Experiment</p>
+  <h1>{{TITLE}} · created {{DATE}} · updated {{DATE}}</h1>
+  <p class="rd-meta">{{SUMMARY}}</p>
+
+  <div class="rd-abstract">
+    <p class="rd-abstract__title">Abstract</p>
+    TODO: one paragraph. The question, the method, the headline result, the main caveat.
+    <p class="rd-keywords"><strong>Keywords:</strong> TODO</p>
+  </div>
+
+  <div class="rd-callout rd-callout--warn">
+    <p class="rd-callout__title">Caveats</p>
+    TODO: say what is unvalidated, small-sample, or preliminary, up front.
+  </div>
+
+  <h2>Headline results</h2>
+  <div class="rd-stats">
+    <div class="rd-stat"><div class="rd-stat__value">TODO</div><div class="rd-stat__label">what it measures</div></div>
+  </div>
+
+  <h2>Method</h2>
+  <p>TODO</p>
+
+  <h2>Results</h2>
+  <figure class="rd-figure">
+    <!-- chart or screenshot; use --rd-seq-* / --rd-cat-* colors -->
+    <figcaption>TODO: what is plotted, and the source.</figcaption>
+  </figure>
+
+  <h2>What did not work</h2>
+  <p>TODO</p>
+
+  <h2>References</h2>
+  <ol class="rd-refs"><li id="ref-1">TODO</li></ol>
+</main>
+</body>
+</html>

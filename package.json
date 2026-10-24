@@ -14,7 +14,10 @@
     "new-post": "node scripts/new-post.js",
     "format": "biome format --write ./src",
     "lint": "biome check --write ./src",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "prepare": "sh scripts/install-hooks.sh",
+    "check:standalone": "node scripts/check-standalone-pages.mjs",
+    "new-experiment": "node scripts/new-experiment.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
