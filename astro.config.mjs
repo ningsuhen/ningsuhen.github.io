@@ -39,7 +39,7 @@ export default defineConfig({
 		"/web-development/2007/12/15/project-1/": "/",
 	},
 	integrations: [
-		standaloneHeader({ label: "Ning Waikhom" }),
+		standaloneHeader(),
 		tailwind({
 			nesting: true,
 		}),
