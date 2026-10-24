@@ -67,11 +67,17 @@ for (const rel of pages) {
 		const page = await ctx.newPage();
 		await page.goto(base + urlPath, { waitUntil: "load" });
 		const m = await page.evaluate(() => {
+			const lic = document.querySelector("[data-site-license]");
+			const lr = lic?.getBoundingClientRect();
 			const host = document.querySelector("[data-site-navbar]");
 			const r = host?.getBoundingClientRect();
 			const doc = document.documentElement;
 			return {
 				has: !!host,
+				lic: !!lic,
+				licLeft: lr ? Math.round(lr.left + scrollX) : null,
+				licWidth: lr ? Math.round(lr.width) : null,
+				licText: lic?.shadowRoot?.textContent ?? "",
 				top: r ? Math.round(r.top + scrollY) : null,
 				left: r ? Math.round(r.left + scrollX) : null,
 				width: r ? Math.round(r.width) : null,
@@ -89,6 +95,11 @@ for (const rel of pages) {
 			if (m.top !== 0 || m.left !== 0) failures.push(`${tag}: navbar not flush top-left (top=${m.top}, left=${m.left})`);
 			if (Math.abs(m.width - m.cw) > 1) failures.push(`${tag}: navbar width ${m.width} != viewport ${m.cw}`);
 			if (m.theme !== "light" && m.theme !== "dark") failures.push(`${tag}: <html data-theme> not set (${m.theme})`);
+		}
+		if (!m.lic) failures.push(`${tag}: license notice missing`);
+		else {
+			if (m.licLeft !== 0 || Math.abs(m.licWidth - m.cw) > 1) failures.push(`${tag}: license footer not flush full-width (left=${m.licLeft}, width=${m.licWidth})`);
+			if (!/without my written permission/.test(m.licText)) failures.push(`${tag}: license text missing the no-reuse clause`);
 		}
 		if (m.sw > m.cw + 1) failures.push(`${tag}: horizontal overflow (scrollWidth ${m.sw} > ${m.cw})`);
 		if (m.mojibake) failures.push(`${tag}: mojibake in page text (missing/wrong charset)`);

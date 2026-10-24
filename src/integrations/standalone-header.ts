@@ -6,6 +6,7 @@ import { navBarConfig, siteConfig } from "../config";
 import { LinkPreset } from "../types/config";
 
 const MARKER = "data-site-navbar";
+const LICENSE_MARKER = "data-site-license";
 const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
 
 type NavItem = { name: string; url: string; external: boolean };
@@ -54,7 +55,7 @@ export default function standaloneHeader(): AstroIntegration {
 						const html = await readFile(file, "utf8");
 						const client = '<script type="module" src="/@vite/client"></script>';
 						res.setHeader("Content-Type", "text/html; charset=utf-8");
-						res.end(transform(html, script, client));
+						res.end(transform(html, script, client, buildLicenseScript(base)));
 					} catch {
 						next();
 					}
@@ -63,10 +64,11 @@ export default function standaloneHeader(): AstroIntegration {
 			"astro:build:done": async ({ dir }) => {
 				const outDir = fileURLToPath(dir);
 				const script = buildScript(navItems(base), siteConfig.title, siteConfig.themeColor.hue);
+				const licenseScript = buildLicenseScript(base);
 				for (const rel of await htmlFiles(publicDir)) {
 					const target = path.join(outDir, rel);
 					const html = await readFile(target, "utf8");
-					await writeFile(target, transform(html, script));
+					await writeFile(target, transform(html, script, "", licenseScript));
 				}
 			},
 		},
@@ -74,11 +76,11 @@ export default function standaloneHeader(): AstroIntegration {
 }
 
 /** Navbar + meta fixes for one standalone HTML document (shared by build and dev). `extra` is appended before </body>. */
-function transform(html: string, script: string, extra = ""): string {
-	if (html.includes(MARKER) || OPT_OUT.test(html)) return html;
-	const tail = script + extra;
+function transform(html: string, script: string, extra = "", footer = ""): string {
+	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
+	if (!parts) return html;
 	const at = html.lastIndexOf("</body>");
-	return ensureMeta(at === -1 ? html + tail : html.slice(0, at) + tail + html.slice(at));
+	return ensureMeta(at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at));
 }
 
 // Exported pages often lose these tags: without a charset, "·" renders as "Â·"; without a viewport,
@@ -158,5 +160,25 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`addEventListener("storage",function(e){if(e.key==="theme")apply(e.newValue||"light")});` +
 		// Mount on <html>, before <body>: the page's own body margin/padding/max-width can then never offset the bar.
 		`document.documentElement.insertBefore(host,document.body)})()</script>`
+	);
+}
+
+// Copyright footer for every standalone page: research here may not be reused without permission.
+// Mounted on <html> after <body> (like the navbar), so page styling can't offset or hide it.
+function buildLicenseScript(base: string): string {
+	const prefix = base.replace(/\/$/, "");
+	const css =
+		":host{all:initial;display:block}" +
+		"footer{box-sizing:border-box;padding:16px max(16px,calc((100% - 1200px)/2));background:#15212b;color:rgba(255,255,255,.8);" +
+		"font:400 13px/1.6 system-ui,-apple-system,Segoe UI,sans-serif}" +
+		"strong{color:#fff}a{color:#9ec5ff}";
+	const markup =
+		`<style>${css}</style><footer><strong>\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</strong> ` +
+		`This research may not be reused, copied, republished or used to train models without my written permission. ` +
+		`Short quotes with attribution and a link are fine. <a href="${esc(prefix)}/license/">License</a></footer>`;
+	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
+	return (
+		`<script ${LICENSE_MARKER}>(function(){var h=document.createElement("div");h.setAttribute("${LICENSE_MARKER}","");` +
+		`h.attachShadow({mode:"open"}).innerHTML=${html};document.documentElement.appendChild(h)})()</script>`
 	);
 }
