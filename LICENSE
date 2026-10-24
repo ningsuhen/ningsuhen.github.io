@@ -1,21 +1,31 @@
-MIT License
+Copyright (c) 2026 Ning Waikhom. All rights reserved.
 
-Copyright (c) 2024 saicaca
+SCOPE
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This license covers the original content of this repository and of https://ningsuhen.github.io/
+("the Work"), including:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  - research, analysis, models, data products and reports (for example, everything published under
+    /ai-economy/ and its underlying simulation outputs and figures);
+  - blog posts, articles, text, images, illustrations and artwork (including the site banner);
+  - site configuration, copy and page content written for this site.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+NO REUSE WITHOUT PERMISSION
+
+No part of the Work may be copied, reproduced, republished, redistributed, adapted, translated,
+scraped for dataset or model-training purposes, or otherwise reused, in whole or in part, in any
+form or medium, without the prior written permission of the copyright holder.
+
+Permitted without asking: viewing the site; linking to it; and quoting short excerpts with clear
+attribution and a link to the source, to the extent allowed by fair use or fair dealing.
+
+The research and reports are provided "as is", for information only. They are not financial,
+investment or legal advice, and not a forecast; no warranty of any kind is given.
+
+To request permission, contact the copyright holder through https://github.com/ningsuhen.
+
+THIRD-PARTY COMPONENTS
+
+This site uses third-party software, including the Fuwari theme (MIT License) and npm packages.
+Those components remain under their own licenses, which are not changed by this file. Their notices
+are in THIRD_PARTY_LICENSES.md. Nothing here grants rights in them beyond what their licenses give.

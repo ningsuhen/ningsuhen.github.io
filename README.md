@@ -1,6 +1,6 @@
 # ningsuhen.github.io
 
-Personal site built with [Astro](https://astro.build) + the [Fuwari](https://github.com/saicaca/fuwari) theme (MIT), edited via [Pages CMS](https://pagescms.org) (`.pages.yml`).
+Personal site built with [Astro](https://astro.build) + the [Fuwari](https://github.com/saicaca/fuwari) theme, edited via [Pages CMS](https://pagescms.org) (`.pages.yml`).
 
 ## Layout
 
@@ -43,3 +43,7 @@ Posts show GitHub-Discussions-powered comments via [Giscus](https://giscus.app).
 Push to `master` → GitHub Actions builds and deploys to GitHub Pages (`.github/workflows/deploy.yml`, pnpm + Node 22).
 
 One-time setup: in the repo **Settings → Pages → Source**, choose **GitHub Actions**.
+
+## License
+
+All rights reserved: the research, reports, posts and artwork may not be reused without permission (see `LICENSE`). Third-party components keep their own licenses (see `THIRD_PARTY_LICENSES.md`).
