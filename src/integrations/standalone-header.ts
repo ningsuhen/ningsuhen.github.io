@@ -203,7 +203,7 @@ function buildLicenseScript(base: string): string {
 		"strong{color:#fff}a{color:#9ec5ff}";
 	const markup =
 		`<style>${css}</style><footer><strong>\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</strong> ` +
-		`This research may not be reused, copied, republished or used to train models without my written permission. ` +
+		`Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission. ` +
 		`Short quotes with attribution and a link are fine. <a href="${esc(prefix)}/license/">License</a></footer>`;
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 	return (

@@ -15,7 +15,7 @@ Two things changed that. First, **quantization**. The llama.cpp README lists 1.5
 
 Here we go. A web page runs the model on your GPU, with no install and no server.
 
-- **WebGPU** is the browser API for the GPU. MDN marks it "limited availability" and requires a secure context, meaning HTTPS ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API), read 2026-10-24). The implementation status page, last edited 2 October 2026, lists Chromium on Mac since version 113. Firefox and Safari have caveats, and phones and Linux vary ([gpuweb wiki](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status), read 2026-10-24).
+- **WebGPU** is the browser API for the GPU. MDN marks it "limited availability" and requires a secure context, meaning HTTPS ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API), read 2026-10-24). The implementation status page, last edited 2 October 2026, lists Chromium (Chrome, Edge) on Mac, Windows and ChromeOS since version 113, Firefox since 141 on Windows and 147 on all Mac versions, and Safari 26 with it on by default ([gpuweb wiki](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status), read 2026-10-24). I have not checked Linux or phones.
 - **Transformers.js** runs Hugging Face models in the browser on ONNX Runtime, on CPU by default and on WebGPU when you ask for it ([docs](https://huggingface.co/docs/transformers.js/index), read 2026-10-24).
 - **WebLLM** is an in-browser LLM engine with an OpenAI-compatible API, accelerated by WebGPU ([README](https://github.com/mlc-ai/web-llm), read 2026-10-24).
 - **ONNX Runtime Web** has WebGPU and WebAssembly backends. WebGPU covers only a subset of ONNX operators ([docs](https://onnxruntime.ai/docs/tutorials/web/), read 2026-10-24).

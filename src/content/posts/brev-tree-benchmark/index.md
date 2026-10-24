@@ -2,7 +2,7 @@
 title: Can a decision tree hold the knowledge? What the Brev benchmark says
 published: 2026-10-24
 description: "Primary observations from the Brev Tree Benchmark: a tree-walking 400M model against a 27B model, on 77 and 196 intents."
-tags: [AI, Benchmark, Rust, Experiment]
+tags: [AI, Benchmark, Rust, Research]
 category: Research
 thumbnail: ./accuracy-latency.webp
 draft: false
@@ -10,7 +10,7 @@ draft: false
 
 I have been building Brev. It runs a small model called laya in the browser, from Rust compiled to WebAssembly. The question I wanted to answer: **can a decision tree hold the knowledge, so a 400M encoder that reads only the criteria on its path matches a 27B model given a short instruction, without its latency?**
 
-I tested it on Banking77 (77 intents), then on 196 intents, and kept a ledger of every hypothesis. The full thing is [here](/brev-tree-benchmark/). These are the things that stood out.
+I tested it on Banking77 (77 intents), then on 196 intents, and kept a ledger of every hypothesis. The full thing is [here](/research/brev-tree-benchmark/). These are the things that stood out.
 
 ![Top results table from the Brev report: hypotheses with accuracy, p50 and p95 latency, and status](./top-results.webp)
 
@@ -48,4 +48,4 @@ A TF-IDF character n-gram head in front of the pipeline answers 65% of rows loca
 - The learn-as-you-go result uses a simulated teacher. A strong sign, not proof.
 - The "top results" table is curated by hand. The ledger is the source of truth.
 
-[Open the report](/brev-tree-benchmark/) and look at the ledger. If something looks wrong, tell me.
+[Open the report](/research/brev-tree-benchmark/) and look at the ledger. If something looks wrong, tell me.

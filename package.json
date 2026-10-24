@@ -18,7 +18,11 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "sh scripts/install-hooks.sh",
     "check:standalone": "node scripts/check-standalone-pages.mjs",
-    "new-experiment": "node scripts/new-experiment.mjs"
+    "new-experiment": "node scripts/new-experiment.mjs",
+    "new-research": "node scripts/new-experiment.mjs --research",
+    "sync": "sh scripts/sync-dev-next.sh",
+    "merge-pr": "sh scripts/merge-pr.sh",
+    "test:hooks": "sh scripts/test-pre-push.sh"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
