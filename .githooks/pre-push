@@ -11,6 +11,10 @@ input=$(cat)
 printf '%s\n' "$input" | run_local_hook pre-push "$@" || exit 1
 
 printf '%s\n' "$input" | while read -r local_ref local_sha remote_ref remote_sha; do
+	if [ "$local_ref" = refs/heads/dev/next ] || [ "$remote_ref" = refs/heads/dev/next ]; then
+		echo "pre-push: refusing to push dev/next. It is a local-only mirror of origin/master and is never pushed (see CLAUDE.md)." >&2
+		exit 1
+	fi
 	[ -z "$local_sha" ] && continue
 	[ "$local_sha" = "$zero" ] && continue # branch deletion
 	if [ "$remote_sha" = "$zero" ]; then

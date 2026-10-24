@@ -31,6 +31,8 @@ export default defineConfig({
 	base: "/",
 	trailingSlash: "always",
 	redirects: {
+		"/ai-economy/": "/research/ai-economy/",
+		"/brev-tree-benchmark/": "/research/brev-tree-benchmark/",
 		"/web-development/2015/03/31/project-6/": "/",
 		"/mobile-app-development/2014/12/10/project-5/": "/",
 		"/web-development/mobile-app-development/2014/05/09/project-4/": "/",
