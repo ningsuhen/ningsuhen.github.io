@@ -198,7 +198,13 @@
 
 /* ---- Stat tiles: the headline-number pattern ---- */
 .rd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.75rem; margin: 1rem 0; }
-.rd-stat { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; }
+.rd-stat { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; border-top: 3px solid var(--rd-line); }
+.rd-stat--candidate { border-top-color: var(--rd-accent); }
+.rd-stat--reference { border-top-color: var(--rd-cat-3); }
+.rd-stat--reference .rd-stat__value { color: var(--rd-text-strong); }
+.rd-stat__delta { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--rd-text-muted); }
+.rd-stat__delta--good { color: var(--rd-good); }
+.rd-stat__delta--bad { color: var(--rd-bad); }
 .rd-stat__value { font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--rd-accent); font-variant-numeric: tabular-nums; }
 .rd-stat__label { margin-top: 0.25rem; color: var(--rd-text-muted); font-size: 0.8rem; }
 .rd-stat__note { margin-top: 0.5rem; color: var(--rd-text-muted); font-size: 0.8rem; }
@@ -208,7 +214,7 @@
 .rd-callout--good { border-color: var(--rd-good); }
 .rd-callout--warn { border-color: var(--rd-warn); }
 .rd-callout--bad { border-color: var(--rd-bad); }
-.rd-callout__title { font-weight: 700; color: var(--rd-text-strong); margin: 0 0 0.25rem; }
+.rd-callout__title { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--rd-text-strong); margin: 0 0 0.25rem; }
 
 /* ---- Figures & charts ---- */
 .rd-figure { margin: 1.5rem 0; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem; }
@@ -222,14 +228,180 @@
 	background: var(--rd-btn-bg); color: var(--rd-accent); font: 500 0.9rem var(--rd-font); cursor: pointer;
 }
 .rd-btn:hover { background: var(--rd-btn-bg-hover); }
-.rd-chip { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 500; }
+.rd-chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 500; line-height: 1.6; }
 .rd-chip--good { color: var(--rd-good); }
 .rd-chip--warn { color: var(--rd-warn); }
 .rd-chip--bad { color: var(--rd-bad); }
+.rd-chip--neutral { color: var(--rd-text-muted); }
 .rd-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--rd-line); margin: 1rem 0; }
 .rd-tabs a { padding: 0.5rem 0.9rem; border-radius: var(--rd-radius-sm) var(--rd-radius-sm) 0 0; color: var(--rd-text); text-decoration: none; }
 .rd-tabs a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
 .rd-tabs a[aria-current="page"], .rd-tabs a.is-active { color: var(--rd-accent); box-shadow: inset 0 -2px 0 var(--rd-primary); }
+
+/* ======================================================================
+   Icons: Lucide, from the inlined sprite (scripts/build-lucide-sprite.mjs writes the
+   <symbol>s between the lucide-sprite markers of each page). Stroke comes from this class.
+   <svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>
+   ====================================================================== */
+.rd-icon {
+	display: inline-block;
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.2em;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.rd-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.5rem; list-style: none; padding: 0; margin: 1rem 0; }
+.rd-icon-grid li { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem; background: var(--rd-card-bg); border-radius: var(--rd-radius-sm); font-size: 0.8rem; color: var(--rd-text-muted); overflow-wrap: anywhere; }
+.rd-icon-grid .rd-icon { width: 1.5rem; height: 1.5rem; color: var(--rd-accent); }
+
+/* ======================================================================
+   Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
+   ====================================================================== */
+/* Experiment navbar: full width, sticky at top: 0. The site bar above it (56px, not sticky) scrolls
+   away, so the two never overlap. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
+.rd-expnav {
+	--rd-expnav-h: 3rem;
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	display: flex;
+	gap: 0.25rem;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: thin;
+	min-height: var(--rd-expnav-h);
+	padding: 0 max(1rem, calc((100% - var(--rd-content-width)) / 2));
+	background: var(--rd-page-bg);
+	box-shadow: 0 1px 0 var(--rd-line);
+}
+.rd-expnav a {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex: none;
+	min-height: var(--rd-expnav-h);
+	padding: 0 0.75rem;
+	color: var(--rd-text-muted);
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+	box-shadow: inset 0 -3px 0 transparent;
+	transition: color 0.15s ease, box-shadow 0.15s ease;
+}
+.rd-expnav a:hover { color: var(--rd-text-strong); }
+.rd-expnav a.is-active { color: var(--rd-accent); box-shadow: inset 0 -3px 0 var(--rd-accent); }
+.rd-expnav a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+.rd-expnav .rd-icon { color: var(--rd-accent); }
+@media (prefers-reduced-motion: no-preference) {
+	html:has(.rd-expnav) { scroll-behavior: smooth; }
+}
+
+/* Section header: an icon badge, an h2, and an id that the navbar links to. */
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: 0.75rem; margin: 2.5rem 0 1rem; scroll-margin-top: calc(var(--rd-expnav-h, 3rem) + 1rem); }
+.rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: 1.4rem; }
+.rd-prose .rd-section__head h2::before { content: none; }
+.rd-section__icon {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg);
+	color: var(--rd-accent);
+}
+.rd-section__icon .rd-icon { width: 1.2rem; height: 1.2rem; }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-expnav-h, 3rem) + 1rem); }
+
+/* Hero: eyebrow, h1, lede, a row of status chips and meta. */
+.rd-hero { padding: 1.5rem 0 1rem; }
+.rd-prose .rd-hero h1 { font-size: clamp(1.6rem, 4.2vw, 2.25rem); line-height: 1.2; letter-spacing: -0.01em; margin: 0.25rem 0 0.75rem; }
+.rd-hero__lede { font-size: 1.05rem; color: var(--rd-text); max-width: 60ch; margin: 0 0 1rem; }
+.rd-hero__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0; color: var(--rd-text-muted); font-size: 0.85rem; }
+
+/* Brief: three boxes (question, status, how to read), each with a coloured top rule. */
+.rd-brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); gap: 0.75rem; margin: 1rem 0; }
+.rd-brief__item { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.1rem; border-top: 3px solid var(--rd-accent); }
+.rd-brief__item:nth-child(2) { border-top-color: var(--rd-cat-5); }
+.rd-brief__item:nth-child(3) { border-top-color: var(--rd-cat-3); }
+.rd-prose .rd-brief__item > :first-child { margin-top: 0; }
+.rd-prose .rd-brief__item p { margin: 0.25rem 0 0; font-size: 0.95rem; }
+
+/* Findings: the numbered conclusions, each with its evidence line. */
+.rd-findings { list-style: none; display: grid; gap: 0.75rem; margin: 1rem 0; padding: 0; }
+.rd-finding { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; align-items: start; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; }
+.rd-finding__icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); color: var(--rd-accent); }
+.rd-finding--good .rd-finding__icon { color: var(--rd-good); }
+.rd-finding--warn .rd-finding__icon { color: var(--rd-warn); }
+.rd-finding--bad .rd-finding__icon { color: var(--rd-bad); }
+.rd-prose .rd-finding__title { margin: 0; font-size: 1rem; font-weight: 700; color: var(--rd-text-strong); }
+.rd-finding p { margin: 0.25rem 0 0; }
+.rd-prose .rd-finding__evidence { margin-top: 0.4rem; font-size: 0.8rem; color: var(--rd-text-muted); }
+.rd-finding__evidence .rd-icon { vertical-align: -0.25em; margin-right: 0.25rem; }
+
+/* Comparison tables: reference rows tinted, best values bold, long tables scroll with a sticky header. */
+.rd-table tr.rd-table__ref td { background: color-mix(in oklch, var(--rd-cat-3) 14%, transparent); }
+.rd-table td.rd-best { color: var(--rd-good); font-weight: 700; }
+.rd-table .rd-chip { font-size: 0.7rem; }
+.rd-table-wrap--tall { max-height: 70vh; overflow: auto; }
+.rd-table-wrap--tall th { position: sticky; top: 0; z-index: 1; }
+
+/* Figures: axis and annotation text, legend swatches, and a source line under the caption. */
+.rd-figure svg text { fill: var(--rd-text-muted); font-family: var(--rd-font); font-size: 12px; }
+.rd-figure svg .rd-annot { fill: var(--rd-text-strong); font-weight: 600; }
+.rd-figure svg .rd-axis { stroke: var(--rd-text-muted); stroke-width: 1; }
+.rd-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; list-style: none; margin: 0.75rem 0 0; padding: 0; font-size: 0.85rem; color: var(--rd-text-muted); }
+.rd-legend li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.rd-legend__swatch { flex: none; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--c); }
+.rd-legend__swatch--square { border-radius: 2px; }
+.rd-source { display: flex; align-items: flex-start; gap: 0.4rem; margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--rd-text-muted); }
+.rd-source .rd-icon { margin-top: 0.15em; }
+.rd-figure .rd-source { margin-top: 0.5rem; }
+
+/* Experiment cards: one per run, coloured by status. */
+.rd-run { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; margin: 0.75rem 0; border-left: 4px solid var(--rd-line); }
+.rd-run--pass { border-left-color: var(--rd-good); }
+.rd-run--fail { border-left-color: var(--rd-bad); }
+.rd-run--running { border-left-color: var(--rd-accent); }
+.rd-run--waiting { border-left-color: var(--rd-warn); }
+.rd-run__head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.rd-prose .rd-run__title { flex: 1 1 12rem; min-width: 0; margin: 0; font-size: 1rem; font-weight: 700; color: var(--rd-text-strong); overflow-wrap: anywhere; }
+.rd-run__meta { color: var(--rd-text-muted); font-size: 0.8rem; }
+.rd-run p { margin: 0.5rem 0 0; }
+
+/* Folds: collapsible detail under a card-style summary. Native details, no JS. */
+.rd-fold { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 0 1.25rem; margin: 1rem 0; }
+.rd-fold > summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.9rem 0; cursor: pointer; font-weight: 700; color: var(--rd-text-strong); list-style: none; }
+.rd-fold > summary::-webkit-details-marker { display: none; }
+.rd-fold > summary::after { content: ""; margin-left: auto; flex: none; width: 0.45rem; height: 0.45rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.15s ease; }
+.rd-fold[open] > summary::after { transform: rotate(-135deg); }
+.rd-fold > :not(summary):last-child { margin-bottom: 1rem; }
+
+/* Definitions: term and meaning in a two-column grid that stacks on phones. */
+.rd-defs { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 0.5rem 1.25rem; margin: 1rem 0; font-size: 0.95rem; }
+.rd-defs dt { font-weight: 700; color: var(--rd-text-strong); }
+.rd-defs dd { margin: 0; }
+@media (max-width: 480px) {
+	.rd-defs { grid-template-columns: 1fr; gap: 0.1rem; }
+	.rd-defs dd { margin-bottom: 0.6rem; }
+}
+
+/* Icon lists: bullets replaced by an icon. Use --warn for caveats. */
+.rd-icon-list { list-style: none; display: grid; gap: 0.5rem; margin: 0.75rem 0; padding: 0; }
+.rd-icon-list li { display: flex; align-items: flex-start; gap: 0.6rem; }
+.rd-icon-list .rd-icon { margin-top: 0.2em; color: var(--rd-accent); }
+.rd-icon-list--warn .rd-icon { color: var(--rd-warn); }
+
+@media print {
+	.rd-expnav { display: none; }
+	.rd-findings, .rd-run, .rd-stat, .rd-brief__item { break-inside: avoid; }
+}
 
 /* ---- Focus & motion & print ---- */
 .rd-body :focus-visible { outline: 2px solid var(--rd-primary); outline-offset: 2px; }
