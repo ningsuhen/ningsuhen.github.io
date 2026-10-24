@@ -34,6 +34,7 @@ const PRESETS: Record<LinkPreset, { name: string; url: string }> = {
 export default function standaloneHeader(): AstroIntegration {
 	let publicDir = "";
 	let base = "/";
+	let site = "";
 
 	return {
 		name: "standalone-header",
@@ -41,6 +42,7 @@ export default function standaloneHeader(): AstroIntegration {
 			"astro:config:done": ({ config }) => {
 				publicDir = fileURLToPath(config.publicDir);
 				base = config.base;
+				site = config.site ?? "";
 			},
 			// Dev: Astro's dev server doesn't map public/<dir>/ to <dir>/index.html and skips the build hook, so
 			// standalone pages were 404 locally and had no navbar. Serve them transformed, with Vite's client
@@ -60,7 +62,7 @@ export default function standaloneHeader(): AstroIntegration {
 						const html = await readFile(file, "utf8");
 						const client = '<script type="module" src="/@vite/client"></script>';
 						res.setHeader("Content-Type", "text/html; charset=utf-8");
-						res.end(transform(html, script, client, buildLicenseScript(base)));
+						res.end(transform(html, script, client, buildLicenseScript(base), pathname, base, site));
 					} catch {
 						next();
 					}
@@ -73,7 +75,8 @@ export default function standaloneHeader(): AstroIntegration {
 				for (const rel of await htmlFiles(publicDir)) {
 					const target = path.join(outDir, rel);
 					const html = await readFile(target, "utf8");
-					await writeFile(target, transform(html, script, "", licenseScript));
+					const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+					await writeFile(target, transform(html, script, "", licenseScript, urlPath, base, site));
 				}
 			},
 		},
@@ -81,22 +84,39 @@ export default function standaloneHeader(): AstroIntegration {
 }
 
 /** Navbar + meta fixes for one standalone HTML document (shared by build and dev). `extra` is appended before </body>. */
-function transform(html: string, script: string, extra = "", footer = ""): string {
+function transform(html: string, script: string, extra: string, footer: string, urlPath: string, base: string, site: string): string {
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
-	if (!parts) return html;
-	const at = html.lastIndexOf("</body>");
-	return ensureMeta(at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at));
+	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
+	return ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href);
 }
 
-// Exported pages often lose these tags: without a charset, "·" renders as "Â·"; without a viewport,
-// phones show a zoomed-out desktop page. Prepend whichever is missing (valid at the very start of the file).
-function ensureMeta(html: string): string {
+// Exported pages often lose these tags. Without a doctype the page renders in quirks mode (BackCompat);
+// without a charset, "·" renders as "Â·"; without a viewport, phones show a zoomed-out desktop page; without
+// lang, screen readers guess the language. Prepend whichever is missing (valid at the very start of the file).
+function ensureHead(html: string, canonical: string): string {
 	const head = html.slice(0, 4096);
+	const doctype = html.match(/^\s*<!doctype[^>]*>/i)?.[0];
 	const missing: string[] = [];
 	if (!/<meta[^>]+charset=/i.test(head)) missing.push('<meta charset="utf-8">');
 	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) missing.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
-	return missing.length ? missing.join("") + html : html;
+	if (!/<link[^>]+rel=["']icon["']/i.test(html)) missing.push(FAVICONS);
+	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) missing.push(`<link rel="canonical" href="${esc(canonical)}">`);
+	const rest = withHtmlLang(doctype ? html.slice(doctype.length) : html);
+	if (doctype) return doctype + missing.join("") + rest;
+	return "<!doctype html>" + missing.join("") + rest;
 }
+
+// Some exports have no <html> start tag at all, and CSS/JS comments can mention <html lang>. Match real tags only.
+function withHtmlLang(html: string): string {
+	const real = html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<!--[\s\S]*?-->/gi, "").match(/<html(?=[\s>])[^>]*>/i)?.[0];
+	if (!real) return '<html lang="en">' + html;
+	if (/\blang=/i.test(real)) return html;
+	return html.replace(real, real.replace(/^<html/i, '<html lang="en"'));
+}
+
+const FAVICONS =
+	'<link rel="icon" href="/favicon/favicon-light-32.png" sizes="32x32" type="image/png" media="(prefers-color-scheme: light)">' +
+	'<link rel="icon" href="/favicon/favicon-dark-32.png" sizes="32x32" type="image/png" media="(prefers-color-scheme: dark)">';
 
 function navItems(base: string): NavItem[] {
 	const prefix = base.replace(/\/$/, "");

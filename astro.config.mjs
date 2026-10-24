@@ -1,4 +1,7 @@
 import sitemap from "@astrojs/sitemap";
+import { readdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
@@ -25,9 +28,20 @@ import standaloneHeader from "./src/integrations/standalone-header.ts";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
+const SITE = "https://ningsuhen.github.io/";
+
+/** Standalone pages in public/ (reports, apps) are not Astro routes, so the sitemap needs them listed by hand. */
+function standaloneSitemapPages(dir = fileURLToPath(new URL("./public/", import.meta.url)), prefix = "") {
+	return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+		if (e.isDirectory()) return standaloneSitemapPages(path.join(dir, e.name), `${prefix}${e.name}/`);
+		if (!e.name.endsWith(".html") || e.name === "template.html") return [];
+		return [new URL(e.name === "index.html" ? prefix : prefix + e.name, SITE).href];
+	});
+}
+
 // https://astro.build/config
 export default defineConfig({
-	site: "https://ningsuhen.github.io/",
+	site: SITE,
 	base: "/",
 	trailingSlash: "always",
 	redirects: {
@@ -109,7 +123,7 @@ export default defineConfig({
 			}
 		}),
         svelte(),
-		sitemap(),
+		sitemap({ customPages: standaloneSitemapPages() }),
 	],
 	markdown: {
 		remarkPlugins: [
