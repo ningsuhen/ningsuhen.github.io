@@ -21,5 +21,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm check:thumbnails
+      - run: pnpm check:links
       - run: pnpm exec playwright-core install --with-deps chromium
       - run: pnpm check:standalone
