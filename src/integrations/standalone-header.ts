@@ -117,21 +117,23 @@ async function htmlFiles(root: string, dir = ""): Promise<string[]> {
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
 const CSS = `
-:host{all:initial;display:block;--hue:250;--bg:#fff;--fg:#2b2b2e;--muted:#6b6b72;--line:rgba(0,0,0,.08);--accent:oklch(.55 .15 var(--hue));--hover:oklch(.95 .03 var(--hue))}
-:host([data-theme=dark]){--bg:oklch(.2 .015 var(--hue));--fg:rgba(255,255,255,.9);--muted:rgba(255,255,255,.55);--line:rgba(255,255,255,.12);--accent:oklch(.75 .14 var(--hue));--hover:oklch(.3 .04 var(--hue))}
-header{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;height:56px;padding:0 max(16px,calc((100% - 1200px)/2));background:var(--bg);color:var(--fg);border-bottom:1px solid var(--line);font:500 15px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:host{all:initial;display:block;--hue:250;--bg:#fff;--fg:#2b2b2e;--muted:#6b6b72;--line:rgba(0,0,0,.08);--accent:oklch(.55 .15 var(--hue));--prime:oklch(.70 .14 var(--hue));--hover:oklch(.95 .03 var(--hue))}
+:host([data-theme=dark]){--bg:oklch(.2 .015 var(--hue));--fg:rgba(255,255,255,.9);--muted:rgba(255,255,255,.55);--line:rgba(255,255,255,.12);--accent:oklch(.75 .14 var(--hue));--prime:oklch(.75 .14 var(--hue));--hover:oklch(.3 .04 var(--hue))}
+header{box-sizing:border-box;display:flex;align-items:center;gap:12px;height:72px;width:min(100%,1168px);margin:0 auto;padding:0 16px;background:#fff;color:var(--fg);border-radius:0 0 16px 16px;font:700 16px/1 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
+:host([data-theme=dark]) header{background:oklch(.23 .015 var(--hue))}
 a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer}
-.brand{font-weight:700;font-size:18px;color:var(--accent);white-space:nowrap}
-nav{display:flex;align-items:center;gap:2px;min-width:0;flex:1 1 auto;justify-content:flex-end;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.brand{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px;border-radius:8px;color:var(--prime);white-space:nowrap}
+.brand svg{width:28px;height:28px;fill:currentColor;stroke:none}
+nav{display:flex;align-items:center;gap:0;min-width:0;flex:1 1 auto;justify-content:flex-start;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
 .brand{flex:none}
-nav a,button{display:inline-flex;align-items:center;gap:4px;height:40px;padding:0 12px;border:0;border-radius:10px;background:transparent}
-nav a:hover,button:hover{background:var(--hover);color:var(--accent)}
-button{width:40px;flex:none;justify-content:center;padding:0}
+nav a,button{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 20px;border:0;border-radius:8px;background:transparent}
+nav a:hover,button:hover,.brand:hover{background:var(--hover);color:var(--accent)}
+button{width:44px;margin-left:auto;flex:none;justify-content:center;padding:0}
 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ni{width:18px;height:18px;flex:none}
+.ni{display:none}
 :host(:not([data-theme=dark])) .moon,:host([data-theme=dark]) .sun{display:none}
-@media(max-width:560px){header{gap:6px}nav a{padding:0 8px}.brand{font-size:16px}}
+@media(max-width:560px){header{gap:6px;padding:0 8px;height:63px}nav a,.brand{padding:0 10px}}
 `;
 
 // Lucide (ISC) icon bodies, copied from @iconify-json/lucide. Inline so standalone pages make no icon requests;
@@ -160,6 +162,8 @@ const NAV_ICONS: Record<string, keyof typeof LUCIDE> = {
 const svgIcon = (name: keyof typeof LUCIDE, cls: string) =>
 	`<svg class="${cls}" viewBox="0 0 24 24">${LUCIDE[name]}</svg>`;
 
+const HOME = '<svg viewBox="0 0 24 24"><path d="M6 19h3v-6h6v6h3v-9l-6-4.5L6 10zm-2 2V9l8-6l8 6v12h-7v-6h-2v6zm8-8.75"/></svg>';
+
 const ICONS = svgIcon("sun", "sun") + svgIcon("moon", "moon");
 
 // Script (not markup) so it works for HTML fragments without <body>; shadow DOM isolates it from page CSS.
@@ -172,7 +176,7 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		})
 		.join("");
 	const markup =
-		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${esc(title)}</a>` +
+		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${HOME}${esc(title)}</a>` +
 		`<nav>${links}</nav><button type="button" aria-label="Toggle light/dark theme">${ICONS}</button></header>`;
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 
