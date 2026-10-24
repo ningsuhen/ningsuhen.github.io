@@ -4,6 +4,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
 import ConfigCarrier from "@components/ConfigCarrier.astro";
+import { getStandalonePaths } from "@utils/standalone-utils";
 import { profileConfig, siteConfig } from "@/config";
 import {
 	AUTO_MODE,
@@ -70,6 +71,8 @@ const bannerOffsetByPosition = {
 };
 const bannerOffset =
 	bannerOffsetByPosition[siteConfig.banner.position || "center"];
+
+const standalonePaths = getStandalonePaths();
 ---
 
 <!DOCTYPE html>
@@ -136,6 +139,22 @@ const bannerOffset =
 			let offset = Math.floor(window.innerHeight * (BANNER_HEIGHT_EXTEND / 100));
 			offset = offset - offset % 4;
 			document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
+		</script>
+
+		<!-- Standalone pages (public/**/*.html: reports, experiments) are complete documents, not Fuwari pages.
+		     Swup must never intercept links to them: it fetches the page, fails to find its containers, and leaves the
+		     history/DOM in a broken state (title and layout wrong after Back). Stop the event before Swup sees it and
+		     let the browser do a normal navigation. -->
+		<script is:inline define:vars={{standalonePaths}}>
+			document.addEventListener("click", (e) => {
+				if (e.defaultPrevented || e.button !== 0) return;
+				const a = e.target instanceof Element ? e.target.closest("a[href]") : null;
+				if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+				const url = new URL(a.href, location.href);
+				if (url.origin !== location.origin) return;
+				const p = url.pathname.endsWith("/") || url.pathname.endsWith(".html") ? url.pathname : `${url.pathname}/`;
+				if (standalonePaths.includes(p)) e.stopPropagation();
+			}, true);
 		</script>
 		<style define:vars={{
 			configHue,

@@ -106,6 +106,31 @@ for (const rel of pages) {
 		await ctx.close();
 	}
 }
+
+// Navigation regression: from a site page, a link to a standalone page must be a normal full navigation,
+// and Back must restore the site page intact (Swup used to intercept the link and corrupt the page).
+const standaloneUrls = new Set(pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`));
+for (const sitePath of ["/experiments/", "/research/"]) {
+	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
+	const page = await ctx.newPage();
+	const resp = await page.goto(base + sitePath, { waitUntil: "load" });
+	if (resp && resp.ok()) {
+		const title = await page.title();
+		const hrefs = await page.$$eval("a[href]", (as) => [...new Set(as.map((a) => new URL(a.href).pathname))]);
+		for (const h of hrefs.filter((x) => standaloneUrls.has(x))) {
+			await page.goto(base + sitePath, { waitUntil: "load" });
+			await page.evaluate(() => { window.__nav_marker = 1; });
+			await Promise.all([page.waitForURL(`**${h}`), page.click(`a[href="${h}"]`)]);
+			await page.waitForLoadState("load");
+			const full = await page.evaluate(() => window.__nav_marker === undefined);
+			await page.goBack({ waitUntil: "load" });
+			const back = await page.evaluate(() => ({ title: document.title, container: !!document.querySelector("#swup-container"), nav: !!document.querySelector("#navbar") }));
+			if (!full) failures.push(`${sitePath} -> ${h}: link was soft-navigated (Swup intercepted a standalone page)`);
+			if (back.title !== title || !back.container || !back.nav) failures.push(`${sitePath} -> ${h} -> Back: page broken (title "${back.title}", container=${back.container}, navbar=${back.nav})`);
+		}
+	}
+	await ctx.close();
+}
 await browser.close();
 server.close();
 
