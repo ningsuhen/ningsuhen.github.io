@@ -173,6 +173,17 @@ for (const [, from, to] of redirectBlock.matchAll(/"([^"]+)":\s*"([^"]+)"/g)) {
 	}
 	await ctx.close();
 }
+// Site pages: the navbar used to overflow the page between 768 and 1023px (links shown at md, search only at lg).
+for (const sitePath of ["/", "/archive/", "/research/"]) {
+	for (const vp of [{ width: 768, height: 1000 }, { width: 375, height: 800 }]) {
+		const ctx = await browser.newContext({ viewport: vp });
+		const page = await ctx.newPage();
+		await page.goto(base + sitePath, { waitUntil: "load" });
+		const sw = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+		if (sw > 1) failures.push(`${sitePath} @${vp.width}: page scrolls horizontally by ${sw}px`);
+		await ctx.close();
+	}
+}
 await browser.close();
 server.close();
 
