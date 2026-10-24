@@ -257,7 +257,7 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`function E(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}` +
 		`function run(q){clearTimeout(tm);tm=setTimeout(async function(){if(!q.trim()){sp.hidden=true;return}sp.hidden=false;res.innerHTML="<p>Searching…</p>";` +
 		`try{pf=pf||await import(${JSON.stringify(pfUrl)});var r=await pf.search(q),d=await Promise.all(r.results.slice(0,6).map(function(x){return x.data()}));` +
-		`res.innerHTML=d.length?d.map(function(x){return'<a href="'+E(x.url)+'"><b>'+E((x.meta&&x.meta.title)||x.url)+'</b>'+x.excerpt+'</a>'}).join(""):"<p>No results</p>"}` +
+		`res.innerHTML=d.length?"":"<p>No results</p>";d.forEach(function(x){var a=document.createElement("a");a.href=x.url;a.innerHTML="<b>"+E((x.meta&&x.meta.title)||x.url)+"</b>"+x.excerpt;res.appendChild(a)})}` +
 		`catch(e){res.innerHTML="<p>Search is only available on the built site.</p>"}},150)}` +
 		`qs.forEach(function(i){i.addEventListener("input",function(){qs.forEach(function(o){if(o!==i)o.value=i.value});run(i.value)});i.addEventListener("focus",function(){if(i.value)run(i.value)})});` +
 		`root.querySelector(".sbtn").addEventListener("click",function(){pn.hidden=true;sp.hidden=!sp.hidden;if(!sp.hidden){var q2=sp.querySelector(".q2");q2.focus()}});` +
