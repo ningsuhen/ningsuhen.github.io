@@ -21,6 +21,7 @@ import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.m
 import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
+import standaloneHeader from "./src/integrations/standalone-header.ts";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
@@ -38,6 +39,7 @@ export default defineConfig({
 		"/web-development/2007/12/15/project-1/": "/",
 	},
 	integrations: [
+		standaloneHeader({ label: "Ning Waikhom" }),
 		tailwind({
 			nesting: true,
 		}),
