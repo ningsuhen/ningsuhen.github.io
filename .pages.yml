@@ -45,7 +45,7 @@ content:
     format: json
     fields:
       - name: items
-        label: Experiments
+        label: Live experiments
         type: object
         list: true
         fields:
@@ -64,7 +64,7 @@ content:
     format: json
     fields:
       - name: items
-        label: Research
+        label: Reports
         type: object
         list: true
         fields:

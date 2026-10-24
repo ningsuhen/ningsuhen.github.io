@@ -44,7 +44,6 @@ export const navBarConfig: NavBarConfig = {
 	links: [
 		LinkPreset.Home,
 		LinkPreset.Archive,
-		LinkPreset.About,
 		{
 			name: "Research",
 			url: "/research/",
@@ -53,6 +52,7 @@ export const navBarConfig: NavBarConfig = {
 			name: "Experiments",
 			url: "/experiments/",
 		},
+		LinkPreset.About,
 		{
 			name: "GitHub",
 			url: "https://github.com/ningsuhen", // Internal links should not include the base path, as it is automatically added
@@ -68,17 +68,17 @@ export const profileConfig: ProfileConfig = {
 	links: [
 		{
 			name: "GitHub",
-			icon: "fa6-brands:github",
+			icon: "lucide:github",
 			url: "https://github.com/ningsuhen",
 		},
 		{
 			name: "LinkedIn",
-			icon: "fa6-brands:linkedin",
+			icon: "lucide:linkedin",
 			url: "https://www.linkedin.com/in/ningsuhen/",
 		},
 		{
 			name: "X (Twitter)",
-			icon: "fa6-brands:x-twitter",
+			icon: "lucide:twitter",
 			url: "https://twitter.com/ningsuhen",
 		},
 	],

@@ -4,15 +4,20 @@ published: 2026-10-24
 description: "Primary observations from the Brev Tree Benchmark: a tree-walking 400M model against a 27B model, on 77 and 196 intents."
 tags: [AI, Benchmark, Rust, Research]
 category: Research
+thumbnail: ./accuracy-latency.webp
 draft: false
 ---
 
 I have been building Brev. It runs a small model called laya in the browser, from Rust compiled to WebAssembly. The question I wanted to answer: **can a decision tree hold the knowledge, so a 400M encoder that reads only the criteria on its path matches a 27B model given a short instruction, without its latency?**
 
-I tested it on Banking77 (77 intents), then on 196 intents, and kept a ledger of every hypothesis. The full thing is [here](/brev-tree-benchmark/). These are the things that stood out.
+I tested it on Banking77 (77 intents), then on 196 intents, and kept a ledger of every hypothesis. The full thing is [here](/research/brev-tree-benchmark/). These are the things that stood out.
+
+![Top results table from the Brev report: hypotheses with accuracy, p50 and p95 latency, and status](./top-results.webp)
 
 **1. Where it ended up is a three-stage chain.**
 A word TF-IDF head answers what it is sure about (225 of 300 rows, 96.9% right). The 4B takes the rest with 8 retrieved examples, and only its least confident 9% go to the 27B. Measured live, end to end: **93.3% vs 93.9% for the 27B alone, at a mean of 49 ms per query vs about 10 s.** On 300 rows that accuracy gap is not distinguishable from zero, and only 27 rows were escalated, so the intervals are wide.
+
+![Accuracy against median latency for each arm, and accuracy as more low-margin walks are handed to a resolver](./accuracy-latency.webp)
 
 **2. The tree walk is fast, but not good.**
 laya's greedy walk takes 52 ms at p50 and gets 47.0% on Banking77. The 27B with a short instruction gets 77.8% at 306 ms. That is 30.8 points behind (CI -32.8 to -28.9).
@@ -22,6 +27,8 @@ Names only: 36.8%. Opaque ids plus criteria: 40.6%. Both: 47.0%. Shuffle the cri
 
 **4. At 196 intents, flat rules in a cached prompt beat the tree.**
 27B with all the rules: 90.4% at 685 ms. Best tree cascade: 81.6% at 4,118 ms. Walking the tree node by node had 40% recall at 605 intents, retrieval (RRF) had 98.2%. So the tree's value has to come from fewer prompt tokens, not from routing.
+
+![Setup table at 196 intents: 27B with the whole knowledge base in the prompt at 90.4% and 685 ms; laya cascades at 75.4% to 80.0%](./scaling-196.webp)
 
 **5. A small model with a cached prefix is surprisingly quick, until you load it.**
 The 4B with flat cached rules gets 77.1% at 159 ms. At 4 requests in flight that is 447 ms, at 8 it is 938 ms.
@@ -41,4 +48,4 @@ A TF-IDF character n-gram head in front of the pipeline answers 65% of rows loca
 - The learn-as-you-go result uses a simulated teacher. A strong sign, not proof.
 - The "top results" table is curated by hand. The ledger is the source of truth.
 
-[Open the report](/brev-tree-benchmark/) and look at the ledger. If something looks wrong, tell me.
+[Open the report](/research/brev-tree-benchmark/) and look at the ledger. If something looks wrong, tell me.

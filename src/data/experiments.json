@@ -3,7 +3,7 @@
     {
       "title": "Brev tree traversal",
       "summary": "Type or pick a message and watch the tree walk node by node: which question is asked, how confident the model is at each step, where it lands, and how that compares with the flat-rules and 27B answers from the benchmark. Scores are precomputed from a real run; it replays them in your browser.",
-      "href": "/brev-tree-traversal/",
+      "href": "/experiments/brev-tree-traversal/",
       "started": "2026-10-24",
       "status": "Coming soon",
       "tags": [

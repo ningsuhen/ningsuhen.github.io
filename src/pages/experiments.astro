@@ -6,11 +6,11 @@ import data from "../data/experiments.json";
 import type { Entry } from "../types/entry";
 ---
 
-<MainGridLayout title="Experiments" description="Live things you can play with.">
+<MainGridLayout title="Experiments" description="Live experiments: things you can play with in the browser.">
     <div class="card-base px-9 py-6 w-full">
         <h1 class="text-3xl font-bold text-90 mb-1">Experiments</h1>
         <p class="text-50 mb-6">Live things you can play with.</p>
-        <EntryCards items={data.items as Entry[]} />
+        <EntryCards items={data.items as Entry[]} kind="experiment" />
     </div>
     <LicenseNote class="mt-4" />
 </MainGridLayout>

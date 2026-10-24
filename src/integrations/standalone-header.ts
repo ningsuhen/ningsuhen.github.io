@@ -129,18 +129,47 @@ nav a,button{display:inline-flex;align-items:center;gap:4px;height:40px;padding:
 nav a:hover,button:hover{background:var(--hover);color:var(--accent)}
 button{width:40px;flex:none;justify-content:center;padding:0}
 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ni{width:18px;height:18px;flex:none}
 :host(:not([data-theme=dark])) .moon,:host([data-theme=dark]) .sun{display:none}
 @media(max-width:560px){header{gap:6px}nav a{padding:0 8px}.brand{font-size:16px}}
 `;
 
-const ICONS =
-	'<svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>' +
-	'<svg class="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+// Lucide (ISC) icon bodies, copied from @iconify-json/lucide. Inline so standalone pages make no icon requests;
+// stroke/fill come from the `svg` rule above.
+const LUCIDE = {
+	house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+	archive: '<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8m-10 4h4"/>',
+	user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+	"flask-conical": '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/>',
+	microscope: '<path d="M6 18h8M3 22h18m-7 0a7 7 0 1 0 0-14h-1m-4 6h2m-2-2a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Zm3-6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>',
+	github: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5c.08-1.25-.27-2.48-1-3.5c.28-1.15.28-2.35 0-3.5c0 0-1 0-3 1.5c-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5c-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+	sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+	moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
+} as const;
+
+// Icon per navbar link name (same names as navBarConfig / presets).
+const NAV_ICONS: Record<string, keyof typeof LUCIDE> = {
+	Home: "house",
+	Archive: "archive",
+	About: "user",
+	Experiments: "flask-conical",
+	Research: "microscope",
+	GitHub: "github",
+};
+
+const svgIcon = (name: keyof typeof LUCIDE, cls: string) =>
+	`<svg class="${cls}" viewBox="0 0 24 24">${LUCIDE[name]}</svg>`;
+
+const ICONS = svgIcon("sun", "sun") + svgIcon("moon", "moon");
 
 // Script (not markup) so it works for HTML fragments without <body>; shadow DOM isolates it from page CSS.
 function buildScript(items: NavItem[], title: string, hue: number): string {
 	const links = items
-		.map((i) => `<a href="${esc(i.url)}"${i.external ? ' target="_blank" rel="noopener"' : ""}>${esc(i.name)}</a>`)
+		.map((i) => {
+			const icon = NAV_ICONS[i.name];
+			const lead = icon ? svgIcon(icon, "ni") : "";
+			return `<a href="${esc(i.url)}"${i.external ? ' target="_blank" rel="noopener"' : ""}>${lead}${esc(i.name)}</a>`;
+		})
 		.join("");
 	const markup =
 		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${esc(title)}</a>` +
@@ -174,7 +203,7 @@ function buildLicenseScript(base: string): string {
 		"strong{color:#fff}a{color:#9ec5ff}";
 	const markup =
 		`<style>${css}</style><footer><strong>\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</strong> ` +
-		`This research may not be reused, copied, republished or used to train models without my written permission. ` +
+		`Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission. ` +
 		`Short quotes with attribution and a link are fine. <a href="${esc(prefix)}/license/">License</a></footer>`;
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 	return (

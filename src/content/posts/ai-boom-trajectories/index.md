@@ -8,7 +8,7 @@ thumbnail: ./fan-charts.webp
 draft: false
 ---
 
-I have been building a simulation of the US economy with the AI boom in it. I call it EcoSimulation. It runs 50,000 paths, I export 10,000 of them, and the whole thing is a report you can play with at [/ai-economy/](/ai-economy/). Here are the things that stood out to me.
+I have been building a simulation of the US economy with the AI boom in it. I call it EcoSimulation. It runs 50,000 paths, I export 10,000 of them, and the whole thing is a report you can play with at [/research/ai-economy/](/research/ai-economy/). Here are the things that stood out to me.
 
 First, the important part. **This is not a forecast.** There is no backtest yet, the model has not been validated against out-of-sample history, and the report lists the problems I know about. They are at the end of this post.
 
@@ -53,4 +53,4 @@ Of \$970bn of AI capex, 42% leaks out of the US, and Taiwan is the most exposed.
 - Some bubble indicators are NaN or shown but not counted, and the AI index bubble test is unvalidated.
 - A lot of parameters are my judgment, not data. Changing methods moved the numbers, for example the 12 month recession odds went from 29% to 19% between a draft and the regenerated run.
 
-If you want to poke at it, [open the report](/ai-economy/) and change the conditions yourself. If you find something wrong, tell me.
+If you want to poke at it, [open the report](/research/ai-economy/) and change the conditions yourself. If you find something wrong, tell me.
