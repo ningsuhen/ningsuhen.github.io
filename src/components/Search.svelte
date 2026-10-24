@@ -145,7 +145,7 @@ $: if (initialized && keywordMobile) {
 
 <!-- search bar for desktop view -->
 <div id="search-bar" class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
+      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] focus-within:outline focus-within:outline-2 focus-within:outline-[var(--primary)]
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
 ">
     <Icon icon={searchIcon} class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
@@ -167,7 +167,7 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
 
     <!-- search bar inside panel for phone/tablet -->
     <div id="search-bar-inside" class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
+      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] focus-within:outline focus-within:outline-2 focus-within:outline-[var(--primary)]
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
   ">
         <Icon icon={searchIcon} class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
