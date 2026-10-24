@@ -57,6 +57,25 @@ content:
           - { name: updated, label: Updated, type: string }
           - { name: status, label: Status, type: string, required: true }
           - { name: tags, label: Tags, type: string, list: true }
+  - name: research
+    label: Research
+    type: file
+    path: src/data/research.json
+    format: json
+    fields:
+      - name: items
+        label: Research
+        type: object
+        list: true
+        fields:
+          - { name: title, label: Title, type: string, required: true }
+          - { name: summary, label: Summary, type: text, required: true }
+          - { name: href, label: Page URL, type: string, required: true }
+          - { name: post, label: Write-up URL, type: string }
+          - { name: started, label: Started, type: string, required: true }
+          - { name: updated, label: Updated, type: string }
+          - { name: status, label: Status, type: string, required: true }
+          - { name: tags, label: Tags, type: string, list: true }
   - name: about
     label: About
     type: file

@@ -2,7 +2,7 @@
 title: What my AI economy simulation says about the AI boom
 published: 2026-10-24
 description: "Primary observations from EcoSimulation, a stock-flow-consistent model of the US economy with an AI investment boom in it."
-tags: [AI, Simulation, Economics, Experiment]
+tags: [AI, Simulation, Economics, Research]
 category: Research
 thumbnail: ./fan-charts.webp
 draft: false

@@ -46,6 +46,10 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Archive,
 		LinkPreset.About,
 		{
+			name: "Research",
+			url: "/research/",
+		},
+		{
 			name: "Experiments",
 			url: "/experiments/",
 		},

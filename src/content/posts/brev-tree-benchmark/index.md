@@ -2,7 +2,7 @@
 title: Can a decision tree hold the knowledge? What the Brev benchmark says
 published: 2026-10-24
 description: "Primary observations from the Brev Tree Benchmark: a tree-walking 400M model against a 27B model, on 77 and 196 intents."
-tags: [AI, Benchmark, Rust, Experiment]
+tags: [AI, Benchmark, Rust, Research]
 category: Research
 draft: false
 ---

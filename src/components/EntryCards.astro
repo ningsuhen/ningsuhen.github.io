@@ -1,0 +1,48 @@
+---
+import ButtonTag from "@components/control/ButtonTag.astro";
+import { url } from "@utils/url-utils";
+import type { Entry } from "../types/entry";
+
+interface Props {
+	items: Entry[];
+}
+
+// Shared by /research/ and /experiments/. Drafts are hidden; "Coming soon" shows as a dimmed card with no links.
+const sorted = Astro.props.items
+	.filter((e) => e.status.toLowerCase() !== "draft")
+	.sort((a, b) => (b.updated ?? b.started).localeCompare(a.updated ?? a.started));
+---
+
+<div class="flex flex-col gap-6">
+    {
+        sorted.map((e) => {
+            const soon = e.status.toLowerCase() === "coming soon";
+            return (
+                <article class:list={["border-t border-dashed border-[var(--line-divider)] pt-5 first:border-t-0 first:pt-0", soon && "opacity-60"]}>
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h2 class="text-2xl font-bold text-90">
+                            {soon ? e.title : <a href={url(e.href)} class="transition hover:text-[var(--primary)]">{e.title}</a>}
+                        </h2>
+                        <span class="btn-regular h-6 text-xs px-2 rounded-md">{e.status}</span>
+                    </div>
+                    <p class="text-50 text-sm mt-1">
+                        Started {e.started}{e.updated ? ` · updated ${e.updated}` : ""}
+                    </p>
+                    <p class="mt-3 text-75">{e.summary}</p>
+                    <p class="mt-1 text-xs text-50">All rights reserved. Not for reuse without my permission.</p>
+                    <div class="flex flex-wrap gap-2 mt-3 items-center">
+                        {e.tags.map((t) => <ButtonTag href={url(`/archive/?tag=${encodeURIComponent(t)}`)} label={t}>{t}</ButtonTag>)}
+                        {
+                            !soon && <a href={url(e.href)} class="btn-plain h-8 px-3 rounded-lg text-[var(--primary)] font-medium">Open →</a>
+                        }
+                        {
+                            !soon && e.post && (
+                                <a href={url(e.post)} class="btn-plain h-8 px-3 rounded-lg text-[var(--primary)] font-medium">Read the write-up →</a>
+                            )
+                        }
+                    </div>
+                </article>
+            );
+        })
+    }
+</div>
