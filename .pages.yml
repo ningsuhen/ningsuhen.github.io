@@ -30,6 +30,10 @@ content:
         # via import.meta.glob. Disable the media picker so the value is written
         # verbatim instead of being forced under the media root.
         options: { media: false }
+      - name: thumbnail
+        label: Card thumbnail (optional; defaults to the cover, then the first image in the body)
+        type: image
+        options: { media: false }
       - { name: tags, label: Tags, type: string, list: true }
       - { name: category, label: Category, type: string }
       - { name: draft, label: Draft, type: boolean, default: false }

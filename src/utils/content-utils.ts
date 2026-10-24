@@ -17,6 +17,19 @@ async function getRawSortedPosts() {
 	return sorted;
 }
 
+/** First local (relative) image referenced in a post body: markdown ![](./x) or <img src="./x">. */
+export function firstLocalImage(body = ""): string {
+	const md = body.match(/!\[[^\]]*\]\(\s*(\.{0,2}\/?[^)\s:]+\.(?:png|jpe?g|webp|avif|gif|svg))[^)]*\)/i);
+	const html = body.match(/<img[^>]+src=["'](\.{0,2}\/?[^"':]+\.(?:png|jpe?g|webp|avif|gif|svg))["']/i);
+	const found = md?.[1] ?? html?.[1] ?? "";
+	return found && !found.startsWith("/") && !found.startsWith("http") ? (found.startsWith(".") ? found : `./${found}`) : "";
+}
+
+/** Thumbnail for listing cards: explicit thumbnail, else cover image, else the first image in the body. */
+export function postThumbnail(entry: CollectionEntry<"posts">): string {
+	return entry.data.thumbnail || entry.data.image || firstLocalImage(entry.body);
+}
+
 export async function getSortedPosts() {
 	const sorted = await getRawSortedPosts();
 
