@@ -1,18 +1,31 @@
 #!/bin/sh
+# managed-by: scripts/install-hooks.sh
 # Blocks pushes that would publish a secret in any commit not already on the remote.
 # Bypass (don't): git push --no-verify
 set -u
 . "$(dirname "$0")/_common.sh"
 zero=0000000000000000000000000000000000000000
+remote_name=${1:-}
+input=$(cat)
 
-while read -r local_ref local_sha remote_ref remote_sha; do
+printf '%s\n' "$input" | run_local_hook pre-push "$@" || exit 1
+
+printf '%s\n' "$input" | while read -r local_ref local_sha remote_ref remote_sha; do
+	[ -z "$local_sha" ] && continue
 	[ "$local_sha" = "$zero" ] && continue # branch deletion
 	if [ "$remote_sha" = "$zero" ]; then
-		range="$local_sha --not --remotes" # new branch: everything not on any remote
+		# New branch: skip only commits already on the push destination; if it can't be identified,
+		# scan the full history rather than trusting unrelated remotes.
+		if [ -n "$remote_name" ] && git remote get-url "$remote_name" >/dev/null 2>&1; then
+			range="$local_sha --not --remotes=$remote_name"
+		else
+			range="$local_sha"
+		fi
 	else
 		range="$remote_sha..$local_sha"
 	fi
-	run_gitleaks git $(repo_config | tr '\n' ' ') --log-opts="$range" || {
+	# --diff-merges: include merge-commit patches (git omits them by default).
+	run_gitleaks git $(repo_config | tr '\n' ' ') --log-opts="--diff-merges=first-parent $range" || {
 		echo "pre-push: possible secret in commits being pushed to $remote_ref." >&2
 		echo "Remove it from history (amend/rebase); rotate it if it was real; push again." >&2
 		exit 1
