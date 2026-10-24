@@ -1,9 +1,14 @@
+import { readFileSync } from "node:fs";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import type { AstroIntegration } from "astro";
 import { navBarConfig, siteConfig } from "../config";
 import { LinkPreset } from "../types/config";
+
+// Same Roboto Bold the main site ships, inlined so link widths (and so positions) match exactly.
+const ROBOTO_700 = readFileSync(path.resolve("node_modules/@fontsource/roboto/files/roboto-latin-700-normal.woff2")).toString("base64");
+const FONT_FACE = `@font-face{font-family:"RobotoNav";font-weight:700;font-display:block;src:url(data:font/woff2;base64,${ROBOTO_700}) format("woff2")}`;
 
 const MARKER = "data-site-navbar";
 const LICENSE_MARKER = "data-site-license";
@@ -119,21 +124,22 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const CSS = `
 :host{all:initial;display:block;--hue:250;--bg:#fff;--fg:#2b2b2e;--muted:#6b6b72;--line:rgba(0,0,0,.08);--accent:oklch(.55 .15 var(--hue));--prime:oklch(.70 .14 var(--hue));--hover:oklch(.95 .03 var(--hue))}
 :host([data-theme=dark]){--bg:oklch(.2 .015 var(--hue));--fg:rgba(255,255,255,.9);--muted:rgba(255,255,255,.55);--line:rgba(255,255,255,.12);--accent:oklch(.75 .14 var(--hue));--prime:oklch(.75 .14 var(--hue));--hover:oklch(.3 .04 var(--hue))}
-header{box-sizing:border-box;display:flex;align-items:center;gap:12px;height:72px;width:min(100%,1168px);margin:0 auto;padding:0 16px;background:#fff;color:var(--fg);border-radius:0 0 16px 16px;font:700 16px/1 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
+header{box-sizing:border-box;display:flex;align-items:center;gap:12px;height:72px;width:min(100%,1168px);margin:0 auto;padding:0 16px;background:#fff;color:var(--fg);border-radius:0 0 16px 16px;font:700 16px/1 RobotoNav,Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
 :host([data-theme=dark]) header{background:oklch(.23 .015 var(--hue))}
 a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer}
 .brand{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px;border-radius:8px;color:var(--prime);white-space:nowrap}
 .brand svg{width:28px;height:28px;fill:currentColor;stroke:none}
-nav{display:flex;align-items:center;gap:0;min-width:0;flex:1 1 auto;justify-content:flex-start;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+nav{display:flex;align-items:center;gap:0;min-width:0;flex:0 1 auto;justify-content:flex-start;margin-left:34px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
 .brand{flex:none}
+.end{display:flex;flex:none;margin-left:auto}
 nav a,button{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 20px;border:0;border-radius:8px;background:transparent}
 nav a:hover,button:hover,.brand:hover{background:var(--hover);color:var(--accent)}
-button{width:44px;margin-left:auto;flex:none;justify-content:center;padding:0}
+button{width:44px;flex:none;justify-content:center;padding:0}
 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ni{display:none}
 :host(:not([data-theme=dark])) .moon,:host([data-theme=dark]) .sun{display:none}
-@media(max-width:560px){header{gap:6px;padding:0 8px;height:63px}nav a,.brand{padding:0 10px}}
+@media(max-width:560px){nav{margin-left:0}header{gap:6px;padding:0 8px;height:63px}nav a,.brand{padding:0 10px}}
 `;
 
 // Lucide (ISC) icon bodies, copied from @iconify-json/lucide. Inline so standalone pages make no icon requests;
@@ -177,11 +183,12 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		.join("");
 	const markup =
 		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${HOME}${esc(title)}</a>` +
-		`<nav>${links}</nav><button type="button" aria-label="Toggle light/dark theme">${ICONS}</button></header>`;
+		`<nav>${links}</nav><span class="end"><button type="button" aria-label="Toggle light/dark theme">${ICONS}</button></span></header>`;
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 
 	return (
 		`<script ${MARKER}>(function(){` +
+		`var f=document.createElement("style");f.textContent=${JSON.stringify(FONT_FACE)};document.documentElement.appendChild(f);` +
 		`var host=document.createElement("div");host.setAttribute("${MARKER}","");` +
 		`var root=host.attachShadow({mode:"open"});root.innerHTML=${html};` +
 		`function get(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}` +
