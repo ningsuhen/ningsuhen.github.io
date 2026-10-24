@@ -48,6 +48,7 @@ section { display: grid; gap: 14px; min-width: 0 }
 .chip.pending, .chip.running { color: var(--wait) }
 .chip.killed { color: var(--wait); text-decoration: line-through }
 .scroll { width: min(75rem, calc(100vw - 32px)); margin-inline: calc(50% - min(37.5rem, 50vw - 16px)); overflow-x: auto; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px }
+.grid2 > .scroll { width: auto; margin-inline: 0 } /* tables inside the two-up grid stay in their cell; the wide-table centring above only works against the main column */
 table { border-collapse: collapse; width: 100%; font-size: 14px }
 th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top }
 th { font: 500 11.5px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); white-space: nowrap }
