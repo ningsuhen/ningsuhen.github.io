@@ -4,6 +4,7 @@ published: 2026-10-24
 description: "Primary observations from EcoSimulation, a stock-flow-consistent model of the US economy with an AI investment boom in it."
 tags: [AI, Simulation, Economics, Experiment]
 category: Research
+thumbnail: ./fan-charts.webp
 draft: false
 ---
 
