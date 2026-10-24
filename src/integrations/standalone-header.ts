@@ -44,12 +44,22 @@ export default function standaloneHeader(): AstroIntegration {
 					const html = await readFile(target, "utf8");
 					if (html.includes(MARKER) || OPT_OUT.test(html)) continue;
 					const at = html.lastIndexOf("</body>");
-					const out = at === -1 ? html + script : html.slice(0, at) + script + html.slice(at);
-					await writeFile(target, out);
+					const withBar = at === -1 ? html + script : html.slice(0, at) + script + html.slice(at);
+					await writeFile(target, ensureMeta(withBar));
 				}
 			},
 		},
 	};
+}
+
+// Exported pages often lose these tags: without a charset, "·" renders as "Â·"; without a viewport,
+// phones show a zoomed-out desktop page. Prepend whichever is missing (valid at the very start of the file).
+function ensureMeta(html: string): string {
+	const head = html.slice(0, 4096);
+	const missing: string[] = [];
+	if (!/<meta[^>]+charset=/i.test(head)) missing.push('<meta charset="utf-8">');
+	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) missing.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
+	return missing.length ? missing.join("") + html : html;
 }
 
 function navItems(base: string): NavItem[] {
