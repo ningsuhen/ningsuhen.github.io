@@ -1,4 +1,5 @@
 ---
+import { Icon } from "astro-icon/components";
 import { url } from "@utils/url-utils";
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 const className = Astro.props.class;
 ---
 <div class:list={["card-base px-6 py-4 text-sm text-75", className]}>
+    <Icon name="lucide:shield-check" class="inline-block align-[-0.2em] text-base mr-1.5 text-[var(--primary)]" />
     <strong class="text-90">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</strong>
     This research may not be reused, copied, republished or used to train models without my written permission.
     Short quotes with attribution and a link are fine. <a href={url("/license/")} class="link text-[var(--primary)]">License</a>
