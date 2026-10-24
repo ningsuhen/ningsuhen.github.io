@@ -1,7 +1,5 @@
 Ex-Google, Ex-Adobe. Focus: AI | ML | Rust | Python | TypeScript. My path ran from telecommunications to Adobe, to co-founding a startup and building indie full-stack & mobile apps, to Google, and now to AI/ML.
 
-I like thinking about the future: where things are going, and planning for that.
-
 ## Favorite Quote
 
 > I skate to where the puck is going to be, not where it has been.
