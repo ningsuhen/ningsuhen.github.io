@@ -19,6 +19,7 @@
     "prepare": "sh scripts/install-hooks.sh",
     "check:standalone": "node scripts/check-standalone-pages.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
+    "check:links": "node scripts/check-internal-links.mjs",
     "new-experiment": "node scripts/new-experiment.mjs",
     "new-research": "node scripts/new-experiment.mjs --research",
     "sync": "sh scripts/sync-dev-next.sh",
