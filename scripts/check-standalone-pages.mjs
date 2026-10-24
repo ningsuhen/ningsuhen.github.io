@@ -85,6 +85,8 @@ for (const rel of pages) {
 				sw: doc.scrollWidth,
 				theme: doc.getAttribute("data-theme"),
 				mojibake: /Â|â€/.test(document.body.innerText),
+				compat: document.compatMode,
+				lang: document.documentElement.lang,
 			};
 		});
 		const tag = `${urlPath} @${vp.width}`;
@@ -103,6 +105,8 @@ for (const rel of pages) {
 		}
 		if (m.sw > m.cw + 1) failures.push(`${tag}: horizontal overflow (scrollWidth ${m.sw} > ${m.cw})`);
 		if (m.mojibake) failures.push(`${tag}: mojibake in page text (missing/wrong charset)`);
+		if (m.compat !== "CSS1Compat") failures.push(`${tag}: rendered in quirks mode (missing doctype)`);
+		if (!m.lang) failures.push(`${tag}: <html lang> missing`);
 		await ctx.close();
 	}
 }
