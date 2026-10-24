@@ -89,6 +89,9 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 };
 
 onMount(() => {
+	if (new URLSearchParams(location.search).has("search")) {
+		document.querySelector<HTMLInputElement>("#search-bar input")?.focus();
+	}
 	const initializeSearch = () => {
 		initialized = true;
 		pagefindLoaded =
