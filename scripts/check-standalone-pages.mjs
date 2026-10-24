@@ -188,6 +188,20 @@ for (const sitePath of ["/", "/archive/", "/research/"]) {
 		await ctx.close();
 	}
 }
+// Site pages: no duplicate ids (the footer used to render twice), no empty or "#" links (pagination, post prev/next).
+for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
+	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
+	const page = await ctx.newPage();
+	await page.goto(base + sitePath, { waitUntil: "load" });
+	const m = await page.evaluate(() => {
+		const ids = {};
+		document.querySelectorAll("[id]").forEach((e) => (ids[e.id] = (ids[e.id] || 0) + 1));
+		return { dup: Object.keys(ids).filter((k) => ids[k] > 1), emptyLinks: document.querySelectorAll('a[href=""], a[href="#"]').length };
+	});
+	if (m.dup.length) failures.push(`${sitePath}: duplicate ids ${m.dup.join(", ")}`);
+	if (m.emptyLinks) failures.push(`${sitePath}: ${m.emptyLinks} empty link(s) (href="" or "#")`);
+	await ctx.close();
+}
 await browser.close();
 server.close();
 

@@ -3,7 +3,7 @@ import { onMount } from "svelte";
 
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
-import { getPostUrlBySlug } from "../utils/url-utils";
+import { getPostUrlBySlug, url } from "../utils/url-utils";
 
 export let tags: string[] = [];
 export let categories: string[] = [];
@@ -30,6 +30,7 @@ interface Group {
 }
 
 let groups: Group[] = [];
+let loaded = false;
 
 function formatDate(date: Date) {
 	const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -82,6 +83,7 @@ onMount(async () => {
 	groupedPostsArray.sort((a, b) => b.year - a.year);
 
 	groups = groupedPostsArray;
+	loaded = true;
 });
 </script>
 
@@ -148,4 +150,7 @@ onMount(async () => {
             {/each}
         </div>
     {/each}
+    {#if loaded && groups.length === 0}
+        <p class="py-10 text-center text-75">No posts match this filter. <a href={url("/archive/")} class="link text-[var(--primary)]">Show all posts</a></p>
+    {/if}
 </div>
