@@ -34,7 +34,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - Navbar and license footer are injected by the build. Never hand-roll them in a standalone page. Standalone pages set `<html data-theme>`; light is the default. The navbar mounts on `<html>` before `<body>`.
 - Standalone pages: no iframes. Swup must not intercept links to standalone pages (`src/layouts/Layout.astro`, `src/utils/standalone-utils.ts`).
 - In Markdown, escape every literal dollar sign as `\$` (math renderer).
-- Card thumbnails: `thumbnail` field, else `image` (cover), else first body image, else the default.
+- Card thumbnails: only the `thumbnail` field (a square 800x800 `thumb.webp` showing ONE focal element, under 60 KB), else `public/images/default-thumbnail.webp`. Never auto-crop covers or body images. `pnpm check:thumbnails` enforces the size rules; the build warns about posts with images but no `thumbnail`.
 - Before publishing, redact internal host names (e.g. `*.mac-mini-eby`) from posts and reports.
 - The check must pass before a PR: `pnpm build && CHROME_PATH=$(fd -t f 'chrome-headless-shell$' ~/Library/Caches/ms-playwright -d 4 | tail -1) pnpm check:standalone`.
 - Shell: `rg`, `fd`, `rm -f`, never `git reset --hard`, never `--no-verify`.

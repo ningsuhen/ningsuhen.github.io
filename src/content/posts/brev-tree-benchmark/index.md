@@ -4,7 +4,7 @@ published: 2026-10-24
 description: "Primary observations from the Brev Tree Benchmark: a tree-walking 400M model against a 27B model, on 77 and 196 intents."
 tags: [AI, Benchmark, Rust, Research]
 category: Research
-thumbnail: ./accuracy-latency.webp
+thumbnail: ./thumb.webp
 draft: false
 ---
 

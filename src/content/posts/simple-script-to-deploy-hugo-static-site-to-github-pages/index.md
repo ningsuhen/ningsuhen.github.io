@@ -3,6 +3,7 @@ title: Simple script to deploy hugo static site to github pages
 published: 2015-11-05
 description: "A small rsync-based script to build a Hugo site and deploy it to GitHub Pages in one step."
 image: ./cover.png
+thumbnail: ./thumb.webp
 tags: [hugo, github pages, deploy, static site]
 category: Dev Automation
 draft: false

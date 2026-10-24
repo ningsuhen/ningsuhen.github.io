@@ -3,6 +3,7 @@ title: Important numbers every programmer should know
 published: 2015-11-06
 description: "The latency and reference numbers every programmer should have memorized, plus base-2 exponents and time units."
 image: ./cover.png
+thumbnail: ./thumb.webp
 tags: [latency numbers, Jeff Dean]
 category: Programming
 draft: false
