@@ -6,11 +6,13 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 
 ## Structure
 
-- `src/content/posts/<slug>/index.md`: posts. Tag `Research` (reports) or `Experiment` (older label) shows the LicenseNote.
-- `/research/`: `src/pages/research.astro`, data `src/data/research.json`. Reports (status `Live`).
-- `/experiments/`: `src/pages/experiments.astro`, data `src/data/experiments.json`. Live, playable things. Status `Coming soon` shows a dimmed card with no links; `Draft` is hidden on both pages.
-- Shared card list: `src/components/EntryCards.astro`, type `src/types/entry.ts`.
-- `public/<slug>/index.html`: standalone pages (reports, apps). Shipped as-is, not Fuwari pages.
+- Wording: Research = reports (static analyses and benchmarks you read). Experiments = live experiments (things you play with in the browser).
+- `src/content/posts/<slug>/index.md`: posts. Report posts: tag and category `Research`. Live-experiment posts: tag and category `Experiment`. Both show the LicenseNote.
+- `/research/`: `src/pages/research.astro`, data `src/data/research.json` (cards chipped "Report").
+- `/experiments/`: `src/pages/experiments.astro`, data `src/data/experiments.json` (cards chipped "Live experiment"). Status `Coming soon` shows a dimmed card with no links; `Draft` is hidden on both pages.
+- Shared card list: `src/components/EntryCards.astro` (prop `kind`), type `src/types/entry.ts`.
+- Standalone pages: reports at `public/research/<slug>/index.html`, live experiments at `public/experiments/<slug>/index.html`. Shipped as-is, not Fuwari pages. Never create `public/research/index.html` or `public/experiments/index.html`: the Astro pages own those URLs.
+- Old report URLs redirect (`redirects` in `astro.config.mjs`): add one there when moving a page.
 - `public/design-system/`: design system and `template.html` (scaffold source). Do not edit casually.
 - `src/integrations/standalone-header.ts`: injects the navbar and license footer into every `public/**/*.html` at build and in dev.
 - `src/config.ts`: `navBarConfig` (the standalone navbar derives from it).

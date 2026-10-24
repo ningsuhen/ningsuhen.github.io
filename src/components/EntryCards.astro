@@ -38,7 +38,6 @@ const sorted = items
                         Started {e.started}{e.updated ? ` · updated ${e.updated}` : ""}
                     </p>
                     <p class="mt-3 text-75">{e.summary}</p>
-                    <p class="mt-1 text-xs text-50">All rights reserved. Not for reuse without my permission.</p>
                     <div class="flex flex-wrap gap-2 mt-3 items-center">
                         {e.tags.map((t) => <ButtonTag href={url(`/archive/?tag=${encodeURIComponent(t)}`)} label={t}>{t}</ButtonTag>)}
                         {
