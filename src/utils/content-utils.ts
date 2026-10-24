@@ -17,19 +17,26 @@ async function getRawSortedPosts() {
 	return sorted;
 }
 
-/** First local (relative) image referenced in a post body: markdown ![](./x) or <img src="./x">. */
-export function firstLocalImage(body = ""): string {
-	const md = body.match(/!\[[^\]]*\]\(\s*(\.{0,2}\/?[^)\s:]+\.(?:png|jpe?g|webp|avif|gif|svg))[^)]*\)/i);
-	const html = body.match(/<img[^>]+src=["'](\.{0,2}\/?[^"':]+\.(?:png|jpe?g|webp|avif|gif|svg))["']/i);
-	const found = md?.[1] ?? html?.[1] ?? "";
-	return found && !found.startsWith("/") && !found.startsWith("http") ? (found.startsWith(".") ? found : `./${found}`) : "";
+/** True when a post body references a local (relative) image: markdown ![](./x) or <img src="./x">. */
+export function hasBodyImage(body = ""): boolean {
+	return /!\[[^\]]*\]\(\s*\.{0,2}\/?[^)\s:]+\.(?:png|jpe?g|webp|avif|gif|svg)/i.test(body) || /<img[^>]+src=["']\.{0,2}\/?[^"':]+\.(?:png|jpe?g|webp|avif|gif|svg)/i.test(body);
 }
 
 export const DEFAULT_THUMBNAIL = "/images/default-thumbnail.webp";
 
-/** Thumbnail for listing cards: explicit thumbnail, else cover image, else the first body image, else the site default. */
+/** Card thumbnail: the post's purpose-made square `thumbnail`, else the site default. Never an auto-cropped cover or body image. */
 export function postThumbnail(entry: CollectionEntry<"posts">): string {
-	return entry.data.thumbnail || entry.data.image || firstLocalImage(entry.body) || DEFAULT_THUMBNAIL;
+	return entry.data.thumbnail || DEFAULT_THUMBNAIL;
+}
+
+/** Build-time nudge: posts with images but no `thumbnail`. Call once per build. */
+export function warnMissingThumbnails(posts: CollectionEntry<"posts">[]): void {
+	const missing = posts
+		.filter((p) => !p.data.thumbnail && (p.data.image || hasBodyImage(p.body)))
+		.map((p) => p.slug);
+	if (missing.length > 0) {
+		console.warn(`[thumbnails] ${missing.length} post(s) have images but no \`thumbnail\` (add a square 800x800 thumb.webp): ${missing.join(", ")}`);
+	}
 }
 
 export async function getSortedPosts() {

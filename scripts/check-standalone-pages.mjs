@@ -131,6 +131,48 @@ for (const sitePath of ["/experiments/", "/research/"]) {
 	}
 	await ctx.close();
 }
+// URL structure: a report lives at /research/<slug>/, a live experiment at /experiments/<slug>/. Every standalone page in
+// those folders must be linked from its list page (a page nobody can reach is a bug), and no folder index may shadow the Astro page.
+for (const [section, listPath] of [
+	["research", "/research/"],
+	["experiments", "/experiments/"],
+]) {
+	if (pages.includes(path.join(section, "index.html"))) failures.push(`public/${section}/index.html exists: the Astro page owns /${section}/`);
+	// Draft entries are hidden on purpose (work in progress), so they are exempt.
+	const drafts = new Set(
+		JSON.parse(readFileSync(path.join("src/data", `${section}.json`), "utf8"))
+			.items.filter((i) => i.status.toLowerCase() === "draft")
+			.map((i) => i.href),
+	);
+	const expected = pages
+		.filter((rel) => rel.startsWith(`${section}${path.sep}`) && rel.split(path.sep).length === 3)
+		.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`)
+		.filter((u) => !drafts.has(u));
+	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
+	const page = await ctx.newPage();
+	const resp = await page.goto(base + listPath, { waitUntil: "load" });
+	const hrefs = resp?.ok() ? await page.$$eval("a[href]", (as) => as.map((a) => new URL(a.href).pathname)) : [];
+	for (const u of expected) if (!hrefs.includes(u)) failures.push(`${u}: standalone page is not linked from ${listPath}`);
+	await ctx.close();
+}
+
+// Old URLs: every redirect in astro.config.mjs must land on its target in a real browser (meta refresh followed).
+const configSrc = readFileSync("astro.config.mjs", "utf8");
+const redirectBlock = configSrc.slice(configSrc.indexOf("redirects: {"), configSrc.indexOf("},", configSrc.indexOf("redirects: {")));
+for (const [, from, to] of redirectBlock.matchAll(/"([^"]+)":\s*"([^"]+)"/g)) {
+	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
+	const page = await ctx.newPage();
+	await page.goto(base + from, { waitUntil: "load" }).catch(() => {});
+	try {
+		await page.waitForURL(base + to, { timeout: 5000 });
+		await page.waitForLoadState("load");
+		const body = await page.evaluate(() => document.body.innerText.trim().length);
+		if (!body) failures.push(`${from} -> ${to}: redirect target is empty`);
+	} catch {
+		failures.push(`${from}: does not redirect to ${to} (ends at ${page.url().replace(base, "")})`);
+	}
+	await ctx.close();
+}
 await browser.close();
 server.close();
 
