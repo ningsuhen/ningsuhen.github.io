@@ -16,6 +16,12 @@ clean_git_dir() {
 	return 1
 }
 
+# repo_config: echo "--config <repo>/.gitleaks.toml" when it exists; otherwise gitleaks' default rules apply.
+repo_config() {
+	cfg="$(git rev-parse --show-toplevel)/.gitleaks.toml"
+	[ -f "$cfg" ] && printf -- '--config\n%s\n' "$cfg"
+}
+
 # run_gitleaks <args...>: fails closed (non-zero) on findings, scan errors, or a missing gitleaks.
 run_gitleaks() {
 	if ! command -v gitleaks >/dev/null 2>&1; then

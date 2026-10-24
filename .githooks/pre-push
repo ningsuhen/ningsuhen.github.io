@@ -4,7 +4,6 @@
 set -u
 . "$(dirname "$0")/_common.sh"
 zero=0000000000000000000000000000000000000000
-root=$(git rev-parse --show-toplevel)
 
 while read -r local_ref local_sha remote_ref remote_sha; do
 	[ "$local_sha" = "$zero" ] && continue # branch deletion
@@ -13,7 +12,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 	else
 		range="$remote_sha..$local_sha"
 	fi
-	run_gitleaks git --config "$root/.gitleaks.toml" --log-opts="$range" || {
+	run_gitleaks git $(repo_config | tr '\n' ' ') --log-opts="$range" || {
 		echo "pre-push: possible secret in commits being pushed to $remote_ref." >&2
 		echo "Remove it from history (amend/rebase); rotate it if it was real; push again." >&2
 		exit 1

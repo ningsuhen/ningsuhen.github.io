@@ -12,7 +12,7 @@ if [ -n "$blocked" ]; then
 	exit 1
 fi
 
-run_gitleaks git --staged --config "$(git rev-parse --show-toplevel)/.gitleaks.toml" || {
+run_gitleaks git --staged $(repo_config | tr '\n' ' ') || {
 	echo "pre-commit: possible secret in staged changes. Remove it; rotate it if it was real." >&2
 	exit 1
 }
