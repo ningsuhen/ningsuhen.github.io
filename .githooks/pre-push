@@ -1,0 +1,20 @@
+#!/bin/sh
+# Blocks pushes that would publish a secret in any commit not already on the remote.
+# Bypass (don't): git push --no-verify
+set -u
+. "$(dirname "$0")/_common.sh"
+zero=0000000000000000000000000000000000000000
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+	[ "$local_sha" = "$zero" ] && continue # branch deletion
+	if [ "$remote_sha" = "$zero" ]; then
+		range="$local_sha --not --remotes" # new branch: everything not on any remote
+	else
+		range="$remote_sha..$local_sha"
+	fi
+	run_gitleaks git $(repo_config | tr '\n' ' ') --log-opts="$range" || {
+		echo "pre-push: possible secret in commits being pushed to $remote_ref." >&2
+		echo "Remove it from history (amend/rebase); rotate it if it was real; push again." >&2
+		exit 1
+	}
+done
