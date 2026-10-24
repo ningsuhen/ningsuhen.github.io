@@ -1,0 +1,47 @@
+media:
+  - name: uploads
+    label: Uploads
+    input: public/uploads
+    output: /uploads
+    categories: [image]
+
+content:
+  - name: posts
+    label: Projects
+    type: collection
+    path: src/content/posts
+    filename: "{primary}/index.md"
+    view:
+      fields: [title, published, category]
+      primary: title
+      sort: [published]
+      default:
+        sort: published
+        order: desc
+    fields:
+      - { name: title, label: Title, type: string, required: true }
+      - { name: published, label: Date, type: date, required: true }
+      - { name: updated, label: Updated, type: date }
+      - { name: description, label: Description, type: text }
+      - name: image
+        label: Cover image
+        type: image
+        # Covers live in the post folder (./cover.png) and are resolved by Fuwari
+        # via import.meta.glob. Disable the media picker so the value is written
+        # verbatim instead of being forced under the media root.
+        options: { media: false }
+      - { name: tags, label: Tags, type: string, list: true }
+      - { name: category, label: Category, type: string }
+      - { name: draft, label: Draft, type: boolean, default: false }
+      - { name: body, label: Body, type: rich-text }
+  - name: about
+    label: About
+    type: file
+    path: src/content/spec/about.md
+    fields:
+      - { name: body, label: Body, type: rich-text }
+  - name: site
+    label: Site settings
+    type: file
+    path: src/config.ts
+    format: code
