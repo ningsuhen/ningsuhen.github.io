@@ -132,7 +132,17 @@ a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer}
 nav{display:flex;align-items:center;gap:0;min-width:0;flex:0 1 auto;justify-content:flex-start;margin-left:34px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
 .brand{flex:none}
-.end{display:flex;flex:none;margin-left:auto}
+.end{display:flex;flex:none;margin-left:auto;align-items:center}
+.search{display:none;align-items:center;gap:8px;width:160px;height:44px;margin-right:8px;padding:0 12px;box-sizing:border-box;border-radius:8px;background:oklch(.95 .01 var(--hue));color:var(--muted);font-weight:400;font-size:14px}
+:host([data-theme=dark]) .search{background:oklch(.3 .035 var(--hue))}
+.search svg{width:20px;height:20px}
+@media(min-width:1024px){.search{display:flex}}
+.ext{width:14px;height:14px;margin-left:4px;opacity:.25}
+header{position:relative}
+.panel{position:absolute;top:76px;right:16px;width:260px;padding:16px;border-radius:16px;background:var(--bg);box-shadow:0 8px 32px rgba(0,0,0,.18);font-size:14px;z-index:1}
+.panel[hidden]{display:none}
+.panel label{display:flex;justify-content:space-between;margin-bottom:12px}
+.panel input{width:100%;accent-color:var(--prime)}
 nav a,button{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 20px;border:0;border-radius:8px;background:transparent}
 nav a:hover,button:hover,.brand:hover{background:var(--hover);color:var(--accent)}
 button{width:44px;flex:none;justify-content:center;padding:0}
@@ -170,6 +180,10 @@ const svgIcon = (name: keyof typeof LUCIDE, cls: string) =>
 
 const HOME = '<svg viewBox="0 0 24 24"><path d="M6 19h3v-6h6v6h3v-9l-6-4.5L6 10zm-2 2V9l8-6l8 6v12h-7v-6h-2v6zm8-8.75"/></svg>';
 
+const EXT = '<svg class="ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+const SEARCH = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+const PALETTE = '<svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>';
+
 const ICONS = svgIcon("sun", "sun") + svgIcon("moon", "moon");
 
 // Script (not markup) so it works for HTML fragments without <body>; shadow DOM isolates it from page CSS.
@@ -178,12 +192,14 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		.map((i) => {
 			const icon = NAV_ICONS[i.name];
 			const lead = icon ? svgIcon(icon, "ni") : "";
-			return `<a href="${esc(i.url)}"${i.external ? ' target="_blank" rel="noopener"' : ""}>${lead}${esc(i.name)}</a>`;
+			return `<a href="${esc(i.url)}"${i.external ? ' target="_blank" rel="noopener"' : ""}>${lead}${esc(i.name)}${i.external ? EXT : ""}</a>`;
 		})
 		.join("");
 	const markup =
 		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${HOME}${esc(title)}</a>` +
-		`<nav>${links}</nav><span class="end"><button type="button" aria-label="Toggle light/dark theme">${ICONS}</button></span></header>`;
+		`<nav>${links}</nav><span class="end"><a class="search" href="${esc((items[0]?.url ?? "/") + "?search=1")}">${SEARCH}Search</a>` +
+		`<button type="button" class="pal" aria-label="Display settings">${PALETTE}</button><button type="button" class="theme" aria-label="Toggle light/dark theme">${ICONS}</button></span>` +
+		`<div class="panel" hidden><label>Theme color <output></output></label><input type="range" min="0" max="360" aria-label="Theme color"></div></header>`;
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 
 	return (
@@ -194,9 +210,13 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`function get(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}` +
 		`function apply(t){document.documentElement.setAttribute("data-theme",t);host.setAttribute("data-theme",t)}` +
 		`host.style.setProperty("--hue",get("hue","${hue}"));apply(get("theme","light"));` +
-		`root.querySelector("button").addEventListener("click",function(){` +
+		`root.querySelector(".theme").addEventListener("click",function(){` +
 		`var t=host.getAttribute("data-theme")==="dark"?"light":"dark";` +
 		`try{localStorage.setItem("theme",t)}catch(e){}apply(t)});` +
+		`var pn=root.querySelector(".panel"),rg=pn.querySelector("input"),ou=pn.querySelector("output");` +
+		`function setHue(h){host.style.setProperty("--hue",h);rg.value=h;ou.textContent=h}setHue(get("hue","${hue}"));` +
+		`root.querySelector(".pal").addEventListener("click",function(){pn.hidden=!pn.hidden});` +
+		`rg.addEventListener("input",function(){setHue(rg.value);try{localStorage.setItem("hue",rg.value)}catch(e){}});` +
 		`addEventListener("storage",function(e){if(e.key==="theme")apply(e.newValue||"light")});` +
 		// Mount on <html>, before <body>: the page's own body margin/padding/max-width can then never offset the bar.
 		`document.documentElement.insertBefore(host,document.body)})()</script>`
