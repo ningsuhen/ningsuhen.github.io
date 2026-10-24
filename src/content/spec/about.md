@@ -13,26 +13,4 @@ Ex-Google, Ex-Adobe. Focus: AI | ML | Rust | Python | TypeScript. My path ran fr
 - 🐍 **Python** — backend and data.
 - ⌨️ **TypeScript** — web and full-stack.
 
-## Skills
-
-### Coding
-
-| Skill | Level |
-| --- | --- |
-| HTML/CSS | 90 |
-| Nodejs | 85 |
-| Javascript | 80 |
-| PHP | 80 |
-| MySQL | 80 |
-| MongoDB | 80 |
-| Python | 60 |
-| Java | 60 |
-| Swift | 60 |
-| Bash/Shell | 50 |
-| RabbitMQ | 50 |
-| Objective-C | 40 |
-| Ruby | 30 |
-| Rust |  |
-| TypeScript |  |
-
 Manhattan, New York
