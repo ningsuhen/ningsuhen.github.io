@@ -1,7 +1,6 @@
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Brev Tree Benchmark · created 2026-10-16 · updated 2026-10-24</title>
 <style>
+.rep {
+
 /* research design system (ningsuhen.github.io/design-system), inlined verbatim */
 /*
  * Research design system: matches the ningsuhen.github.io theme (Fuwari-derived tokens).
@@ -11,7 +10,7 @@
  * Prefix: rd-  (never restyle bare elements outside .rd-prose, so it can't clash with a report's own CSS).
  */
 
-:root {
+& {
 	--hue: 250;
 	/* Layout: site page width (75rem) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
 	--rd-page-width: 75rem;
@@ -67,8 +66,7 @@
 	--rd-font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-:root[data-theme="dark"],
-:root.dark {
+html.dark &, html[data-theme="dark"] & {
 	--rd-page-bg: oklch(0.16 0.014 var(--hue));
 	--rd-card-bg: oklch(0.23 0.015 var(--hue));
 	--rd-primary: oklch(0.75 0.14 var(--hue));
@@ -94,7 +92,7 @@
 }
 
 /* ---- Page ---- */
-.rd-body {
+& {
 	margin: 0;
 	background: var(--rd-page-bg);
 	color: var(--rd-text);
@@ -322,17 +320,19 @@
 
 /* Report layer: maps this report's components onto the research design system (--rd-* tokens only).
    Column = the site post column (54.5rem). Tables stay in the column and scroll sideways when wider. */
-:root {
+& {
   --laya: var(--rd-cat-2); --llm: var(--rd-cat-1); --small: var(--rd-cat-4);
   --paper: var(--rd-page-bg); --sheet: var(--rd-card-bg); --ink: var(--rd-text-strong); --ink-2: var(--rd-text-muted);
   --rule: var(--rd-line); --good: var(--rd-good); --bad: var(--rd-bad); --wait: var(--rd-text-muted);
   --mono: var(--rd-font-mono);
 }
-* { box-sizing: border-box }
-body { margin: 0; background: var(--rd-page-bg); color: var(--rd-text); font: 400 16px/1.7 var(--rd-font); -webkit-font-smoothing: antialiased;
+& * { box-sizing: border-box }
+& { margin: 0; background: var(--rd-page-bg); color: var(--rd-text); font: 400 16px/1.7 var(--rd-font); -webkit-font-smoothing: antialiased;
   padding: 2rem max(16px, env(safe-area-inset-right, 0px)) 4rem max(16px, env(safe-area-inset-left, 0px)) }
 @media (max-width: 768px) { body { font-size: 14px } }
-main { max-width: var(--rd-content-width); margin: 0 auto; display: grid; gap: 2.5rem }
+/* The blog's content area: a 54.5rem card with 2.25rem padding, so text is 800px wide like the posts. */
+.rep-main { max-width: var(--rd-content-width); margin: 0 auto; display: grid; gap: 2.5rem; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 2.25rem }
+@media (max-width: 768px) { main { padding: 1rem } }
 h1, h2, h3 { color: var(--rd-text-strong); font-weight: 700; line-height: 1.3; text-wrap: balance; margin: 0 }
 h1 { font-size: 2rem }
 h2 { font-size: 1.5rem; padding-left: .9rem; position: relative }
@@ -354,7 +354,7 @@ section { display: grid; gap: 1rem; min-width: 0 }
 .bar > i { display: block; height: 100%; background: var(--rd-primary) }
 .bar.laya > i { background: var(--laya) } .bar.llm > i { background: var(--llm) } .bar.small > i { background: var(--small) }
 .ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .75rem }
-.hyp { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; display: grid; gap: 6px; align-content: start; min-width: 0 }
+.hyp { background: var(--rd-page-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; display: grid; gap: 6px; align-content: start; min-width: 0 }
 .hyp .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px }
 .hyp .id { font: 700 .85rem var(--rd-font-mono); color: var(--rd-text-strong) }
 .hyp .stmt { font-weight: 500; color: var(--rd-text-strong) }
@@ -363,11 +363,14 @@ section { display: grid; gap: 1rem; min-width: 0 }
 .chip.supported { color: var(--rd-good) } .chip.refuted { color: var(--rd-bad) } .chip.mixed { color: var(--rd-warn) }
 .chip.pending, .chip.running { color: var(--rd-text-muted) }
 .chip.killed { color: var(--rd-text-muted); text-decoration: line-through }
-.scroll { overflow-x: auto; background: var(--rd-card-bg); border-radius: var(--rd-radius-sm) }
+.scroll { overflow-x: auto; border: 1px solid var(--rd-line); background: var(--rd-card-bg); border-radius: var(--rd-radius-sm) }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums }
 th, td { text-align: left; padding: .6rem .75rem; border-bottom: 1px solid var(--rd-line-soft); vertical-align: top }
 th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); white-space: nowrap }
-td.num, th.num { text-align: right; white-space: nowrap }
+td.num, th.num { text-align: right }
+th.num { white-space: nowrap }
+td.num { min-width: 7rem }
+td:not(.num):not(:first-child) { min-width: 9rem }
 tr:last-child td { border-bottom: 0 }
 tbody tr:hover td { background: var(--rd-plain-hover) }
 td .sub { display: block; margin-top: 4px; font-size: .8rem; color: var(--rd-text-muted) }
@@ -375,10 +378,10 @@ td .sub { display: block; margin-top: 4px; font-size: .8rem; color: var(--rd-tex
 .armid.laya { color: var(--laya) } .armid.llm { color: var(--llm) } .armid.small { color: var(--small) }
 .muted { color: var(--rd-text-muted) }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem }
-figure { margin: 0; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem; display: grid; gap: 8px; min-width: 0 }
+figure { margin: 0; background: var(--rd-page-bg); border-radius: var(--rd-radius); padding: 1rem; display: grid; gap: 8px; min-width: 0 }
 figcaption { font-size: .85rem; color: var(--rd-text-muted) }
 svg text { font-family: var(--rd-font); font-size: 11px; fill: var(--rd-text-muted) }
-.note { background: var(--rd-card-bg); border-left: .25rem solid var(--rd-warn); padding: .75rem 1rem; font-size: .9rem; border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0 }
+.note { background: var(--rd-page-bg); border-left: .25rem solid var(--rd-warn); padding: .75rem 1rem; font-size: .9rem; border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0 }
 ul.plain { margin: 0; padding-left: 1.25rem; display: grid; gap: 6px }
 .log { font: 13px/1.7 var(--rd-font-mono); color: var(--rd-text-muted); display: grid; gap: 2px }
 .ci { position: relative; height: 14px; min-width: 160px }
@@ -387,10 +390,13 @@ ul.plain { margin: 0; padding-left: 1.25rem; display: grid; gap: 6px }
 .ci .pt { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--rd-text-strong) }
 a { color: var(--rd-accent) }
 :focus-visible { outline: 2px solid var(--rd-primary); outline-offset: 2px }
-</style>
-<script>try{var s=localStorage.getItem('theme');if(s==='dark'||s==='light')document.documentElement.setAttribute('data-theme',s)}catch(e){}</script>
 
-<main>
+.rep-main { background: none; padding: 0; margin: 0; max-width: none }
+& { background: none; padding: 0; min-height: 0 }
+}
+</style>
+<div class="rep">
+<div class="rep-main">
   <header>
     <span class="eyebrow">Brev research · experiment E1 · Banking77</span>
     <h1>Brev Tree Benchmark</h1>
@@ -512,11 +518,11 @@ a { color: var(--rd-accent) }
     <h2 id="h-bs">Brainstorm synthesis</h2>
     <div id="brainstorm"></div>
   </section>
-</main>
-
-<script>
+</div>
+</div>
+<script is:inline>
 const R = {
- "updated": "2026-10-24 18:30 EDT",
+ "updated": "2026-10-24 18:40 EDT",
  "arms": [
   {
    "id": "T-crit",

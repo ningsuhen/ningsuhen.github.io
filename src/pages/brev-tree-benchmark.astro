@@ -1,0 +1,11 @@
+---
+// The Brev benchmark report, inside the blog layout (sidebar, navbar, banner). The report is an exported
+// fragment (CSS scoped under .rep, its own script); re-export it, don't edit it by hand.
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import report from "../data/brev-benchmark-report.html?raw";
+---
+<MainGridLayout title="Brev Tree Benchmark" description="A ledger of what a decision tree, a small model and a 27B model can and cannot do together.">
+    <div class="card-base px-9 py-6 w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+        <Fragment set:html={report} />
+    </div>
+</MainGridLayout>
