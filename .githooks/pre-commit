@@ -1,8 +1,11 @@
 #!/bin/sh
+# managed-by: scripts/install-hooks.sh
 # Blocks commits that stage secrets: risky filenames + gitleaks scan of the staged diff.
 # Bypass (don't): git commit --no-verify
 set -u
 . "$(dirname "$0")/_common.sh"
+
+run_local_hook pre-commit "$@" || exit 1
 
 blocked=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E '(^|/)(\.env(\..+)?|\.npmrc\.local|id_(rsa|dsa|ecdsa|ed25519)(\.pub)?|.*\.(pem|key|p12|pfx|jks|keystore|ovpn)|\.netrc|credentials(\.json)?|service-account.*\.json)$' | grep -vE '\.(example|sample|template)$' || true)
 if [ -n "$blocked" ]; then
