@@ -72,6 +72,7 @@
 <a href="#components"><svg class="rd-icon" aria-hidden="true"><use href="#i-layout-dashboard"/></svg>Components</a>
 <a href="#science"><svg class="rd-icon" aria-hidden="true"><use href="#i-sigma"/></svg>Writing</a>
 <a href="#checklist"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg>Checklist</a>
+<a href="#conformance"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg>Conformance</a>
 </nav>
 
 <main class="rd-container rd-prose">
@@ -121,6 +122,7 @@
 <tr><td><code>--rd-gap-section</code></td><td class="rd-num">32px</td><td class="rd-num">48px</td><td class="rd-num">20px</td><td>space above a section</td></tr>
 <tr><td><code>--rd-gap-block</code></td><td class="rd-num">12px</td><td class="rd-num">20px</td><td class="rd-num">8px</td><td>space between blocks</td></tr>
 <tr><td><code>--rd-control-h</code></td><td class="rd-num">28px</td><td class="rd-num">40px</td><td class="rd-num">24px</td><td>buttons, summaries (tap target)</td></tr>
+<tr><td><code>--rd-navbar-gap</code></td><td class="rd-num">16px</td><td class="rd-num">16px</td><td class="rd-num">16px</td><td>gap between the navbar card and the section bar</td></tr>
 <tr><td><code>--rd-expnav-h</code></td><td class="rd-num">40px</td><td class="rd-num">48px</td><td class="rd-num">36px</td><td>experiment navbar height</td></tr>
 <tr><td><code>--rd-measure</code></td><td class="rd-num">75ch</td><td class="rd-num">70ch</td><td class="rd-num">none</td><td>prose line length</td></tr></tbody></table></div>
 <h3>Which density to use</h3>
@@ -183,7 +185,7 @@
 </ul>
 
 <header class="rd-section__head" id="navbar"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-panel-top"/></svg></span><h2>Experiment navbar</h2></header>
-<p>The in-page navigation for experiments and reports. It is <code>rd-expnav</code>, the live bar at the top of this page. It is full width and <strong>sticky at <code>top: 0</code></strong>. The site bar above it is 56px and not sticky, so the two never overlap, and the nav never covers content it has not scrolled past. The section in view is highlighted (<code>.is-active</code>, <code>aria-current</code>) by a 20-line scroll-spy script with no dependencies. Smooth scrolling is on only when reduced motion is not requested. On a phone the links scroll sideways inside their own track, so the page never overflows. Links are plain anchors: they are keyboard reachable and show a focus ring.</p>
+<p>The in-page navigation for experiments and reports: <code>rd-expnav</code>, the bar under the navbar card. It sits <strong><code>--rd-navbar-gap</code> (16px, the main site's rhythm) below the card</strong>, in the navbar's frame (<code>--rd-navbar-width</code>, 1168px from 1200px up). Its first link starts at the navbar's own left padding (the brand's edge: 152px at 1440px), and below 1200px at the container padding (16px). It is <strong>sticky at <code>top: 0</code></strong> once the navbar has scrolled away (the site bar is not sticky), so the gap shows only while the navbar is on screen. Links scroll sideways inside the bar when they overflow: an edge fade shows the side with hidden links, and the scroll-spy keeps the active link in view. The section in view is highlighted (<code>.is-active</code>, <code>aria-current</code>) by a scroll-spy script with no dependencies. Smooth scrolling is on only when reduced motion is not requested. Links are plain anchors: they are keyboard reachable and show a focus ring.</p>
 <pre><code>&lt;nav class="rd-expnav" aria-label="Sections"&gt;
 &lt;a href="#summary" class="is-active"&gt;&lt;svg class="rd-icon" aria-hidden="true"&gt;&lt;use href="#i-file-text"/&gt;&lt;/svg&gt;Summary&lt;/a&gt;
 &lt;a href="#method"&gt;&lt;svg class="rd-icon" aria-hidden="true"&gt;&lt;use href="#i-flask-conical"/&gt;&lt;/svg&gt;Method&lt;/a&gt;
@@ -191,21 +193,22 @@
 <p>Put the nav directly under <code>&lt;body&gt;</code>, before <code>&lt;main&gt;</code>, so it spans the page. Each link targets a section header, <code>&lt;header class="rd-section__head" id="method"&gt;</code>. The template has the nav and the script ready to copy.</p>
 
 <header class="rd-section__head" id="tabbed"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-panel-top"/></svg></span><h2>Tabbed report layout</h2></header>
-<p>Long reports split into tabs. The tab bar and the content use the <strong>navbar card's width</strong> (<code>--rd-navbar-width</code>, 1168px from 1200px up), so their edges line up with the card above them. The "On this page" rail is <strong>outside</strong> that width, in the right page margin, the way the main post page's table of contents sits outside its column. Each tab has its own rail, listing that tab's sections.</p>
+<p>Long reports split into tabs. The tab bar and the content use the <strong>navbar card's width</strong> (<code>--rd-navbar-width</code>, 1168px from 1200px up), so their edges line up with the card above them. The tab bar sits 16px (<code>--rd-navbar-gap</code>) under the card, and its first tab starts at the card's brand edge (152px at 1440px). The "On this page" rail is <strong>outside</strong> that width, in the right page margin, the way the main post page's table of contents sits outside its column. Each tab has its own rail, listing that tab's sections.</p>
 <figure class="rd-figure" aria-label="Tabbed report layout diagram">
-<svg viewBox="0 0 1440 240" role="img" aria-hidden="true" style="width:100%;height:auto">
+<svg viewBox="0 0 1440 256" role="img" aria-hidden="true" style="width:100%;height:auto">
 <rect x="136" y="16" width="1168" height="36" rx="12" style="fill:var(--rd-card-bg)"/>
 <text x="152" y="39" style="font-size:13px;fill:var(--rd-text-muted)">Navbar card, 1168px (injected)</text>
-<rect x="136" y="64" width="1168" height="32" rx="8" style="fill:var(--rd-btn-bg)"/>
-<text x="152" y="85" style="font-size:13px;fill:var(--rd-text-strong)">Tab bar, 1168px: the same left and right edges as the navbar card</text>
-<rect x="136" y="108" width="1168" height="112" rx="12" style="fill:var(--rd-card-bg);stroke:var(--rd-line)"/>
-<text x="152" y="134" style="font-size:13px;fill:var(--rd-text-muted)">Content, 1168px: cards, tables, figures; prose capped at 75ch</text>
-<rect x="1368" y="64" width="152" height="156" rx="12" style="fill:none;stroke:var(--rd-accent);stroke-dasharray:4 3"/>
+<text x="152" y="63" style="font-size:12px;fill:var(--rd-accent)">16px gap: --rd-navbar-gap</text>
+<rect x="136" y="68" width="1168" height="32" rx="8" style="fill:var(--rd-btn-bg)"/>
+<text x="152" y="89" style="font-size:13px;fill:var(--rd-text-strong)">Tab bar, 1168px: first tab at the brand edge (152px), same right edge as the card</text>
+<rect x="136" y="116" width="1168" height="112" rx="12" style="fill:var(--rd-card-bg);stroke:var(--rd-line)"/>
+<text x="152" y="142" style="font-size:13px;fill:var(--rd-text-muted)">Content, 1168px: cards, tables, figures; prose capped at 75ch</text>
+<rect x="1368" y="68" width="152" height="156" rx="12" style="fill:none;stroke:var(--rd-accent);stroke-dasharray:4 3"/>
 <text x="1376" y="92" style="font-size:12px;fill:var(--rd-accent)">On this page</text>
 <text x="1376" y="112" style="font-size:12px;fill:var(--rd-text-muted)">rail, 1536px+</text>
-<text x="1304" y="250" text-anchor="end" style="font-size:12px;fill:var(--rd-text-muted)">16px gap, then the rail to the viewport edge less 16px</text>
+<text x="1304" y="248" text-anchor="end" style="font-size:12px;fill:var(--rd-text-muted)">16px gap, then the rail to the viewport edge less 16px</text>
 </svg>
-<figcaption class="rd-source">1440px viewport. The rail sits in the margin: 136px on each side, and it starts 16px right of the navbar card.</figcaption>
+<figcaption class="rd-source">1440px viewport. The bar and the rail sit 16px under and 16px right of the navbar card. The rail sits in the margin: 136px on each side.</figcaption>
 </figure>
 <p>Below 1536px the rail has no room in the margin, so it becomes the collapsed "On this page" disclosure above the content, open by default. That is the same breakpoint the main site uses for its table of contents (Tailwind <code>2xl</code>, 1536px).</p>
 <table class="rd-table">
@@ -373,9 +376,21 @@
 <li>Caveats and unvalidated results are stated on the page, not buried.</li>
 <li>Check both themes and a 375px viewport before publishing.</li>
 </ul>
+<header class="rd-section__head" id="conformance"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg></span><h2>Conformance</h2></header>
+<p>Every standalone page under <code>public/research/</code> and <code>public/experiments/</code> is measured in a real browser by <code>pnpm check:design-system</code> (after <code>pnpm build</code>, about 35 seconds). The reference is the main site's post page, <code>/posts/rust-learnings/</code>, rendered in the same run, so the check follows theme changes on the main site. Each page is measured at 1280, 1440 and 1920 px, light and dark, plus 375 px for overflow and tap targets. Non-origin requests are blocked during the run, and the navbar must not move when a scrollbar appears.</p>
+<div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Rule</th><th>What it requires</th></tr></thead><tbody><tr><td><code>head-order</code></td><td>charset then viewport are the first two head elements</td></tr><tr><td><code>title-stamp</code></td><td>title and visible h1 end with · created YYYY-MM-DD · updated YYYY-MM-DD</td></tr><tr><td><code>css-canonical</code></td><td>research.css is linked, or inlined verbatim (whitespace-insensitive)</td></tr><tr><td><code>body-class</code></td><td>&lt;body class="rd-body"&gt;</td></tr><tr><td><code>container-class</code></td><td>main content uses rd-container, rd-container--wide or rd-tabbed</td></tr><tr><td><code>container-width</code></td><td>rd-container is 872px (54.5rem); wide/tabbed content is the navbar card width</td></tr><tr><td><code>density</code></td><td>data-density, when set, is compact, comfortable or dense</td></tr><tr><td><code>theme-owned</code></td><td>theme comes from html[data-theme] only: no prefers-color-scheme, no page theme toggle</td></tr><tr><td><code>container-comment</code></td><td>a page using rd-container--wide documents why in a source comment</td></tr><tr><td><code>icon-glyph</code></td><td>no emoji or arrow glyphs used as UI icons</td></tr><tr><td><code>icon-sprite</code></td><td>icons are svg.rd-icon whose &lt;use&gt; target exists in the sprite (no hand-drawn icon SVGs)</td></tr><tr><td><code>colour-tokens</code></td><td>colours come from --rd-* tokens (no raw hex/rgb/oklch in page CSS or style attributes)</td></tr><tr><td><code>fonts</code></td><td>no @font-face of its own (fonts come from the design system or the site)</td></tr><tr><td><code>iframe</code></td><td>no iframes</td></tr><tr><td><code>one-footer</code></td><td>the license card is the only footer (no &lt;footer&gt; in the page itself)</td></tr><tr><td><code>external-requests</code></td><td>no requests outside the page origin (non-origin requests are blocked during the run)</td></tr><tr><td><code>console-errors</code></td><td>no console errors or uncaught exceptions during load</td></tr><tr><td><code>overflow</code></td><td>no horizontal page overflow at 1440 and 375</td></tr><tr><td><code>tap-target</code></td><td>interactive controls are at least 24px at 375</td></tr><tr><td><code>injected-once</code></td><td>the site navbar and the license card are each present exactly once</td></tr><tr><td><code>forbidden-strings</code></td><td>no internal hostnames, /Users/ paths or IP addresses in the source</td></tr><tr><td><code>axe</code></td><td>no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark</td></tr><tr><td><code>scrollbar-gutter</code></td><td>navbar x does not move when a vertical scrollbar appears or disappears</td></tr><tr><td><code>tab-aria</code></td><td>tablist/tab/tabpanel wiring: aria-controls, one aria-selected, rd-tabpanel</td></tr><tr><td><code>tab-keys</code></td><td>ArrowRight moves to the next tab</td></tr><tr><td><code>tab-deeplink</code></td><td>each tab sets a hash that opens that tab on load</td></tr><tr><td><code>tab-history</code></td><td>each tab change adds exactly one history entry; Back restores the previous tab</td></tr><tr><td><code>tab-rail</code></td><td>every tab panel has the shared rd-toc</td></tr><tr><td><code>typography-scale</code></td><td>h1/h2/h3/p/td font size, line height and weight match the template (compact)</td></tr><tr><td><code>nav-card</code></td><td>navbar card position and size equal the main site's</td></tr><tr><td><code>nav-links</code></td><td>navbar link positions equal the main site's</td></tr><tr><td><code>nav-style</code></td><td>navbar link font size, weight and family equal the main site's</td></tr><tr><td><code>content-width</code></td><td>content width equals the main post column (or the navbar card when wide)</td></tr><tr><td><code>content-align</code></td><td>content left edge equals the main post column (or the navbar card when wide)</td></tr><tr><td><code>footer-box</code></td><td>license card width, left edge and corner radius equal the site footer card</td></tr><tr><td><code>footer-type</code></td><td>license card text size and colour equal the site footer text</td></tr><tr><td><code>footer-gap</code></td><td>space between content and the footer card equals the main site's</td></tr><tr><td><code>surface</code></td><td>page background and navbar card background equal the main site's (tokens)</td></tr><tr><td><code>rail-presence</code></td><td>the contents rail appears at the same widths as on the main post</td></tr><tr><td><code>rail-geometry</code></td><td>rail x offset from the navbar card, width and top offset equal the main site's</td></tr><tr><td><code>rail-type</code></td><td>rail link font size and colour equal the main site's</td></tr><tr><td><code>rail-indicator</code></td><td>active rail indicator has the same style as the main site's</td></tr><tr><td><code>rail-highlight</code></td><td>every heading in view is highlighted in the rail, as on the main post</td></tr><tr><td><code>prose-type</code></td><td>prose h2/h3/p/a/td size, line height, weight and colour equal the main post's</td></tr></tbody></table></div>
+<h3>Exceptions</h3>
+<ul>
+<li>A page-wide, documented exception: <code>&lt;meta name="ds-allow" content="rule-id: reason"&gt;</code>. The reason is required.</li>
+<li>An element-level exception: <code>data-ds-allow="rule-id"</code> on the element or an ancestor (rules <code>colour-tokens</code>, <code>icon-sprite</code>, <code>tap-target</code>). Use it for a chart or a diagram with its own colours, and say why in a comment.</li>
+<li>A page that uses <code>rd-container--wide</code> must say why in a source comment next to it.</li>
+</ul>
+<h3>Baseline policy</h3>
+<p>Violations that exist today are listed in <code>scripts/design-system-baseline.json</code>, one entry per page and rule, with an owner (<code>EcoSimulation</code>, <code>Brev</code> or <code>site</code>) and a real reason. The rule is a ratchet: a new violation fails CI, and an entry that no longer fires fails CI until it is removed. Fix the source project or this repo, then delete the entry in the same PR. Locally, <code>pnpm check:design-system --update-baseline</code> adds new findings with a placeholder reason and drops fixed ones; the reasons must then be written by hand before the PR. Warnings (not failures): a missing <code>&lt;meta name="ds-contract"&gt;</code> version marker, and inline CSS over 80 KB.</p>
 </main>
 <script>
-// Experiment navbar scroll-spy: marks the section in view (aria-current + .is-active). No dependencies.
+// Section bar scroll-spy: marks the section in view (aria-current + .is-active), keeps that link visible on the bar
+// (the bar scrolls sideways, not the page) and shows an edge fade while links are hidden on that side. No dependencies.
 (function () {
   var nav = document.querySelector('.rd-expnav');
   if (!nav) return;
@@ -384,7 +399,16 @@
     var s = document.getElementById(a.getAttribute('href').slice(1));
     if (s) pairs.push([a, s]);
   });
-  var ticking = false;
+  var ticking = false, shown = null;
+  function edges() {
+    nav.classList.toggle('is-fade-start', nav.scrollLeft > 2);
+    nav.classList.toggle('is-fade-end', nav.scrollLeft < nav.scrollWidth - nav.clientWidth - 2);
+  }
+  function reveal(a) {
+    var pad = 40, l = a.offsetLeft, r = l + a.offsetWidth;
+    if (l < nav.scrollLeft + pad) nav.scrollLeft = l - pad;
+    else if (r > nav.scrollLeft + nav.clientWidth - pad) nav.scrollLeft = r - nav.clientWidth + pad;
+  }
   function update() {
     ticking = false;
     var line = nav.offsetHeight + 24; // a section counts once its top is under the navbar
@@ -397,10 +421,13 @@
       if (on) p[0].setAttribute('aria-current', 'location');
       else p[0].removeAttribute('aria-current');
     });
+    if (current && current[0] !== shown) { shown = current[0]; reveal(shown); }
+    edges();
   }
   function schedule() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule);
+  nav.addEventListener('scroll', edges, { passive: true });
   update();
 })();
 </script>
