@@ -45,6 +45,7 @@ const RULES = {
 	overflow: "no horizontal page overflow at 1440 and 375",
 	"tap-target": "interactive controls are at least 24px at 375",
 	"injected-once": "the site navbar and the license card are each present exactly once",
+	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
 	axe: "no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
@@ -292,6 +293,8 @@ const probeStructure = (canon) => {
 		lightFooters: document.querySelectorAll("footer").length,
 		navCount: document.querySelectorAll("div[data-site-navbar]").length,
 		licCount: document.querySelectorAll("div[data-site-license]").length,
+		crumbBands: document.querySelectorAll("[data-site-breadcrumb]").length,
+		strayCrumbs: [...document.querySelectorAll('.rd-breadcrumb, nav[aria-label="Breadcrumb"]')].filter((n) => !n.closest("[data-site-breadcrumb]")).length,
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -633,6 +636,8 @@ await Promise.all(pages.map(async (rel) => {
 				[errors.length > 0, "console-errors", errors.slice(0, 2).join(" | ")],
 				[s.navCount !== 1, "injected-once", `site navbar present ${s.navCount} time(s)`],
 				[s.licCount !== 1, "injected-once", `license card present ${s.licCount} time(s)`],
+				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
+				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
