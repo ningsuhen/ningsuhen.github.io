@@ -67,7 +67,7 @@ This repo holds the site and the compiled output that research and experiments n
 
 ## Git and PR flow
 
-- `master` is protected. Work on a branch in a worktree under `.worktrees/` only. Open PRs with `gh pr create --base master`; merge with squash (`pnpm merge-pr <n>`).
+- `master` is protected. Work on a branch in a worktree under `.worktrees/` only. Open PRs with `gh pr create --base master`; merge with squash (`pnpm merge-pr <n>`). Branch protection requires the `check` (Standalone page check) and `gitleaks` jobs, so a merge waits for both; GitHub auto-merge is allowed (the in-place editor arms it on its PRs) and merged branches are deleted.
 - PR body ends with a blank line, `---`, then `<sub>Ning›🤖›</sub>`.
 - `pr-conflicts.yml` labels open PRs that conflict with master (`conflict`), keeps one bot comment per PR, and clears both on resolve; logic in `.github/scripts/pr-conflicts.mjs` (`pnpm test:pr-conflicts`); API-only, never checks out PR code.
 - Git hooks: `pnpm install` runs `prepare`, which installs `.githooks/` into the repo. Needs `gitleaks` (`brew install gitleaks`); pre-commit and pre-push scan for secrets.
