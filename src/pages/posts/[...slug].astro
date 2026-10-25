@@ -7,7 +7,7 @@ import Markdown from "@components/misc/Markdown.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getSortedPosts } from "@utils/content-utils";
+import { getSortedPosts, postThumbnailUrl } from "@utils/content-utils";
 import { getPostUrlBySlug } from "@utils/url-utils";
 import { render } from "astro:content";
 import { Icon } from "astro-icon/components";
@@ -31,12 +31,16 @@ const { Content, headings } = await render(entry);
 const { remarkPluginFrontmatter } = await render(entry);
 const licensed = entry.data.tags.includes("Research") || entry.data.tags.includes("Experiment");
 
+// Card thumbnail as an absolute URL: the og:image, twitter:image and JSON-LD image all point at it.
+const thumbnailUrl = postThumbnailUrl(entry, Astro.site!.href);
+
 const jsonLd = {
 	"@context": "https://schema.org",
 	"@type": "BlogPosting",
 	headline: entry.data.title,
 	description: entry.data.description || entry.data.title,
 	keywords: entry.data.tags,
+	image: thumbnailUrl,
 	author: {
 		"@type": "Person",
 		name: profileConfig.name,
@@ -46,10 +50,9 @@ const jsonLd = {
 	inLanguage: entry.data.lang
 		? entry.data.lang.replace("_", "-")
 		: siteConfig.lang.replace("_", "-"),
-	// TODO include cover image here
 };
 ---
-<MainGridLayout license={licensed} banner={entry.data.image}title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings}>
+<MainGridLayout license={licensed} banner={entry.data.image}title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings} ogImage={thumbnailUrl}>
     <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
     <div class="flex w-full rounded-[var(--radius-large)] overflow-clip relative mb-4">
         <div id="post-container" class:list={["card-base !overflow-clip z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
