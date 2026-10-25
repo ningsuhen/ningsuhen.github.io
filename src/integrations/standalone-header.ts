@@ -272,15 +272,13 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 
 // Copyright footer for every standalone page: research here may not be reused without permission.
 // Mounted on <html> after <body> (like the navbar), so page styling can't offset or hide it.
-// Follows <html data-theme> and the navbar hue. Look kept in step with src/components/LicenseNote.astro.
 function buildLicenseScript(base: string, hue: number): string {
 	const prefix = base.replace(/\/$/, "");
 	const css =
-		`:host{all:initial;display:block;--hue:${hue};--bg:#fff;--rule:rgba(0,0,0,.12);--strong:#1d2228;--body:#3d444d;--muted:#5b626b;--accent:oklch(.5 .12 var(--hue));--hover:oklch(.95 .03 var(--hue))}` +
-		":host([data-theme=dark]){--bg:oklch(.2 .015 var(--hue));--rule:rgba(255,255,255,.14);--strong:rgba(255,255,255,.92);--body:#c9ced6;--muted:#a7aeb8;--accent:oklch(.75 .1 var(--hue));--hover:oklch(.3 .04 var(--hue))}" +
-		"footer{box-sizing:border-box;position:relative;padding:1.5rem max(1rem,calc((100% - 54.5rem)/2)) 1.75rem;background:var(--bg);border-top:1px solid var(--rule);" +
+		`:host{all:initial;display:block;--hue:${hue};--bg:#fff;--strong:#1d2228;--body:#3d444d;--muted:#5b626b;--accent:oklch(.5 .12 var(--hue));--hover:oklch(.95 .03 var(--hue))}` +
+		":host([data-theme=dark]){--bg:oklch(.23 .015 var(--hue));--strong:rgba(255,255,255,.92);--body:#c9ced6;--muted:#a7aeb8;--accent:oklch(.75 .1 var(--hue));--hover:oklch(.3 .04 var(--hue))}" +
+		"footer{box-sizing:border-box;width:min(54.5rem,calc(100% - 2rem));margin:2rem auto 2.5rem;padding:1.5rem 1.5rem 1.25rem;border-radius:1rem;background:var(--bg);" +
 		"font:400 0.9375rem/1.6 Roboto,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--body);overflow-wrap:anywhere}" +
-		'footer::before{content:"";position:absolute;top:-1px;left:max(1rem,calc((100% - 54.5rem)/2));width:3rem;height:2px;background:var(--accent)}' +
 		"p{margin:0;max-width:60ch}p+p{margin-top:.5rem}" +
 		".copy{font-weight:600;font-size:1rem;color:var(--strong)}" +
 		".quote{font-size:.875rem;color:var(--muted)}" +
