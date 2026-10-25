@@ -26,6 +26,7 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import standaloneHeader from "./src/integrations/standalone-header.ts";
 import { standalonePages } from "./scripts/lib/standalone-pages.mjs";
+import { remarkOwnerMarkers } from "./src/plugins/owner-markers.mjs";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { remarkSourceMap } from "./src/plugins/remark-source-map.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
@@ -142,6 +143,7 @@ export default defineConfig({
 		// Astro 7 default processor is Satteri; keep the unified (remark/rehype) pipeline the site was built on.
 		processor: unified({
 		remarkPlugins: [
+			remarkOwnerMarkers, // first: hidden owner markers never reach the HTML, excerpt or reading time
 			remarkMath,
 			remarkReadingTime,
 			remarkExcerpt,

@@ -6,6 +6,7 @@ import type { APIContext } from "astro";
 import MarkdownIt from "markdown-it";
 import sanitizeHtml from "sanitize-html";
 import { siteConfig } from "@/config";
+import { stripOwnerMarkers } from "../plugins/owner-markers.mjs";
 
 const parser = new MarkdownIt();
 
@@ -27,7 +28,7 @@ export async function GET(context: APIContext) {
 		items: blog.map((post) => {
 			const content =
 				typeof post.body === "string" ? post.body : String(post.body || "");
-			const cleanedContent = stripInvalidXmlChars(content);
+			const cleanedContent = stripInvalidXmlChars(stripOwnerMarkers(content));
 			return {
 				title: post.data.title,
 				pubDate: toFeedPubDate(post.data.published),

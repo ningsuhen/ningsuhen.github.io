@@ -51,7 +51,7 @@ const RULES = {
 	"injected-once": "the site navbar and the license card are each present exactly once",
 	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
-	axe: "no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark",
+	axe: "no axe WCAG 2.0/2.1 A and AA violations at 375 and 1440, light and dark, on every standalone page (research, playground, ideas and the design-system pages)",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
 	"tab-aria": "tablist/tab/tabpanel wiring: aria-controls, one aria-selected, rd-tabpanel",
 	"tab-keys": "ArrowRight moves to the next tab",
@@ -78,6 +78,11 @@ const RULES = {
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
+// Accessibility (axe) runs on every standalone page — reports, playground, ideas and the design-system
+// pages — at 375 and 1440, light and dark. Both sets come from the shared page registry, so a new page is
+// covered without editing this file. template.html is a scaffold source (placeholder content, not a shipped
+// page), so it is excluded.
+const a11yPages = [...pages, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -670,7 +675,8 @@ async function tabChecks(page, ok) {
 await Promise.all(pages.map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page);
-	// Each width x theme: chrome against the live reference. At 1440 also the structure, typography, axe.
+	// Each width x theme: chrome against the live reference. At 1440 also the structure and typography. (axe runs
+	// separately, on every standalone page, at 375 and 1440 — see the accessibility pass below.)
 	for (const w of WIDTHS) for (const t of THEMES) {
 		const { ctx, external, errors } = await newCtx({ width: w, height: DESKTOP_H }, t);
 		const p = await open(ctx, page);
@@ -717,14 +723,6 @@ await Promise.all(pages.map(async (rel) => {
 					}
 				}
 			}
-			if (!ok.has("axe")) {
-				await p.addScriptTag({ path: path.resolve("node_modules/axe-core/axe.min.js") });
-				const v = await p.evaluate(async () => {
-					const r = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] }, resultTypes: ["violations"] });
-					return r.violations.map((x) => ({ id: x.id, impact: x.impact, n: x.nodes.length }));
-				});
-				for (const x of v) add(page, "axe", `@1440 ${t}: ${x.id} (${x.impact}) on ${x.n} node(s)`);
-			}
 		}
 		await ctx.close();
 	}
@@ -740,6 +738,28 @@ await Promise.all(pages.map(async (rel) => {
 	}
 	await tabChecks(page, ok);
 	await tabWidthChecks(page, ok);
+}));
+
+// ---- Accessibility: axe on every standalone page at 375 and 1440, light and dark ------------------------------------
+// The conformance loop above only reaches the report/experiment/idea pages and only ran axe at 1440. This pass
+// closes the two blind spots: it also runs axe at 375, and it covers the design-system guide page too. Pages are
+// discovered from the shared page registry (a11yPages), not a hardcoded list, so a new page is covered without editing this file.
+await Promise.all(a11yPages.map(async (rel) => {
+	const page = urlOf(rel);
+	const ok = allowedBy.get(page) ?? new Set();
+	for (const w of [375, 1440]) for (const t of THEMES) {
+		const { ctx } = await newCtx({ width: w, height: DESKTOP_H }, t);
+		const p = await open(ctx, page);
+		if (!ok.has("axe")) {
+			await p.addScriptTag({ path: path.resolve("node_modules/axe-core/axe.min.js") });
+			const v = await p.evaluate(async () => {
+				const r = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] }, resultTypes: ["violations"] });
+				return r.violations.map((x) => `${x.id} (${x.impact}) on ${x.nodes.length} node(s)`);
+			});
+			for (const x of v) add(page, "axe", `@${w} ${t}: ${x}`);
+		}
+		await ctx.close();
+	}
 }));
 await browser.close();
 server.close();

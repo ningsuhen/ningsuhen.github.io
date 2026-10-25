@@ -11,6 +11,7 @@ import { addBreadcrumb } from "../chrome/breadcrumb";
 import { buildSocialMeta } from "../chrome/social";
 import { withThemeScript } from "../chrome/theme";
 import { esc } from "../chrome/util";
+import { A11Y_MARKER, buildA11yScript } from "../chrome/a11y";
 
 /**
  * Adds the site's navbar (same links as navBarConfig, plus the light/dark toggle) to every
@@ -82,7 +83,8 @@ export default function standaloneHeader(): AstroIntegration {
 /** Navbar, breadcrumb and meta fixes for one standalone HTML document (shared by build and dev). `extra` is appended before </body>. */
 function transform(html: string, script: string, extra: string, footer: string, urlPath: string, base: string, site: string): string {
 	const comments = commentsFor(html, urlPath);
-	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
+	const a11y = html.includes(A11Y_MARKER) ? "" : buildA11yScript();
+	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	const withCrumbs = addBreadcrumb(body, urlPath, base, site);
 	return withThemeScript(ensureHead(versionedBundle(withCrumbs), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
