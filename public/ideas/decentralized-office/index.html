@@ -21,10 +21,9 @@
 .idea-t--l { text-anchor: start; }
 .idea-t--accent { fill: var(--rd-accent); }
 .idea-steps__ctrl { display: none; align-items: center; gap: var(--rd-space-3); flex-wrap: wrap; margin: var(--rd-gap-block) 0; }
-.idea-steps__ctrl button { min-height: 2.25rem; min-width: 2.25rem; display: inline-flex; align-items: center; gap: var(--rd-space-2); padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); color: var(--rd-accent); font: inherit; font-weight: 700; cursor: pointer; }
-.idea-steps__ctrl button:disabled { opacity: 0.45; cursor: default; }
 .idea-steps__ctrl button:focus-visible, .idea-presets label:focus-within, .idea-ask button:focus-visible, .idea-ask input:focus-visible, .idea-quiz input:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
 .idea-steps__count { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.idea-steps__ctrl .rd-btn:disabled { opacity: 0.45; cursor: default; }
 .idea-steps__list { list-style: none; padding: 0; margin: 0; }
 .idea-steps__list li { margin: var(--rd-space-2) 0; }
 .js .idea-steps__ctrl { display: flex; }
@@ -48,11 +47,9 @@
 .idea-table td [data-p]:not(.is-on) { display: none; }
 .idea-table td [data-p]:not(.is-on) + [data-p] { margin-top: 0; }
 .idea-chips { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; list-style: none; padding: 0; }
-.idea-chips button { min-height: 2.25rem; padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-accent); font: inherit; font-size: var(--rd-fs-sm); cursor: pointer; }
 .idea-ask { display: grid; gap: var(--rd-space-2); }
 .idea-ask form { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
 .idea-ask input[type="text"] { flex: 1 1 14rem; min-height: 2.5rem; padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-card-bg); color: var(--rd-text-strong); font: inherit; }
-.idea-ask form > button { min-height: 2.5rem; padding: 0 var(--rd-space-4); border: 0; border-radius: var(--rd-radius-sm); background: var(--rd-accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .idea-log { display: grid; gap: var(--rd-space-3); max-height: 34rem; overflow-y: auto; padding: var(--rd-space-2) 0; }
 .idea-msg { border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); background: var(--rd-btn-bg); }
 .idea-msg--me { justify-self: end; max-width: 90%; background: var(--rd-card-bg); border: 1px solid var(--rd-line); }
@@ -163,9 +160,9 @@
         <text class="idea-t idea-t--s" x="340" y="320">Keys never leave the laptops.</text>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. A person edits a document on laptop A. The change is made locally first, so it works offline.</li>
@@ -229,9 +226,9 @@
         <text class="idea-t idea-t--s" x="340" y="336">Shown with three members. The same wrapping applies to any number.</text>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. A new document gets a random key. Nothing else holds it yet.</li>
@@ -271,9 +268,9 @@
         <text class="idea-t idea-t--s" x="340" y="288">Neither edit was lost, and no one had to pick a winner by hand.</text>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. Replica A is offline. Alice adds a new line at the end. The change is recorded with a unique id.</li>
@@ -321,9 +318,9 @@
         <g data-s="7"><text class="idea-t idea-t--s" x="585" y="326">identity restored, document keys re-fetched</text></g>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 7</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. The laptop takes a snapshot of its local store, including the identity keys.</li>
@@ -540,18 +537,18 @@
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg></span><h2>Ask this idea</h2></header>
     <p class="rd-callout"><strong>Answers come from the written notes on this page, not an AI model.</strong> The chat matches your question against a list of questions and terms written for this page. If nothing matches well, it says so. Messages are kept in this tab only and are not stored or sent anywhere.</p>
     <ul class="idea-chips" aria-label="Suggested questions">
-      <li><button type="button" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
-      <li><button type="button" data-ask="What happens when someone is removed?">What happens when someone is removed?</button></li>
-      <li><button type="button" data-ask="Can the backup provider read my documents?">Can the backup provider read my documents?</button></li>
-      <li><button type="button" data-ask="How do offline edits merge?">How do offline edits merge?</button></li>
-      <li><button type="button" data-ask="What about email?">What about email?</button></li>
-      <li><button type="button" data-ask="What is not decided?">What is not decided?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What happens when someone is removed?">What happens when someone is removed?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Can the backup provider read my documents?">Can the backup provider read my documents?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="How do offline edits merge?">How do offline edits merge?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What about email?">What about email?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is not decided?">What is not decided?</button></li>
     </ul>
     <div class="idea-ask">
       <form id="idea-ask-form" role="search">
         <label for="idea-ask-input" class="rd-eyebrow">Your question</label>
         <input id="idea-ask-input" type="text" name="q" autocomplete="off" placeholder="Ask about the idea" maxlength="300">
-        <button type="submit">Ask</button>
+        <button type="submit" class="rd-btn">Ask</button>
       </form>
       <div class="idea-log" id="idea-log" role="log" aria-live="polite" aria-label="Conversation"></div>
     </div>
@@ -621,6 +618,104 @@
   </div>
 </div>
 </main>
+
+<script>
+// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
+// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
+// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
+// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
+(function () {
+  if (window.__rdToc) return;
+  window.__rdToc = true;
+  var wide = window.matchMedia('(min-width: 1536px)');
+  function Rail(nav) {
+    var self = this;
+    this.nav = nav;
+    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+    this.indicator = nav.querySelector('.rd-toc__indicator');
+    this.sections = [];
+    this.index = new Map();
+    this.active = [];
+    this.anchorNavTarget = null;
+    this.links.forEach(function (a, i) {
+      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      self.sections.push(sec);
+      self.active.push(false);
+      if (sec) self.index.set(sec, i);
+    });
+    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
+    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
+    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
+    nav.classList.add('is-live');
+    this.fallback();
+    this.update();
+  }
+  Rail.prototype.onIntersect = function (entries) {
+    var self = this;
+    entries.forEach(function (e) {
+      var i = self.index.get(e.target);
+      if (i !== undefined) self.active[i] = e.isIntersecting;
+      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
+    });
+    if (this.active.indexOf(true) < 0) this.fallback();
+    this.update();
+  };
+  Rail.prototype.fallback = function () {
+    var vh = window.innerHeight;
+    for (var i = 0; i < this.sections.length; i++) {
+      var s = this.sections[i];
+      if (!s) continue;
+      var r = s.getBoundingClientRect();
+      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
+      else if (r.top > vh) break;
+    }
+  };
+  Rail.prototype.update = function () {
+    var self = this;
+    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
+  };
+  Rail.prototype.toggle = function () {
+    var links = this.links, a = this.active;
+    var i = links.length - 1, min = links.length - 1, max = -1;
+    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
+    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
+    while (i >= 0) { links[i].classList.remove('visible'); i--; }
+    if (!this.indicator) return;
+    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
+    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
+    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
+    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
+    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
+  };
+  Rail.prototype.scroll = function () {
+    if (this.anchorNavTarget || !wide.matches) return;
+    var vis = this.nav.querySelectorAll('a.visible');
+    if (!vis.length) return;
+    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
+    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
+    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
+  };
+  Rail.prototype.onClick = function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+  };
+  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
+  function openForWide() {
+    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
+  }
+  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
+  wide.addEventListener('change', refresh);
+  window.addEventListener('resize', refresh, { passive: true });
+  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
+  var mo = new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
+    });
+  });
+  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+  openForWide();
+})();
+</script>
 
 <script>
 // Tabs and history (design-system "Tabbed pages"). A tab is a ?tab= link. A section jump or a tab change is one
