@@ -53,11 +53,6 @@ export const navBarConfig: NavBarConfig = {
 			url: "/experiments/",
 		},
 		LinkPreset.About,
-		{
-			name: "GitHub",
-			url: "https://github.com/ningsuhen", // Internal links should not include the base path, as it is automatically added
-			external: true, // Show an external link icon and will open in a new tab
-		},
 	],
 };
 

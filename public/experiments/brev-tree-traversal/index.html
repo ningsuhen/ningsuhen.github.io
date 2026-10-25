@@ -7,7 +7,8 @@
 <meta name="description" content="Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, then see how that walk scores against flat rules and a 27B model. Replayed from a recorded run.">
 <!-- Experiment page. The site build injects the navbar, light/dark toggle and licence footer; none are hand-rolled here.
      Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Colours only via --rd-*.
-     Width: the default post column; nothing here needs the wide container. Icons: Lucide, inlined below. No external requests. -->
+     Width: rd-container--wide (the navbar's width, 73rem) so the walker can use two columns (node card left, path and verdict right)
+     and the compare table and failure strip span the navbar card. Prose stays at --rd-measure. Icons: Lucide, inlined below. No external requests. -->
 <link rel="stylesheet" href="/design-system/research.css">
 <style>
 .tt-card { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-3) 0; }
@@ -43,6 +44,21 @@
 .tt-verdict { margin: var(--rd-space-3) 0 0; }
 .tt-stack { display: flex; height: 1.4rem; border-radius: 0.35rem; overflow: hidden; margin: var(--rd-space-2) 0; background: var(--rd-line-soft); }
 .tt-stack span { display: block; height: 100%; min-width: 2px; width: calc(var(--w) * 1%); }
+/* Walker stage: path and verdict beside the node card on wide screens; one column (path, node, verdict) below 900px */
+.tt-stage { display: grid; gap: var(--rd-space-3); min-width: 0; margin-top: var(--rd-space-3); }
+.tt-side { min-width: 0; background: var(--rd-page-bg); border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); }
+.tt-side .rd-eyebrow { margin: 0; }
+.tt-side .tt-path { margin: var(--rd-space-1) 0 0; }
+#node-card, .tt-stage .tt-verdict { min-width: 0; margin: 0; }
+@media (min-width: 900px) {
+  .tt-stage { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+  .tt-side { grid-column: 2; grid-row: 1; }
+  #node-card { grid-column: 1; grid-row: 1 / span 2; }
+  .tt-stage .tt-verdict { grid-column: 2; grid-row: 2; }
+}
+@media (min-width: 1100px) {
+  .tt-opts { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--rd-space-3); }
+}
 .tt-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--rd-space-3); }
 .tt-grid3 > div { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); min-width: 0; }
 .tt-grid3 h3 { margin-top: 0; display: flex; gap: 0.4rem; align-items: center; }
@@ -94,7 +110,8 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
 <a href="#sources"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg>Sources</a>
 </nav>
 
-<main class="rd-container rd-prose">
+<!-- rd-container--wide: the walker, compare table and failure strip need the navbar's width; prose keeps --rd-measure. -->
+<main class="rd-container rd-container--wide rd-prose">
   <header class="rd-hero">
     <p class="rd-eyebrow">Experiment · brev-tree-traversal</p>
     <h1>Brev tree traversal · created 2026-10-24 · updated 2026-10-24</h1>
@@ -154,11 +171,14 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     </div>
     <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Keyboard: Left and Right arrow keys step back and forward while focus is inside this panel. Browser Back also steps back.</p>
 
-    <p class="rd-eyebrow">Path so far</p>
-    <ol class="tt-path" id="path" aria-label="Path so far"></ol>
-
-    <div id="node-card"></div>
-    <div class="tt-verdict" id="verdict"></div>
+    <div class="tt-stage">
+      <div class="tt-side">
+        <p class="rd-eyebrow">Path so far</p>
+        <ol class="tt-path" id="path" aria-label="Path so far"></ol>
+      </div>
+      <div id="node-card"></div>
+      <div class="tt-verdict" id="verdict"></div>
+    </div>
     <p class="tt-sr" id="live" aria-live="polite"></p>
   </section>
 
