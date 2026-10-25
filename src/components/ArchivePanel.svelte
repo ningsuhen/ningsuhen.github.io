@@ -11,8 +11,11 @@ export let categories: string[] = [];
 export let sortedPosts: Post[] = [];
 
 const params = new URLSearchParams(window.location.search);
-tags = params.has("tag") ? params.getAll("tag") : [];
-categories = params.has("category") ? params.getAll("category") : [];
+// Old filter links (?tag=Experiment) keep working after the section was renamed to Playground.
+const LEGACY: Record<string, string> = { Experiment: "Playground" };
+const renamed = (names: string[]) => names.map((n) => LEGACY[n] ?? n);
+tags = params.has("tag") ? renamed(params.getAll("tag")) : [];
+categories = params.has("category") ? renamed(params.getAll("category")) : [];
 const uncategorized = params.get("uncategorized");
 
 interface Post {

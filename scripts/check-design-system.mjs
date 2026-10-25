@@ -1,4 +1,4 @@
-// Design-system conformance for standalone pages (public/research/**, public/experiments/**, public/ideas/**), measured in a real browser
+// Design-system conformance for standalone pages (public/research/**, public/playground/**, public/ideas/**), measured in a real browser
 // over the built dist. Every page is held to the research design system (public/design-system/index.html, "Conformance")
 // and to the main site's post page, which is rendered in the same run at 1280/1440/1920, light and dark.
 // Run after `pnpm build`:  pnpm check:design-system  (CHROME_PATH, or `pnpm exec playwright-core install chromium`).

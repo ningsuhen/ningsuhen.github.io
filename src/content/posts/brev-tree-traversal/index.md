@@ -2,13 +2,13 @@
 title: "Brev tree traversal"
 published: 2026-10-24
 description: "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, then compare it with flat rules and a 27B model."
-tags: [Experiment]
-category: Experiment
+tags: [Playground]
+category: Playground
 thumbnail: ./thumb.webp
 draft: false
 ---
 
-Here you can watch laya, the 400M encoder in my Brev project, walk a decision tree on the Banking77 test set, one question at a time. It is a replay of one thing I measured. [Open the experiment](/experiments/brev-tree-traversal/).
+Here you can watch laya, the 400M encoder in my Brev project, walk a decision tree on the Banking77 test set, one question at a time. It is a replay of one thing I measured. [Open the experiment](/playground/brev-tree-traversal/).
 
 ## The tree
 

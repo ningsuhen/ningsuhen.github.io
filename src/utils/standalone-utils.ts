@@ -1,6 +1,6 @@
 import { standalonePages } from "../../scripts/lib/standalone-pages.mjs";
 
-/** URL paths (with base, trailing slash) of standalone HTML documents shipped from public/ (reports, experiments). Draft pages are not shipped, so they are left out. */
+/** URL paths (with base, trailing slash) of standalone HTML documents shipped from public/ (reports, playground demos). Draft pages are not shipped, so they are left out. */
 export function getStandalonePaths(base = import.meta.env.BASE_URL): string[] {
 	const prefix = base.replace(/\/$/, "");
 	return standalonePages().map((rel) => {

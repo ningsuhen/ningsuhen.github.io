@@ -54,6 +54,10 @@ export default defineConfig({
 	redirects: {
 		"/ai-economy/": "/research/ai-economy/",
 		"/brev-tree-benchmark/": "/research/brev-tree-benchmark/",
+		// Experiments was renamed to Playground. ecosimulation is a Draft (not shipped), so it lands on the list until it goes Live.
+		"/experiments/": "/playground/",
+		"/experiments/brev-tree-traversal/": "/playground/brev-tree-traversal/",
+		"/experiments/ecosimulation/": "/playground/",
 		"/web-development/2015/03/31/project-6/": "/",
 		"/mobile-app-development/2014/12/10/project-5/": "/",
 		"/web-development/mobile-app-development/2014/05/09/project-4/": "/",

@@ -21,18 +21,18 @@ function fixture() {
 		mkdirSync(path.dirname(path.join(pub, rel)), { recursive: true });
 		writeFileSync(path.join(pub, rel), `<!doctype html><title>x</title>${body}`);
 	};
-	writeFileSync(path.join(data, "experiments.json"), JSON.stringify({ items: [{ href: "/experiments/live-one/", status: "Live" }, { href: "/experiments/ecosimulation/", status: "Draft" }] }));
+	writeFileSync(path.join(data, "playground.json"), JSON.stringify({ items: [{ href: "/playground/live-one/", status: "Live" }, { href: "/playground/ecosimulation/", status: "Draft" }] }));
 	writeFileSync(path.join(data, "research.json"), JSON.stringify({ items: [{ href: "/research/report/", status: "Live" }] }));
 	writeFileSync(path.join(data, "ideas.json"), JSON.stringify({ items: [{ href: "/ideas/idea/", status: "draft" }] }));
-	page("experiments/ecosimulation/index.html", LEAK);
-	page("experiments/live-one/index.html", "<p>clean</p>");
+	page("playground/ecosimulation/index.html", LEAK);
+	page("playground/live-one/index.html", "<p>clean</p>");
 	return { root, data, pub };
 }
 
 test("draftHrefs collects Draft entries from all three data files", () => {
 	const { root, data } = fixture();
 	try {
-		assert.deepEqual([...draftHrefs(data)].sort(), ["/experiments/ecosimulation/", "/ideas/idea/"]);
+		assert.deepEqual([...draftHrefs(data)].sort(), ["/playground/ecosimulation/", "/ideas/idea/"]);
 	} finally {
 		rmSync(root, { recursive: true, force: true });
 	}
@@ -42,13 +42,13 @@ test("a Draft page is skipped by the browser checks but still scanned by leaks",
 	const { root, data, pub } = fixture();
 	try {
 		const drafts = draftHrefs(data);
-		const pages = ["experiments/ecosimulation/index.html", "experiments/live-one/index.html", "research/report/index.html"];
+		const pages = ["playground/ecosimulation/index.html", "playground/live-one/index.html", "research/report/index.html"];
 		// The browser checks (check-standalone-pages, check-design-system) walk only these pages.
-		assert.deepEqual(pages.filter((rel) => !isDraftPage(rel, drafts)), ["experiments/live-one/index.html", "research/report/index.html"]);
+		assert.deepEqual(pages.filter((rel) => !isDraftPage(rel, drafts)), ["playground/live-one/index.html", "research/report/index.html"]);
 		// check:leaks walks the whole public/ tree, Draft pages included.
 		const leaks = spawnSync(process.execPath, [path.join(ROOT, "scripts/check-public-leaks.mjs"), pub], { encoding: "utf8" });
 		assert.equal(leaks.status, 1, leaks.stdout + leaks.stderr);
-		assert.match(leaks.stdout, /FAIL \[home-path\].*experiments\/ecosimulation\/index\.html/);
+		assert.match(leaks.stdout, /FAIL \[home-path\].*playground\/ecosimulation\/index\.html/);
 	} finally {
 		rmSync(root, { recursive: true, force: true });
 	}
