@@ -75,6 +75,7 @@ const RULES = {
 	"rail-indicator": "active rail indicator has the same style as the main site's",
 	"rail-highlight": "every heading in view is highlighted in the rail, as on the main post",
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
+	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -307,6 +308,11 @@ const probeStructure = (canon) => {
 		licCount: document.querySelectorAll("div[data-site-license]").length,
 		crumbBands: document.querySelectorAll("[data-site-breadcrumb]").length,
 		strayCrumbs: [...document.querySelectorAll('.rd-breadcrumb, nav[aria-label="Breadcrumb"]')].filter((n) => !n.closest("[data-site-breadcrumb]")).length,
+		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
+		// A div/span styled as a button is not focusable and breaks keyboard use.
+		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+		})),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -713,6 +719,7 @@ await Promise.all(pages.map(async (rel) => {
 				[s.licCount !== 1, "injected-once", `license card present ${s.licCount} time(s)`],
 				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
 				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
+				[s.btns.some((b) => !b.operable), "button", "a .rd-btn is not a keyboard-operable <button> (or role=button)"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
