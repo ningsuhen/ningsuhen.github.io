@@ -1,8 +1,9 @@
 {
-	"version": "1.0.0",
-	"hash": "416deb68abc6",
+	"version": "1.1.0",
+	"hash": "4f6c3f68257b",
 	"files": {
-		"rd.css": "416deb68abc6",
-		"research.css": "416deb68abc6"
+		"rd.css": "4f6c3f68257b",
+		"research.css": "416deb68abc6",
+		"rd.js": "5a5ac4e36f2a"
 	}
 }

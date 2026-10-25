@@ -142,7 +142,7 @@ const add = (page, rule, msg) => {
 
 // bundle-fresh (repo-level): the committed generated files must equal a fresh build of the sources.
 // A stale bundle means someone edited src/design-system/ without running `pnpm build:design-system`.
-for (const problem of checkFresh()) failures.push(`bundle-fresh: ${problem}`);
+for (const problem of (await checkFresh()).problems) failures.push(`bundle-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
