@@ -10,6 +10,8 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { checkFresh } from "./build-design-system.mjs";
+import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -28,6 +30,8 @@ const RULES = {
 	"head-order": "charset then viewport are the first two head elements",
 	"title-stamp": "title and visible h1 end with · created YYYY-MM-DD · updated YYYY-MM-DD",
 	"css-canonical": "research.css is linked, or inlined verbatim (whitespace-insensitive)",
+	"bundle-fresh": "the shipped design-system bundle (rd.css, research.css alias, manifest.json) equals a fresh build of src/design-system/",
+	"bundle-linked": "the page links the design-system bundle instead of inlining a frozen copy",
 	"body-class": '<body class="rd-body">',
 	"container-class": "main content uses rd-container, rd-container--wide or rd-tabbed",
 	"container-width": "rd-container is 872px (54.5rem); wide/tabbed content is the navbar card width",
@@ -45,6 +49,7 @@ const RULES = {
 	overflow: "no horizontal page overflow at 1440 and 375",
 	"tap-target": "interactive controls are at least 24px at 375",
 	"injected-once": "the site navbar and the license card are each present exactly once",
+	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
 	axe: "no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
@@ -53,6 +58,7 @@ const RULES = {
 	"tab-deeplink": "each tab sets its address (?tab= or a hash) that opens that tab on load",
 	"tab-history": "each tab change adds exactly one history entry; Back restores the previous tab",
 	"tab-rail": "every tab panel has the shared rd-toc",
+	"tab-width": "in every tab from 768px up, the panel, its tab body and their sections span the navbar card's edges; a nested section spans its parent",
 	"typography-scale": "h1/h2/h3/p/td font size, line height and weight match the template (compact)",
 	"nav-card": "navbar card position and size equal the main site's",
 	"nav-links": "navbar link positions equal the main site's",
@@ -78,7 +84,8 @@ function htmlPages(dir = "") {
 		return e.name.endsWith(".html") ? [rel] : [];
 	});
 }
-const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3);
+const drafts = draftHrefs();
+const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -134,6 +141,10 @@ const add = (page, rule, msg) => {
 	if (!found.has(k)) found.set(k, []);
 	found.get(k).push(msg);
 };
+
+// bundle-fresh (repo-level): the committed generated files must equal a fresh build of the sources.
+// A stale bundle means someone edited src/design-system/ without running `pnpm build:design-system`.
+for (const problem of (await checkFresh()).problems) failures.push(`bundle-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
@@ -164,6 +175,11 @@ for (const rel of pages) {
 	if (!/<meta[^>]+name=["']ds-contract["']/i.test(src)) warnings.push(`${page}: no <meta name="ds-contract"> version marker (optional for now)`);
 	const cssBytes = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].reduce((n, m) => n + m[1].length, 0);
 	if (cssBytes > CSS_BUDGET) warnings.push(`${page}: inline <style> is ${Math.round(cssBytes / 1000)} KB (budget ${CSS_BUDGET / 1000} KB)`);
+	// bundle-linked (warning): a page that inlines the design system carries a frozen copy that goes
+	// stale when the bundle changes. Link the bundle (/design-system/rd.css) instead of inlining it.
+	// Signal: the token *definitions* (not just var() usage) appear in an inline <style>.
+	const inlinesBundle = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].some((m) => /--rd-page-bg\s*:/.test(m[1]));
+	if (inlinesBundle) warnings.push(`${page}: [bundle-linked] inlines the design system; link /design-system/rd.css instead so it stays current`);
 }
 
 // ---- Browser helpers ----------------------------------------------------------------------------------------------------
@@ -271,7 +287,7 @@ const probeStructure = (canon) => {
 		headOrder: kids[0]?.matches("meta[charset]") && kids[1]?.matches('meta[name="viewport"]') ? "ok" : kids.slice(0, 2).map((k) => k.outerHTML.slice(0, 40)).join(" | "),
 		titleOk: stamp.test(document.title) ? "ok" : document.title,
 		h1Ok: h1 && stamp.test(h1.textContent.trim()) ? "ok" : (h1?.textContent || "no visible h1").trim(),
-		cssInline: flat.includes(canon) || links.some((h) => /(^|\/)design-system\/research\.css$/.test(h)),
+		cssInline: flat.includes(canon) || links.some((h) => /(^|\/)design-system\/(research|rd)\.css(\?|$)/.test(h)),
 		bodyRd: document.body.classList.contains("rd-body"),
 		mainClass: !!main && ["rd-container", "rd-container--wide", "rd-tabbed"].some((c) => main.classList.contains(c)),
 		mainWide: !!main && main.classList.contains("rd-container") && !main.classList.contains("rd-container--wide"),
@@ -292,6 +308,8 @@ const probeStructure = (canon) => {
 		lightFooters: document.querySelectorAll("footer").length,
 		navCount: document.querySelectorAll("div[data-site-navbar]").length,
 		licCount: document.querySelectorAll("div[data-site-license]").length,
+		crumbBands: document.querySelectorAll("[data-site-breadcrumb]").length,
+		strayCrumbs: [...document.querySelectorAll('.rd-breadcrumb, nav[aria-label="Breadcrumb"]')].filter((n) => !n.closest("[data-site-breadcrumb]")).length,
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -377,20 +395,26 @@ const probeChrome = (isRef) => {
 	const footRadius = footEl ? parseFloat(getComputedStyle(footEl).borderTopLeftRadius) : null;
 	const footGap = footRect && contentRect ? Math.round(footRect.y - contentRect.b) : null;
 	const rail = isRef ? [...document.querySelectorAll("table-of-contents")].find(vis) : [...document.querySelectorAll(".rd-toc")].find(vis);
+	// Geometry box: the main post's fixed #toc-inner-wrapper and the standalone .rd-toc both pin their top to the
+	// navbar bottom, so they compare. The inner table-of-contents sits 32px lower (a top spacer) and would not.
+	const railBox = isRef ? document.querySelector("#toc-inner-wrapper") ?? rail : rail;
 	const railEntries = rail ? [...rail.querySelectorAll(isRef ? ":scope > a" : "a")] : [];
+	// The active-heading indicator is a dashed box on both sides (#active-indicator / .rd-toc__indicator), not a
+	// border on the active link. Read its border-left style + width on each side so the two values have the same shape.
 	const railIndicator = rail
 		? isRef
-			? rail.querySelector("#active-indicator")
-				? getComputedStyle(rail.querySelector("#active-indicator")).borderTopStyle
-				: "none"
+			? (() => {
+					const i = rail.querySelector("#active-indicator");
+					return i ? `${getComputedStyle(i).borderLeftStyle} ${getComputedStyle(i).borderLeftWidth}` : "none";
+				})()
 			: (() => {
-					const a = rail.querySelector('a[aria-current="location"]') || railEntries[0];
-					return a ? `${getComputedStyle(a).borderLeftStyle} ${getComputedStyle(a).borderLeftWidth}` : "none";
+					const i = rail.querySelector(".rd-toc__indicator");
+					return i ? `${getComputedStyle(i).borderLeftStyle} ${getComputedStyle(i).borderLeftWidth}` : "none";
 				})()
 		: null;
 	const railText = railEntries[0] ? (isRef ? railEntries[0].querySelector("div") : railEntries[0]) : null;
 	const railTypo = railText ? { fs: parseFloat(getComputedStyle(railText).fontSize), c: rgb(getComputedStyle(railText).color) } : null;
-	const railRect = rect(rail);
+	const railRect = rect(railBox);
 	const railOff = railRect && navRect ? { x: Math.round(railRect.x - navRect.r), w: Math.round(railRect.w), y: Math.round(railRect.y - navRect.b) } : null;
 	const prose = isRef ? [...document.querySelectorAll(".prose")].find((e) => e.querySelector("h2")) : [...document.querySelectorAll(".rd-prose")].find((e) => e.querySelector("h2"));
 	const proseTypo = prose
@@ -470,7 +494,9 @@ const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
 const r1 = (v) => (v == null ? "missing" : `${Math.round(v * 10) / 10}px`);
 
 function compareAt(page, w, t, c, r) {
-	const bad = (rule, msg) => add(page, rule, `@${w} ${t}: ${msg}`);
+	const bad = (rule, msg) => {
+		if (!allowedBy.get(page)?.has(rule)) add(page, rule, `@${w} ${t}: ${msg}`); // a page's ds-allow covers the parity rules too
+	};
 	const cmp = (rule, label, a, b, tol) => {
 		if (!near(a, b, tol)) bad(rule, `${label} ${r1(b)}, main post ${r1(a)}`);
 	};
@@ -538,6 +564,60 @@ function compareAt(page, w, t, c, r) {
 	// Highlight: the same rule as the main TOC.
 	if (c.railPresent && c.hl && r.hl && !c.hl.same) bad("rail-highlight", `${c.hl.lit} of ${c.hl.inView} headings in view are highlighted in the rail (main post: all of them)`);
 	if (c.railPresent && r.railPresent && c.hl === null) bad("rail-highlight", "no heading of the contents rail is ever in view, so the highlight could not be checked");
+}
+
+// Tab content edges (tab-width): every tab panel's blocks against the navbar card. Top level (the panel, .rd-tab__body
+// and their direct section children) must sit on the card's edges; a section nested in a stacking parent must span the
+// parent's content box (catches a max-width cap like 72ch on a card). Below 768px the card is full-bleed and the content
+// keeps a gutter, so only 768px and up are measured.
+const TAB_WIDTHS = [1440, 1280, 1024, 768];
+const probeTabEdges = () => {
+	const nav = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
+	const panel = [...document.querySelectorAll(".rd-tabpanel")].find((p) => p.getBoundingClientRect().width > 0);
+	if (!nav || !panel) return { issues: [nav ? "no visible .rd-tabpanel" : "navbar card not found"] };
+	const SEC = "section, .section, .rd-tabsec, .rd-tab__body";
+	const shown = (el) => {
+		const s = getComputedStyle(el);
+		return el.getBoundingClientRect().width > 0 && s.position !== "fixed" && s.position !== "absolute";
+	};
+	const stacking = (el) => {
+		const s = getComputedStyle(el);
+		return s.display === "block" || (s.display.includes("grid") && s.gridTemplateColumns.trim().split(/\s+/).length === 1) || (s.display.includes("flex") && s.flexDirection.startsWith("column"));
+	};
+	const name = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/).join(".")}` : ""}`;
+	const r1 = (v) => Math.round(v * 10) / 10;
+	const issues = [];
+	const top = [panel, ...[...panel.children].filter((k) => k.matches(SEC))];
+	for (const b of panel.querySelectorAll(":scope > .rd-tab__body")) top.push(...[...b.children].filter((k) => k.matches(SEC)));
+	for (const el of top.filter(shown)) {
+		const b = el.getBoundingClientRect();
+		if (Math.abs(b.left - nav.left) > 1 || Math.abs(b.right - nav.right) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, navbar card ${r1(nav.left)}..${r1(nav.right)}`);
+	}
+	for (const el of [...panel.querySelectorAll(SEC)].filter((e) => !top.includes(e) && !e.closest(".rd-toc") && shown(e))) {
+		const par = el.parentElement;
+		if (!stacking(par)) continue;
+		const ps = getComputedStyle(par), pb = par.getBoundingClientRect(), b = el.getBoundingClientRect();
+		const l = pb.left + parseFloat(ps.borderLeftWidth) + parseFloat(ps.paddingLeft);
+		const r = pb.right - parseFloat(ps.borderRightWidth) - parseFloat(ps.paddingRight);
+		if (Math.abs(b.left - l) > 1 || Math.abs(b.right - r) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, its parent ${name(par)} ${r1(l)}..${r1(r)}`);
+	}
+	return { issues };
+};
+async function tabWidthChecks(page, ok) {
+	if (ok.has("tab-width")) return;
+	for (const [w, t] of [...TAB_WIDTHS.map((x) => [x, "light"]), [1440, "dark"]]) {
+		const { ctx } = await newCtx({ width: w, height: DESKTOP_H }, t);
+		const p = await open(ctx, page);
+		const tabs = p.locator("[role=tablist] [role=tab]");
+		const names = await tabs.allTextContents();
+		for (let i = 0; i < names.length; i++) {
+			await tabs.nth(i).click();
+			await p.waitForLoadState("load");
+			await p.waitForTimeout(100);
+			for (const m of (await p.evaluate(probeTabEdges)).issues) add(page, "tab-width", `@${w} ${t} [${names[i].trim()}]: ${m}`);
+		}
+		await ctx.close();
+	}
 }
 
 // ---- Per page -------------------------------------------------------------------------------------------------------------
@@ -633,6 +713,8 @@ await Promise.all(pages.map(async (rel) => {
 				[errors.length > 0, "console-errors", errors.slice(0, 2).join(" | ")],
 				[s.navCount !== 1, "injected-once", `site navbar present ${s.navCount} time(s)`],
 				[s.licCount !== 1, "injected-once", `license card present ${s.licCount} time(s)`],
+				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
+				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
@@ -665,6 +747,7 @@ await Promise.all(pages.map(async (rel) => {
 		await ctx.close();
 	}
 	await tabChecks(page, ok);
+	await tabWidthChecks(page, ok);
 }));
 await browser.close();
 server.close();

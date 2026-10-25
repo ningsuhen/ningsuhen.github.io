@@ -1,6 +1,25 @@
 @tailwind components;
 
 @layer components {
+    /* Keyboard focus indicator for interactive elements (mouse clicks don't trigger it).
+       Accent ink (--btn-content, like LicenseNote): 3:1+ against card and page; --primary is only 2.3-2.7:1 in light. */
+    a:focus-visible,
+    button:focus-visible,
+    summary:focus-visible,
+    [tabindex]:focus-visible {
+        @apply outline-2 outline-[var(--btn-content)] outline-offset-2;
+    }
+
+    /* Keyboard-only skip link: off-screen until focused, then pinned above the navbar. */
+    .skip-link {
+        @apply fixed top-2 left-2 z-[100] px-4 py-2 rounded-lg font-bold
+        bg-[var(--card-bg)] text-[var(--btn-content)] shadow-lg
+        transform -translate-y-[200%] transition;
+    }
+    .skip-link:focus {
+        @apply translate-y-0 outline-2 outline-[var(--btn-content)] outline-offset-2;
+    }
+
     .card-base {
         @apply rounded-[var(--radius-large)] overflow-hidden bg-[var(--card-bg)] transition;
     }
@@ -17,7 +36,7 @@
         @apply -translate-y-1 opacity-0 pointer-events-none
     }
     .search-panel mark {
-        @apply bg-transparent text-[var(--primary)]
+        @apply bg-transparent text-[var(--btn-content)]
     }
 
     .btn-card {
@@ -29,14 +48,14 @@
     }
     .btn-plain {
         @apply transition relative flex items-center justify-center bg-none
-        text-black/75 hover:text-[var(--primary)] dark:text-white/75 dark:hover:text-[var(--primary)];
+        text-black/75 hover:text-[var(--btn-content)] dark:text-white/75 dark:hover:text-[var(--btn-content)];
         &:not(.scale-animation) {
             @apply hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
         }
         &.scale-animation {
             @apply expand-animation;
             &.current-theme-btn {
-                @apply before:scale-100 before:opacity-100 before:bg-[var(--btn-plain-bg-hover)] text-[var(--primary)]
+                @apply before:scale-100 before:opacity-100 before:bg-[var(--btn-plain-bg-hover)] text-[var(--btn-content)]
             }
         }
     }
@@ -73,8 +92,9 @@
     .text-75 {
         @apply text-black/75 dark:text-white/75
     }
+    /* Secondary text (meta, TOC, search). 0.56 in light: 4.5:1+ on card, page, button and TOC-active grounds. */
     .text-50 {
-        @apply text-black/50 dark:text-white/50
+        @apply text-black/[0.56] dark:text-white/50
     }
     .text-30 {
         @apply text-black/30 dark:text-white/30
@@ -129,5 +149,34 @@
     * {
         color: var(--codeblock-bg);
     }
+  }
+}
+/* Skeleton placeholder: reserves the exact space of late-loading UI (comments, listen player) so it never jumps. */
+.skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--btn-regular-bg);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+}
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
   }
 }

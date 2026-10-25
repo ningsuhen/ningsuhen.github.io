@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ds-allow" content="rail-type: the shared rail uses the main TOC 14px entry text; the check reads the main TOC 12px label. Design-system decision.">
 <title>Brev tree traversal · created 2026-10-24 · updated 2026-10-25</title>
 <meta name="description" content="Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, see how that walk scores against flat rules and a 27B model, and time the same encoder on your own GPU in the browser.">
 <!-- Experiment page with three tabs: Walk (a replay of a recorded run), Speed test (live, in the visitor's browser), Caveats & sources.
@@ -13,12 +14,11 @@
      Tabs, sections and history: the model of /research/brev-tree-benchmark/ (scripts copied from it, marked "traversal:" where
      they differ). Icons: Lucide, inlined below.
      Network: the page itself makes no external request. The laya model is fetched only after the visitor consents on the
-     Speed test tab (host listed there), or read from Cache Storage; the vendored ONNX Runtime Web (vendor/LICENSES.txt) is
-     imported only inside a run. -->
+     Speed test tab (hosts listed there), or read from Cache Storage. ONNX Runtime Web: its small JavaScript is the site's
+     shared copy at /tts/vendor/ort/; its WebAssembly binary comes through the site's shared loader /tts/ort-runtime.js
+     (pinned public Hugging Face repo, size and SHA-256 checked, Cache Storage). Both load only inside a run. -->
 <link rel="stylesheet" href="/design-system/research.css">
 <style>
-/* page gutter: rd-tabbed has no side padding of its own (the benchmark report's body rule, 16px or the safe area) */
-body.rd-body { padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); }
 /* sections are grid items of .rd-tab__body: without min-width 0 a wide table would widen the page instead of scrolling in its wrapper */
 .rd-tabsec { min-width: 0; }
 /* hashes and repo ids are long unbroken strings: let them wrap at 375px instead of widening the page */
@@ -334,7 +334,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     </div>
     <div class="rd-callout rd-callout--warn">
       <p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Different runtimes, one checked GPU</p>
-      The benchmark's laya figure is PyTorch fp16 on an RTX 4060; this page runs an fp16 ONNX conversion in ONNX Runtime Web. That file matched native fp32 on 47 of 47 recorded passes on one GPU (Apple Metal, Chrome); the full-set parity run was not done. See <a href="#speed-caveats">the speed-test caveats</a>.
+      The benchmark's laya figure is PyTorch fp16 on an RTX 4060; this page runs an fp16 ONNX conversion in ONNX Runtime Web. That file matched native fp32 on 47 of 47 recorded passes on one GPU (Apple Metal, Chrome, ONNX Runtime Web 1.31-dev; not yet repeated on the 1.27.0 runtime this page now uses); the full-set parity run was not done. See <a href="#speed-caveats">the speed-test caveats</a>.
     </div>
   </section>
 
@@ -363,12 +363,13 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
           <caption>What will be downloaded, and from where</caption>
           <thead><tr><th>Part</th><th class="rd-num">Size</th><th>File</th><th>Host contacted</th></tr></thead>
           <tbody>
-            <tr><td><strong>laya fp16</strong></td><td class="rd-num" id="c-laya-size"></td><td><code>laya.fp16-nonan.onnx</code> (fp16, NaN guards rewritten). Inputs are pre-tokenised in this page, so no tokenizer is fetched. The runtime library (ONNX Runtime Web, about 27 MB) is served from this site.</td><td id="c-laya-host"></td></tr>
+            <tr><td><strong>laya fp16</strong></td><td class="rd-num" id="c-laya-size"></td><td><code>laya.fp16-nonan.onnx</code> (fp16, NaN guards rewritten). Inputs are pre-tokenised in this page, so no tokenizer is fetched.</td><td id="c-laya-host"></td></tr>
+            <tr><td><strong>ONNX Runtime Web 1.27.0</strong></td><td class="rd-num" id="c-ort-size"></td><td><code>ort-wasm-simd-threaded.asyncify.wasm</code>, the runtime's WebAssembly binary, from a pinned commit; size and SHA-256 are checked before use. Shared with the rest of this site. Its small JavaScript is served from this site.</td><td>huggingface.co (repository <code>ningsuhen/onnxruntime-web-1.27.0</code>), which may redirect to its CDN</td></tr>
           </tbody>
         </table>
       </div>
       <p class="gs-dl"><span class="rd-chip" id="dl-chip"><svg class="rd-icon" aria-hidden="true"><use href="#i-hard-drive"/></svg><span id="dl-state">Checking this browser's cache...</span></span></p>
-      <p class="gs-note">The file is kept in your browser's Cache Storage, so a later visit starts without downloading it again; the page asks the browser to keep it (persistent storage). Remove download deletes it.</p>
+      <p class="gs-note">Both files are kept in your browser's Cache Storage, so a later visit starts without downloading them again; the page asks the browser to keep them (persistent storage). Remove download deletes both.</p>
       <p class="gs-note"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg> Sustained GPU load drains a laptop battery and heats it; plug in, and expect later runs to be slower if the machine throttles. Switching tab while a run is going reloads the page and stops it.</p>
 
       <fieldset class="gs-fs">
@@ -481,7 +482,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     </div>
     <div class="rd-callout rd-callout--warn">
       <p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>An fp16 conversion of laya, checked on a subset</p>
-      The file is an ONNX fp16 conversion in which the 30 attention IsNaN guards are rewritten as Not(Equal(p, p)) so they run on the GPU (same arithmetic). In Chrome with WebGPU on Apple Metal its top option equalled native fp32 on 47 of 47 recorded passes (largest probability difference 0.021). Natively, on a 134-message subset, 0 of 3,082 node decisions flipped and the final intent agreed on 134 of 134. The full 616-message parity run was not done. One GPU and one browser have been checked; yours may differ, which is why the page compares every output with native fp32.
+      The file is an ONNX fp16 conversion in which the 30 attention IsNaN guards are rewritten as Not(Equal(p, p)) so they run on the GPU (same arithmetic). In Chrome with WebGPU on Apple Metal, under ONNX Runtime Web 1.31-dev, its top option equalled native fp32 on 47 of 47 recorded passes (largest probability difference 0.021). This page now runs the site's shared ONNX Runtime Web 1.27.0, and that browser check has not been repeated on 1.27.0. Natively, on a 134-message subset, 0 of 3,082 node decisions flipped and the final intent agreed on 134 of 134. The full 616-message parity run was not done. One GPU and one browser have been checked; yours may differ, which is why the page compares every output with native fp32.
     </div>
     <ul class="rd-icon-list rd-icon-list--warn">
       <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>Why not the smaller int8 file: under WebGPU it runs mostly on CPU kernels (all 122 MatMulInteger and 122 DynamicQuantizeLinear nodes were placed on the CPU provider) and it gave the wrong top option on 15 of 47 recorded passes (32%).</span></li>
@@ -498,7 +499,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
       <li id="ref-3">laya (Convai Innovations), a 400M typed-decisions encoder, scored per node with option names and criteria.</li>
       <li id="ref-4">Speed test, benchmark numbers: ledger H8 and the T-crit timing record (300 messages, batch 1, RTX 4060) for the walk; H10 for the root question; H174 and the laya-fp16-parity run for the fp16 file (native ONNX Runtime 1.30.0 on a CPU; browser: Chrome 155, ORT-web 1.31-dev, WebGPU on Apple Metal-3).</li>
       <li id="ref-5">laya ONNX fp16 conversion, <code>laya.fp16-nonan.onnx</code>: public Hugging Face repository <code>ningsuhen/laya-typed-decisions-onnx</code>, file <code>fp16/laya.fp16-nonan.onnx</code>, 846,157,544 B, sha256 06405e8bae697839ee2654bef55b5fd26b3435ac479980e48da6cb6b777ce46a.</li>
-      <li id="ref-6">Runtime library, vendored in this page's folder (one source-map comment removed): ONNX Runtime Web 1.31.0-dev.20260914 (MIT). Licence text: <a href="/experiments/brev-tree-traversal/vendor/LICENSES.txt">vendor/LICENSES.txt</a>.</li>
+      <li id="ref-6">Runtime library: ONNX Runtime Web 1.27.0 (MIT), the copy this site shares. JavaScript served from this site; the WebAssembly binary from the public Hugging Face repository <code>ningsuhen/onnxruntime-web-1.27.0</code> at a pinned commit, checked against its size and SHA-256 before use. Licence text: <a href="/tts/LICENSES.txt">/tts/LICENSES.txt</a>.</li>
     </ol>
     <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Walk data: per-node probabilities for 60 sampled test messages (seed 42), exported from the recorded run on 2026-10-24. Benchmark numbers on the Speed test tab: ledger as of 2026-10-24. Your speed measurements are produced live in your browser and are not stored or sent anywhere.</p>
   </section>
@@ -773,6 +774,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
   };
   Rail.prototype.toggle = function () {
     var links = this.links, a = this.active;
+    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
     var i = links.length - 1, min = links.length - 1, max = -1;
     while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
     while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
@@ -1108,7 +1110,9 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
 const LAYA_BASE_URL = 'https://huggingface.co/ningsuhen/laya-typed-decisions-onnx/resolve/main/fp16/';
 const LAYA_HOST_READY = true;            // public, CORS and range requests verified; fetched at run time, never committed to this site
 const LAYA_FILE = 'laya.fp16-nonan.onnx';
-const VENDOR = '/experiments/brev-tree-traversal/vendor/';
+const ORT_BASE = '/tts/vendor/ort/';    // the site's shared ONNX Runtime Web JavaScript (1.27.0); the wasm comes from /tts/ort-runtime.js
+const ortRuntime = () => import('/tts/ort-runtime.js');
+let ORT_BYTES = 0;                      // set in init() from the loader's pin
 const N_DECISIONS = 50, N_RUNS = 3, WARMUP = 3;
 const CACHE_LAYA = 'brev-traversal-laya-fp16-v1';
 
@@ -1120,8 +1124,8 @@ const f1 = (x) => (x == null || !isFinite(x) ? 'n/a' : x.toFixed(1));
 const pct = (xs, q) => { const s = [...xs].sort((a, b) => a - b); if (!s.length) return NaN; const i = (s.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); };
 const median = (xs) => pct(xs, 0.5);
 
-/* ---- local-only override (?tab=speed&laya=http://127.0.0.1:PORT/): honoured ONLY on 127.0.0.1 / localhost ---- */
-const isLocal = ['127.0.0.1', 'localhost'].includes(location.hostname);
+/* ---- local-only override (?tab=speed&laya=http://localhost:PORT/): honoured ONLY when the page is served from localhost ---- */
+const isLocal = location.hostname === 'localhost';
 const qs = new URLSearchParams(location.search);
 const ovLaya = isLocal && qs.get('laya') ? qs.get('laya').replace(/\/?$/, '/') : null;
 const layaBase = ovLaya || LAYA_BASE_URL;
@@ -1129,7 +1133,7 @@ const layaUrl = layaBase + LAYA_FILE;
 const layaReady = !!ovLaya || LAYA_HOST_READY;
 const layaHostLabel = ovLaya ? new URL(layaBase).host + ' (local override)' : 'huggingface.co, which redirects the file to its CDN (us.aws.cdn.hf.co or another *.hf.co host)';
 
-const S = { dev: null, laya: null, running: false, stop: false, abort: null, contacts: new Set(), cached: false };
+const S = { dev: null, laya: null, running: false, stop: false, abort: null, contacts: new Set(), cached: false, ortCached: false };
 
 function setStatus(t, err) { const e = $('status'); e.textContent = t; e.classList.toggle('gs-err', !!err); }
 function setBar(frac) { $('bar').style.setProperty('--w', frac == null ? 0 : Math.max(0, Math.min(100, frac * 100)).toFixed(1)); }
@@ -1178,7 +1182,7 @@ function renderProbe(p) {
   rows.forEach(([k, v]) => { dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', null, v)); });
   const w = $('probe-warn'); w.textContent = '';
   if (p.software) w.appendChild(callout('warn', 'Software adapter', 'This adapter is a software renderer, not a GPU. Numbers will be far below real hardware and meaningless as a GPU comparison.'));
-  if (ovLaya) w.appendChild(callout('warn', 'Local override active', 'The model URL is taken from the query string (allowed only on 127.0.0.1 or localhost).'));
+  if (ovLaya) w.appendChild(callout('warn', 'Local override active', 'The model URL is taken from the query string (allowed only on localhost).'));
 }
 
 /* ============ gates: no silent CPU run ============ */
@@ -1213,18 +1217,20 @@ async function cachedResponse() {
 }
 async function showCache() {
   const r = await cachedResponse();
-  S.cached = !!r && Number(r.headers.get('content-length') || D.layaBytes) === D.layaBytes;
+  try { S.ortCached = await (await ortRuntime()).ortRuntimeCached(); } catch (e) { S.ortCached = false; }
+  S.cached = S.ortCached && !!r && Number(r.headers.get('content-length') || D.layaBytes) === D.layaBytes;
   const chip = $('dl-chip');
   chip.className = 'rd-chip ' + (S.cached ? 'rd-chip--good' : 'rd-chip--neutral');
   $('dl-state').textContent = typeof caches === 'undefined' ? 'Cache Storage is unavailable here: every run downloads the model again.' :
-    S.cached ? 'Downloaded: the model (' + fmtMB(D.layaBytes) + ') is in this browser\'s cache. Start reads it from there; nothing is downloaded.' :
-      'Not downloaded yet: Start downloads ' + fmtMB(D.layaBytes) + ' once, after you agree below.';
+    S.cached ? 'Downloaded: the model (' + fmtMB(D.layaBytes) + ') and the runtime are in this browser\'s cache. Start reads them from there; nothing is downloaded.' :
+      'Not downloaded yet: Start downloads ' + fmtMB(D.layaBytes + (S.ortCached ? 0 : ORT_BYTES)) + ' once, after you agree below.';
   syncStart();
 }
 async function removeDownload() {
   try {
     const before = navigator.storage?.estimate ? (await navigator.storage.estimate()).usage : null;
     await caches.delete(CACHE_LAYA);
+    await (await ortRuntime()).removeOrtRuntime();
     const after = navigator.storage?.estimate ? (await navigator.storage.estimate()).usage : null;
     setStatus('Download removed.' + (before != null && after != null ? ' Freed about ' + fmtMB(Math.max(0, before - after)) + ' (browser storage estimate).' : ''));
   } catch (e) { setStatus('Could not remove the download: ' + e.message, true); }
@@ -1233,7 +1239,7 @@ async function removeDownload() {
 
 /* ============ model bytes: cache first, else one consented download ============ */
 function noteHost(u) { try { S.contacts.add(new URL(u, location.href).host); } catch (e) {} showContacts(); }
-function showContacts() { $('contacts').textContent = S.contacts.size ? 'Hosts contacted for the model: ' + [...S.contacts].join(', ') : 'No model host has been contacted.'; }
+function showContacts() { $('contacts').textContent = S.contacts.size ? 'Hosts contacted for the downloads: ' + [...S.contacts].join(', ') : 'No download host has been contacted.'; }
 async function fetchLaya(signal) {
   const total = D.layaBytes;
   const hit = await cachedResponse();
@@ -1273,9 +1279,22 @@ function explain(e) {
 }
 
 /* ============ laya run ============ */
-async function loadOrt() {
-  const ort = await import(VENDOR + 'ort.webgpu.bundle.min.mjs');
-  ort.env.wasm.wasmPaths = VENDOR; ort.env.wasm.numThreads = 1; ort.env.wasm.proxy = false; ort.env.logLevel = 'error';
+/* The shared loader returns the verified wasm bytes (Cache Storage, else the pinned host) and hooks window.ort so ONNX
+   Runtime gets them as env.wasm.wasmBinary with numThreads 1. The JavaScript is the site's shared copy, loaded once. */
+async function loadOrt(signal) {
+  const rt = await ortRuntime();
+  if (!S.ortCached) noteHost(rt.ORT_WASM_URL);
+  const wasmBinary = await rt.ensureOrtRuntime({ signal, onProgress: (f) => { setBar(f); setStatus('Runtime: ' + (S.ortCached ? 'reading the cached copy' : 'downloading ' + (f * ORT_BYTES / 1e6).toFixed(0) + ' of ' + (ORT_BYTES / 1e6).toFixed(0) + ' MB') + '...'); } });
+  if (!window.ort?.InferenceSession) {
+    await new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = ORT_BASE + 'ort.webgpu.min.js';
+      sc.onload = resolve; sc.onerror = () => reject(new Error('could not load the ONNX Runtime script from this site'));
+      document.head.appendChild(sc);
+    });
+  }
+  const ort = window.ort;
+  ort.env.wasm.wasmPaths = ORT_BASE; ort.env.wasm.wasmBinary = wasmBinary; ort.env.wasm.numThreads = 1; ort.env.wasm.proxy = false; ort.env.logLevel = 'error';
   return ort;
 }
 function softmaxT(logits, k, t) { let mx = -Infinity; for (let i = 0; i < k; i++) mx = Math.max(mx, logits[i] / t); const e = new Array(k); let s = 0; for (let i = 0; i < k; i++) { e[i] = Math.exp(logits[i] / t - mx); s += e[i]; } return e.map((v) => v / s); }
@@ -1283,10 +1302,10 @@ function argmax(a) { let b = 0; for (let i = 1; i < a.length; i++) if (a[i] > a[
 
 async function runLaya(cpu) {
   const items = D.items, tStart = performance.now();
-  setBar(0); setStatus('laya: loading the ONNX Runtime library from this site...');
-  const ort = await loadOrt();
-  ort.env.wasm.proxy = !!cpu;  // CPU path runs in a worker so the tab stays responsive; the WebGPU path must stay on the main thread
+  setBar(0); setStatus('Runtime: loading ONNX Runtime Web...');
   S.abort = new AbortController();
+  const ort = await loadOrt(S.abort.signal);
+  ort.env.wasm.proxy = !!cpu;  // CPU path runs in a worker so the tab stays responsive; the WebGPU path must stay on the main thread
   const got = await fetchLaya(S.abort.signal);
   setBar(null); setStatus('laya: creating the session' + (cpu ? ' (CPU wasm)' : ' on the GPU (first run compiles shaders)') + '...');
   /* logSeverityLevel 3: ORT's generic warning that small shape nodes run on the CPU is not printed as a console error.
@@ -1346,7 +1365,7 @@ function renderLaya() {
   parts.push((r.fromCache ? 'Model read from this browser\'s cache (no download)' : 'Downloaded in ' + (r.dlMs / 1000).toFixed(1) + ' s (' + (D.layaBytes / 1e6 / (r.dlMs / 1000)).toFixed(1) + ' MB/s)' + (r.persisted === true ? ', kept as persistent storage' : r.persisted === false ? ', cached (the browser did not grant persistent storage)' : '')) + '; session creation ' + (r.loadMs / 1000).toFixed(1) + ' s; ready ' + (r.readyMs / 1000).toFixed(1) + ' s after Start.');
   if (r.first != null) parts.push('First pass (includes shader compile) ' + f1(r.first) + ' ms.');
   if (r.runs.length) parts.push('Median of runs: ' + f1(m('dps')) + ' decisions/s, p50 ' + f1(m('p50')) + ' ms, walk p50 ' + f1(m('walkP50')) + ' ms.');
-  if (r.runs.length && m('same') < 0.95) parts.push('Warning: only ' + (m('same') * 100).toFixed(1) + '% of the top options match native ONNX Runtime for the fp32 model (largest probability difference ' + Math.max(...r.runs.map((x) => x.md)).toFixed(2) + '). On this browser, driver and execution provider the fp16 graph computes different answers than it did in our test (47 of 47 on Chrome/Metal), so read the speed as a speed only.');
+  if (r.runs.length && m('same') < 0.95) parts.push('Warning: only ' + (m('same') * 100).toFixed(1) + '% of the top options match native ONNX Runtime for the fp32 model (largest probability difference ' + Math.max(...r.runs.map((x) => x.md)).toFixed(2) + '). On this browser, driver and execution provider the fp16 graph computes different answers than it did in our test (47 of 47 on Chrome/Metal, ORT-web 1.31-dev), so read the speed as a speed only.');
   $('laya-sum').textContent = parts.join(' ');
   updateCard();
 }
@@ -1366,7 +1385,7 @@ function updateCard() {
     lines.push('  first pass ' + f1(L.first) + ' ms; model ' + (L.fromCache ? 'from cache' : 'downloaded in ' + (L.dlMs / 1000).toFixed(1) + ' s') + '; session creation ' + (L.loadMs / 1000).toFixed(1) + ' s; same top option as native fp32 ' + (same * 100).toFixed(1) + '%');
     if (same < 0.95) lines.push('  WARNING: top option differs from native fp32 on ' + ((1 - same) * 100).toFixed(0) + '% of passes; kernels on this provider disagree with the reference');
     lines.push('  benchmark RTX 4060 (PyTorch fp16, different runtime): walk p50 ' + B.walk_p50 + ' ms, p95 ' + B.walk_p95 + ' ms, mean depth ' + B.depth + '; root question ' + B.root_ms + ' ms');
-    lines.push('Caveats: laya fp16 matched native fp32 on 47/47 recorded passes in Chrome/Metal; native subset of 134 messages: 0 of 3,082 node flips, final intent 134/134; full 616-message parity not run. Thermal throttling and shader compilation affect results.');
+    lines.push('Caveats: laya fp16 matched native fp32 on 47/47 recorded passes in Chrome/Metal with ORT-web 1.31-dev (this page runs 1.27.0); native subset of 134 messages: 0 of 3,082 node flips, final intent 134/134; full 616-message parity not run. Thermal throttling and shader compilation affect results.');
     cmp.appendChild(cmpRow('laya, per forward pass, p50', f1(p50) + ' ms', B.root_ms + ' ms (root question)', 'Different runtime: fp16 ONNX in ONNX Runtime Web against fp16 PyTorch. One forward pass here; the benchmark figure is the measured root-question latency, also one pass.'));
     cmp.appendChild(cmpRow('laya, per walk, p50', f1(wp) + ' ms', B.walk_p50 + ' ms (p95 ' + B.walk_p95 + ')', 'Yours replays the recorded path (' + depth + ' passes on average); the benchmark walked live (' + B.depth + ' on average), n=' + B.n + '.'));
     cmp.appendChild(cmpRow('laya, throughput', f1(dps) + ' decisions/s', 'not recorded', 'The benchmark recorded latency, not decisions per second.'));
@@ -1409,7 +1428,8 @@ async function init() {
   $('s-bench-walk').textContent = Math.round(D.bench.walk_p50) + ' ms';
   document.querySelectorAll('.b-walk').forEach((n) => { n.textContent = D.bench.walk_p50; });
   $('m-pool').textContent = D.items.length;
-  $('c-laya-size').textContent = fmtB(D.layaBytes); $('c-laya-host').textContent = layaHostLabel;
+  try { ORT_BYTES = (await ortRuntime()).ORT_WASM_BYTES; } catch (e) {}
+  $('c-laya-size').textContent = fmtB(D.layaBytes); $('c-ort-size').textContent = fmtB(ORT_BYTES); $('c-laya-host').textContent = layaHostLabel;
   showContacts(); updateCard();
   await showCache();
   S.dev = await probe(); renderProbe(S.dev); applyGates(S.dev); updateCard();

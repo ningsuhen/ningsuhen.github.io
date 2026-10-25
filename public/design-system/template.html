@@ -10,14 +10,17 @@
        - the site navbar + light/dark toggle (mounted on <html> before <body>, so nothing here can offset it)
        - the "All rights reserved, no reuse without permission" footer
        - a Comments section (giscus, click to load) above the footer, on pages under research/, experiments/ and ideas/ (opt out: <meta name="rd-comments" content="off">)
+       - the breadcrumb band under the navbar (opaque, sticky; it holds the trail: Home, section, title, from the title and the URL). Style: .rd-crumb-band and .rd-breadcrumb in research.css.
+         Never write one by hand (check:standalone fails on a second one). A page opts out with the rd-breadcrumb meta (content off).
      Do not add your own navbar, theme toggle, comments or license footer. `pnpm check:standalone` fails the PR if either is missing,
      misplaced, or the page overflows horizontally at 1440px or 375px.
      Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Use only --rd-* colors.
      Width: .rd-container is the site's post column (54.5rem). Use .rd-container--wide (73rem = 1168px, the navbar's width) only if the content needs it.
      Footer: one small-print license block (12px, muted; copyright, permission, quotes, License · RSS · Sitemap), a card no wider than the navbar (73rem); never restyle it.
      Icons: Lucide, inlined below as one <symbol> per icon used. No external requests. -->
-<link rel="stylesheet" href="/design-system/research.css">
-<!-- Self-contained export? Inline research.css and the sprite block (both are plain text) instead of linking. -->
+<link rel="stylesheet" href="/design-system/rd.css">
+<script type="module" src="/design-system/rd.js"></script>
+<!-- Self-contained export? Inline rd.css and the sprite block (both are plain text) instead of linking. -->
 </head>
 <body class="rd-body">
 <!-- Lucide sprite: generated between the markers by scripts/build-lucide-sprite.mjs (pnpm build runs it); it keeps only the icons this page uses. -->
@@ -36,9 +39,9 @@
 <!-- lucide-sprite:end -->
 
 <!-- Experiment navbar: sticky under the injected site bar. One hash link (#id) per section id below: the browser keeps the
-     history, no script pushes entries. Tabbed reports use ?tab= links instead (index.html, "Tabbed pages"). The script at the end
-     marks the section in view. Icons: Lucide, referenced as #i-<name>. -->
-<nav class="rd-expnav" aria-label="Sections">
+     history, no script pushes entries. Tabbed reports use ?tab= links instead (index.html, "Tabbed pages"). data-rd="expnav"
+     makes rd.js mark the section in view (no inline script needed). Icons: Lucide, referenced as #i-<name>. -->
+<nav class="rd-expnav" data-rd="expnav" aria-label="Sections">
 <a href="#summary" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
 <a href="#method"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Method</a>
 <a href="#results"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Results</a>
@@ -134,49 +137,5 @@
 <!-- Tabbed report (long reports): tab bar + one panel per tab, each with its own "On this page" rail. Markup, CSS and
      script: see the design-system guide, section "Tabbed report layout" (research.css .rd-tabbed, .rd-toc). -->
 </main>
-
-<script>
-// Section bar scroll-spy: marks the section in view (aria-current + .is-active), keeps that link visible on the bar
-// (the bar scrolls sideways, not the page) and shows an edge fade while links are hidden on that side. No dependencies.
-(function () {
-  var nav = document.querySelector('.rd-expnav');
-  if (!nav) return;
-  var pairs = [];
-  nav.querySelectorAll('a[href^="#"]').forEach(function (a) {
-    var s = document.getElementById(a.getAttribute('href').slice(1));
-    if (s) pairs.push([a, s]);
-  });
-  var ticking = false, shown = null;
-  function edges() {
-    nav.classList.toggle('is-fade-start', nav.scrollLeft > 2);
-    nav.classList.toggle('is-fade-end', nav.scrollLeft < nav.scrollWidth - nav.clientWidth - 2);
-  }
-  function reveal(a) {
-    var pad = 40, l = a.offsetLeft, r = l + a.offsetWidth;
-    if (l < nav.scrollLeft + pad) nav.scrollLeft = l - pad;
-    else if (r > nav.scrollLeft + nav.clientWidth - pad) nav.scrollLeft = r - nav.clientWidth + pad;
-  }
-  function update() {
-    ticking = false;
-    var line = nav.getBoundingClientRect().bottom + 24; // a section counts once its top is under the navbar
-    var current = pairs[0];
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = pairs[pairs.length - 1];
-    else pairs.forEach(function (p) { if (p[1].getBoundingClientRect().top <= line) current = p; });
-    pairs.forEach(function (p) {
-      var on = p === current;
-      p[0].classList.toggle('is-active', on);
-      if (on) p[0].setAttribute('aria-current', 'location');
-      else p[0].removeAttribute('aria-current');
-    });
-    if (current && current[0] !== shown) { shown = current[0]; reveal(shown); }
-    edges();
-  }
-  function schedule() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule);
-  nav.addEventListener('scroll', edges, { passive: true });
-  update();
-})();
-</script>
 </body>
 </html>

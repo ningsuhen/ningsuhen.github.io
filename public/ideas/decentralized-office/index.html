@@ -6,11 +6,11 @@
 <title>Decentralized email and office tools, instead of Google Workspace · created 2026-10-24 · updated 2026-10-25</title>
 <meta name="description" content="An idea, not a product: email and office tools where your data lives on your own machines, clouds only hold ciphertext, and collaboration still works.">
 <link rel="stylesheet" href="/design-system/research.css">
+<script type="module" src="/design-system/rd.js"></script>
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
 .idea-fig > svg { width: 100%; height: auto; max-width: 42.5rem; margin-inline: auto; color: var(--rd-text-strong); }
 .rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
-.rd-tabbed .rd-tab__body { max-width: var(--rd-measure); } /* wide diagrams scroll inside their figure, never the page */
 .idea-box { fill: var(--rd-card-bg); stroke: currentColor; stroke-width: 1.5; }
 .idea-box--key { stroke: var(--rd-accent); }
 .idea-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
@@ -95,7 +95,7 @@
 </svg>
 <!-- lucide-sprite:end -->
 
-<nav class="rd-expnav" role="tablist" aria-label="Sections">
+<nav class="rd-expnav" role="tablist" aria-label="Sections" data-rd="tabs">
 <a role="tab" id="tab-summary" href="?tab=summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
 <a role="tab" id="tab-architecture" href="?tab=architecture" aria-controls="architecture" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Architecture</a>
 <a role="tab" id="tab-sync" href="?tab=sync" aria-controls="sync" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg>Sync</a>
@@ -119,7 +119,7 @@
 </header>
 
 <div class="rd-tabpanel rd-with-toc" id="summary" role="tabpanel" aria-labelledby="tab-summary">
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#in-30-seconds"><span class="rd-toc__badge">1</span><span class="rd-toc__text">In 30 seconds</span></a></li>
     <li><a href="#the-problem"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The problem</span></a></li>
     <li><a href="#idea-in-one-picture"><span class="rd-toc__badge">3</span><span class="rd-toc__text">The idea in one picture</span></a></li>
@@ -192,7 +192,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="architecture" role="tabpanel" aria-labelledby="tab-architecture" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#components"><span class="rd-toc__badge">1</span><span class="rd-toc__text">The parts</span></a></li>
     <li><a href="#keys-sharing"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Keys and sharing</span></a></li>
   </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
@@ -247,7 +247,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="sync" role="tabpanel" aria-labelledby="tab-sync" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#sync-merge"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Offline edits and merge</span></a></li>
     <li><a href="#signed-ops"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Signed operations</span></a></li>
   </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
@@ -294,7 +294,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="backup" role="tabpanel" aria-labelledby="tab-backup" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#backup-recovery"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Backup and recovery</span></a></li>
     <li><a href="#device-loss"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Losing a device</span></a></li>
   </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
@@ -345,7 +345,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="access" role="tabpanel" aria-labelledby="tab-access" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#who-can-read"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Who can read this?</span></a></li>
     <li><a href="#threats"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Threat model</span></a></li>
     <li><a href="#metadata"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Metadata</span></a></li>
@@ -410,7 +410,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#glossary"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Glossary</span></a></li>
     <li><a href="#concepts"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The techniques</span></a></li>
     <li><a href="#quiz"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Check yourself</span></a></li>
@@ -531,7 +531,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="ask" role="tabpanel" aria-labelledby="tab-ask" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#ask-this-idea"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Ask this idea</span></a></li>
   </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
   <div class="rd-tab__body">
@@ -562,7 +562,7 @@
 </div>
 
 <div class="rd-tabpanel rd-with-toc" id="tradeoffs" role="tabpanel" aria-labelledby="tab-tradeoffs" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#open-problems"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Open problems</span></a></li>
     <li><a href="#not-decided"><span class="rd-toc__badge">2</span><span class="rd-toc__text">What is not decided</span></a></li>
     <li><a href="#caveats"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Caveats</span></a></li>
@@ -688,254 +688,8 @@
 {"q":"Why does a backup of a lost laptop still need the cloud?","a":"Because the snapshot is kept there sealed, so a new laptop can download it after the old one is gone. The cloud cannot open it on its own.","k":"backup cloud why needed lost laptop","s":"backup-recovery","t":"Backup and recovery"},
 {"q":"What does sealed mean?","a":"Encrypted and authenticated, so a change to the bytes is detected. The page uses sealed for encrypted data throughout.","k":"sealed encrypted authenticated term","s":"glossary","t":"Glossary"}
 ]</script>
-<script>
-// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
-// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
-// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
-// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
-(function () {
-  if (window.__rdToc) return;
-  window.__rdToc = true;
-  var wide = window.matchMedia('(min-width: 1536px)');
-  function Rail(nav) {
-    var self = this;
-    this.nav = nav;
-    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
-    this.indicator = nav.querySelector('.rd-toc__indicator');
-    this.sections = [];
-    this.index = new Map();
-    this.active = [];
-    this.anchorNavTarget = null;
-    this.links.forEach(function (a, i) {
-      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
-      self.sections.push(sec);
-      self.active.push(false);
-      if (sec) self.index.set(sec, i);
-    });
-    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
-    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
-    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
-    nav.classList.add('is-live');
-    this.fallback();
-    this.update();
-  }
-  Rail.prototype.onIntersect = function (entries) {
-    var self = this;
-    entries.forEach(function (e) {
-      var i = self.index.get(e.target);
-      if (i !== undefined) self.active[i] = e.isIntersecting;
-      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
-    });
-    if (this.active.indexOf(true) < 0) this.fallback();
-    this.update();
-  };
-  Rail.prototype.fallback = function () {
-    var vh = window.innerHeight;
-    for (var i = 0; i < this.sections.length; i++) {
-      var s = this.sections[i];
-      if (!s) continue;
-      var r = s.getBoundingClientRect();
-      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
-      else if (r.top > vh) break;
-    }
-  };
-  Rail.prototype.update = function () {
-    var self = this;
-    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
-  };
-  Rail.prototype.toggle = function () {
-    var links = this.links, a = this.active;
-    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
-    var i = links.length - 1, min = links.length - 1, max = -1;
-    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
-    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
-    while (i >= 0) { links[i].classList.remove('visible'); i--; }
-    if (!this.indicator) return;
-    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
-    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
-    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
-    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
-    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
-  };
-  Rail.prototype.scroll = function () {
-    if (this.anchorNavTarget || !wide.matches) return;
-    var vis = this.nav.querySelectorAll('a.visible');
-    if (!vis.length) return;
-    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
-    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
-    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
-  };
-  Rail.prototype.onClick = function (e) {
-    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
-    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
-  };
-  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
-  function openForWide() {
-    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
-  }
-  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
-  wide.addEventListener('change', refresh);
-  window.addEventListener('resize', refresh, { passive: true });
-  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
-  var mo = new MutationObserver(function (muts) {
-    muts.forEach(function (m) {
-      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
-    });
-  });
-  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
-  openForWide();
-})();
-</script>
 
 <script>
-// Tabs and history (design-system "Tabbed pages"). A tab is a ?tab= link. A section jump or a tab change is one
-// history entry (pushState) that keeps the saved scroll; Back and Forward restore tab, section and scroll; a deep link
-// (?tab=x#section, or a bare #section) opens its tab with no entry. Widgets on this page never touch history.
-// Reload: every scroll is also written to sessionStorage under the entry's URL (a write made in pagehide does not
-// reach the entry a reload restores from). The restore is re-applied after fonts load, and <html data-history-ready>
-// marks it done.
-(function () {
-  var bar = document.querySelector('.rd-expnav[role="tablist"]');
-  if (!bar) return;
-  document.documentElement.classList.add('js');
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
-  var ids = tabs.map(function (t) { return t.getAttribute('aria-controls'); });
-  var panels = ids.map(function (id) { return document.getElementById(id); });
-
-  function panelOf(el) {
-    for (var i = 0; i < panels.length; i++) if (panels[i].contains(el)) return i;
-    return -1;
-  }
-  function keyOf() { return location.pathname + location.search + location.hash; }
-  function remember(y) {
-    try { sessionStorage.setItem('rd-y:' + keyOf(), String(y)); } catch (e) {}
-  }
-  // Only for an entry this page wrote (history.state is set): a fresh visit to the same URL starts at the top.
-  function recalled() {
-    var nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
-    if (!history.state && !(nav && nav.type === 'reload')) return null;
-    try { var v = sessionStorage.getItem('rd-y:' + keyOf()); return v === null ? null : Number(v); } catch (e) { return null; }
-  }
-  function saveScroll() {
-    var y = Math.round(window.pageYOffset);
-    remember(y);
-    history.replaceState(Object.assign({}, history.state, { y: y }), '');
-  }
-  function activate(i) {
-    tabs.forEach(function (t, k) {
-      var on = k === i;
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      t.setAttribute('tabindex', on ? '0' : '-1');
-      t.classList.toggle('is-active', on);
-      panels[k].hidden = !on;
-    });
-    tabs[i].scrollIntoView({ inline: 'center', block: 'nearest' });
-    edges();
-  }
-  function edges() {
-    bar.classList.toggle('is-fade-start', bar.scrollLeft > 2);
-    bar.classList.toggle('is-fade-end', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 2);
-  }
-  function reveal(el) {
-    el.setAttribute('tabindex', '-1');
-    el.focus({ preventScroll: true });
-    el.scrollIntoView({ block: 'start', behavior: 'instant' });
-  }
-  // First paint: restore the saved position (or the section), then once more after load and after fonts, unless the
-  // reader has moved. Sets data-history-ready when done.
-  function restoreFirst(y, sectionEl) {
-    var touched = false;
-    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
-      window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
-    });
-    var apply = function () {
-      if (touched) return;
-      if (y !== null) window.scrollTo({ top: y, behavior: 'instant' });
-      else if (sectionEl) reveal(sectionEl);
-    };
-    var mark = function () { document.documentElement.setAttribute('data-history-ready', ''); };
-    apply();
-    window.addEventListener('load', function () {
-      apply();
-      var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
-      fonts.then(function () {
-        if (!touched && y !== null && Math.abs(window.pageYOffset - y) > 2) apply();
-        mark();
-      }, mark);
-    }, { once: true });
-  }
-  // Show what the URL names. mode: 'load' | 'pop' | 'nav' | 'show'.
-  function sync(mode) {
-    var q = new URLSearchParams(location.search).get('tab');
-    var hash = decodeURIComponent(location.hash.slice(1));
-    var hashEl = hash ? document.getElementById(hash) : null;
-    var hashPanel = hashEl ? panelOf(hashEl) : -1;
-    var i = ids.indexOf(q);
-    if (i < 0 && ids.indexOf(hash) >= 0) { // legacy #tab-id: map to ?tab=, no hash, no entry
-      i = ids.indexOf(hash);
-      hashEl = null;
-      history.replaceState(history.state, '', '?tab=' + ids[i]);
-    } else if (hashPanel >= 0 && hashPanel !== i) { // a section in another tab opens that tab, no entry
-      i = hashPanel;
-      history.replaceState(history.state, '', '?tab=' + ids[i] + location.hash);
-    } else if (i < 0) {
-      i = 0;
-    }
-    activate(i);
-    if (mode === 'show') return;
-    var section = hashEl && hashEl !== panels[i] ? hashEl : null;
-    if (mode === 'load') {
-      var rec = recalled();
-      var saved = rec !== null ? rec : history.state && typeof history.state.y === 'number' ? history.state.y : null;
-      restoreFirst(saved, section);
-      return;
-    }
-    var y = history.state && typeof history.state.y === 'number' ? history.state.y : null;
-    if (y !== null && mode !== 'nav') window.scrollTo({ top: y, behavior: 'instant' });
-    else if (section) reveal(section);
-    else if (mode === 'nav' || mode === 'pop') window.scrollTo({ top: 0, behavior: 'instant' });
-  }
-  function go(href, mode) {
-    var url = new URL(href, location.href);
-    if (url.href === location.href) return false;
-    saveScroll();
-    history.pushState({}, '', url.href);
-    sync(mode || 'nav');
-    return true;
-  }
-  window.ideaGo = function (sectionId) { // Ask tab citations: a real navigation to that tab and section
-    var el = document.getElementById(sectionId);
-    var p = el ? panelOf(el) : -1;
-    if (p >= 0) go('?tab=' + ids[p] + '#' + sectionId);
-  };
-
-  document.addEventListener('click', function (e) {
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
-    if (!bar.contains(a) && !a.closest('.rd-toc')) return;
-    e.preventDefault();
-    go(a.getAttribute('href'), 'nav');
-  });
-  bar.addEventListener('keydown', function (e) {
-    var i = tabs.indexOf(document.activeElement);
-    if (i < 0) return;
-    var n = null;
-    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
-    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
-    else if (e.key === 'Home') n = 0;
-    else if (e.key === 'End') n = tabs.length - 1;
-    if (n !== null) { e.preventDefault(); tabs[n].focus({ preventScroll: true }); return; }
-    if (e.key === ' ') { e.preventDefault(); tabs[i].click(); }
-  });
-  window.addEventListener('scroll', function () { remember(Math.round(window.pageYOffset)); }, { passive: true });
-  window.addEventListener('popstate', function () { sync('pop'); });
-  window.addEventListener('pageshow', function (e) { if (e.persisted) sync('show'); });
-  window.addEventListener('pagehide', saveScroll);
-  bar.addEventListener('scroll', edges, { passive: true });
-  window.addEventListener('resize', edges, { passive: true });
-  sync('load');
-})();
 
 // Step-through figures: Next and Back move the highlight and the caption. No history entries.
 (function () {

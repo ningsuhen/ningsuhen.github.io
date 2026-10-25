@@ -1,0 +1,17 @@
+flowchart TB
+  C([Client]) --> R[Router]
+  R --> S[Scheduler]
+  S --> G[GPU compute]
+  G --> O[Response]
+  O --> OK[Delivered]
+  R -->|cache miss| E[Embedding service]
+  S -->|queue full| Q[Rejected]
+  G -->|reads| K[(KV cache)]
+  class C actor
+  class R,S control
+  class G compute
+  class K memory
+  class O data
+  class E external
+  class OK good
+  class Q bad

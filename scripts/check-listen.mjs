@@ -8,7 +8,9 @@ import {
 	readdirSync,
 	readFileSync,
 	statSync,
+	writeFileSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -65,6 +67,9 @@ const SPEECH_STUB = `
 })();
 `;
 
+// Stub: a WebGPU adapter exists (the neural voice is offered and is the default).
+const GPU_STUB = `Object.defineProperty(navigator, "gpu", { value: { requestAdapter: async () => ({}) }, configurable: true });`;
+
 function findChrome() {
 	if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
 	const cache = path.join(homedir(), "Library/Caches/ms-playwright");
@@ -99,11 +104,25 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}`;
 
-const browser = await chromium.launch({ executablePath: findChrome() });
+// Real scrollbars: Playwright's default --hide-scrollbars makes OverlayScrollbars cancel itself, and that hid the
+// double-connect bug (OverlayScrollbars moves every body child, so <listen-player> connects twice on a hard load).
+// Without the flag the headless shell draws classic scrollbars, like Windows, Linux and a Mac with a mouse.
+const browser = await chromium.launch({
+	executablePath: findChrome(),
+	ignoreDefaultArgs: ["--hide-scrollbars"],
+});
 const failures = [];
 const expect = (ok, message) => {
 	if (!ok) failures.push(message);
 };
+/** Runs one section. A thrown error (a click that times out) fails that section and the run goes on. */
+async function step(name, run) {
+	try {
+		await run();
+	} catch (err) {
+		failures.push(`${name}: ${String(err?.message ?? err).split("\n")[0]}`);
+	}
+}
 
 async function openPage(
 	viewport,
@@ -114,6 +133,7 @@ async function openPage(
 		javaScriptEnabled,
 		reducedMotion: "reduce",
 	});
+	ctx.setDefaultTimeout(10000);
 	await ctx.addInitScript(
 		`${SPEECH_STUB}; try { localStorage.setItem("theme", ${JSON.stringify(theme)}); } catch {}`,
 	);
@@ -123,7 +143,7 @@ async function openPage(
 }
 
 // 1. Progressive enhancement: without JavaScript the player never appears.
-{
+await step("1. no-JS", async () => {
 	const { ctx, page } = await openPage(
 		{ width: 1440, height: 900 },
 		{ javaScriptEnabled: false },
@@ -133,10 +153,10 @@ async function openPage(
 		.catch(() => true);
 	expect(!visible, "no-JS: listen-player is visible");
 	await ctx.close();
-}
+});
 
 // 2. Desktop light: renders, plays through the stub, highlight moves, pause stops speech.
-{
+await step("2. desktop play", async () => {
 	const { ctx, page } = await openPage({ width: 1440, height: 900 });
 	await page
 		.waitForFunction(
@@ -219,7 +239,7 @@ async function openPage(
 	await page.evaluate(() => window.scrollTo(0, 0));
 	expect(cancelled, "pause: speech not cancelled");
 	await ctx.close();
-}
+});
 
 // 2b. Docking: inline at the top of the post, then pinned flush to the viewport top as one slim row.
 const RAIL = "#toc-inner-wrapper";
@@ -234,7 +254,7 @@ for (const [name, viewport, theme] of [
 ]) {
 	const { ctx, page } = await openPage(viewport, { theme });
 	await page
-		.waitForSelector("listen-player:not([hidden])", { timeout: 8000 })
+		.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 })
 		.catch(() => expect(false, `${name}: player missing`));
 	await page.waitForTimeout(300);
 	const inline = await page.evaluate(() => {
@@ -262,7 +282,9 @@ for (const [name, viewport, theme] of [
 		let covered = true;
 		for (let y = 0; y < r.height; y += 1) {
 			for (const x of [r.left + 4, r.left + r.width / 2, r.right - 4]) {
-				if (!document.elementFromPoint(x, y)?.closest("listen-player")) {
+				// The overlay scrollbar (OverlayScrollbars, classic-scrollbar systems) is page chrome, not content.
+				const hit = document.elementFromPoint(x, y);
+				if (!hit?.closest("listen-player, .os-scrollbar")) {
 					covered = false;
 				}
 			}
@@ -385,15 +407,15 @@ for (const [name, viewport, theme] of [
 }
 
 // 2c. Docked player cleans up on a Swup visit: no docked state and no scroll padding left on the next post.
-{
+await step("2c. swup while docked", async () => {
 	const { ctx, page } = await openPage({ width: 1440, height: 900 });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	await page.evaluate(() => window.scrollTo(0, 1500));
 	await page.waitForTimeout(300);
 	await page.evaluate((href) => window.swup.navigate(href), OTHER_POST);
 	await page.waitForURL(`**${OTHER_POST}`, { timeout: 8000 }).catch(() => {});
 	await page
-		.waitForSelector("listen-player:not([hidden])", { timeout: 8000 })
+		.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 })
 		.catch(() => expect(false, "swup while docked: player missing"));
 	await page.waitForTimeout(400);
 	const after = await page.evaluate(() => ({
@@ -408,7 +430,7 @@ for (const [name, viewport, theme] of [
 		`swup while docked: scroll padding left as ${after.pad}`,
 	);
 	await ctx.close();
-}
+});
 
 // 3. Desktop dark + mobile: collapsed by default, expands on toggle, no horizontal overflow.
 for (const [name, viewport, theme] of [
@@ -418,7 +440,7 @@ for (const [name, viewport, theme] of [
 ]) {
 	const { ctx, page } = await openPage(viewport, { theme });
 	await page
-		.waitForSelector("listen-player:not([hidden])", { timeout: 8000 })
+		.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 })
 		.catch(() => expect(false, `${name}: player missing`));
 	await page.waitForTimeout(300);
 	const isMobile = viewport.width < 768;
@@ -452,9 +474,9 @@ for (const [name, viewport, theme] of [
 }
 
 // 4. Swup navigation: speech stops, the player is rebuilt for the new post.
-{
+await step("4. swup navigation", async () => {
 	const { ctx, page } = await openPage({ width: 1440, height: 900 });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	await page.click("[data-action=play]");
 	await page
 		.waitForFunction(() => window.__tts.spoken.length >= 2, null, {
@@ -501,17 +523,19 @@ for (const [name, viewport, theme] of [
 		)
 		.catch(() => expect(false, "nav: player missing on the new post"));
 	await ctx.close();
-}
+});
 
 // 5. Neural slot: offered only when window.__KOKORO_READY is set. Choosing it asks first; cancel keeps the built-in voice.
-{
+await step("5. neural slot", async () => {
 	const ctx = await browser.newContext({
 		viewport: { width: 1440, height: 900 },
 	});
-	await ctx.addInitScript(`${SPEECH_STUB}; window.__KOKORO_READY = true;`);
+	ctx.setDefaultTimeout(10000);
+	// The GPU stub: the consent dialog is only offered with a WebGPU adapter, and CI runners have none.
+	await ctx.addInitScript(`${SPEECH_STUB}; ${GPU_STUB}; window.__KOKORO_READY = true;`);
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	expect(
 		await page.$eval("[data-engine-wrap]", (el) => !el.hidden),
 		"kokoro ready: engine select hidden",
@@ -531,16 +555,38 @@ for (const [name, viewport, theme] of [
 			expect(false, "kokoro: cancel did not return to built-in voice"),
 		);
 	await ctx.close();
-}
+});
 
 // Stubs for the neural engine: no model download, so the checks run in seconds. The module is served
-// through a route, so the real player code runs against it.
-const GPU_STUB = `Object.defineProperty(navigator, "gpu", { value: { requestAdapter: async () => ({}) }, configurable: true });`;
-const stubEngine = (delayMs) => `export function createEngine() { return {
+// through a route, so the real player code runs against it. Like the real engine, speak() before init() fails.
+// window.__stubEngines and window.__stubInits count createEngine() and init() calls.
+// Fake model files: the real ones are hundreds of MB. The manifest holds their real sizes and SHA-256 values,
+// and the Hugging Face host is routed to these bodies, so the download, checksum and cache path runs for real.
+const FAKE_FILES = {
+	"onnx/model.onnx": Buffer.alloc(4000, 109),
+	"voices/af_heart.bin": Buffer.alloc(1000, 97),
+	"voices/am_michael.bin": Buffer.alloc(1000, 98),
+};
+const FAKE_MANIFEST = {
+	base: "https://huggingface.co/fake/resolve/test/",
+	files: Object.fromEntries(
+		Object.entries(FAKE_FILES).map(([key, body]) => [key, { bytes: body.length, sha256: createHash("sha256").update(body).digest("hex") }]),
+	),
+	local: { "lexicon-en-us.txt": { bytes: 4592212, sha256: "7d33f53aed4e1d6946ab726cda27cef897bbeb17911cbf70e01b63d5b581206b" } },
+};
+const stubEngine = (delayMs, initMs = 0) => `export function createEngine() {
+	window.__stubEngines = (window.__stubEngines || 0) + 1;
+	let ready = false;
+	return {
 	id: "kokoro", label: "Neural voice (Kokoro)", accelerator: "webgpu", requiresDownloadMB: 355, notice: "Stub engine for check:listen.",
-	async init(opts) { opts && opts.onProgress && opts.onProgress(1); },
-	voices() { return [{ id: "stub", name: "Stub", lang: "en-US", local: true }]; },
-	speak() { return (async function* () {
+	async init(opts) {
+		window.__stubInits = (window.__stubInits || 0) + 1;
+		await new Promise((r) => setTimeout(r, ${initMs}));
+		ready = true;
+		opts && opts.onProgress && opts.onProgress(1);
+	},
+	voices() { return [{ id: "af_heart", name: "Heart", lang: "en-US", local: true }, { id: "am_michael", name: "Michael", lang: "en-US", local: true }]; },
+	speak() { if (!ready) throw new Error("kokoro: call init() first"); return (async function* () {
 		await new Promise((r) => setTimeout(r, ${delayMs}));
 		yield { samples: new Float32Array(24000).fill(0.1), sampleRate: 24000 };
 	})(); },
@@ -550,22 +596,72 @@ const routeKokoro = (ctx, body, status = 200) =>
 	ctx.route("**/tts/kokoro.js", (route) =>
 		route.fulfill({ status, contentType: "text/javascript", body }),
 	);
-const neuralContext = async (browser, { delayMs, status, body }) => {
+// The pinned ONNX Runtime binary. The real bytes are fetched once (checked by size and SHA-256) into the gitignored
+// .tmp/, then served to the page by route, so the real download, check and cache path runs.
+const ORT_URL = "https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0/resolve/c25145ab811e50c175798b09cd6da3fc272d9411/ort-wasm-simd-threaded.asyncify.wasm";
+const ORT_BYTES = 24254953;
+const ORT_SHA = "7e83cd6cee77e478bc96a7e91b198144fb5e4126287daf1f9b54bb195ebcd55a";
+const ORT_CACHE = path.resolve(".tmp/check-listen/ort-wasm.bin");
+async function realOrtRuntime() {
+	const digest = (b) => createHash("sha256").update(b).digest("hex");
+	if (existsSync(ORT_CACHE)) {
+		const kept = readFileSync(ORT_CACHE);
+		if (kept.length === ORT_BYTES && digest(kept) === ORT_SHA) return kept;
+	}
+	const response = await fetch(ORT_URL).catch(() => null);
+	if (!response?.ok) throw new Error("check:listen needs internet once to fetch the pinned ONNX Runtime binary");
+	const body = Buffer.from(await response.arrayBuffer());
+	if (body.length !== ORT_BYTES || digest(body) !== ORT_SHA) throw new Error("the pinned ONNX Runtime binary does not match its size and hash");
+	mkdirSync(path.dirname(ORT_CACHE), { recursive: true });
+	writeFileSync(ORT_CACHE, body);
+	return body;
+}
+const REAL_ORT = await realOrtRuntime();
+
+const routeModelFiles = async (ctx, counter, runtime = {}) => {
+	await ctx.route("**/tts/manifest.json", (route) =>
+		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FAKE_MANIFEST) }),
+	);
+	await ctx.route("https://huggingface.co/**", (route) => {
+		counter.hf += 1;
+		const key = new URL(route.request().url()).pathname.split("/").slice(-2).join("/");
+		const body = FAKE_FILES[key];
+		return route.fulfill({
+			status: body ? 200 : 404,
+			contentType: "application/octet-stream",
+			headers: { "access-control-allow-origin": "*" },
+			body: body ?? "missing",
+		});
+	});
+	// Registered after the general route, so it matches first.
+	await ctx.route(ORT_URL, (route) => {
+		counter.hf += 1;
+		return route.fulfill({
+			status: runtime.status ?? 200,
+			contentType: "application/wasm",
+			headers: { "access-control-allow-origin": "*" },
+			body: runtime.body ?? REAL_ORT,
+		});
+	});
+};
+const neuralContext = async (browser, { delayMs, initMs, status, body, gpu = true, counter = { hf: 0 }, runtime = {} }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-	await ctx.addInitScript(`${SPEECH_STUB}; ${GPU_STUB}; window.__KOKORO_READY = true;`);
-	await routeKokoro(ctx, body ?? stubEngine(delayMs ?? 50), status);
+	ctx.setDefaultTimeout(10000);
+	await ctx.addInitScript(`${SPEECH_STUB}; ${gpu ? GPU_STUB : ""}; window.__KOKORO_READY = true;`);
+	await routeKokoro(ctx, body ?? stubEngine(delayMs ?? 50, initMs ?? 0), status);
+	await routeModelFiles(ctx, counter, runtime);
 	return ctx;
 };
 const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
 
 // 7. Browser voice is always a visible choice. Choosing it downloads nothing; the choice can be changed at any time.
-{
+await step("7. browser voice choice", async () => {
 	const ctx = await neuralContext(browser, {});
 	const page = await ctx.newPage();
 	const requests = [];
 	page.on("request", (req) => requests.push(req.url()));
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	expect(await page.$eval("[data-engine-wrap]", (el) => !el.hidden), "voice choice hidden");
 	await page.selectOption("[data-engine]", "kokoro");
 	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
@@ -577,8 +673,8 @@ const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
 	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 3000 })
 		.catch(() => expect(false, "browser choice did not select the browser voice"));
 	expect(
-		requests.filter((u) => /kokoro|vendor\/ort|huggingface|\.hf\.co/.test(u)).length === 0,
-		`browser choice requested neural files: ${requests.filter((u) => /kokoro|vendor\/ort|huggingface/.test(u)).join(", ")}`,
+		requests.filter((u) => /vendor\/ort|huggingface|\.hf\.co/.test(u)).length === 0,
+		`browser choice requested neural files: ${requests.filter((u) => /vendor\/ort|huggingface|\.hf\.co/.test(u)).join(", ")}`,
 	);
 	// Back and forth: neural (consent once, then no prompt), browser, neural again.
 	await page.selectOption("[data-engine]", "kokoro");
@@ -595,40 +691,81 @@ const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
 	await savedEngine("kokoro");
 	expect(await page.$$eval("[data-consent][open]", (els) => els.length) === 0, "consent asked again after consent was given");
 	await ctx.close();
-}
+});
 
 // 8. Forced init failure (the module does not load): the player stays usable on the browser voice and says why.
-{
+await step("8. init failure", async () => {
 	const ctx = await neuralContext(browser, { status: 500, body: "missing" });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	await page.selectOption("[data-engine]", "kokoro");
 	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
 	await page.click("[data-variant=fp32]");
-	await page.waitForFunction(() => /not available here/.test(document.querySelector("[data-status]").textContent), null, { timeout: 8000 })
-		.catch(() => expect(false, "init failure: no fallback notice"));
-	expect(await engineValue(page) === "web-speech", "init failure: engine not back on the browser voice");
-	expect(await page.$eval("[data-engine]", (el) => el.value) === "web-speech", "init failure: select out of sync");
+	// Wait for the state change itself: the status text can already be there from the failed start on page load.
+	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 8000 })
+		.catch(() => expect(false, "init failure: engine not back on the browser voice"));
+	expect(await page.$eval("[data-status]", (el) => /not available here/.test(el.textContent ?? "")), "init failure: no fallback notice");
 	await ctx.close();
-}
+});
 
-// 9. Too slow: a neural engine whose first audio takes 9 s pauses itself, remembers the device, and offers the browser voice.
-{
-	const ctx = await neuralContext(browser, { delayMs: 9000 });
+// 9. Too slow: a neural engine slower than real time (1 s of audio every 2 s, RTF 2) never pauses playback.
+// The notice and its button show while audio plays, gaps are bridged without any click, the post does not shift,
+// and only the pause button pauses. Switching to the browser voice is remembered for the next visit.
+await step("9. too slow", async () => {
+	const ctx = await neuralContext(browser, { delayMs: 2000 });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	await page.selectOption("[data-engine]", "kokoro");
 	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
 	await page.click("[data-variant=fp32]");
+	await page.waitForFunction(() => /Neural voice: downloaded/.test(document.querySelector("[data-download-state]")?.textContent ?? ""), null, { timeout: 15000 })
+		.catch(() => expect(false, "slow engine: download did not complete before Play"));
+	// Every state the player enters from here on, and the post's document offset (layout shift probe).
+	const postTop = () => page.evaluate(() => {
+		const next = document.querySelector("listen-player").nextElementSibling;
+		return Math.round(next.getBoundingClientRect().top + scrollY);
+	});
+	const topBefore = await postTop();
+	await page.evaluate(() => {
+		const player = document.querySelector("listen-player");
+		window.__states = [];
+		new MutationObserver(() => window.__states.push(player.dataset.state)).observe(player, { attributeFilter: ["data-state"] });
+	});
+	const position = () => page.$eval("[data-position]", (el) => Number.parseInt(el.textContent ?? "0", 10));
+	const state = () => page.$eval("listen-player", (el) => el.dataset.state);
 	await page.click("[data-action=play]");
 	await page.waitForSelector("[data-slow]:not([hidden])", { timeout: 25000 })
-		.catch(() => expect(false, "slow engine: too-slow notice did not appear"));
+		.catch(() => expect(false, "slow engine: slow notice did not appear"));
+	expect(await state() === "playing", `slow engine: state is ${await state()} when the notice shows, want playing`);
+	expect(await page.isVisible("[data-slow-browser]"), "slow engine: 'Switch to browser voice' not visible");
+	expect(await postTop() === topBefore, "slow engine: the notice shifted the post");
 	expect(
 		await page.evaluate(() => localStorage.getItem("listen-neural-slow") === "true"),
 		"slow engine: device not remembered",
 	);
+	// Gaps (synthesis is twice as slow as playback) are bridged by waiting: position advances with no click.
+	const atNotice = await position();
+	await page.waitForFunction((from) => Number.parseInt(document.querySelector("[data-position]").textContent ?? "0", 10) >= from + 2, atNotice, { timeout: 15000 })
+		.catch(() => expect(false, "slow engine: playback did not continue on its own after a gap"));
+	expect(await state() === "playing", `slow engine: state is ${await state()} after gaps, want playing`);
+	// Keeping the neural voice only hides the notice: no restart, still playing.
+	await page.click("[data-slow-keep]");
+	expect(await page.$eval("[data-slow]", (el) => el.hidden), "slow engine: notice still visible after 'Keep neural voice'");
+	expect(await state() === "playing", "slow engine: 'Keep neural voice' changed the play state");
+	const states = await page.evaluate(() => window.__states);
+	expect(states.every((s) => s === "playing"), `slow engine: player left 'playing' without a pause click: ${states.join(", ")}`);
+	// Pause happens only via the pause button, and then position holds.
+	await page.click("[data-action=play]");
+	expect(await state() === "paused", `slow engine: pause button gave state ${await state()}`);
+	const held = await position();
+	await page.waitForTimeout(3000);
+	expect(await position() === held, "slow engine: position moved while paused");
+	await page.click("[data-action=play]");
+	expect(await state() === "playing", "slow engine: play after pause did not resume");
+	// The switch still works mid-playback (the notice is shown again on a fresh page below).
+	await page.evaluate(() => { document.querySelector("[data-slow]").hidden = false; });
 	await page.click("[data-slow-browser]");
 	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 5000 })
 		.catch(() => expect(false, "slow engine: switch to browser voice failed"));
@@ -636,17 +773,252 @@ const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
 	// Next visit on this device starts on the browser voice, and neural stays selectable.
 	const again = await ctx.newPage();
 	await again.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await again.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await again.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	expect(await engineValue(again) === "web-speech", "slow device: next visit did not default to the browser voice");
 	expect(
 		await again.$eval("[data-engine] option[value=kokoro]", (el) => !el.disabled),
 		"slow device: neural voice no longer selectable",
 	);
 	await ctx.close();
+});
+
+// 10. Connect once. On a hard load OverlayScrollbars moves every body child into its viewport, which disconnects
+// and reconnects <listen-player>. Each connection must leave exactly one set of handlers: one sentinel, one Next
+// click moves one sentence, one Play click plays (a second handler would pause it again within milliseconds).
+// Clicks are real mouse events (page.click), never el.click().
+const position = (page) =>
+	page.$eval("[data-position]", (el) => Number.parseInt(el.textContent, 10));
+const playerState = (page) =>
+	page.$eval("listen-player", (el) => el.dataset.state);
+async function expectOneConnection(page, label) {
+	await page
+		.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 })
+		.catch(() => expect(false, `${label}: player missing`));
+	// Give a second (stale) init time to finish, as it would on a slow load.
+	await page.waitForTimeout(400);
+	const shape = await page.evaluate(() => ({
+		overlay: !!document.querySelector("body > .os-scrollbar"),
+		sentinels: document.querySelectorAll(".listen-sentinel").length,
+	}));
+	expect(
+		shape.overlay,
+		`${label}: OverlayScrollbars did not start on the body (scrollbars hidden?), so this check proves nothing`,
+	);
+	expect(shape.sentinels === 1, `${label}: ${shape.sentinels} .listen-sentinel, expected 1`);
+	const start = await position(page);
+	await page.click("listen-player [data-action=next]");
+	await page.waitForTimeout(100);
+	const afterNext = await position(page);
+	expect(afterNext === start + 1, `${label}: one Next click moved ${start} -> ${afterNext}, expected ${start + 1}`);
+	await page.click("listen-player [data-action=prev]");
+	await page.waitForTimeout(100);
+	const afterPrev = await position(page);
+	expect(afterPrev === start, `${label}: one Prev click moved ${afterNext} -> ${afterPrev}, expected ${start}`);
+	await page.click("listen-player [data-action=play]");
+	await page.waitForTimeout(500);
+	const playing = await playerState(page);
+	expect(playing === "playing", `${label}: state ${playing} 500 ms after one Play click, expected playing`);
+	await page.click("listen-player [data-action=play]");
+	await page.waitForTimeout(300);
+	const paused = await playerState(page);
+	expect(paused === "paused", `${label}: state ${paused} after one Pause click, expected paused`);
+}
+
+// 10a. Browser voice (Web Speech stub): hard load, reload, and a reconnect of the element.
+await step("10a. connect once, web speech", async () => {
+	const { ctx, page } = await openPage({ width: 1440, height: 900 });
+	await expectOneConnection(page, "web speech, hard load");
+	await page.reload({ waitUntil: "load" });
+	await expectOneConnection(page, "web speech, after reload");
+	// Reconnect: remove, append to the body, then put it back where it was. Still one set of handlers.
+	await page.evaluate(async () => {
+		const el = document.querySelector("listen-player");
+		const parent = el.parentNode;
+		const next = el.nextSibling;
+		el.remove();
+		document.body.append(el);
+		await new Promise((r) => requestAnimationFrame(r));
+		parent.insertBefore(el, next);
+	});
+	await expectOneConnection(page, "web speech, after reconnect");
+	await ctx.close();
+});
+
+// 10b. Neural voice (stub engine, consented and stored): hard load and reload. One engine, one init, and two rapid
+// Play clicks while the engine initialises never create a second engine or a second init.
+await step("10b. connect once, neural", async () => {
+	const ctx = await neuralContext(browser, { delayMs: 30, initMs: 300 });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	// Store the stub files and the consent, as a visitor who downloaded the voice earlier would have them.
+	await page.evaluate(async ({ ortUrl, sha }) => {
+		// The verified runtime is stored under its cache key (ort-runtime.js), with the real bytes.
+		const runtimeBytes = await (await fetch(ortUrl, { mode: "cors" })).arrayBuffer();
+		const runtimeCache = await caches.open("ort-runtime-v1");
+		await runtimeCache.put(new URL(`/ort-wasm@1.27.0/${sha}`, location.origin).href, new Response(runtimeBytes, { headers: { "content-length": String(runtimeBytes.byteLength) } }));
+		const manifest = await (await fetch("/tts/manifest.json")).json();
+		const cache = await caches.open("kokoro-tts-v1");
+		// A stored file counts by its recorded size (kokoro-cache.ts), so each entry carries the manifest size.
+		const entries = [
+			...Object.entries(manifest.files).map(([key, file]) => [manifest.base + key, file.bytes]),
+			...Object.entries(manifest.local).map(([key, file]) => [new URL(`/tts/${key}`, location.href).href, file.bytes]),
+		];
+		for (const [url, bytes] of entries)
+			await cache.put(url, new Response("stub", { headers: { "content-length": String(bytes) } }));
+		localStorage.setItem("listen-prefs", JSON.stringify({ engine: "kokoro", rate: 1 }));
+		localStorage.setItem("listen-kokoro-consent", JSON.stringify("fp32"));
+	}, { ortUrl: ORT_URL, sha: ORT_SHA });
+	const errors = [];
+	page.on("pageerror", (e) => errors.push(e.message));
+	for (const label of ["neural, hard load", "neural, after reload"]) {
+		await page.reload({ waitUntil: "load" });
+		await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+		await page.waitForTimeout(400);
+		expect((await engineValue(page)) === "kokoro", `${label}: stored neural voice not selected`);
+		const playButton = await page.$("listen-player [data-action=play]");
+		await playButton.scrollIntoViewIfNeeded();
+		const box = await playButton.boundingBox();
+		const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+		await page.mouse.click(x, y);
+		await page.mouse.click(x, y);
+		await page.waitForTimeout(800);
+		const run = await page.evaluate(() => ({
+			engines: window.__stubEngines ?? 0,
+			inits: window.__stubInits ?? 0,
+			sentinels: document.querySelectorAll(".listen-sentinel").length,
+			state: document.querySelector("listen-player").dataset.state,
+			status: document.querySelector("[data-status]").textContent,
+		}));
+		expect(run.engines === 1, `${label}: ${run.engines} neural engines created, expected 1`);
+		expect(run.inits === 1, `${label}: ${run.inits} neural inits, expected 1`);
+		expect(run.sentinels === 1, `${label}: ${run.sentinels} .listen-sentinel, expected 1`);
+		expect(run.state === "playing", `${label}: state ${run.state} after two rapid Play clicks, expected playing (status "${run.status}")`);
+		expect(!/call init\(\) first/.test(run.status), `${label}: playback used an engine that was never initialised`);
+		expect(errors.length === 0, `${label}: page errors: ${errors.join("; ")}`);
+		await page.click("listen-player [data-action=play]");
+		await page.waitForTimeout(300);
+		const paused = await playerState(page);
+		expect(paused === "paused", `${label}: state ${paused} after one Pause click, expected paused`);
+	}
+	await ctx.close();
+});
+
+// 11. Defaults: the neural voice (Heart) when WebGPU exists, the browser voice otherwise, a stored choice wins, and a
+// cached model plays with no prompt and no network.
+{
+	const counter = { hf: 0 };
+	const ctx = await neuralContext(browser, { counter });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(page) === "kokoro", `default with WebGPU: engine is ${await engineValue(page)}, not neural`);
+	expect(await page.$eval("[data-voice]", (el) => el.value) === "af_heart", "default neural voice is not Heart (af_heart)");
+	expect(await page.$$eval("[data-consent][open]", (els) => els.length) === 0, "default: a prompt opened at page load");
+	await page.click("[data-action=play]");
+	await page.waitForSelector("[data-consent][open]", { timeout: 4000 })
+		.catch(() => expect(false, "default neural: first Play did not ask for consent"));
+	await page.click("[data-variant=fp32]");
+	await page.waitForFunction(() => /Neural voice: downloaded/.test(document.querySelector("[data-download-state]")?.textContent ?? ""), null, { timeout: 15000 })
+		.catch(() => expect(false, "default neural: download did not complete"));
+	const before = counter.hf;
+	const again = await ctx.newPage();
+	await again.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await again.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(again) === "kokoro", "cached: default engine is not neural on the next visit");
+	await again.click("[data-action=play]");
+	await again.waitForFunction(() => document.querySelector("[data-status]")?.textContent !== undefined, null, { timeout: 2000 }).catch(() => {});
+	expect(await again.$$eval("[data-consent][open]", (els) => els.length) === 0, "cached: Play asked for consent again");
+	expect(counter.hf === before, `cached: ${counter.hf - before} model request(s) on the next visit`);
+	await ctx.close();
+}
+{
+	const ctx = await neuralContext(browser, { gpu: false });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(page) === "web-speech", "no WebGPU: default is not the browser voice");
+	await ctx.close();
+}
+{
+	const ctx = await neuralContext(browser, {});
+	await ctx.addInitScript(() => localStorage.setItem("listen-engine-choice", JSON.stringify("web-speech")));
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(page) === "web-speech", "stored browser choice did not win over the neural default");
+	await ctx.close();
+}
+
+// 12. Choices: only an explicit pick persists. A cancelled prompt keeps the neural default for the next visit; an
+// explicit "Use browser voice" sticks; two failed starts in a row pause the default (cool-down).
+{
+	const ctx = await neuralContext(browser, {});
+	const first = await ctx.newPage();
+	await first.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await first.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	await first.click("[data-action=play]");
+	await first.waitForSelector("[data-consent][open]", { timeout: 4000 })
+		.catch(() => expect(false, "choices: first Play did not ask"));
+	await first.click("[data-consent] button[value=cancel]");
+	const second = await ctx.newPage();
+	await second.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await second.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(second) === "kokoro", "cancelled prompt: next visit did not default to neural");
+	await ctx.close();
+}
+{
+	const ctx = await neuralContext(browser, {});
+	const first = await ctx.newPage();
+	await first.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await first.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	await first.selectOption("[data-engine]", "web-speech");
+	await first.waitForFunction(() => JSON.parse(localStorage.getItem("listen-engine-choice") || "null") === "web-speech", null, { timeout: 4000 })
+		.catch(() => expect(false, "explicit browser pick was not stored"));
+	const second = await ctx.newPage();
+	await second.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await second.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(second) === "web-speech", "explicit browser pick did not stick on the next visit");
+	await ctx.close();
+}
+{
+	const ctx = await neuralContext(browser, { status: 500, body: "missing" });
+	for (let visit = 0; visit < 2; visit += 1) {
+		const page = await ctx.newPage();
+		await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+		await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+		await page.close();
+	}
+	const third = await ctx.newPage();
+	await third.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await third.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(third) === "web-speech", "two failed starts: the default was not paused");
+	await ctx.close();
+}
+
+// 13. ONNX Runtime binary: bytes that do not match the pin are never used (integrity error, browser voice for this
+// session); an unreachable host is reported as "host unavailable" after retries, with no automatic second host.
+for (const [label, runtime, expected] of [
+	["integrity", { body: Buffer.alloc(ORT_BYTES, 0) }, /integrity check/],
+	["host", { status: 500 }, /host unavailable/],
+]) {
+	const ctx = await neuralContext(browser, { runtime });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.click("[data-action=play]");
+	await page.waitForSelector("[data-consent][open]", { timeout: 4000 })
+		.catch(() => expect(false, `${label}: no consent prompt`));
+	await page.click("[data-variant=fp32]");
+	await page.waitForFunction((source) => new RegExp(source).test(document.querySelector("[data-status]")?.textContent ?? ""), expected.source, { timeout: 20000 })
+		.catch(() => expect(false, `${label}: no runtime error shown`));
+	expect(await engineValue(page) === "web-speech", `${label}: the browser voice did not take over`);
+	expect(!(await page.evaluate(() => /stored/.test(document.querySelector("[data-runtime-state]")?.textContent ?? ""))), `${label}: runtime reported as stored after a failed check`);
+	await ctx.close();
 }
 
 // 6. The player is not on a post that opts out. Opt-out is a front-matter flag, so this checks a standalone page is untouched.
-{
+await step("6. opt-out", async () => {
 	const ctx = await browser.newContext({
 		viewport: { width: 1440, height: 900 },
 	});
@@ -657,7 +1029,7 @@ const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
 		"about page: listen-player present on a non-post page",
 	);
 	await ctx.close();
-}
+});
 
 await browser.close();
 server.close();

@@ -1,6 +1,18 @@
 {
   "items": [
     {
+      "title": "EcoSimulation",
+      "summary": "Condition a stock-flow-consistent AI-economy model on a driver state and watch six macro and financial series re-fan across five years.",
+      "href": "/experiments/ecosimulation/",
+      "post": "/posts/ecosimulation/",
+      "started": "2026-10-24",
+      "updated": "2026-10-24",
+      "status": "Draft",
+      "tags": [
+        "Experiment"
+      ]
+    },
+    {
       "title": "Brev tree traversal",
       "summary": "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, compare it with flat rules and a 27B model, then time the same encoder on your own GPU in the browser.",
       "href": "/experiments/brev-tree-traversal/",

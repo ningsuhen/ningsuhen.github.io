@@ -6,7 +6,7 @@ interface Props {
 	class?: string;
 }
 const className = Astro.props.class;
-const link = "underline underline-offset-2 hover:text-[var(--primary)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 rounded-sm";
+const link = "underline underline-offset-2 hover:text-[var(--btn-content)] focus-visible:outline-2 focus-visible:outline-[var(--btn-content)] focus-visible:outline-offset-2 rounded-sm";
 ---
 <aside class:list={["card-base px-4 py-3 text-[12px] leading-normal text-black/65 dark:text-white/65 border border-black/10 dark:border-white/10", className]} aria-label="Copyright and license">
 	<p class="font-semibold text-black/80 dark:text-white/85">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</p>

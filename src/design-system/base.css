@@ -1,0 +1,166 @@
+/* ---- Page ---- */
+.rd-body {
+	margin: 0;
+	background: var(--rd-page-bg);
+	color: var(--rd-text);
+	font: 400 var(--rd-fs-base) / var(--rd-lh) var(--rd-font);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Width contract: default = the main site's content column (54.5rem). --wide = the navbar's width (1168px):
+   the content edges line up with the navbar card. Use it for tabbed reports, never for a single column. */
+.rd-container {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: var(--rd-content-width);
+	margin: 0 auto;
+	padding: var(--rd-gap-block) var(--rd-space-4) var(--rd-gap-section);
+}
+.rd-container--wide { max-width: var(--rd-navbar-width); } /* matches the injected navbar width */
+
+/* ---- Cards ---- */
+.rd-card {
+	background: var(--rd-card-bg);
+	border-radius: var(--rd-radius);
+	padding: var(--rd-pad-card);
+	margin: var(--rd-gap-block) 0;
+}
+.rd-card > :first-child { margin-top: 0; }
+.rd-card > :last-child { margin-bottom: 0; }
+
+/* ---- Type (scoped so it never leaks into a report's own components) ---- */
+.rd-prose { color: var(--rd-text); }
+.rd-prose h1, .rd-prose h2, .rd-prose h3, .rd-prose h4 {
+	color: var(--rd-text-strong);
+	font-weight: 700;
+	line-height: 1.3;
+}
+.rd-prose h1 { font-size: var(--rd-fs-h1); margin: 0 0 var(--rd-space-2); }
+.rd-prose h2 {
+	font-size: var(--rd-fs-h2);
+	margin: var(--rd-gap-section) 0 var(--rd-gap-block);
+	padding-left: 0.9rem;
+	position: relative;
+}
+.rd-prose h2::before { /* the site's accent bar before section headings */
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.2em;
+	bottom: 0.2em;
+	width: 0.25rem;
+	border-radius: 0.125rem;
+	background: var(--rd-primary);
+}
+.rd-prose h3 { font-size: var(--rd-fs-h3); margin: var(--rd-gap-block) 0 var(--rd-gap-para); }
+.rd-prose p { margin: var(--rd-gap-para) 0; max-width: var(--rd-measure); }
+.rd-prose li { max-width: var(--rd-measure); }
+.rd-prose a {
+	color: var(--rd-accent-ink);
+	text-decoration: underline;
+	text-decoration-color: var(--rd-line);
+	text-underline-offset: 3px;
+}
+.rd-prose a:hover { text-decoration-color: var(--rd-accent); }
+.rd-prose hr { border: 0; border-top: 1px dashed var(--rd-line); margin: var(--rd-gap-section) 0; }
+.rd-prose blockquote {
+	margin: var(--rd-gap-block) 0;
+	padding: 0.25rem 1rem;
+	border-left: 0.25rem solid var(--rd-primary);
+	background: var(--rd-btn-bg);
+	border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0;
+}
+.rd-prose code {
+	font-family: var(--rd-font-mono);
+	font-size: 0.875em;
+	background: var(--rd-code-bg);
+	color: var(--rd-code-fg);
+	padding: 0.1em 0.35em;
+	border-radius: 0.25rem;
+}
+.rd-prose pre {
+	background: var(--rd-codeblock-bg);
+	color: var(--rd-codeblock-fg);
+	padding: var(--rd-pad-card);
+	border-radius: var(--rd-radius-sm);
+	overflow-x: auto;
+}
+.rd-prose pre code { background: none; color: inherit; padding: 0; }
+
+.rd-meta { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-eyebrow {
+	color: var(--rd-text-muted);
+	font-size: var(--rd-fs-xs);
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* ---- Tables (scroll inside the container, never widen the page) ---- */
+.rd-table-wrap { overflow-x: auto; margin: var(--rd-gap-block) 0; border-radius: var(--rd-radius-sm); scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.rd-table { width: 100%; border-collapse: collapse; font-size: var(--rd-fs-table); font-variant-numeric: tabular-nums; }
+.rd-table th, .rd-table td { padding: var(--rd-pad-cell-y) var(--rd-pad-cell-x); text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
+.rd-table th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); }
+.rd-table td.rd-num, .rd-table th.rd-num { text-align: right; }
+.rd-table code { font-size: 1em; } /* keep table code at the cell size: never below the 11px floor */
+.rd-table tr:hover td { background: var(--rd-plain-hover); }
+
+/* ---- Stat tiles: the headline-number pattern ---- */
+.rd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr)); gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; }
+.rd-stat { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); border-top: 3px solid var(--rd-line); }
+.rd-stat--candidate { border-top-color: var(--rd-accent); }
+.rd-stat--reference { border-top-color: var(--rd-cat-3); }
+.rd-stat--reference .rd-stat__value { color: var(--rd-text-strong); }
+.rd-stat__value { font-size: var(--rd-fs-stat); font-weight: 700; line-height: 1.1; color: var(--rd-accent); font-variant-numeric: tabular-nums; }
+.rd-stat__label { margin-top: var(--rd-space-1); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-stat__note { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-stat__delta { display: flex; align-items: center; gap: 0.3rem; margin-top: var(--rd-space-2); font-size: var(--rd-fs-sm); font-weight: 600; color: var(--rd-text-muted); }
+.rd-stat__delta--good { color: var(--rd-good); }
+.rd-stat__delta--bad { color: var(--rd-bad); }
+
+/* ---- Callouts ---- */
+.rd-callout { border-left: 0.25rem solid var(--rd-primary); background: var(--rd-card-bg); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; padding: var(--rd-pad-callout); margin: var(--rd-gap-block) 0; }
+.rd-callout--good { border-color: var(--rd-good); }
+.rd-callout--warn { border-color: var(--rd-warn); }
+.rd-callout--bad { border-color: var(--rd-bad); }
+.rd-callout__title { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-1); }
+
+/* ---- Figures & charts ---- */
+.rd-figure { margin: var(--rd-gap-section) 0; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); }
+.rd-figure { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.rd-figure img { max-width: 100%; height: auto; display: block; border-radius: var(--rd-radius-sm); }
+/* Charts: never shrink below ~42rem (the 680-unit viewBox at 1:1). On a phone the figure scrolls sideways
+   inside itself, so axis and annotation text stays at the density size instead of scaling below 11px. */
+.rd-figure > svg { display: block; width: 100%; min-width: 42rem; height: auto; border-radius: var(--rd-radius-sm); }
+.rd-figure figcaption { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+
+/* ---- Buttons / chips / nav tabs ---- */
+.rd-btn {
+	display: inline-flex; align-items: center; gap: 0.35rem;
+	min-height: var(--rd-control-h); padding: 0 var(--rd-space-3);
+	border: 0; border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg); color: var(--rd-accent-ink); font: 500 var(--rd-fs-sm) var(--rd-font); cursor: pointer;
+}
+.rd-btn:hover { background: var(--rd-btn-bg-hover); }
+.rd-chip {
+	display: inline-flex; align-items: center; gap: 0.3rem;
+	padding: var(--rd-pad-chip); border-radius: 999px;
+	background: var(--rd-btn-bg); color: var(--rd-accent-ink);
+	font-size: var(--rd-fs-xs); font-weight: 500; line-height: 1.6;
+}
+.rd-chip--good { color: var(--rd-good); }
+.rd-chip--warn { color: var(--rd-warn); }
+.rd-chip--bad { color: var(--rd-bad); }
+.rd-chip--neutral { color: var(--rd-text-muted); }
+.rd-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--rd-line); margin: var(--rd-gap-block) 0; }
+.rd-tabs a { display: inline-flex; align-items: center; min-height: var(--rd-control-h); padding: 0 var(--rd-space-3); border-radius: var(--rd-radius-sm) var(--rd-radius-sm) 0 0; color: var(--rd-text); text-decoration: none; }
+.rd-tabs a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
+.rd-tabs a[aria-current="page"], .rd-tabs a.is-active { color: var(--rd-accent-ink); box-shadow: inset 0 -2px 0 var(--rd-primary); }
+
+/* ---- Focus & motion & print ---- */
+.rd-body :focus-visible { outline: 2px solid var(--rd-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .rd-body * { transition: none !important; animation: none !important; } }
+@media print {
+	.rd-body { background: #fff; color: #000; }
+	.rd-card, .rd-stat, .rd-figure { break-inside: avoid; box-shadow: none; }
+}

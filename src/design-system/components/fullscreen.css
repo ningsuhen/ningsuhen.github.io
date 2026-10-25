@@ -1,0 +1,41 @@
+/* rd-fullscreen: expand a container to the viewport. Real Fullscreen API when available; the
+   .is-expanded overlay is the iOS fallback (no Fullscreen API). Token-compliant; ships in rd.css
+   only (the research.css compatibility alias stays the frozen core). */
+
+.rd-fullscreen { position: relative; }
+
+/* Overlay fallback: covers the viewport (including the injected navbar, z-index 20) and scrolls.
+   Safe-area insets keep content clear of the notch / home indicator. */
+.rd-fullscreen.is-expanded {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	box-sizing: border-box;
+	overflow: auto;
+	background: var(--rd-page-bg);
+	padding: calc(var(--rd-space-4) + env(safe-area-inset-top)) calc(var(--rd-space-4) + env(safe-area-inset-right)) calc(var(--rd-space-4) + env(safe-area-inset-bottom)) calc(var(--rd-space-4) + env(safe-area-inset-left));
+}
+
+/* Real Fullscreen API: the browser sizes the element; reset the page chrome. */
+.rd-fullscreen:fullscreen,
+.rd-fullscreen:-webkit-full-screen {
+	overflow: auto;
+	background: var(--rd-page-bg);
+	padding: var(--rd-space-4);
+}
+
+/* Toggle button: a small rd-btn carrying a Lucide maximize/minimize icon (swapped by rd.js). */
+[data-rd-fullscreen-toggle] {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-2);
+	min-height: var(--rd-control-h);
+	padding: 0 var(--rd-space-3);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg);
+	color: var(--rd-accent-ink);
+	font: 500 var(--rd-fs-sm) var(--rd-font);
+	cursor: pointer;
+}
+[data-rd-fullscreen-toggle]:hover { background: var(--rd-btn-bg-hover); }
+[data-rd-fullscreen-toggle] .rd-icon { width: 1em; height: 1em; }

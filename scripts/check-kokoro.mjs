@@ -61,14 +61,16 @@ await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}`;
 
 const executablePath = findChrome();
+// Real scrollbars, as in check-listen: Playwright's default --hide-scrollbars hides layout paths visitors take.
 const browser = await chromium.launch({
 	executablePath,
+	ignoreDefaultArgs: ["--hide-scrollbars"],
 	args: ["--enable-unsafe-webgpu", "--enable-features=Vulkan", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"],
 });
 const failures = [];
 const hosts = new Map();
 try {
-	const page = await browser.newPage();
+	const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 	await page.addInitScript(() => {
 		window.__beacons = [];
 		const send = navigator.sendBeacon?.bind(navigator);
@@ -88,10 +90,18 @@ try {
 		if (!ALLOWED_HOST.test(host)) failures.push(`request to ${host} (${req.url().slice(0, 80)})`);
 	});
 	page.on("pageerror", (e) => failures.push(`page error: ${e.message}`));
+	// ONNX Runtime's node-assignment note is noise (sessions run with logSeverityLevel 3); any copy is a regression.
+	page.on("console", (m) => {
+		if ((m.type() === "warning" || m.type() === "error") && /VerifyEachNodeIsAssignedToAnEp/.test(m.text()))
+			failures.push(`ORT console line: ${m.text().slice(0, 120)}`);
+	});
 	await page.goto(`${base}/__kokoro-check.html${MODE === "cpu" ? "?mode=cpu" : ""}`);
 
 	const result = await page.evaluate(
 		async ({ sentences, mode, modelBase }) => {
+			// The verified ONNX Runtime binary (pinned host, size and SHA-256) must be in place before the engine's init().
+			const runtime = await import("/tts/ort-runtime.js");
+			await runtime.ensureOrtRuntime({});
 			const { createEngine } = await import("/tts/kokoro.js");
 			const engine = await createEngine();
 			const t0 = performance.now();
@@ -118,7 +128,7 @@ try {
 			}
 			const beacons = window.__beacons;
 			engine.dispose();
-			return { accelerator: engine.accelerator, initMs, beacons, runs };
+			return { accelerator: engine.accelerator, initMs, beacons, runs, voices: engine.voices().map((v) => v.id) };
 		},
 		{ sentences: SENTENCES, mode: MODE, modelBase: MODEL_BASE },
 	);
@@ -145,6 +155,8 @@ try {
 		if (seconds < 1 || seconds > 8) failures.push(`implausible duration ${seconds.toFixed(2)} s for "${run.text}"`);
 	}
 	metrics.hosts = Object.fromEntries(hosts);
+	// The player's default neural voice is Heart (af_heart).
+	if (result.voices[0] !== "af_heart") failures.push(`default voice is ${result.voices[0]}, expected af_heart`);
 	console.log(JSON.stringify(metrics, null, 2));
 } finally {
 	await browser.close();

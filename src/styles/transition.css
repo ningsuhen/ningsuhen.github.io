@@ -51,3 +51,18 @@ html.is-animating .transition-swup-fade {
 #post-container :nth-child(5) { animation-delay: calc(var(--content-delay) + 250ms) }
 #post-container :nth-child(6) { animation-delay: calc(var(--content-delay) + 325ms) }
 
+/* Respect reduced motion: no fade-in-up on load, no Swup page transition. Content is shown
+   immediately instead. (The listen player already guards its own motion separately.) */
+@media (prefers-reduced-motion: reduce) {
+    .onload-animation {
+        animation: none;
+        opacity: 1;
+    }
+    html.is-changing .transition-swup-fade,
+    html.is-animating .transition-swup-fade {
+        transition: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+

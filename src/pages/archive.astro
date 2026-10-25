@@ -8,7 +8,7 @@ import { getSortedPostsList } from "../utils/content-utils";
 const sortedPostsList = await getSortedPostsList();
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)}>
+<MainGridLayout title={i18n(I18nKey.archive)} breadcrumb={[{ name: "Home", url: "/" }, { name: i18n(I18nKey.archive), url: "/archive/" }]}>
     <ArchivePanel sortedPosts={sortedPostsList} client:only="svelte"></ArchivePanel>
 </MainGridLayout>
 

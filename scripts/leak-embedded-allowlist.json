@@ -1,0 +1,18 @@
+{
+	"_comment": "Time-boxed, hash-pinned exceptions for embedded-payload leaks. Each entry pins the sha256 of the DECODED payload (not the whole file) and names the file where it was found. A page ships at both public/… and its dist/… build copy, which differ only in the injected navbar/license but carry the identical payload, so one payload hash covers both. The entry stops applying when the payload changes (a re-export) or after `expires`. This is a tripwire, not a blanket skip: it suppresses only that payload's `embedded` findings.",
+	"removeWhen": "Both entries are removed together when EcoSimulation's clean re-export (v51, no embedded build paths) lands for /research/ai-economy/ and replaces /experiments/ecosimulation/. Until then the payload-hash pin and the 2026-11-08 expiry keep this failing automatically on re-export or after the date.",
+	"entries": [
+		{
+			"file": "public/research/ai-economy/index.html",
+			"payloadSha256": "87d85b3fdcffa4dfbb7c76fe9edf96668fc28ab055266876ecca03846c567a5d",
+			"expires": "2026-11-08",
+			"reason": "EcoSimulation v50 export embeds a base64+gzip wasm that still carries the builder's home and cargo/rustc paths. Suppressed until the v51 re-export lands clean; the payload hash pin and expiry make this fail automatically on re-export or after the date."
+		},
+		{
+			"file": "public/experiments/ecosimulation/index.html",
+			"payloadSha256": "87d85b3fdcffa4dfbb7c76fe9edf96668fc28ab055266876ecca03846c567a5d",
+			"expires": "2026-11-08",
+			"reason": "Same EcoSimulation v50 build as /research/ai-economy/ (identical embedded payload), now unpublished (Draft) by #143 but the file still ships at its URL. Suppressed on the same terms until the v51 re-export lands clean."
+		}
+	]
+}
