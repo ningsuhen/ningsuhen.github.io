@@ -6,10 +6,11 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 
 ## Structure
 
-- Wording: Research = reports (static analyses and benchmarks you read). Experiments = live experiments (things you play with in the browser).
-- `src/content/posts/<slug>/index.md`: posts. Report posts: tag and category `Research`. Live-experiment posts: tag and category `Experiment`. Both show the LicenseNote.
+- Wording: Research = reports (static analyses and benchmarks you read). Experiments = live experiments (things you play with in the browser). Ideas = short write-ups of things I may build or test (not research or experiments yet).
+- `src/content/posts/<slug>/index.md`: posts. Report posts: tag and category `Research`. Live-experiment posts: tag and category `Experiment`. Idea posts: tag and category `Idea`. All three show the LicenseNote.
 - `/research/`: `src/pages/research.astro`, data `src/data/research.json` (cards chipped "Report").
 - `/experiments/`: `src/pages/experiments.astro`, data `src/data/experiments.json` (cards chipped "Live experiment"). Status `Coming soon` shows a dimmed card with no links; `Draft` is hidden on both pages.
+- `/ideas/`: `src/pages/ideas.astro`, data `src/data/ideas.json` (cards chipped "Idea"); no standalone page, the entry links to the idea post; empty shows "Nothing here yet."
 - Shared card list: `src/components/EntryCards.astro` (prop `kind`), type `src/types/entry.ts`.
 - Standalone pages: reports at `public/research/<slug>/index.html`, live experiments at `public/experiments/<slug>/index.html`. Shipped as-is, not Fuwari pages. Never create `public/research/index.html` or `public/experiments/index.html`: the Astro pages own those URLs.
 - Old report URLs redirect (`redirects` in `astro.config.mjs`): add one there when moving a page.
@@ -17,7 +18,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - Listen player (every post, opt-out `noListen: true`): `src/components/ListenPlayer.astro` + `src/scripts/tts/` (engine contract `engine.ts`, normaliser `normalize.ts`, article extraction `extract.ts`, Web Speech engine, Kokoro stub, `listen-player.ts`). Neural engine (Kokoro-82M, `public/tts/`, from Brev): `kokoro.js`, `kokoro_glue.js`, `kokoro_bg.wasm`, `snippets/`; `vendor/ort/` and `lexicon-en-us.txt` are gitignored until the owner decides vendor vs CDN+SRI. Off unless `KOKORO_ENABLED` is true in `ListenPlayer.astro`; the CPU tier stays off (`window.__KOKORO_CPU`). ORT base: `PUBLIC_KOKORO_ORT_BASE` at build time, default `/tts/vendor/ort/`. Licences: `public/tts/LICENSES.txt`. `pnpm check:kokoro`: real-browser check (needs internet; not in `pnpm check`).
 - `src/integrations/standalone-header.ts`: injects the navbar and license footer into every `public/**/*.html` at build and in dev.
 - `src/config.ts`: `navBarConfig` (the standalone navbar derives from it).
-- `scripts/`: `new-experiment.mjs` (scaffold; `--research` for Research), `check-standalone-pages.mjs`, `sync-dev-next.sh`, `merge-pr.sh`, `test-pre-push.sh`, `dev-server.sh`, `install-hooks.sh`.
+- `scripts/`: `new-experiment.mjs` (scaffold; `--research` for Research, `--idea` for Ideas), `check-standalone-pages.mjs`, `sync-dev-next.sh`, `merge-pr.sh`, `test-pre-push.sh`, `dev-server.sh`, `install-hooks.sh`.
 
 ## Commands
 
@@ -30,7 +31,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - `pnpm check:design-system`: conformance of every standalone page against the design system and the main post page (`/posts/rust-learnings/`), in a real browser. Needs a build. `--update-baseline` for local triage only. Rules, exceptions and baseline policy: design-system guide, "Conformance".
 - `pnpm check:listen`: real-browser check of the Listen player on a built post (speech is stubbed). `pnpm test:tts`: unit tests for the speech normaliser and chunker.
 - `pnpm astro check`: type check.
-- `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. Then set the entry's status to `Live` (or `Coming soon`).
+- `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. `pnpm new-idea <slug> "<Title>" ["<summary>"]`: draft post and Draft entry only (no page). Then set the entry's status to `Live` (or `Coming soon`).
 - `pnpm sync`: local-only dev/next sync (see below). `pnpm merge-pr <n>`: squash-merge a PR, then sync.
 - `pnpm test:hooks`: tests the pre-push guard.
 - `pnpm check:leaks`: scans the built site, `public/`, `src/content/`, `src/data/` and these docs for leaks (see CRITICAL "No leaks"). `node scripts/check-public-leaks.mjs <dir>` scans any export folder.

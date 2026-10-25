@@ -154,6 +154,7 @@ for (const sitePath of ["/experiments/", "/research/"]) {
 for (const [section, listPath] of [
 	["research", "/research/"],
 	["experiments", "/experiments/"],
+	["ideas", "/ideas/"],
 ]) {
 	if (pages.includes(path.join(section, "index.html"))) failures.push(`public/${section}/index.html exists: the Astro page owns /${section}/`);
 	// Draft entries are hidden on purpose (work in progress), so they are exempt.
@@ -192,8 +193,8 @@ for (const [, from, to] of redirectBlock.matchAll(/"([^"]+)":\s*"([^"]+)"/g)) {
 	await ctx.close();
 }
 // Site pages: the navbar used to overflow the page between 768 and 1023px (links shown at md, search only at lg).
-for (const sitePath of ["/", "/archive/", "/research/"]) {
-	for (const vp of [{ width: 768, height: 1000 }, { width: 375, height: 800 }]) {
+for (const sitePath of ["/", "/archive/", "/research/", "/experiments/", "/ideas/"]) {
+	for (const vp of [375, 768, 1024, 1280, 1440].map((width) => ({ width, height: 1000 }))) {
 		const ctx = await browser.newContext({ viewport: vp });
 		const page = await ctx.newPage();
 		await page.goto(base + sitePath, { waitUntil: "load" });
@@ -218,7 +219,7 @@ for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
 }
 // Every main page must have exactly one <h1>: the shared layout supplies a screen-reader heading on
 // pages whose visible title is a styled div, and the section/404 pages render their own visible <h1>.
-for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments/", "/license/", "/posts/ai-boom-trajectories/"]) {
+for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments/", "/ideas/", "/license/", "/posts/ai-boom-trajectories/"]) {
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	await page.goto(base + sitePath, { waitUntil: "load" });
@@ -461,7 +462,7 @@ const licensedPosts = readdirSync(path.join(DIST, "posts"), { withFileTypes: tru
 const within = (inner, outer) => inner[0] >= outer[0] - 0.5 && inner[1] <= outer[1] + 0.5;
 const fmt = (r) => r.map(Math.round).join("..");
 for (const width of FOOTER_WIDTHS) {
-	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/experiments/", ...licensedPosts]) {
+	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/experiments/", "/ideas/", ...licensedPosts]) {
 		const isStandalone = standaloneUrls.has(urlPath);
 		const hasLicense = isStandalone || readFileSync(path.join(DIST, urlPath, "index.html"), "utf8").includes(LICENSE_ASIDE);
 		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
@@ -573,6 +574,12 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 		await s.ctx.close();
 		if (main.bar.bg !== std.bar.bg || !near(main.bar.x, std.bar.x) || !near(main.bar.w, std.bar.w) || !near(main.bar.h, std.bar.h)) failures.push(`${tag}: bar ${JSON.stringify(std.bar)} vs main ${JSON.stringify(main.bar)}`);
 		if (std.sbw !== 0) failures.push(`${tag}: page scrollbar takes ${std.sbw}px of layout width (main takes 0)`);
+		// Every visible link (Ideas included) must sit inside the navbar card, on both navbars: an overflowing nav wraps or spills out.
+		for (const [who, st] of [["main", main], ["standalone", std]]) {
+			for (const [name, c] of Object.entries(st.controls)) {
+				if (c.x < st.bar.x - 1 || c.x + c.w > st.bar.x + st.bar.w + 1) failures.push(`${tag}: "${name}" ${Math.round(c.x)}..${Math.round(c.x + c.w)} outside the ${who} navbar card ${Math.round(st.bar.x)}..${Math.round(st.bar.x + st.bar.w)}`);
+			}
+		}
 		if (std.scrollable !== main.scrollable && h === 900) failures.push(`${tag}: scroll state differs (main ${main.scrollable}, standalone ${std.scrollable})`);
 		for (const [name, mc] of Object.entries(main.controls)) {
 			const sc = std.controls[name];
