@@ -226,6 +226,21 @@ for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments
 	if (h1 !== 1) failures.push(`${sitePath}: expected exactly one <h1>, found ${h1}`);
 	await ctx.close();
 }
+// Site pages: the footer small-print links (RSS / Sitemap / Astro / Fuwari) must keep a >= 24px tap
+// target on phones. Each is inline-flex with a 24px min-height, so the element itself is the tap target.
+{
+	const ctx = await browser.newContext({ viewport: { width: 375, height: 800 } });
+	const page = await ctx.newPage();
+	await page.goto(base + "/", { waitUntil: "load" });
+	const small = await page.evaluate(() =>
+		[...document.querySelectorAll("a")]
+			.filter((a) => /^(RSS|Sitemap|Astro|Fuwari)$/.test(a.textContent.trim()))
+			.map((a) => Math.round(a.getBoundingClientRect().height))
+			.filter((h) => h > 0)
+	);
+	for (const h of small) if (h < 24) failures.push(`/ @375: footer small-print link tap target ${h}px (< 24px)`);
+	await ctx.close();
+}
 // Wide container (tabbed reports, class rd-container--wide = the navbar's width): from 1200px up, the content's
 // left and right edges must sit on the navbar card's edges, so the page reads as one column with the navbar.
 const WIDE_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
