@@ -82,6 +82,7 @@ const RULES = {
 	"stepper": "every .rd-stepper has a minus and a plus <button> and a value region",
 	"chat": "every .rd-chat__msg has a variant (--me or --them) and every .rd-chat__input input is labelled",
 	"quiz": "every .rd-quiz has a question and at least one option, and its feedback line carries a --good/--bad variant",
+	"meter": "every .rd-meter has a .rd-meter__fill and exposes its value to a screen reader (role=progressbar + aria-valuenow, or an aria-label)",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -365,6 +366,13 @@ const probeStructure = (canon) => {
 			hasQuestion: !!el.querySelector(".rd-quiz__q"),
 			hasManyOptions: el.querySelectorAll(".rd-quiz__opts .rd-choice").length > 0,
 			feedbackVariant: [...el.querySelectorAll(".rd-quiz__feedback")].every((f) => f.classList.contains("rd-quiz__feedback--good") || f.classList.contains("rd-quiz__feedback--bad")),
+		})),
+		// Meter: every .rd-meter has a fill and exposes its value to a screen reader — either a
+		// progressbar role with aria-valuenow, or an aria-label. A bare bar with no fill or no
+		// accessible value is broken.
+		meters: [...document.querySelectorAll(".rd-meter")].map((el) => ({
+			hasFill: !!el.querySelector(".rd-meter__fill"),
+			accessible: el.getAttribute("role") === "progressbar" ? el.hasAttribute("aria-valuenow") : !!el.getAttribute("aria-label"),
 		})),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
@@ -784,6 +792,8 @@ await Promise.all(pages.map(async (rel) => {
 				[s.quizzes.some((q) => !q.hasQuestion), "quiz", "a .rd-quiz has no .rd-quiz__q question"],
 				[s.quizzes.some((q) => !q.hasManyOptions), "quiz", "a .rd-quiz has no options"],
 				[s.quizzes.some((q) => !q.feedbackVariant), "quiz", "a .rd-quiz__feedback line has no --good/--bad variant"],
+				[s.meters.some((m) => !m.hasFill), "meter", "a .rd-meter has no .rd-meter__fill"],
+				[s.meters.some((m) => !m.accessible), "meter", "a .rd-meter exposes no value to a screen reader (role=progressbar + aria-valuenow, or aria-label)"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
