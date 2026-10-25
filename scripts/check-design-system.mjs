@@ -49,6 +49,7 @@ const RULES = {
 	overflow: "no horizontal page overflow at 1440 and 375",
 	"tap-target": "interactive controls are at least 24px at 375",
 	"injected-once": "the site navbar and the license card are each present exactly once",
+	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
 	axe: "no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
@@ -306,6 +307,8 @@ const probeStructure = (canon) => {
 		lightFooters: document.querySelectorAll("footer").length,
 		navCount: document.querySelectorAll("div[data-site-navbar]").length,
 		licCount: document.querySelectorAll("div[data-site-license]").length,
+		crumbBands: document.querySelectorAll("[data-site-breadcrumb]").length,
+		strayCrumbs: [...document.querySelectorAll('.rd-breadcrumb, nav[aria-label="Breadcrumb"]')].filter((n) => !n.closest("[data-site-breadcrumb]")).length,
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -391,20 +394,26 @@ const probeChrome = (isRef) => {
 	const footRadius = footEl ? parseFloat(getComputedStyle(footEl).borderTopLeftRadius) : null;
 	const footGap = footRect && contentRect ? Math.round(footRect.y - contentRect.b) : null;
 	const rail = isRef ? [...document.querySelectorAll("table-of-contents")].find(vis) : [...document.querySelectorAll(".rd-toc")].find(vis);
+	// Geometry box: the main post's fixed #toc-inner-wrapper and the standalone .rd-toc both pin their top to the
+	// navbar bottom, so they compare. The inner table-of-contents sits 32px lower (a top spacer) and would not.
+	const railBox = isRef ? document.querySelector("#toc-inner-wrapper") ?? rail : rail;
 	const railEntries = rail ? [...rail.querySelectorAll(isRef ? ":scope > a" : "a")] : [];
+	// The active-heading indicator is a dashed box on both sides (#active-indicator / .rd-toc__indicator), not a
+	// border on the active link. Read its border-left style + width on each side so the two values have the same shape.
 	const railIndicator = rail
 		? isRef
-			? rail.querySelector("#active-indicator")
-				? getComputedStyle(rail.querySelector("#active-indicator")).borderTopStyle
-				: "none"
+			? (() => {
+					const i = rail.querySelector("#active-indicator");
+					return i ? `${getComputedStyle(i).borderLeftStyle} ${getComputedStyle(i).borderLeftWidth}` : "none";
+				})()
 			: (() => {
-					const a = rail.querySelector('a[aria-current="location"]') || railEntries[0];
-					return a ? `${getComputedStyle(a).borderLeftStyle} ${getComputedStyle(a).borderLeftWidth}` : "none";
+					const i = rail.querySelector(".rd-toc__indicator");
+					return i ? `${getComputedStyle(i).borderLeftStyle} ${getComputedStyle(i).borderLeftWidth}` : "none";
 				})()
 		: null;
 	const railText = railEntries[0] ? (isRef ? railEntries[0].querySelector("div") : railEntries[0]) : null;
 	const railTypo = railText ? { fs: parseFloat(getComputedStyle(railText).fontSize), c: rgb(getComputedStyle(railText).color) } : null;
-	const railRect = rect(rail);
+	const railRect = rect(railBox);
 	const railOff = railRect && navRect ? { x: Math.round(railRect.x - navRect.r), w: Math.round(railRect.w), y: Math.round(railRect.y - navRect.b) } : null;
 	const prose = isRef ? [...document.querySelectorAll(".prose")].find((e) => e.querySelector("h2")) : [...document.querySelectorAll(".rd-prose")].find((e) => e.querySelector("h2"));
 	const proseTypo = prose
@@ -649,6 +658,8 @@ await Promise.all(pages.map(async (rel) => {
 				[errors.length > 0, "console-errors", errors.slice(0, 2).join(" | ")],
 				[s.navCount !== 1, "injected-once", `site navbar present ${s.navCount} time(s)`],
 				[s.licCount !== 1, "injected-once", `license card present ${s.licCount} time(s)`],
+				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
+				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {

@@ -41,7 +41,8 @@
     "sync": "sh scripts/sync-dev-next.sh",
     "merge-pr": "sh scripts/merge-pr.sh",
     "test:hooks": "sh scripts/test-pre-push.sh",
-    "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs"
+    "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs",
+    "test:leaks-embedded": "node --test scripts/test-leak-embedded.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -126,15 +127,17 @@
       "brace-expansion@^2": "^2.1.7",
       "rollup@^2": "^2.80.0",
       "rollup@^4": "^4.59.0",
+      "tar@^6": "^7.5.21",
       "postcss@^8": "^8.5.23",
       "vite@^6": "^6.4.4",
       "zod@^4": "^4.6.6",
       "ajv@^8": "^8.18.0",
       "colord": "^2.9.4",
-      "postcss-selector-parser@^6": "^6.1.3",
+      "postcss-selector-parser@^6": "^7.1.6",
       "postcss-selector-parser@^7": "^7.1.6",
       "yaml@^1": "^1.10.3",
-      "yaml@^2": "^2.8.3"
+      "yaml@^2": "^2.8.3",
+      "serialize-javascript@^4": "^7.0.3"
     }
   },
   "packageManager": "pnpm@9.14.4"

@@ -4,13 +4,15 @@
 // Extra private terms (never committed): scripts/leak-denylist.local.txt, one literal per line.
 // Run: pnpm check:leaks (after pnpm build). Scan any export folder: node scripts/check-public-leaks.mjs <dir>
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { gunzipSync } from "node:zlib";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { gunzipSync, inflateSync } from "node:zlib";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
 const DENYLIST = path.join(HERE, "leak-denylist.local.txt");
+const EMBED_ALLOWLIST = path.join(HERE, "leak-embedded-allowlist.json");
 const SCAN_DIRS = ["dist", "public", "src/content", "src/data"].map((d) => path.join(ROOT, d));
 const DOC_FILES = ["CLAUDE.md", "README.md", "THIRD_PARTY_LICENSES.md", "LICENSE"].map((f) => path.join(ROOT, f));
 const IMAGE_EXT = /\.(png|jpe?g|webp|gif)$/i;
@@ -122,6 +124,107 @@ const SOURCEMAP_KEPT = ["tts/vendor/ort/ort.webgpu.min.js"];
 /** True for the pinned file at any scan root (public/ or dist/). */
 const isSourceMapKept = (rel) => SOURCEMAP_KEPT.some((p) => rel === p || rel.endsWith(`/${p}`));
 
+// ---- Embedded payloads ------------------------------------------------------------------
+// A page can hide a build artifact inside a base64 blob (a data URI, `const WASM_B64 = "..."`, a JSON
+// bundle). The blob decodes to gzip/deflate and then to wasm or text; the builder's home and toolchain
+// paths live in the decoded bytes, invisible to a plain text scan. Decode every base64 blob and scan the
+// result with the same rules. Opaque binary (fonts, images) is skipped: only gzip/deflate containers and
+// wasm/text payloads are scanned.
+const GZIP_MAGIC = [0x1f, 0x8b];
+const ZLIB_MAGICS = [
+	[0x78, 0x01],
+	[0x78, 0x5b],
+	[0x78, 0x9c],
+	[0x78, 0xda],
+];
+const WASM_MAGIC = [0x00, 0x61, 0x73, 0x6d];
+const B64_MAX = 20_000_000; // base64 chars; ~15 MB of payload. Larger blobs are not scanned.
+// Opaque binary media: a data URI of these types is never a text/wasm payload, so it is not decoded (a page's
+// inlined fonts are the common case, and decoding megabytes of them is pure waste).
+const OPAQUE_MIME = /^(?:font|image|audio|video)\//;
+// A base64 blob, two forms: a data URI `data:<mime>;base64,<blob>` (m[1]=mime, m[2]=blob) or a quoted JS string
+// `["']<blob>` (m[3]=blob). The base64 class stops at the first non-base64 char (the closing quote or paren).
+const B64_BLOBS = /data:([a-z0-9.\/+-]+);base64,([A-Za-z0-9+/=]{32,})|["']([A-Za-z0-9+/=]{32,})/g;
+const startsWith = (buf, magic) => magic.every((b, i) => buf[i] === b);
+/** True if the head of a buffer is mostly printable ASCII (text, not opaque binary). */
+const isTextish = (buf) => {
+	const n = Math.min(buf.length, 4096);
+	if (!n) return false;
+	let ok = 0;
+	for (let i = 0; i < n; i++) {
+		const c = buf[i];
+		if (c === 9 || c === 10 || c === 13 || (c >= 32 && c <= 126)) ok++;
+	}
+	return ok / n >= 0.9;
+};
+/** base64 → (gzip/deflate →) payload bytes, or null if it is not a scannable container/text. */
+function decodePayload(b64) {
+	let buf;
+	try {
+		buf = Buffer.from(b64, "base64");
+	} catch {
+		return null;
+	}
+	if (!buf.length) return null;
+	if (startsWith(buf, GZIP_MAGIC)) {
+		try {
+			buf = gunzipSync(buf);
+		} catch {
+			return null;
+		}
+	} else if (ZLIB_MAGICS.some((m) => startsWith(buf, m))) {
+		try {
+			buf = inflateSync(buf);
+		} catch {
+			return null;
+		}
+	}
+	return startsWith(buf, WASM_MAGIC) || isTextish(buf) ? buf : null;
+}
+
+/** The rule/denylist/source-map scan over one block of text. */
+function scanLines(text, file, { docs, binary, redactAll }) {
+	const problems = [];
+	const lines = text.split("\n");
+	const rules = RULES.filter((r) => (!docs || r.docs) && (!binary || !r.textOnly));
+	const denylist = readDenylist();
+	lines.forEach((line, i) => {
+		for (const rule of rules) {
+			for (const m of hitsIn(rule, line, file)) {
+				// Decoded payloads can carry a username or build path; never echo the value, only a marker.
+				const secret = redactAll || rule.id === "secret" || rule.id === "email";
+				problems.push({ rule: rule.id, line: i + 1, match: secret ? redact(m) : m.slice(0, 80) });
+			}
+		}
+		const lower = line.toLowerCase();
+		denylist.forEach((term, k) => {
+			if (lower.includes(term)) problems.push({ rule: "denylist", line: i + 1, match: `private term #${k + 1}` });
+		});
+		if (!docs && line.includes("sourceMappingURL=") && !isSourceMapKept(path.relative(ROOT, file))) problems.push({ rule: "source-map", line: i + 1, match: "sourceMappingURL" });
+	});
+	return problems;
+}
+
+/** Problems found in the base64 blobs embedded in a text file. Each is tagged `embedded`. */
+function scanEmbedded(text, file, { docs }) {
+	const problems = [];
+	const seen = new Set();
+	for (const m of text.matchAll(B64_BLOBS)) {
+		const mime = m[1]; // data URI media type, or undefined for a bare quoted string
+		if (mime && OPAQUE_MIME.test(mime)) continue; // fonts/images/audio/video: never a text/wasm payload
+		const b64 = m[2] ?? m[3];
+		if (b64.length > B64_MAX || seen.has(b64)) continue;
+		seen.add(b64);
+		const payload = decodePayload(b64);
+		if (!payload) continue;
+		const payloadText = payload.toString("latin1");
+		const binary = payloadText.slice(0, 4096).includes("\0");
+		const payloadSha = createHash("sha256").update(payload).digest("hex");
+		for (const p of scanLines(payloadText, file, { docs, binary, redactAll: true })) problems.push({ ...p, embedded: true, payloadSha });
+	}
+	return problems;
+}
+
 /** Problems in one file, as {rule, line, match}. */
 function scanFile(file, root, { docs }) {
 	const problems = [];
@@ -134,26 +237,58 @@ function scanFile(file, root, { docs }) {
 	if (buf[0] === 0x1f && buf[1] === 0x8b) buf = gunzipSync(buf);
 	const text = buf.toString("latin1");
 	const binary = text.slice(0, 4096).includes("\0");
-	const lines = text.split("\n");
-	const rules = RULES.filter((r) => (!docs || r.docs) && (!binary || !r.textOnly));
-	const denylist = readDenylist();
-	lines.forEach((line, i) => {
-		for (const rule of rules) {
-			for (const m of hitsIn(rule, line, file)) {
-				const secret = rule.id === "secret" || rule.id === "email";
-				problems.push({ rule: rule.id, line: i + 1, match: secret ? redact(m) : m.slice(0, 80) });
-			}
-		}
-		const lower = line.toLowerCase();
-		denylist.forEach((term, k) => {
-			if (lower.includes(term)) problems.push({ rule: "denylist", line: i + 1, match: `private term #${k + 1}` });
-		});
-		if (!docs && line.includes("sourceMappingURL=") && !isSourceMapKept(path.relative(ROOT, file))) problems.push({ rule: "source-map", line: i + 1, match: "sourceMappingURL" });
-	});
+	problems.push(...scanLines(text, file, { docs, binary }));
+	// Embedded base64 payloads only make sense inside a text file (a binary file is already scanned whole).
+	if (!binary) problems.push(...scanEmbedded(text, file, { docs }));
 	if (!docs && /\.(html?|css)$/i.test(name)) {
 		for (const ref of escapingLinks(file, text, root)) problems.push({ rule: "escaping-link", line: 0, match: ref });
 	}
 	return problems;
+}
+
+/**
+ * Time-boxed exceptions for embedded-payload leaks. Each entry names ONE file by path + sha256; it stops
+ * applying the moment the file changes (a re-export) or after `expires`. This is a tripwire, not a blanket
+ * skip: it suppresses only the `embedded` findings in that exact file, and only while its hash still matches.
+ */
+function readEmbedAllowlist() {
+	if (!existsSync(EMBED_ALLOWLIST)) return { entries: [] };
+	try {
+		return JSON.parse(readFileSync(EMBED_ALLOWLIST, "utf8"));
+	} catch (e) {
+		return { entries: [], error: `cannot parse ${path.relative(ROOT, EMBED_ALLOWLIST)}: ${e.message}` };
+	}
+}
+
+/**
+ * Which embedded payloads are currently allowed, plus warnings for stale/expired entries. An entry pins the
+ * sha256 of the DECODED payload (not the whole file): a page ships at both `public/…` and its `dist/…` build
+ * copy, which differ only in the injected navbar/license, but carry the identical embedded payload. The entry
+ * suppresses that payload everywhere; when the source is re-exported the payload changes and the entry stops
+ * matching, so the leak fails again. `file` documents where it was found and is checked for staleness.
+ */
+function embedAllowlistState() {
+	const { entries = [], error } = readEmbedAllowlist();
+	const allowedPayloads = new Set(); // sha256 of payloads whose embedded findings are suppressed
+	const warnings = [];
+	if (error) warnings.push(error);
+	const today = new Date().toISOString().slice(0, 10);
+	for (const e of entries) {
+		if (!e.payloadSha256) {
+			warnings.push(`embed allowlist: entry for ${e.file} has no payloadSha256`);
+			continue;
+		}
+		if (!existsSync(path.join(ROOT, e.file))) {
+			warnings.push(`embed allowlist: ${e.file} no longer exists (stale entry)`);
+			continue;
+		}
+		if (e.expires && e.expires < today) {
+			warnings.push(`embed allowlist: ${e.file} expired on ${e.expires} — the embedded leak now fails until the source is fixed`);
+			continue;
+		}
+		allowedPayloads.add(e.payloadSha256);
+	}
+	return { allowedPayloads, warnings };
 }
 
 /** Optional private terms, lower-cased. Missing file means none. */
@@ -198,22 +333,33 @@ function main() {
 		for (const dir of SCAN_DIRS.filter((d) => existsSync(d))) targets.push({ dir, root: dir, docs: false });
 		for (const file of DOC_FILES.filter((f) => existsSync(f))) targets.push({ dir: file, root: ROOT, docs: true, file });
 	}
+	const { allowedPayloads, warnings: embedWarnings } = embedAllowlistState();
 	const found = [];
 	let scanned = 0;
 	for (const t of targets) {
 		const files = t.file ? [t.file] : walk(t.dir);
 		for (const file of files) {
 			scanned += 1;
-			for (const p of scanFile(file, t.root, { docs: t.docs })) found.push({ ...p, file: path.relative(ROOT, file) });
+			const rel = path.relative(ROOT, file);
+			for (const p of scanFile(file, t.root, { docs: t.docs })) {
+				// A time-boxed, hash-pinned exception suppresses only the embedded findings of that exact payload,
+				// wherever it ships (public/ and dist/ copies together). A re-export changes the payload and re-fails.
+				if (p.embedded && allowedPayloads.has(p.payloadSha)) continue;
+				found.push({ ...p, file: rel });
+			}
 		}
 	}
+	for (const w of embedWarnings) console.log(`warn: ${w}`);
 	for (const p of found) console.log(`FAIL [${p.rule}] ${p.file}${p.line ? `:${p.line}` : ""}  ${p.match}`);
 	const files = new Set(found.map((p) => p.file)).size;
 	if (found.length) {
 		console.log(`\n${found.length} leak finding(s) in ${files} file(s). Fix the source, or add a generic replacement; never allowlist a private term.`);
 		process.exit(1);
 	}
-	console.log(`PASS: ${scanned} file(s) clean (${existsSync(DENYLIST) ? "denylist applied" : "no local denylist"}).`);
+	console.log(`PASS: ${scanned} file(s) clean (${existsSync(DENYLIST) ? "denylist applied" : "no local denylist"}${allowedPayloads.size ? `, ${allowedPayloads.size} embedded payload exception(s) active` : ""}).`);
 }
 
-main();
+// Run only when invoked directly, so the decoder can be imported by the unit test without scanning the repo.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+
+export { decodePayload, scanEmbedded, scanLines, B64_BLOBS };
