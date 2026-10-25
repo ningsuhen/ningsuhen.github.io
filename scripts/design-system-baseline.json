@@ -32,39 +32,9 @@
 		},
 		{
 			"page": "/research/ai-economy/",
-			"rule": "console-errors",
-			"owner": "EcoSimulation",
-			"reason": "Console errors come from the blocked external scripts and fonts; they go away with the external-requests fix."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "container-class",
-			"owner": "EcoSimulation",
-			"reason": "Main is a page-owned layout (main.page), not rd-container or rd-container--wide."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "content-align",
-			"owner": "EcoSimulation",
-			"reason": "Content does not share the navbar card's left edge or the main post column's left edge."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "content-width",
-			"owner": "EcoSimulation",
-			"reason": "Content column is 1120px at 1280px, not the 872px post column or the navbar card."
-		},
-		{
-			"page": "/research/ai-economy/",
 			"rule": "css-canonical",
 			"owner": "EcoSimulation",
 			"reason": "Page ships its own stylesheet (palette, spacing, type) instead of research.css. Re-export on the design system."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "external-requests",
-			"owner": "EcoSimulation",
-			"reason": "Loads d3, d3-sankey and Google Fonts from CDNs. Self-host or drop them (blocked in the check)."
 		},
 		{
 			"page": "/research/ai-economy/",
@@ -95,18 +65,6 @@
 			"rule": "rail-presence",
 			"owner": "EcoSimulation",
 			"reason": "The page has an On this page rail at 1920px and the main post does not (or the reverse). Align the breakpoint."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "tab-aria",
-			"owner": "EcoSimulation",
-			"reason": "Tab buttons point at panels without role=tabpanel and rd-tabpanel (the design-system tab pattern)."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "tab-rail",
-			"owner": "EcoSimulation",
-			"reason": "Visible tab panels have no shared rd-toc (On this page rail)."
 		},
 		{
 			"page": "/research/ai-economy/",
