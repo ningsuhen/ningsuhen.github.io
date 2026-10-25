@@ -12,7 +12,7 @@ import {
 	type Voice,
 } from "./engine";
 import { extractSentences, type Sentence } from "./extract";
-import { loadKokoroEngine } from "./kokoro-engine";
+import { loadKokoroEngine, loadOrtRuntime, prepareOrtRuntime } from "./kokoro-engine";
 import {
 	type FileSpec,
 	type KokoroVariant,
@@ -408,7 +408,8 @@ class ListenPlayer extends HTMLElement {
 		try {
 			let specs = await this.specsFor(variant);
 			// A stored, size-checked copy is used with no prompt and no network. Otherwise the listener agrees first.
-			if (!(await isCached(specs))) {
+			// Both the model and the ONNX Runtime binary must be stored; otherwise the listener agrees first.
+			if (!((await isCached(specs)) && (await this.runtimeCached()))) {
 				if (!askConsent) {
 					// Selected but not downloaded: nothing is fetched here. Play asks first.
 					this.activate(await this.createNeural(), "kokoro");
@@ -475,6 +476,8 @@ class ListenPlayer extends HTMLElement {
 		if (neuralInit) return neuralInit;
 		const run: Promise<void> = (async () => {
 			const engine = await this.createNeural();
+			// Reads the stored binary (no network after the first download) and gives it to ONNX Runtime before init.
+			await prepareOrtRuntime(this.ttsSrc());
 			const manifest = await this.manifest();
 			await engine.init({
 				variant,
@@ -493,6 +496,14 @@ class ListenPlayer extends HTMLElement {
 		);
 		neuralInit = run;
 		return run;
+	}
+
+	private ttsSrc(): string {
+		return new URL(this.dataset.kokoroSrc ?? "/tts/kokoro.js", location.href).href;
+	}
+
+	private async runtimeCached(): Promise<boolean> {
+		return (await loadOrtRuntime(this.ttsSrc())).ortRuntimeCached();
 	}
 
 	private manifest(): Promise<Manifest> {
@@ -518,15 +529,19 @@ class ListenPlayer extends HTMLElement {
 		this.renderDownload();
 		try {
 			await withStallGuard(
-				(touch) =>
-					downloadFiles(
+				async (touch) => {
+					// The runtime is fetched first (pinned host, checked), then the model files.
+					this.status("Downloading the neural voice runtime.");
+					await prepareOrtRuntime(this.ttsSrc(), () => touch(), controller.signal);
+					await downloadFiles(
 						specs,
 						(received, total) => {
 							touch();
 							this.setProgress(received / total);
 						},
 						controller.signal,
-					),
+					);
+				},
 				INIT_STALL_MS,
 				() => {
 					stalled = true;
@@ -562,6 +577,12 @@ class ListenPlayer extends HTMLElement {
 		const megabytes = totalMB(specs);
 		const downloading = this.downloadAbort !== null;
 		const stored = !downloading && (await isCached(specs));
+		const runtime = await this.runtimeCached();
+		const runtimeState = this.querySelector<HTMLElement>("[data-runtime-state]");
+		if (runtimeState)
+			runtimeState.textContent = runtime
+				? "Runtime (ONNX Runtime 1.27.0, 24 MB): stored in this browser."
+				: "Runtime (ONNX Runtime 1.27.0, 24 MB): not downloaded.";
 		const state = this.querySelector<HTMLElement>("[data-download-state]");
 		if (state)
 			state.textContent = downloading
@@ -594,6 +615,7 @@ class ListenPlayer extends HTMLElement {
 		void loading?.then((engine) => engine.dispose(), () => {});
 		neuralReady = false;
 		await removeDownload();
+		await (await loadOrtRuntime(this.ttsSrc())).removeOrtRuntime();
 		writeStorage(CONSENT_KEY, null);
 		this.renderDownload();
 	}
