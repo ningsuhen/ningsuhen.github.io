@@ -1,20 +1,21 @@
 ---
 title: What I learned rewriting Python programs in Rust, and what got faster
 published: 2026-10-24
-description: "Notes from rewriting several Python programs in Rust this year: the startup win, the FFI tax, the reliability changes and their limits, and a checklist for deciding."
+description: "Notes from rewriting several Python programs in Rust this year: the startup win, the FFI tax, which bug classes moved and which did not, whether agent-written code changed the answer, and a checklist for deciding."
 thumbnail: ./thumb.webp
 tags: [Rust, Python, Performance, Opinion]
 category: Thoughts
 draft: false
 ---
 
-This year I rewrote several of my Python programs in Rust. Some were small and some were not. I will keep their names out of this post. Below is what I learned, and a checklist for deciding whether the same move makes sense for you.
+This year I rewrote several of my Python programs in Rust. Some were small and some were not. I will keep their names out of this post. A lot of the work was done with AI coding agents, so I also asked whether that changed the answer. Below is what I learned, and a checklist for deciding whether the same move makes sense for you.
 
 **TL;DR**
 
 - The clearest speed win was a short-lived helper process. Most other speed gains came from algorithm changes made during the rewrite.
 - The FFI boundary can take back most of a numeric gain. Count the crossings first.
-- Fewer Python runtime-error fixes followed the rewrite. Hangs, timeouts and panics did not go away.
+- Some bug classes moved from runtime to compile time. Others changed form, and hangs and design-level memory growth did not move at all.
+- Agent-written Rust got early compiler feedback. The compiler did not catch design errors, hangs or calls that a merge dropped, so those still needed tests and review.
 - Benchmark the old version on the same input before you start. Keep it as the reference until a parity audit passes.
 
 ## What I did not measure
@@ -55,28 +56,27 @@ A per-step loop is the reverse case. The first Rust version was slower than the 
 
 A third is a memory change. Switching a service to mimalloc cut its peak memory by 23 percent on a rerun with identical output. That comparison is Rust against Rust, so it says nothing about Python.
 
-## Reliability: fewer runtime-error fixes, same kinds of failure
+## How the bug classes moved
 
-I counted fix commits on each side of the rewrite, using subject lines only. These are rough tallies of commit messages, not defect rates.
+I wanted to know whether the rewrite removed a class of bug or only moved it. For each class I checked when it last showed up in Python code, whether it came back after the port, and what changed the mechanism. Positions are relative, not dates.
 
-- **Counted:** about six months of this year, before the last phase of the rewrite: about 500 fix commits. A few (about 3 percent) had an error word in the subject: bare or broad except, AttributeError, NoneType, KeyError, TypeError, ValueError, traceback, swallowed, silent.
-- **Counted:** the 2.8 months after the Python tree was deleted: about 1,800 fix commits. A few (about 0.5 percent) had the same words.
-- **Counted:** import and environment fixes (venv, pip, requirements, ImportError and similar): a handful in the first window, one in the second.
-- **Counted:** CI memory fixes (worker counts, container limits, OOM retries): about 30 Python-era subjects between late December and mid July, against one in the Rust era, a JavaScript test runner.
-- **Judged:** explicit error types made the error paths visible in the code. I read the diffs more than I counted them, and I believe most of the drop comes from that.
+- **Counted:** in one repository, about 50 Python-only fix commits had a runtime-error word in the subject (AttributeError, TypeError, NoneType, KeyError). About one Rust-only fix commit did, and about 20 had panic or unwrap. About 260 Python-only fix subjects matched event-loop or blocking words, against about 65 Rust-only. These are subject-line counts with different word lists per language. They are not defect rates.
+- **Counted, rough:** in one Rust codebase, about 7,000 lines contain unwrap, about 2,700 contain expect and about 500 contain panic!, test code included.
 
-Limits, in the same breath. The later window is shorter and covers more features, including a new admin UI and a lot of research code. I think a rewrite attracts fixes in its first weeks whatever the language. Rust fixes also use different words: they say "panic" or "unwrap", not AttributeError. So the drop is real in these counts, but I cannot separate it from the rewrite's own churn.
+| Class | Last Python-era case | After the port | Mechanism now | Went away? |
+|---|---|---|---|---|
+| Class | Last Python-era case | After the port | Mechanism now | Went away? |
+|---|---|---|---|---|
+| Attribute, type and None errors | Late in the Python period, a row type lacked a method. Tests mocked a dict that had it, so the bug reached production. | Panics and unwraps. A background-task panic printed one stderr line and never reached the logs. | Missing methods are compile errors. Absent values go through Option and Result. A panic is still runtime. | Changed form. |
+| Leaks: file descriptors and slots | Early in the Python period, a connection pool handed back open connections. | A slot leaked when a panic skipped a manual decrement. | A guard whose drop runs on every exit path, including unwinding. | Gone for guarded resources. Logic leaks still happen. |
+| Memory growth from data design | A CI run hit its container limit after one test accumulated millions of mock records. | A request loaded stored payloads for every row, twelve at a time. The pod ran out of memory. | Not the language. The design loaded too much. | Did not change. |
+| Hangs on a dependency | Timeouts were added to the cache clients. Later, a sync timeout did not abort the call. | A cache client with no default timeouts hung every call when the server stopped answering. | Explicit timeouts in one shared place. | Did not change. Same fix. |
+| Deadlocks and blocking | About 260 Python-only fix subjects touched event-loop or blocking work. | A logging layer re-entered its own writer lock. A writer lock was held across slow work. | Thread locks, not the event loop. A plain mutex deadlocks when its own thread takes it again. | Changed form. |
+| Log floods | Flood fixes in the Python period. | Three always-on logs, one writing tens of thousands of lines a day. | The same. | Did not change. |
 
-Python-era fixes looked like this. An assertion fired on None data, and a None value reached a max() call. A timeout never fired at all: the exception was raised in a timer thread and went to the default handler. One cleanup pass replaced a dozen bare except blocks with specific types. Python let me catch broadly and move on. That habit is my opinion of the cause, not something the commits prove.
+**Judged:** most of the drop in runtime-error fixes came from explicit types and error returns. I cannot separate that from the rewrite's own churn.
 
-The Rust era still had failures, and they belong in this section:
-
-- A panic in a background task printed one plain line to stderr and never reached the structured logs. The fix logs and counts it.
-- A cache client with no timeouts hung every call when the server accepted connections and then stopped answering.
-- A logging layer deadlocked itself, because a warning logged while the writer lock was held came back into the same layer.
-- An audit found a file read that blocked the async runtime. The planned fix is to move it onto a blocking task.
-- **Counted, by path and rough:** a few thousand unwrap calls, a couple thousand expect calls and a few hundred panic! calls, outside test code. Panics are still possible in this code.
-- **Memory:** the runtime memory failure I hit was a design error. An analytics endpoint loaded the full stored payloads for tens of thousands of records on every request, and the process ran out of memory. The fix was to stop loading the payloads. Rust did not cause that, and it did not prevent it. A separate fix stopped a background drain task from leaking.
+Plainly, no class went away everywhere. Runtime type errors moved to compile time where types can express them. Leaks lost their Python mechanism for guarded resources. Hangs, data-design memory growth and log floods came back in Rust. The CI memory failures I found were in Python-era commits, and I found fewer in Rust-only commits. The count is rough, so I cannot say they went away.
 
 ## A miss
 
@@ -93,6 +93,55 @@ The borrow checker cost me some time, but not the kind that mattered. These did:
 - `cargo test` runs every test in one process, so a test that changes an environment variable breaks its neighbours. The fix was to inject paths instead of changing the environment.
 
 The float drift and the bare except are in the pitfalls below.
+
+## Did agentic coding change the answer?
+
+The fair comparison is not hand-written Python against agent-written Rust. I could not measure agent use cleanly in either era.
+
+- **Counted:** in one repository, about 1 in 8 Python-only commits carries an explicit co-author trailer that names an AI model. Among Rust-only commits it is about 1 in 100. The broad marker is a trailer or a task id, and the repo also puts task ids on human commits, so it does not measure AI use. The two markers disagree, so I cannot say the eras had matched agent shares. The Rust history is shorter and mixed with other work.
+
+What the compiler gave an agent was a precise error inside its own loop, instead of an incident later:
+
+| Bug | Python: where it surfaced | Rust: where it surfaced |
+|---|---|---|
+| Method or field missing on a type | Runtime, in production, when tests mocked it away | Compile error. The type does not have that method, so the code does not build. |
+| Enum variant added, match not updated | Runtime, or a silent default | Compile error for a non-exhaustive match. One commit made a case compile-time exhaustive across two files. |
+| Two branches change one signature and merge close together | Runtime, on the paths the tests reached | Compile break on main after the merge. Two more commits fixed it. The gate ran after the merge, not before. |
+| Call dropped during a merge | Silent | Silent. A merge removed the audit calls, and nothing failed to compile because the calls were simply absent. |
+| Lint drift | Ruff and mypy red on main. One change waited until the mypy errors were fixed. | Clippy with warnings as errors red across every open pull request for a while, about forty lints. |
+| Borrow error | Not applicable | A lifetime error in a test was caught by the compiler and "fixed" with unwrap. |
+
+What got worse:
+
+- **The loop got longer.** Compiles take longer than a Python test run. I have no timing logs, so I cannot give a number.
+- **Agents reach for unwrap and clone.** The unwrap line count is the only evidence I have. I did not count clones.
+- **Code got wired in late or not at all.** Some new modules were not reached from the entry point, and a merge dropped whole call paths.
+- **Merges collided.** Concurrent pull requests merged cleanly in git and still broke the build.
+
+Where Python agent loops were fine: scripts, glue, ML code, and tests against real objects. A Python test run is fast enough to loop on many times. Python's runtime errors were real, and the asyncio blocking was documented, so Python was not free of runtime trouble.
+
+**Judged:** the Python loop worked when the tests ran real objects. The mock case was a test design failure, not a Python one.
+
+Tallies, with their caveats:
+
+- **Counted:** in the most recent 300 CI runs of one repository, about three in four had at least one failing job. Lint and spec failed in about 73 percent of those runs, web UI and security audit in about 64 percent, Rust tests in about 61 percent, and end-to-end in about 22 percent. The lint job also runs a cargo build and advisory Python checkers, so I cannot split compile errors from test failures. I did not measure how many agent iterations ended in compiler errors. The repo keeps no per-iteration log.
+
+Public sources:
+
+- FeedbackEval (arXiv 2504.06939): on code repair tasks, compiler feedback alone gave 49.2 percent success, test feedback 57.9 percent, and both together 63.6 percent, across five language models. It is not a Rust study and not a Python comparison.
+- A 2026 preprint (arXiv 2607.13921) gives compiler feedback during generation and tests it on repository-level Rust tasks. Its abstract gives no figures I could check.
+
+Together they support one narrow point: feedback type matters, and compiler feedback alone is not the whole loop.
+
+**Judged:** Rust was worth it for the checks an agent cannot run itself. It was not clearly worth it for fewer bugs overall. The compiler caught the type and enum mistakes early. It did not catch the design memory problem, the hang, or the dropped audit calls. I would still pick Rust for a long-running service with strict resource rules. I would not pick it because an agent can write it unsupervised. What would change my mind is a whole-service comparison with the same agent setup in both languages, measured as time to a correct, green change.
+
+If you use agents on a Rust codebase:
+
+- Run `cargo check`, clippy with warnings as errors, and `cargo deny` in the agent loop, and again in the gate that blocks a merge. A gate that runs after the merge catches the break too late.
+- Lint against `unwrap` and `expect` in non-test code, and make each exception explicit.
+- Write tests first, including the degenerate inputs. For a port, run the old and new code on the same inputs.
+- Check that every new module is reachable from the real entry point, and read merges for calls that went missing.
+- Keep pull requests small, and read the diff for removed lines, not only added ones.
 
 ## What stayed in Python
 
@@ -172,6 +221,6 @@ except Exception:
 
 ## Where I am
 
-Rust made a few short processes much faster. It made some numeric loops faster until the boundary ate part of the gain. The biggest real wins were algorithm changes made during the rewrite.
+Rust made a few short processes much faster. It made some numeric loops faster until the boundary ate part of the gain. The biggest real wins were algorithm changes.
 
-The reliability gain is narrow: fewer Python runtime-error fixes, explicit error paths, and CI gates that block some bad patterns. Hangs, timeouts and panics did not go away, and the memory problem I hit was a design problem. I do not have a clean Python-versus-Rust number for a whole service yet. That is the next thing I want to measure.
+The reliability gain is narrow. Some runtime type errors moved to compile time, and guarded resources stopped leaking. Hangs, timeouts and panics did not go away, and the memory problem I hit was a design problem. The compiler caught what it could see. It did not catch what needed a test or a review. I do not have a clean Python-versus-Rust number for a whole service yet. That is the next thing I want to measure, with the same agents on both sides.
