@@ -1,0 +1,287 @@
+---
+// Listen player for every post (see src/scripts/tts). Ships hidden: the script shows it only when an engine can run,
+// so without JavaScript nothing renders. Opt out per post with `noListen: true` in front matter.
+import { Icon } from "astro-icon/components";
+import { url } from "@utils/url-utils";
+
+interface Props {
+	title: string;
+}
+const { title } = Astro.props;
+---
+
+<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")}>
+	<div class="listen-bar">
+		<button type="button" class="listen-btn listen-toggle" data-toggle aria-expanded="false" aria-controls="listen-panel">
+			<Icon name="lucide:headphones" />
+			<span>Listen</span>
+			<Icon name="lucide:chevron-down" class="listen-chevron" />
+		</button>
+		<button type="button" class="listen-btn listen-play" data-action="play" aria-label="Play">
+			<span data-icon-play><Icon name="lucide:play" /></span>
+			<span data-icon-pause hidden><Icon name="lucide:pause" /></span>
+		</button>
+		<button type="button" class="listen-btn" data-action="prev" aria-label="Previous sentence">
+			<Icon name="lucide:skip-back" />
+		</button>
+		<button type="button" class="listen-btn" data-action="next" aria-label="Next sentence">
+			<Icon name="lucide:skip-forward" />
+		</button>
+		<input type="range" class="listen-range" data-progress min="0" max="0" value="0" aria-label="Sentence in this post" />
+		<span class="listen-pos" data-position>0 / 0</span>
+		<button type="button" class="listen-btn" data-follow hidden aria-label="Show the sentence being read">
+			<Icon name="lucide:locate-fixed" />
+		</button>
+	</div>
+
+	<div id="listen-panel" class="listen-panel">
+		<label class="listen-field" data-voice-wrap>
+			<span>Voice</span>
+			<select data-voice class="listen-select"></select>
+		</label>
+		<label class="listen-field">
+			<span>Speed</span>
+			<select data-rate class="listen-select" aria-label="Speed"></select>
+		</label>
+		<label class="listen-field" data-engine-wrap hidden>
+			<span>Engine</span>
+			<select data-engine class="listen-select">
+				<option value="web-speech">Built-in voice</option>
+			</select>
+		</label>
+		<p class="listen-note">
+			<span data-note-local>Realtime audio generated on your device<sup data-accel hidden></sup>. Nothing is uploaded.</span>
+			<span data-note-remote hidden>This voice is a remote service: the sentence text is sent to it.</span>
+		</p>
+		<p class="listen-status" data-status aria-live="polite"></p>
+	</div>
+
+	<dialog class="listen-dialog" data-consent aria-labelledby="listen-consent-title">
+		<form method="dialog">
+			<h2 id="listen-consent-title">Download a neural voice?</h2>
+			<p>The model is about 86 to 326 MB, depending on the variant your device can run. It is downloaded once, cached in your browser, and runs locally on your device. Nothing is uploaded.</p>
+			<menu>
+				<button type="submit" value="cancel" class="listen-btn listen-text">Cancel</button>
+				<button type="submit" value="ok" class="listen-btn listen-primary">Download and use</button>
+			</menu>
+		</form>
+	</dialog>
+</listen-player>
+
+<script>
+	import "../scripts/tts/listen-player";
+</script>
+
+<style is:global>
+	listen-player {
+		display: block;
+		position: sticky;
+		top: 5rem;
+		z-index: 20;
+		margin-bottom: 1.25rem;
+		border: 1px solid var(--line-divider);
+		border-radius: 0.75rem;
+		background: var(--card-bg);
+		color: rgb(0 0 0 / 0.78);
+	}
+	.dark listen-player {
+		color: rgb(255 255 255 / 0.86);
+	}
+	listen-player[hidden],
+	listen-player [hidden] {
+		display: none !important;
+	}
+	.listen-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.5rem 0.625rem;
+	}
+	.listen-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.375rem;
+		min-width: 2.25rem;
+		height: 2.25rem;
+		padding: 0 0.5rem;
+		border-radius: 0.5rem;
+		background: var(--btn-regular-bg);
+		color: inherit;
+		font-size: 0.875rem;
+		cursor: pointer;
+		flex: none;
+	}
+	.listen-btn:hover {
+		background: var(--btn-regular-bg-hover);
+	}
+	.listen-btn:active {
+		background: var(--btn-regular-bg-active);
+	}
+	.listen-btn:focus-visible,
+	.listen-select:focus-visible,
+	.listen-range:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+	.listen-play {
+		background: var(--primary);
+		color: oklch(0.2 0.02 var(--hue));
+	}
+	.listen-play:hover {
+		filter: brightness(1.08);
+	}
+	.listen-toggle {
+		padding: 0 0.75rem;
+	}
+	.listen-toggle [data-icon] {
+		width: 1rem;
+		height: 1rem;
+	}
+	.listen-chevron {
+		transition: transform 0.2s ease;
+	}
+	listen-player[data-open] .listen-chevron {
+		transform: rotate(180deg);
+	}
+	.listen-range {
+		display: none;
+		flex: 1;
+		min-width: 0;
+		accent-color: var(--primary);
+	}
+	.listen-pos {
+		font-size: 0.8125rem;
+		font-variant-numeric: tabular-nums;
+		opacity: 0.7;
+		white-space: nowrap;
+		margin-left: auto;
+	}
+	.listen-panel {
+		display: none;
+		flex-direction: column;
+		gap: 0.625rem;
+		padding: 0.25rem 0.75rem 0.75rem;
+		border-top: 1px dashed var(--line-divider);
+	}
+	listen-player[data-open] .listen-panel {
+		display: flex;
+	}
+	.listen-field {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: 0.875rem;
+	}
+	.listen-field > span {
+		width: 4.5rem;
+		opacity: 0.7;
+	}
+	.listen-select {
+		flex: 1;
+		min-width: 0;
+		height: 2.25rem;
+		padding: 0 0.5rem;
+		border-radius: 0.5rem;
+		border: 1px solid var(--line-divider);
+		background: var(--btn-regular-bg);
+		color: inherit;
+		font-size: 0.875rem;
+	}
+	.listen-note,
+	.listen-status {
+		margin: 0;
+		font-size: 0.8125rem;
+		opacity: 0.75;
+	}
+	.listen-status:empty {
+		display: none;
+	}
+	.listen-note sup {
+		font-size: 0.65em;
+		font-weight: 600;
+		color: var(--primary);
+		margin-left: 0.125rem;
+	}
+	.listen-dialog {
+		border: 0;
+		border-radius: 0.75rem;
+		padding: 1.25rem;
+		max-width: min(26rem, calc(100vw - 2rem));
+		background: var(--card-bg);
+		color: inherit;
+	}
+	.listen-dialog::backdrop {
+		background: rgb(0 0 0 / 0.4);
+	}
+	.listen-dialog h2 {
+		margin: 0 0 0.5rem;
+		font-size: 1.125rem;
+		font-weight: 700;
+	}
+	.listen-dialog p {
+		margin: 0 0 1rem;
+		font-size: 0.9375rem;
+		line-height: 1.5;
+	}
+	.listen-dialog menu {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+	}
+	.listen-primary {
+		background: var(--primary);
+		color: oklch(0.2 0.02 var(--hue));
+	}
+	.listen-text {
+		background: transparent;
+	}
+	.listen-dialog .listen-btn {
+		min-width: 0;
+	}
+
+	@media (min-width: 768px) {
+		.listen-toggle {
+			display: none;
+		}
+		.listen-range {
+			display: block;
+		}
+		.listen-panel {
+			display: flex;
+			border-top: 0;
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: 0.5rem 1.25rem;
+			padding-top: 0;
+		}
+		.listen-field {
+			width: auto;
+		}
+		.listen-field:first-child {
+			flex: 1 1 14rem;
+		}
+		.listen-note,
+		.listen-status {
+			width: 100%;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.listen-chevron,
+		.listen-btn {
+			transition: none;
+		}
+	}
+
+	::highlight(listen-current) {
+		background-color: color-mix(in oklch, var(--primary) 26%, transparent);
+		color: inherit;
+	}
+	/* Fallback where the CSS Custom Highlight API is missing. */
+	.listen-active {
+		box-shadow: inset 3px 0 0 var(--primary);
+		border-radius: 2px;
+	}
+</style>

@@ -13,6 +13,8 @@ const postsCollection = defineCollection({
 		tags: z.array(z.string()).optional().default([]),
 		category: z.string().optional().nullable().default(""),
 		lang: z.string().optional().default(""),
+		/* Hide the Listen player on this post. Single blocks can opt out with a data-no-listen attribute. */
+		noListen: z.boolean().optional().default(false),
 
 		/* For internal use */
 		prevTitle: z.string().default(""),
