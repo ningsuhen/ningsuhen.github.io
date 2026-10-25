@@ -507,8 +507,7 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 	html:has(.rd-expnav) { scroll-behavior: smooth; }
 }
 
-/* Tabbed reports. Tabs, filters and paging are real ?tab= links (the browser keeps the history); a section is a hash link
-   (index.html, "Tabbed pages"). The tab bar and the content use the navbar card's width (--rd-navbar-width, 1168px from 1200px up),
+/* Tabbed reports. The tab bar and the content use the navbar card's width (--rd-navbar-width, 1168px from 1200px up),
    so their edges line up with the navbar card. The "On this page" rail (.rd-toc) sits OUTSIDE that width in the right
    page margin, as the main post page's TOC does (Fuwari, src/components/widget/TOC.astro; measured on /posts/rust-learnings/):
    from 1536px up (the main site's 2xl breakpoint) it is position:fixed at top 3.5rem, width (100vw - navbar) / 2 - 1rem,

@@ -50,7 +50,7 @@ const RULES = {
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
 	"tab-aria": "tablist/tab/tabpanel wiring: aria-controls, one aria-selected, rd-tabpanel",
 	"tab-keys": "ArrowRight moves to the next tab",
-	"tab-deeplink": "each tab sets a hash that opens that tab on load",
+	"tab-deeplink": "each tab sets its address (?tab= or a hash) that opens that tab on load",
 	"tab-history": "each tab change adds exactly one history entry; Back restores the previous tab",
 	"tab-rail": "every tab panel has the shared rd-toc",
 	"typography-scale": "h1/h2/h3/p/td font size, line height and weight match the template (compact)",
@@ -565,8 +565,8 @@ async function tabChecks(page, ok) {
 		await tabs[0].focus();
 		await p.keyboard.press("ArrowRight");
 		await p.waitForTimeout(100);
-		const afterKey = await p.evaluate(() => (document.activeElement?.getAttribute("role") === "tab" ? document.activeElement.getAttribute("aria-selected") : null));
-		if (afterKey !== "true" && !ok.has("tab-keys")) add(page, "tab-keys", "ArrowRight from the first tab did not move to the next tab");
+		const movedFocus = await p.evaluate(() => document.activeElement?.getAttribute("role") === "tab" && document.activeElement !== document.querySelector("[role=tab]"));
+		if (!movedFocus && !ok.has("tab-keys")) add(page, "tab-keys", "ArrowRight from the first tab did not move focus to the next tab");
 		// History: click a tab that is not selected: one entry; Back restores the previous tab.
 		const flags = await p.$$eval("[role=tablist] [role=tab]", (els) => els.map((e) => e.getAttribute("aria-selected") === "true"));
 		const k = flags.findIndex((f) => !f);
@@ -575,9 +575,9 @@ async function tabChecks(page, ok) {
 		await tabs[k].click();
 		await p.waitForTimeout(150);
 		const h1 = await p.evaluate(() => history.length);
-		const hash = await p.evaluate(() => location.hash);
+		const hash = await p.evaluate(() => location.search + location.hash);
 		if (h1 !== h0 + 1 && !ok.has("tab-history")) add(page, "tab-history", `tab click added ${h1 - h0} history entries (expected 1)`);
-		if (!hash && !ok.has("tab-deeplink")) add(page, "tab-deeplink", "tab click does not set a URL hash");
+		if (!/[?&]tab=|#./.test(hash) && !ok.has("tab-deeplink")) add(page, "tab-deeplink", "tab click sets neither ?tab= nor a hash");
 		await p.goBack();
 		await p.waitForTimeout(150);
 		const back = await selected();
