@@ -67,6 +67,7 @@ svg{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-wi
 .res a{display:block;padding:.625em .75em;border-radius:.5em;font-weight:400;font-size:.875em;line-height:1.4}
 .res a:hover{background:var(--hover)}
 .res b{display:block;color:var(--ink);font-size:.9375em}
+.res .kind{display:inline-block;margin-bottom:.25em;font-size:.625em;font-weight:700;letter-spacing:.02em;padding:.125em .5em;border-radius:999px;background:var(--field-hover);color:var(--muted)}
 .res mark{background:transparent;color:var(--ink);font-weight:700}
 .res p{margin:0;padding:.5em .75em;color:var(--muted);font-size:.875em}
 .panel{width:20em;padding:1em}
@@ -165,9 +166,10 @@ export function buildScript(base: string): string {
 		`addEventListener("keydown",function(e){if(e.key==="Escape"&&panels.some(isOpen)){var back=isOpen(mp)?mn:isOpen(pn)?pl:sb;var inside=!!root.activeElement;shut();if(inside)back.focus()}});` +
 		`document.addEventListener("click",function(e){if(e.composedPath().indexOf(host)<0)shut()});` +
 		`function E(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}` +
+		`function kind(u){var p=u||"";if(p.indexOf("/research/")===0)return"Report";if(p.indexOf("/playground/")===0)return"Live demo";if(p.indexOf("/ideas/")===0)return"Idea";return""}` +
 		`function run(q){clearTimeout(tm);tm=setTimeout(async function(){if(!q.trim()){sp.classList.add("closed");syncAria();return}open(sp);res.innerHTML="<p>Searching…</p>";` +
 		`try{pf=pf||await import(${JSON.stringify(pfUrl)});var r=await pf.search(q),d=await Promise.all(r.results.slice(0,6).map(function(x){return x.data()}));` +
-		`res.innerHTML=d.length?"":"<p>No results</p>";d.forEach(function(x){var a=document.createElement("a");a.href=x.url;a.innerHTML="<b>"+E((x.meta&&x.meta.title)||x.url)+"</b>"+x.excerpt;res.appendChild(a)})}` +
+		`res.innerHTML=d.length?"":"<p>No results</p>";d.forEach(function(x){var a=document.createElement("a");a.href=x.url;var k=kind(x.url);a.innerHTML=(k?'<span class="kind">'+E(k)+'</span>':"")+"<b>"+E((x.meta&&x.meta.title)||x.url)+"</b>"+x.excerpt;res.appendChild(a)})}` +
 		`catch(e){res.innerHTML="<p>Search is only available on the built site.</p>"}},150)}` +
 		`qs.forEach(function(i){i.addEventListener("input",function(){qs.forEach(function(o){if(o!==i)o.value=i.value});run(i.value)});i.addEventListener("focus",function(){if(i.value)run(i.value)})});` +
 		// Mount on <html>, before <body>: the page's own body margin/padding/max-width can then never offset the bar.
