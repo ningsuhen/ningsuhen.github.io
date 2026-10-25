@@ -1106,6 +1106,83 @@ await step("6. opt-out", async () => {
 	await ctx.close();
 });
 
+// 12. Comments: a giscus error other than "Discussion not found" shows the notice in the skeleton's space (no shift,
+// widget hidden, retry and discussions link); a retry that gets the normal empty-discussion answer shows the widget.
+// giscus is stubbed: client.js and the widget are served for https://giscus.app, so its messages carry that origin.
+await step("12. comments: giscus error", async () => {
+	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+	let mode = "error";
+	await ctx.route("https://giscus.app/client.js", (route) =>
+		route.fulfill({
+			contentType: "text/javascript",
+			body: `(() => {
+				const me = document.currentScript;
+				const box = document.createElement("div");
+				box.className = "giscus";
+				const f = document.createElement("iframe");
+				f.className = "giscus-frame";
+				f.src = "https://giscus.app/widget?stub=" + Date.now();
+				box.append(f);
+				me.after(box);
+				addEventListener("message", (e) => {
+					if (e.origin === "https://giscus.app" && e.data?.giscus?.resizeHeight) f.style.height = e.data.giscus.resizeHeight + "px";
+				});
+			})();`,
+		}),
+	);
+	await ctx.route("https://giscus.app/widget**", (route) => {
+		const msgs =
+			mode === "error"
+				? [{ resizeHeight: 84 }, { error: "Unable to fetch token from Valkey." }, { resizeHeight: 24 }]
+				: [{ resizeHeight: 84 }, { error: "Discussion not found" }, { resizeHeight: 372 }];
+		route.fulfill({
+			contentType: "text/html",
+			body: `<script>${JSON.stringify(msgs)}.forEach((m, i) => setTimeout(() => parent.postMessage({ giscus: m }, "*"), 50 * (i + 1)))</script>`,
+		});
+	});
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	const below = () =>
+		page.evaluate(() => {
+			const host = document.getElementById("giscus-comments");
+			// First rendered element after the host in document order (the host can be its parent's last child).
+			let n = null;
+			for (let a = host; a && !n; a = a.parentElement) {
+				for (let s = a.nextElementSibling; s && !n; s = s.nextElementSibling) if (s.getBoundingClientRect().height > 0) n = s;
+			}
+			const g = host.querySelector(".giscus");
+			return {
+				height: host.getBoundingClientRect().height,
+				below: n ? n.getBoundingClientRect().top + window.scrollY : Number.NaN,
+				failed: host.hasAttribute("data-failed"),
+				loaded: host.hasAttribute("data-loaded"),
+				notice: !host.querySelector(".giscus-unavailable").hidden,
+				widget: !!g && getComputedStyle(g).display !== "none",
+				link: host.querySelector(".giscus-unavailable a")?.getAttribute("href") ?? "",
+			};
+		});
+	const before = await below();
+	await page
+		.waitForFunction(() => document.getElementById("giscus-comments")?.hasAttribute("data-failed"), null, { timeout: 5000 })
+		.catch(() => expect(false, "comments: a giscus error did not show the failure notice"));
+	await page.waitForTimeout(400);
+	const failed = await below();
+	expect(failed.notice && !failed.widget, `comments: on error the notice shows (${failed.notice}) and the widget is hidden (${!failed.widget})`);
+	expect(Math.abs(failed.height - before.height) <= 1, `comments: host ${before.height}px -> ${failed.height}px on error, expected no change`);
+	expect(Math.abs(failed.below - before.below) <= 1, `comments: content below moved ${failed.below - before.below}px on error`);
+	expect(/^https:\/\/github\.com\/[^/]+\/[^/]+\/discussions$/.test(failed.link), `comments: discussions link is ${failed.link}`);
+	mode = "notfound";
+	await page.click(".giscus-retry");
+	await page
+		.waitForFunction(() => document.getElementById("giscus-comments")?.hasAttribute("data-loaded"), null, { timeout: 5000 })
+		.catch(() => expect(false, "comments: retry did not load the widget"));
+	await page.waitForTimeout(600);
+	const ok = await below();
+	expect(ok.widget && !ok.notice && !ok.failed, `comments: after retry the widget shows (${ok.widget}) and the notice is gone (${!ok.notice})`);
+	expect(Math.abs(ok.height - before.height) <= 1, `comments: host ${before.height}px -> ${ok.height}px after retry, expected the empty widget's height`);
+	await ctx.close();
+});
+
 await browser.close();
 server.close();
 

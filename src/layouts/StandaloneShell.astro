@@ -1,0 +1,75 @@
+---
+// The Astro shell for standalone pages (option E). A fragment (src/standalone/<kind>/<slug>/) supplies
+// content only — body.html, page.css, page.js and meta.json; this shell supplies all the chrome: head,
+// design-system bundle link, hero, tab bar, rails, and (via the shared applyChrome pipeline) the navbar,
+// license footer, comments, breadcrumb, theme script and OG/canonical.
+//
+// Kind-agnostic: `kind` is a plain string (research, experiment, idea, …). The canonical URL is
+// /<kind>/<slug>/, so renaming a kind is a folder move, not a shell change.
+//
+// The shell renders a complete standalone HTML document and hands it to the same applyChrome pipeline the
+// old injection path uses, so the two paths stay uniform. The document is emitted with set:html.
+import { buildScript } from "../chrome/navbar";
+import { buildLicenseScript } from "../chrome/license";
+import { applyChrome } from "../chrome/apply";
+import { esc } from "../chrome/util";
+import { themeRuntimeScript } from "../utils/theme-runtime";
+import type { Fragment } from "../standalone/loader";
+
+// Human label for a kind, used as the hero eyebrow when the fragment has no eyebrow of its own.
+const KIND_LABEL: Record<string, string> = { research: "Research", experiment: "Experiment", playground: "Playground", idea: "Idea", "design-system": "Design system" };
+const kindLabel = (kind: string) => KIND_LABEL[kind] ?? kind;
+
+interface Props { kind: string; slug: string; fragment: Fragment }
+const { kind, slug, fragment } = Astro.props;
+const { meta, body, css, js, tabs } = fragment;
+const site = Astro.site?.href ?? "";
+const base = Astro.site ? Astro.site.pathname : "/";
+const urlPath = `/${kind}/${slug}/`;
+
+// The "· created · updated" stamp the shell renders from meta (the title carries no stamp of its own).
+const stamp = ` · created ${meta.created} · updated ${meta.updated}`;
+const title = `${meta.title}${stamp}`;
+
+// Tab bar (contract: tabs come from the markup, derived by the loader). ?tab= is owned by rd.js.
+const tabBar =
+	meta.layout === "tabbed" && tabs.length
+		? `<nav class="rd-expnav" role="tablist" aria-label="Sections">` +
+			tabs.map((t, i) => `<a role="tab" id="tab-${esc(t.id)}" href="?tab=${esc(t.id)}" aria-controls="${esc(t.id)}" aria-selected="${i === 0 ? "true" : "false"}">${t.icon ? `<svg class="rd-icon" aria-hidden="true"><use href="#i-${esc(t.icon)}"/></svg>` : ""}${esc(t.label)}</a>`).join("") +
+			`</nav>`
+		: "";
+
+// The page's own styles, scoped and inlined (contract: page.css is <= 4 KB, every selector prefixed).
+const pageCss = css ? `<style is:inline>${css}</style>` : "";
+// The page's runtime module (contract: export default init({ root, data, rd })).
+const pageJs = js ? `<script type="module" src="/${kind}/${slug}/page.js"></script>` : "";
+
+// A complete standalone document, shaped like a generator's export so applyChrome treats it the same as a
+// public/**/*.html page. The design-system bundle is linked (not inlined) so it stays current.
+const doc =
+	`<!doctype html>` +
+	`<html lang="en" data-theme="light">` +
+	`<head>` +
+	`<meta charset="utf-8">` +
+	`<meta name="viewport" content="width=device-width, initial-scale=1">` +
+	`<title>${esc(title)}</title>` +
+	`<meta name="description" content="${esc(meta.summary)}">` +
+	`<link rel="stylesheet" href="/design-system/rd.css">` +
+	`<script data-site-theme>${themeRuntimeScript(true)}</script>` +
+	`</head>` +
+	`<body class="rd-body">` +
+	`<main class="${meta.layout === "tabbed" ? "rd-tabbed " : ""}rd-container${meta.width === "wide" ? "--wide" : ""} rd-prose" data-page="${esc(slug)}" data-pagefind-body="${meta.search ? "" : "false"}">` +
+	`<header class="rd-hero"><p class="rd-eyebrow">${esc(meta.eyebrow ?? kindLabel(kind))}</p><h1>${esc(title)}</h1><p class="rd-hero__lede">${esc(meta.summary)}</p></header>` +
+	`${tabBar}` +
+	`${body}` +
+	`</main>` +
+	`${pageCss}` +
+	`<script type="module" src="/design-system/rd.js"></script>` +
+	`${pageJs}` +
+	`</body>` +
+	`</html>`;
+
+// applyChrome adds the navbar, license footer, comments, breadcrumb band, theme sync and OG/canonical.
+const html = applyChrome(doc, buildScript(base), "", buildLicenseScript(base), urlPath, base, site);
+---
+<html set:html={html} />
