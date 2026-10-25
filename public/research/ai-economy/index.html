@@ -894,13 +894,15 @@ body {
    stays off the viewport edge on narrow screens. The conditioning bar sits
    outside <main> and matches the navbar card's width + 16px padding the same
    way. The expnav already has this in the design system. */
-.rd-tabbed { padding-left: var(--rd-space-4); padding-right: var(--rd-space-4); }
+.rd-tabbed { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-left: 0; padding-right: 0; } /* site fix: content = navbar card edges from 768px */
+@media (max-width: 767.98px) { .rd-tabbed { max-width: none; padding-left: var(--rd-space-4); padding-right: var(--rd-space-4); } }
+@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-left: 0; padding-right: 0; } } /* site fix: the trail starts on the content edge */
 .condition-bar {
   max-width: var(--rd-navbar-width); margin-left: auto; margin-right: auto;
   padding-left: var(--rd-space-4); padding-right: var(--rd-space-4);
 }
 .masthead { padding-top: var(--sp-18); padding-bottom: var(--sp-10); border-bottom: 1px solid var(--rule); }
-.section { max-width: 100%; }
+.section, .section.prose { max-width: 100%; } /* site fix: .prose (72ch) made Macro/AI market/About cards half width */
 /* Every section card fills the container; the wide tables (Methods Assumptions,
    Recession, Markets) no longer clip in a 54.5rem column. */
 h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-wrap: balance; }

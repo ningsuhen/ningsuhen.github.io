@@ -504,6 +504,7 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	color: var(--rd-text-muted);
 }
 .rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: var(--rd-navbar-width); }
+@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-inline: 0; } } /* = .rd-tabbed: the trail starts on the content (navbar card) edge */
 .rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); }
 .rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
 .rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
@@ -624,7 +625,11 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem var(--rd-space-4) 4rem; }
+/* The content box IS the navbar card from 768px up (the card's own formula: min(100%, 75rem) - 2rem), so every tab's
+   sections, cards and tables span the card's edges, like the main post column. No inline padding there: a gutter inside
+   this box would inset the content 16px from the card. Below 768px the card is full-bleed and the content keeps a 16px gutter. */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: min(100% - 2rem, var(--rd-navbar-width)); margin: 0 auto; padding: 1.5rem 0 4rem; }
+@media (max-width: 767.98px) { .rd-tabbed { max-width: none; padding-inline: var(--rd-space-4); } }
 .rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
 .rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
