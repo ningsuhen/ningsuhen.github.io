@@ -23,9 +23,6 @@
    light (the shared value is 3.8:1), and links in the tab body in the ink accent (the shared link colour is 4.18:1). */
 :root:not([data-theme="dark"]) { --rd-toc-text: rgba(0, 0, 0, 0.62); }
 .rd-tab__body a:not(.rd-btn) { color: var(--rd-accent-ink); }
-/* One block width for the whole tab body: the 872px post column. Text, figures, tables and folds share it. */
-.rd-tabbed .rd-tab__body { max-width: var(--rd-content-width); }
-.rd-tabbed .rd-tab__body :is(p, li) { max-width: none; }
 .rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
 /* Diagrams render at 1:1 (680 units = 42.5rem). On a phone they scroll inside their figure, never the page. */
 .idea-fig > svg { width: 100%; height: auto; max-width: 42.5rem; margin-inline: auto; color: var(--rd-text-strong); }
