@@ -21,11 +21,16 @@ type PlayState = "idle" | "playing" | "paused";
 declare global {
 	interface Window {
 		__KOKORO_READY?: boolean;
+		__KOKORO_CPU?: boolean;
 	}
 }
 
 const PREFS_KEY = "listen-prefs";
 const CONSENT_KEY = "listen-kokoro-consent";
+/** Pinned revision of onnx-community/Kokoro-82M-v1.0-ONNX (Apache-2.0). Pinned so the cached files never drift. */
+const KOKORO_MODEL_BASE =
+	"https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/1939ad2a8e416c0acfeecc08a694d14ef25f2231/";
+type KokoroVariant = "fp32" | "q8f16";
 const RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
 const FOLLOW_PAUSE_MS = 4000;
 const HIGHLIGHT = "listen-current";
@@ -111,6 +116,16 @@ async function playStream(
 		}
 	} finally {
 		signal.removeEventListener("abort", stop);
+	}
+}
+
+/** True when the browser exposes a WebGPU adapter. Any failure counts as no. */
+async function hasWebGpuAdapter(): Promise<boolean> {
+	const gpu = (navigator as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
+	try {
+		return Boolean(gpu && (await gpu.requestAdapter()));
+	} catch {
+		return false;
 	}
 }
 
@@ -250,11 +265,16 @@ class ListenPlayer extends HTMLElement {
 		askConsent: boolean,
 	): Promise<TtsEngine | null> {
 		if (activeEngine && activeEngineId === id) return activeEngine;
-		if (id === "kokoro" && askConsent && !(await this.confirmDownload()))
-			return null;
+		const variant =
+			id === "kokoro"
+				? askConsent
+					? await this.confirmDownload()
+					: readStorage<KokoroVariant | null>(CONSENT_KEY, null)
+				: null;
+		if (id === "kokoro" && !variant) return null;
 		try {
 			const engine =
-				id === "kokoro" ? await this.loadKokoro() : await this.loadWebSpeech();
+				variant ? await this.loadKokoro(variant) : await this.loadWebSpeech();
 			activeEngine?.dispose();
 			activeEngine = engine;
 			activeEngineId = id;
@@ -284,30 +304,42 @@ class ListenPlayer extends HTMLElement {
 		return engine;
 	}
 
-	private async loadKokoro(): Promise<TtsEngine> {
+	private async loadKokoro(variant: KokoroVariant): Promise<TtsEngine> {
 		this.status("Loading neural voice");
 		const engine = await loadKokoroEngine(
 			this.dataset.kokoroSrc ?? "/tts/kokoro.js",
 		);
 		await engine.init({
+			variant,
+			baseUrl: KOKORO_MODEL_BASE,
+			ortBase: new URL(this.dataset.kokoroOrt ?? "/tts/vendor/ort/", location.href).href,
 			onProgress: (f) =>
 				this.status(`Downloading model ${Math.round(f * 100)}%`),
 		});
-		writeStorage(CONSENT_KEY, true);
+		writeStorage(CONSENT_KEY, variant);
 		this.status("");
 		return engine;
 	}
 
-	private confirmDownload(): Promise<boolean> {
-		if (readStorage<boolean>(CONSENT_KEY, false)) return Promise.resolve(true);
+	private async confirmDownload(): Promise<KokoroVariant | null> {
+		const saved = readStorage<KokoroVariant | null>(CONSENT_KEY, null);
+		if (saved) return saved;
 		const dialog = this.querySelector<HTMLDialogElement>("[data-consent]");
-		if (!dialog || typeof dialog.showModal !== "function")
-			return Promise.resolve(false);
+		if (!dialog || typeof dialog.showModal !== "function") return null;
+		// The GPU variant is only offered when this browser has a WebGPU adapter.
+		const fast = dialog.querySelector<HTMLButtonElement>("[data-variant=fp32]");
+		if (fast) fast.hidden = !(await hasWebGpuAdapter());
+		// The CPU tier stays hidden until it is verified (see ListenPlayer.astro).
+		const light = dialog.querySelector<HTMLButtonElement>("[data-variant=q8f16]");
+		if (light) light.hidden = window.__KOKORO_CPU !== true;
 		dialog.showModal();
 		return new Promise((resolve) => {
 			dialog.addEventListener(
 				"close",
-				() => resolve(dialog.returnValue === "ok"),
+				() => {
+					const value = dialog.returnValue;
+					resolve(value === "fp32" || value === "q8f16" ? value : null);
+				},
 				{ once: true },
 			);
 		});
@@ -317,6 +349,11 @@ class ListenPlayer extends HTMLElement {
 		const engine = activeEngine;
 		if (!engine) return;
 		this.syncEngineSelect(activeEngineId);
+		const notice = this.querySelector<HTMLElement>("[data-notice]");
+		if (notice) {
+			notice.textContent = engine.notice ?? "";
+			notice.hidden = !engine.notice;
+		}
 		const voices = engine.voices();
 		const select = this.querySelector<HTMLSelectElement>("[data-voice]");
 		if (select) {

@@ -41,6 +41,12 @@ export interface AudioChunk {
 export interface EngineInitOptions {
 	/** 0-1 while model files download. */
 	onProgress?: (fraction: number) => void;
+	/** Neural engines: "fp32" (GPU) or "q8f16" (CPU). Omit to let the engine pick. */
+	variant?: "fp32" | "q8f16";
+	/** Neural engines: absolute URL the model files load from (pinned Hugging Face revision). */
+	baseUrl?: string;
+	/** Neural engines: absolute URL of the ONNX Runtime dist (served from this site). */
+	ortBase?: string;
 }
 
 export interface TtsEngine {
@@ -48,6 +54,8 @@ export interface TtsEngine {
 	readonly label: string;
 	/** Download size shown in the consent dialog. Omit for engines with no download. */
 	readonly requiresDownloadMB?: number;
+	/** Attribution the player shows while this engine is active (model licence and credits). */
+	readonly notice?: string;
 	/** Reported after init(). The player shows GPU / CPU from it; Web Speech reports `none`. */
 	readonly accelerator: Accelerator;
 	init(opts?: EngineInitOptions): Promise<void>;
