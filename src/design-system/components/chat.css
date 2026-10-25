@@ -1,0 +1,29 @@
+/* rd-chat: a message thread — user and assistant bubbles, and an input row. The user's messages
+   (--me) are right-aligned and filled; the assistant's (--them) are left-aligned on the card ground.
+   The input row reuses .rd-input and .rd-btn. Ships in rd.css only (the research.css compatibility
+   alias stays the frozen core). */
+
+.rd-chat { display: flex; flex-direction: column; gap: var(--rd-space-2); }
+.rd-chat__msg {
+	max-width: 85%;
+	padding: var(--rd-space-2) var(--rd-space-3);
+	border-radius: var(--rd-radius-md);
+	font-size: var(--rd-fs-base);
+	line-height: var(--rd-lh);
+}
+.rd-chat__msg--me {
+	align-self: flex-end;
+	background: var(--rd-accent);
+	color: var(--rd-card-bg);
+}
+.rd-chat__msg--them {
+	align-self: flex-start;
+	background: var(--rd-btn-bg);
+	color: var(--rd-text);
+}
+.rd-chat__input {
+	display: flex;
+	gap: var(--rd-space-2);
+	margin-top: var(--rd-space-1);
+}
+.rd-chat__input .rd-input { flex: 1; }

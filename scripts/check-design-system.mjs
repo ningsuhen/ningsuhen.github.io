@@ -80,6 +80,7 @@ const RULES = {
 	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
 	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
 	"stepper": "every .rd-stepper has a minus and a plus <button> and a value region",
+	"chat": "every .rd-chat__msg has a variant (--me or --them) and every .rd-chat__input input is labelled",
 	"fullscreen-toggle": "every data-rd=fullscreen container has a [data-rd-fullscreen-toggle] button with aria-pressed and is focusable (wheel-only-after-focus)",
 };
 
@@ -348,6 +349,30 @@ const probeStructure = (canon) => {
 		steppers: [...document.querySelectorAll(".rd-stepper")].map((el) => ({
 			buttons: el.querySelectorAll("button").length,
 			hasValue: !!el.querySelector(".rd-stepper__value"),
+		})),
+		// Chat: every message bubble carries a variant (--me / --them) so it is styled and
+		// aligned, and the input row's field is associated with a label.
+		chats: [...document.querySelectorAll(".rd-chat")].map((el) => ({
+			msgs: [...el.querySelectorAll(".rd-chat__msg")].map((m) => m.classList.contains("rd-chat__msg--me") || m.classList.contains("rd-chat__msg--them")),
+			inputLabelled: [...el.querySelectorAll(".rd-chat__input .rd-input")].every((i) => {
+				const id = i.id;
+				return (id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`)) || !!i.getAttribute("aria-label") || !!i.getAttribute("aria-labelledby") || !!i.closest("label");
+			}),
+		})),
+		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
+		// A div/span styled as a button is not focusable and breaks keyboard use.
+		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+		})),
+		// Filters: every .rd-filter is a keyboard-operable toggle with an explicit aria-pressed state.
+		filters: [...document.querySelectorAll(".rd-filter")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+			pressed: el.hasAttribute("aria-pressed"),
+		})),
+		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
+		// A div/span styled as a button is not focusable and breaks keyboard use.
+		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
 		})),
 		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
 		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
@@ -799,6 +824,8 @@ await Promise.all(pages.map(async (rel) => {
 				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
 				[s.steppers.some((s) => s.buttons < 2), "stepper", "a .rd-stepper has fewer than two <button> controls (minus and plus)"],
 				[s.steppers.some((s) => !s.hasValue), "stepper", "a .rd-stepper has no .rd-stepper__value region"],
+				[s.chats.some((c) => c.msgs.some((v) => !v)), "chat", "a .rd-chat__msg has no variant (must be --me or --them)"],
+				[s.chats.some((c) => !c.inputLabelled), "chat", "a .rd-chat__input input has no associated label"],
 				[s.fullscreen.some((f) => !f.hasToggle), "fullscreen-toggle", `a data-rd=fullscreen container has no [data-rd-fullscreen-toggle]`],
 				[s.fullscreen.some((f) => f.hasToggle && !f.isButton), "fullscreen-toggle", "a fullscreen toggle is not a button (use <button> or role=button)"],
 				[s.fullscreen.some((f) => f.hasToggle && !f.ariaPressed), "fullscreen-toggle", "a fullscreen toggle lacks aria-pressed"],

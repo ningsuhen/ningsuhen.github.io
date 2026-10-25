@@ -34,7 +34,7 @@ const CORE = [
 ];
 
 // New component layers (T3+). Appended to rd.css only; the research.css alias stays the frozen core.
-const EXTENSIONS = ["components/fullscreen.css", "components/buttons.css", "components/filter.css", "components/field.css", "components/choice.css", "components/stepper.css"];
+const EXTENSIONS = ["components/fullscreen.css", "components/buttons.css", "components/filter.css", "components/field.css", "components/choice.css", "components/stepper.css", "components/chat.css"];
 
 // The runtime entry; esbuild bundles it (resolving the relative ./expnav.js etc.) into rd.js.
 const JS_ENTRY = "js/index.js";
