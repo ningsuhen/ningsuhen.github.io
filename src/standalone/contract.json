@@ -1,0 +1,59 @@
+{
+	"contract": 1,
+	"fragment": {
+		"folder": "src/standalone/<kind>/<slug>/",
+		"files": {
+			"meta.json": "required",
+			"body.html": "required",
+			"page.css": "optional",
+			"page.js": "optional"
+		},
+		"runtimeAssets": "public/<kind>/<slug>/ (no index.html here; the shell owns the URL)"
+	},
+	"meta": {
+		"required": ["contract", "kind", "slug", "title", "created", "updated", "summary"],
+		"optional": ["eyebrow", "width", "layout", "comments", "search", "source"],
+		"types": {
+			"contract": "literal 1",
+			"kind": "string, must equal the folder kind",
+			"slug": "string, kebab-case, must equal the folder slug",
+			"title": "string, no date stamp (the shell renders '· created · updated')",
+			"created": "YYYY-MM-DD",
+			"updated": "YYYY-MM-DD",
+			"summary": "string",
+			"eyebrow": "string",
+			"width": "post | wide (default post)",
+			"layout": "tabbed | scroll (default scroll)",
+			"comments": "boolean (default true)",
+			"search": "boolean (default true)",
+			"source": "{ project: string, build: string } (the build hash)"
+		}
+	},
+	"body": {
+		"contentOnly": true,
+		"tabbed": "top-level <section data-rd-tab=\"id\" data-rd-label=\"…\" [data-rd-icon=\"…\"]>; ids equal today's ?tab= values",
+		"scroll": "data-rd-section",
+		"allowed": ["rd-* components", "inline SVG", "<script type=\"application/json\" data-rd-data> up to 100 KB"],
+		"forbidden": [
+			"html/head/body/style/link/iframe tags",
+			"executable scripts",
+			"navbar, footer, comments, breadcrumb, hero, rd-expnav, rd-toc (the shell injects them)",
+			"on* event handlers",
+			"emoji or glyph icons",
+			"style=\"…\" beyond custom properties (--*)"
+		],
+		"dataMaxBytes": 102400
+	},
+	"pageCss": {
+		"maxBytes": 4096,
+		"selectorPrefix": "[data-page=\"<slug>\"]",
+		"forbidden": ["bare element selectors", "rd-* overrides", "--rd-* redefinitions", "raw colours/sizes", "@font-face", "prefers-color-scheme"]
+	},
+	"pageJs": {
+		"shape": "export default init({ root, data, rd })",
+		"events": "rd.on('tabshow', …) for charts in hidden tabs",
+		"forbidden": ["history calls", "tab/rail code", "external URLs", "globals (window./document.)"]
+	},
+	"data": "over 100 KB goes to same-origin sidecar files; never base64 in HTML; shared assets under public/shared/<project>/",
+	"validator": "pnpm check:export <dir> (dependency-free; copied into generator repos' CI)"
+}
