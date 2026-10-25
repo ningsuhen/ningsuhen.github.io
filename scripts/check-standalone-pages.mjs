@@ -591,6 +591,93 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 	}
 }
 
+// Comments (giscus, click to load). Reports, live experiments and ideas get a section above the license card; other
+// standalone pages get none (static, from the built HTML). In a browser: nothing reaches giscus.app before "Load comments"
+// is pressed; after it the client script loads, the section keeps the column and the footer order, and a theme change
+// reaches the giscus frame. giscus.app is stubbed here (no network), so this checks our side of the contract only.
+const COMMENTS_PAGE = /^\/(research|experiments|ideas)\/[^/]+\/$/;
+const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
+const commentsSrc = readFileSync("src/config.ts", "utf8");
+const commentCfg = (key) => commentsSrc.match(new RegExp(`\\b${key}: "([^"]+)"`))?.[1];
+const GISCUS_STUB = "(function(){var s=document.currentScript;var f=document.createElement('iframe');f.className='giscus-frame';f.src='about:blank';s.parentElement.appendChild(f);f.contentWindow.postMessage=function(m,o){(window.__posted=window.__posted||[]).push([m,o])};})();";
+for (const rel of pages) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	const expected = COMMENTS_PAGE.test(urlPath) && !COMMENTS_OPT_OUT.test(readFileSync(path.join(PUBLIC, rel), "utf8"));
+	const built = readFileSync(path.join(DIST, rel), "utf8");
+	const has = built.includes("data-site-comments");
+	if (has !== expected) failures.push(`${urlPath}: comments section ${has ? "present" : "missing"}, expected ${expected ? "present" : "absent"}`);
+	else if (has && built.indexOf("data-site-comments") > built.indexOf("data-site-license")) failures.push(`${urlPath}: comments section is below the license card`);
+	if (!expected) continue;
+	for (const width of [1440, 375]) {
+		const tag = `${urlPath} @${width} comments`;
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		let clicked = false;
+		const before = [];
+		const after = [];
+		await page.route("https://giscus.app/**", (route) => {
+			const u = route.request().url();
+			(clicked ? after : before).push(u);
+			if (u.endsWith("/client.js")) return route.fulfill({ status: 200, contentType: "text/javascript", body: GISCUS_STUB });
+			return route.abort();
+		});
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.waitForTimeout(300);
+		const pre = await page.evaluate(() => {
+			const box = (el) => el?.getBoundingClientRect();
+			const sec = box(document.querySelector("[data-site-comments]"));
+			const lic = box(document.querySelector("div[data-site-license]"));
+			const main = box(document.querySelector("main"));
+			return {
+				sec: sec && { top: sec.top, bottom: sec.bottom, w: sec.width },
+				lic: lic && lic.top,
+				mainBottom: main ? main.bottom : null,
+				button: !!document.querySelector(".rd-comments__load"),
+				frames: document.querySelectorAll("iframe.giscus-frame, script[src*='giscus']").length,
+				cw: document.documentElement.clientWidth,
+				sw: document.documentElement.scrollWidth,
+			};
+		});
+		if (!pre.sec || !pre.button) failures.push(`${tag}: section or "Load comments" button not found`);
+		else {
+			if (pre.lic !== null && pre.sec.bottom > pre.lic + 1) failures.push(`${tag}: section ends below the license card top`);
+			if (pre.mainBottom !== null && pre.mainBottom > pre.sec.top + 1) failures.push(`${tag}: section starts above the end of the content`);
+			// 872px (54.5rem) column, narrower when the page's own body gutter is in the way; never wider.
+			if (pre.sec.w > Math.min(872, pre.cw) + 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px is wider than 872px or the viewport`);
+			if (width >= 1000 && Math.abs(pre.sec.w - 872) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected 872px (54.5rem)`);
+		}
+		if (before.length) failures.push(`${tag}: request(s) to giscus.app before the click: ${[...new Set(before)].slice(0, 3).join(", ")}`);
+		if (pre.frames) failures.push(`${tag}: giscus script or frame present before the click`);
+		clicked = true;
+		await page.click(".rd-comments__load");
+		await page.waitForSelector("iframe.giscus-frame", { timeout: 5000 }).catch(() => {});
+		const post = await page.evaluate(() => {
+			const s = document.querySelector('script[src="https://giscus.app/client.js"]');
+			return {
+				focus: document.activeElement?.id ?? "",
+				button: !!document.querySelector(".rd-comments__load"),
+				repoId: s?.getAttribute("data-repo-id"),
+				categoryId: s?.getAttribute("data-category-id"),
+				mapping: s?.getAttribute("data-mapping"),
+				theme: s?.getAttribute("data-theme"),
+				frame: !!document.querySelector("iframe.giscus-frame"),
+			};
+		});
+		if (!after.some((u) => u.endsWith("/client.js"))) failures.push(`${tag}: giscus client.js not requested after the click`);
+		if (post.button || !post.frame) failures.push(`${tag}: button not replaced by the giscus frame`);
+		if (post.repoId !== commentCfg("repoId") || post.categoryId !== commentCfg("categoryId")) failures.push(`${tag}: repo/category ids differ from src/config.ts`);
+		if (post.mapping !== "pathname") failures.push(`${tag}: data-mapping is ${post.mapping}, expected pathname`);
+		if (post.focus !== "rd-comments-slot") failures.push(`${tag}: focus not moved into the comments after the click (${post.focus || "none"})`);
+		const themeNow = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+		if (post.theme !== (themeNow === "dark" ? "dark" : "light")) failures.push(`${tag}: giscus theme ${post.theme} does not match the page (${themeNow})`);
+		await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
+		await page.waitForFunction(() => (window.__posted || []).some((p) => p[1] === "https://giscus.app" && p[0].giscus?.setConfig?.theme === "dark"), null, { timeout: 3000 }).catch(() => {});
+		const synced = await page.evaluate(() => (window.__posted || []).some((p) => p[1] === "https://giscus.app" && p[0].giscus?.setConfig?.theme === "dark"));
+		if (!synced) failures.push(`${tag}: theme change to dark was not posted to the giscus frame`);
+		await ctx.close();
+	}
+}
+
 await browser.close();
 server.close();
 
