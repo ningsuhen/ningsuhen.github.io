@@ -62,6 +62,12 @@
 		},
 		{
 			"page": "/research/ai-economy/",
+			"rule": "rail-type",
+			"owner": "EcoSimulation",
+			"reason": "The export carries its own accent copy (oklch(0.55 0.12 h), 4.18:1 on the page); the site accent ink is now oklch(0.5 0.12 h). Re-export with --rd-accent-ink for rail and link text."
+		},
+		{
+			"page": "/research/ai-economy/",
 			"rule": "tap-target",
 			"owner": "EcoSimulation",
 			"reason": "Filter and source-tier controls at 375px are smaller than 24px."
