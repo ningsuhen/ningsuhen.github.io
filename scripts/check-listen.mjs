@@ -583,15 +583,16 @@ const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
 	// Back and forth: neural (consent once, then no prompt), browser, neural again.
 	await page.selectOption("[data-engine]", "kokoro");
 	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
+	// Each step waits for the engine the player saved after a successful switch, so no step races a load in flight.
+	const savedEngine = (id) =>
+		page.waitForFunction((want) => JSON.parse(localStorage.getItem("listen-prefs") || "{}").engine === want, id, { timeout: 8000 })
+			.catch(() => expect(false, `engine ${id} was not activated`));
 	await page.click("[data-variant=fp32]");
-	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "kokoro", null, { timeout: 5000 })
-		.catch(() => expect(false, "neural choice did not activate after consent"));
+	await savedEngine("kokoro");
 	await page.selectOption("[data-engine]", "web-speech");
-	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 3000 })
-		.catch(() => expect(false, "switch back to browser voice failed"));
+	await savedEngine("web-speech");
 	await page.selectOption("[data-engine]", "kokoro");
-	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "kokoro", null, { timeout: 5000 })
-		.catch(() => expect(false, "second switch to neural failed"));
+	await savedEngine("kokoro");
 	expect(await page.$$eval("[data-consent][open]", (els) => els.length) === 0, "consent asked again after consent was given");
 	await ctx.close();
 }

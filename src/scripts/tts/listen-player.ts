@@ -814,7 +814,8 @@ class ListenPlayer extends HTMLElement {
 			return;
 		}
 		this.setState("paused");
-		writeStorage(PREFS_KEY, { engine: id, voice: this.voice, rate: this.rate });
+		// Save the engine that is active, which can differ from the one asked for (browser voice chosen at the prompt).
+		writeStorage(PREFS_KEY, { engine: activeEngineId, voice: this.voice, rate: this.rate });
 		if (wasPlaying) this.run(this.index);
 	}
 
