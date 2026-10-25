@@ -27,7 +27,14 @@ const enabled =
 				<span class="skeleton giscus-skeleton-button"></span>
 			</div>
 		</div>
-		<p class="giscus-unavailable" hidden>Comments could not load right now.</p>
+		<!-- Shown instead of the widget when giscus fails; keeps the skeleton's height so nothing below moves. -->
+		<div class="giscus-unavailable" role="status" hidden>
+			<p>Comments could not load right now. Try again later.</p>
+			<p class="giscus-unavailable-actions">
+				<button type="button" class="giscus-retry btn-regular">Try again</button>
+				<a href={`https://github.com/${commentConfig.repo}/discussions`} rel="noopener">Open the discussions on GitHub</a>
+			</p>
+		</div>
 		<noscript><style>.giscus-skeleton{display:none}</style></noscript>
 	</div>
 	<script is:inline define:vars={{
@@ -52,18 +59,21 @@ const enabled =
 					);
 				}
 			}
-			// Swap the skeleton for the widget (ok) or a short notice (failed). Safe to call more than once.
+			// Swap the skeleton for the widget (ok) or the notice (failed). Safe to call more than once; a failure wins
+			// over an earlier ok (giscus can report an error after its first height).
 			function settle(host, ok) {
-				if (host.hasAttribute("data-loaded")) return;
+				if (host.hasAttribute("data-failed") || (ok && host.hasAttribute("data-loaded"))) return;
 				host.removeAttribute("aria-busy");
+				clearTimeout(host.__giscusSettle);
 				var skeleton = host.querySelector(".giscus-skeleton");
 				var notice = host.querySelector(".giscus-unavailable");
 				if (ok) {
+					// The skeleton fades out (CSS) but stays in layout: the host never drops below the reserved height, even
+					// while the lazy iframe still has its 150px default. A taller widget (with comments) grows past it.
 					host.setAttribute("data-loaded", "");
-					if (notice) notice.hidden = true;
-					// Fade out, then drop it from layout so a short widget is not padded to the skeleton's height.
-					if (skeleton) setTimeout(function () { skeleton.hidden = true; }, 250);
-				} else if (!host.hasAttribute("data-failed")) {
+				} else {
+					// The notice takes the skeleton's height and the widget is hidden (CSS), so the page does not move.
+					host.removeAttribute("data-loaded");
 					host.setAttribute("data-failed", "");
 					if (skeleton) skeleton.hidden = true;
 					if (notice) notice.hidden = false;
@@ -72,6 +82,14 @@ const enabled =
 			function mount() {
 				var host = document.getElementById("giscus-comments");
 				if (!host) return;
+				var retry = host.querySelector(".giscus-retry");
+				if (retry) retry.onclick = function () {
+					host.removeAttribute("data-failed");
+					host.setAttribute("aria-busy", "true");
+					host.querySelector(".giscus-skeleton").hidden = false;
+					host.querySelector(".giscus-unavailable").hidden = true;
+					mount();
+				};
 				// Remove any existing giscus script/iframe so SPA navigation never duplicates the widget.
 				document.querySelectorAll("script[data-giscus], iframe.giscus-frame").forEach(function (el) {
 					el.remove();
@@ -87,7 +105,8 @@ const enabled =
 				s.setAttribute("data-mapping", "pathname");
 				s.setAttribute("data-strict", "0");
 				s.setAttribute("data-reactions-enabled", "1");
-				s.setAttribute("data-emit-metadata", "0");
+				// Metadata tells us the discussion rendered (see the message listener).
+				s.setAttribute("data-emit-metadata", "1");
 				s.setAttribute("data-input-position", "top");
 				s.setAttribute("data-theme", giscusTheme());
 				s.setAttribute("data-lang", "en");
@@ -101,7 +120,8 @@ const enabled =
 					var io = new IntersectionObserver(function (entries) {
 						if (!entries[0].isIntersecting) return;
 						io.disconnect();
-						setTimeout(function () {
+						clearTimeout(host.__giscusTimeout);
+						host.__giscusTimeout = setTimeout(function () {
 							if (!host.hasAttribute("data-loaded")) settle(host, false);
 						}, 30000);
 					});
@@ -111,14 +131,22 @@ const enabled =
 
 			mount();
 
-			// Giscus posts a message from its iframe once it has rendered (its first height report). Registered once
-			// per session; it always looks up the current host, so SPA navigations reuse it.
+			// Giscus messages from its iframe: discussion metadata means it rendered; "Discussion not found" is normal for a
+			// post without comments yet (the empty widget still renders); any other error (an outage, a broken repo setup)
+			// is a failure. Height reports alone settle after a short grace period, in case neither signal arrives.
+			// Registered once per session; it always looks up the current host, so SPA navigations reuse it.
 			if (!window.__giscusLoadListener) {
 				window.__giscusLoadListener = true;
 				window.addEventListener("message", function (e) {
 					if (e.origin !== "https://giscus.app" || !e.data || typeof e.data !== "object" || !e.data.giscus) return;
 					var host = document.getElementById("giscus-comments");
-					if (host) settle(host, true);
+					if (!host) return;
+					var g = e.data.giscus;
+					if (g.error) settle(host, g.error === "Discussion not found");
+					else if (g.discussion) settle(host, true);
+					else if (g.resizeHeight && !host.__giscusSettle) {
+						host.__giscusSettle = setTimeout(function () { host.__giscusSettle = 0; settle(host, true); }, 1500);
+					}
 				});
 			}
 
@@ -192,9 +220,46 @@ const enabled =
 		opacity: 0;
 		pointer-events: none;
 	}
+	.giscus-host[data-failed] .giscus {
+		display: none;
+	}
 	.giscus-unavailable {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+		height: 372px;
+		padding: 1rem;
+		border: 1px solid var(--line-divider);
+		border-radius: 0.375rem;
 		font-size: 0.875rem;
-		opacity: 0.6;
+		text-align: center;
+	}
+	.giscus-unavailable[hidden] {
+		display: none;
+	}
+	.giscus-unavailable p {
+		margin: 0;
+	}
+	.giscus-unavailable-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 1rem;
+	}
+	.giscus-retry {
+		min-height: 2.25rem;
+		padding: 0 1rem;
+		border-radius: 0.5rem;
+		font-weight: 500;
+		color: var(--btn-content);
+	}
+	.giscus-unavailable a {
+		color: var(--btn-content);
+		text-decoration: underline;
+		text-underline-offset: 2px;
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.giscus-skeleton {
