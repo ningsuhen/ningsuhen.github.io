@@ -19,6 +19,7 @@
 	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
 	--rd-navbar-width: 73rem;
 	--rd-navbar-gap: 1rem; /* space between the injected navbar card and the section bar under it (the main site's 16px rhythm) */
+	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
 	--rd-radius-md: 0.75rem;
@@ -458,12 +459,13 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
    ====================================================================== */
 /* Section bar (rd-expnav): the navbar-width frame, one gap (--rd-navbar-gap) under the injected navbar card. Its first
    link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
-   container padding. Sticky at top: 0 once the navbar has scrolled away (the site bar is not sticky, so the two never
-   overlap). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
+   container padding. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
+   --rd-navbar-h + --rd-navbar-gap (one gap under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
    link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
+@media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
 .rd-expnav {
 	position: sticky;
-	top: 0;
+	top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap));
 	z-index: 20;
 	box-sizing: border-box;
 	display: flex;
@@ -568,7 +570,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
-.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
 .rd-prose .rd-section__head h2::before { content: none; }
 .rd-section__icon {
@@ -583,7 +585,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: var(--rd-accent);
 }
 .rd-section__icon .rd-icon { width: 1em; height: 1em; }
-.rd-prose [id] { scroll-margin-top: calc(var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
 
 /* Hero: eyebrow, h1, lede, a row of status chips and meta. */
 .rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }
@@ -3076,7 +3078,7 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
   var wide = window.matchMedia('(min-width: 1100px)');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var navH = function () { return bar.offsetHeight; };
+  var navH = function () { return bar.getBoundingClientRect().bottom; }; // the bar is stuck one gap under the navbar: content starts below its bottom
   var saveTimer = 0;
   var seq = Date.now(); // keys of the entries this document pushes (unique across reloads)
   var yByKey = {};

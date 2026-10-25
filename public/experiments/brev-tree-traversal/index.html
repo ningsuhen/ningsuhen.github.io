@@ -475,7 +475,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     }
     function update() {
       ticking = false;
-      var line = nav.offsetHeight + 24; // a section counts once its top is under the navbar
+      var line = nav.getBoundingClientRect().bottom + 24; // a section counts once its top is under the navbar
       var current = pairs[0];
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = pairs[pairs.length - 1];
       else pairs.forEach(function (p) { if (p[1].getBoundingClientRect().top <= line) current = p; });
