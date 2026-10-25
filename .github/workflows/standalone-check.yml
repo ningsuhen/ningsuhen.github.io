@@ -249,17 +249,50 @@ jobs:
           path: cwv.log
           retention-days: 7
 
+  # Visual regression: screenshot every page at 375/768/1440, light and dark, and pixelmatch against the
+  # last master baseline (the visual-baseline branch). Deterministic: baseline and candidate render on the
+  # same ubuntu-latest runner (same fonts, same chromium), animations off, external requests blocked.
+  # Bootstrap: with no baseline branch yet it passes (the visual-baseline workflow generates it on master).
+  visual:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: Fetch the baseline branch
+        run: |
+          if git ls-remote --exit-code --heads origin visual-baseline >/dev/null 2>&1; then
+            git clone --depth 1 --branch visual-baseline --single-branch https://github.com/${{ github.repository }}.git visual-baseline-ref
+          else
+            echo "no visual-baseline branch yet (first run)"
+          fi
+      - name: check:visual
+        run: bash scripts/ci-check.sh visual "pnpm check:visual --compare visual-baseline-ref/visual-baseline"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-failure
+          path: |
+            visual.log
+          retention-days: 7
+
   # Aggregate status: the single required check for branch protection. Fails if any leg fails.
   check:
     runs-on: ubuntu-latest
-    needs: [static, standalone, report-history, theme, navigation, listen, design-system, dates, cwv]
+    needs: [static, standalone, report-history, theme, navigation, listen, design-system, dates, cwv, visual]
     if: always()
     timeout-minutes: 2
     steps:
       - name: Aggregate result
         run: |
           failed=0
-          for j in ${{ needs.static.result }} ${{ needs.standalone.result }} ${{ needs.report-history.result }} ${{ needs.theme.result }} ${{ needs.navigation.result }} ${{ needs.listen.result }} ${{ needs.design-system.result }} ${{ needs.dates.result }} ${{ needs.cwv.result }}; do
+          for j in ${{ needs.static.result }} ${{ needs.standalone.result }} ${{ needs.report-history.result }} ${{ needs.theme.result }} ${{ needs.navigation.result }} ${{ needs.listen.result }} ${{ needs.design-system.result }} ${{ needs.dates.result }} ${{ needs.cwv.result }} ${{ needs.visual.result }}; do
             if [ "$j" != "success" ]; then
               echo "::error::a check leg did not pass (result: $j)"
               failed=1
