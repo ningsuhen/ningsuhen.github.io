@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import type { AstroIntegration } from "astro";
 import { commentConfig, navBarConfig, siteConfig } from "../config";
 import { LinkPreset } from "../types/config";
 import { themeRuntimeScript } from "../utils/theme-runtime";
+import { draftHrefs, isDraftPage } from "../../scripts/lib/draft-pages.mjs";
 
 // Same Roboto Bold the main site ships, inlined so link widths (and so positions) match exactly.
 const ROBOTO_700 = readFileSync(path.resolve("node_modules/@fontsource/roboto/files/roboto-latin-700-normal.woff2")).toString("base64");
@@ -82,7 +83,15 @@ export default function standaloneHeader(): AstroIntegration {
 				const outDir = fileURLToPath(dir);
 				const script = buildScript(navItems(base), siteConfig.title, siteConfig.themeColor.hue);
 				const licenseScript = buildLicenseScript(base, siteConfig.themeColor.hue);
+				// Draft pages (src/data Draft entries) are not shipped. Astro already copied public/ into dist/, so their
+				// folders (page and data) are removed here, before pagefind indexes the output.
+				const drafts = draftHrefs();
+				for (const href of drafts) {
+					if (!/^\/(research|experiments|ideas)\/[^/]+\/$/.test(href)) throw new Error(`Draft href is not a standalone page folder: ${href}`);
+					await rm(path.join(outDir, href), { recursive: true, force: true });
+				}
 				for (const rel of await htmlFiles(publicDir)) {
+					if (isDraftPage(rel, drafts)) continue;
 					const target = path.join(outDir, rel);
 					const html = await readFile(target, "utf8");
 					const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;

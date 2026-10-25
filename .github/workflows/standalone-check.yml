@@ -20,6 +20,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:tts
+      - run: pnpm test:drafts
       - run: pnpm test:dates
       - run: pnpm build
       - run: pnpm check:thumbnails

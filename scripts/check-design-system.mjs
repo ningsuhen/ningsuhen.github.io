@@ -11,6 +11,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
+import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -81,7 +82,8 @@ function htmlPages(dir = "") {
 		return e.name.endsWith(".html") ? [rel] : [];
 	});
 }
-const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3);
+const drafts = draftHrefs();
+const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
