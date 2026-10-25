@@ -38,8 +38,8 @@ A Japanese write-up on note.com, dated 3 October 2026, ran FrogNano-4B and Qwen3
 
 These come from my [Brev benchmark](/posts/brev-tree-benchmark/), on a 196-intent set. Latency is the median (p50).
 
-- The 4B model with every rule in the prompt, about 18k tokens: 77.1% accuracy, 159 ms. It ran on one RTX 4060.
-- The same 4B with a cached rules prompt: 447 ms with 4 requests in flight, 938 ms with 8. These are timing runs with no accuracy.
+- The 4B model with every rule in the prompt, about 18.8k tokens: 77.1% accuracy, 159 ms median. It ran on one RTX 4060, served from llama.cpp's prefix cache (99.9% of prompt tokens cached, one request at a time). I didn't measure it without the cache.
+- The same 4B under load, on that cache: 447 ms with 4 requests in flight, 938 ms with 8. These are timing runs with no accuracy.
 - The 27B model on a shared endpoint, with every rule in the prompt: 90.4% accuracy, 685 ms. The endpoint is shared, so the latency includes queueing.
 - A small TF-IDF model in front answers 65% of rows locally at 97% precision, in about 8 ms.
 
