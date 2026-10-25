@@ -215,7 +215,7 @@ const probeStructure = (canon) => {
 	const stamp = /· created \d{4}-\d{2}-\d{2} · updated \d{4}-\d{2}-\d{2}$/;
 	const main = document.querySelector("main");
 	const navCard = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header");
-	const scripts = [...document.scripts].filter((s) => !s.src).map((s) => s.textContent).join("");
+	const scripts = [...document.scripts].filter((s) => !s.src && !s.hasAttribute("data-site-theme")).map((s) => s.textContent).join("");
 	const themeButtons = [...document.querySelectorAll("button, [role=switch], input[type=checkbox]")]
 		.filter((b) => /theme|dark|light mode|colou?r scheme/i.test(`${b.getAttribute("aria-label") || ""} ${b.textContent || ""}`))
 		.map((b) => (b.getAttribute("aria-label") || b.textContent || "").trim().slice(0, 40));
