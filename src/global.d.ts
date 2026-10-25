@@ -4,6 +4,12 @@ declare global {
 	interface Window {
 		// type from '@swup/astro' is incorrect
 		swup: AstroIntegration;
+		// Shared theme model, defined in <head> by src/utils/theme-runtime.ts (main site and standalone pages).
+		siteTheme: {
+			choice: () => "light" | "dark" | "auto";
+			dark: () => boolean;
+			set: (choice: "light" | "dark" | "auto") => void;
+		};
 		pagefind: {
 			search: (query: string) => Promise<{
 				results: Array<{

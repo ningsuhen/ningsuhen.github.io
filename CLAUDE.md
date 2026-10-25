@@ -26,6 +26,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - Agents must NEVER start a server on port 4321 (`pnpm dev`, `pnpm preview`, `astro dev --port 4321`): the LaunchAgent owns it. Use `pnpm dev:agent`.
 - `pnpm build`: Astro build + Pagefind.
 - `pnpm check:standalone`: real-browser check of standalone pages and Back navigation. Needs a build and `CHROME_PATH` (or `pnpm exec playwright-core install chromium`).
+- `pnpm check:theme`: real-browser check of the theme model (light default, only `auto` follows the OS, toggles, navigation, second tab). Needs a build and `CHROME_PATH`.
 - `pnpm check:listen`: real-browser check of the Listen player on a built post (speech is stubbed). `pnpm test:tts`: unit tests for the speech normaliser and chunker.
 - `pnpm astro check`: type check.
 - `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. Then set the entry's status to `Live` (or `Coming soon`).

@@ -5,6 +5,7 @@ import path from "node:path";
 import type { AstroIntegration } from "astro";
 import { navBarConfig, siteConfig } from "../config";
 import { LinkPreset } from "../types/config";
+import { themeRuntimeScript } from "../utils/theme-runtime";
 
 // Same Roboto Bold the main site ships, inlined so link widths (and so positions) match exactly.
 const ROBOTO_700 = readFileSync(path.resolve("node_modules/@fontsource/roboto/files/roboto-latin-700-normal.woff2")).toString("base64");
@@ -13,6 +14,9 @@ const face = (w: number, b64: string) => `@font-face{font-family:"RobotoNav";fon
 const FONT_FACE = face(700, ROBOTO_700) + face(400, ROBOTO_400);
 
 const MARKER = "data-site-navbar";
+const THEME_MARKER = "data-site-theme";
+// Theme model in <head>, before first paint (see src/utils/theme-runtime.ts). Light unless the reader chose otherwise.
+const HEAD_THEME = `<script ${THEME_MARKER}>${themeRuntimeScript(true)}</script>`;
 const LICENSE_MARKER = "data-site-license";
 const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
 
@@ -89,7 +93,15 @@ export default function standaloneHeader(): AstroIntegration {
 function transform(html: string, script: string, extra: string, footer: string, urlPath: string, base: string, site: string): string {
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
-	return ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href);
+	return withThemeScript(ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href));
+}
+
+// The theme script goes at the end of <head>, or right after <html> when the export has no </head>.
+function withThemeScript(html: string): string {
+	if (html.includes(THEME_MARKER)) return html;
+	const headEnd = html.search(/<\/head>/i);
+	if (headEnd !== -1) return html.slice(0, headEnd) + HEAD_THEME + html.slice(headEnd);
+	return html.replace(/<html(?=[\s>])[^>]*>/i, (tag) => tag + HEAD_THEME);
 }
 
 // Exported pages often lose these tags. Without a doctype the page renders in quirks mode (BackCompat);
@@ -242,11 +254,12 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`var host=document.createElement("div");host.setAttribute("${MARKER}","");` +
 		`var root=host.attachShadow({mode:"open"});root.innerHTML=${html};` +
 		`function get(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}` +
-		`function apply(t){document.documentElement.setAttribute("data-theme",t);host.setAttribute("data-theme",t)}` +
-		`host.style.setProperty("--hue",get("hue","${hue}"));apply(get("theme","light"));` +
+		`host.style.setProperty("--hue",get("hue","${hue}"));` +
+		// The page's data-theme (set by the head script, or by siteTheme.set) is the one source; the bar mirrors it.
+		`function sync(){host.setAttribute("data-theme",document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light")}` +
+		`sync();new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});` +
 		`root.querySelector(".theme").addEventListener("click",function(){` +
-		`var t=host.getAttribute("data-theme")==="dark"?"light":"dark";` +
-		`try{localStorage.setItem("theme",t)}catch(e){}apply(t)});` +
+		`window.siteTheme.set(host.getAttribute("data-theme")==="dark"?"light":"dark")});` +
 		`var pn=root.querySelector(".panel"),rg=pn.querySelector("input"),ou=pn.querySelector("output");` +
 		`function setHue(h){host.style.setProperty("--hue",h);rg.value=h;ou.textContent=h}setHue(get("hue","${hue}"));` +
 		`root.querySelector(".pal").addEventListener("click",function(){pn.hidden=!pn.hidden});` +
@@ -262,7 +275,6 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`root.querySelector(".pal").addEventListener("click",function(){sp.hidden=true});` +
 		`addEventListener("keydown",function(e){if(e.key==="Escape"){sp.hidden=true;pn.hidden=true}});` +
 		`document.addEventListener("click",function(e){if(e.composedPath().indexOf(host)<0){sp.hidden=true;pn.hidden=true}});` +
-		`addEventListener("storage",function(e){if(e.key==="theme")apply(e.newValue||"light")});` +
 		// Mount on <html>, before <body>: the page's own body margin/padding/max-width can then never offset the bar.
 		`document.documentElement.insertBefore(host,document.body)})()</script>`
 	);

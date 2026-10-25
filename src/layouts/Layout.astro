@@ -5,15 +5,12 @@ import "@fontsource/roboto/700.css";
 
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import { getStandalonePaths } from "@utils/standalone-utils";
-import { profileConfig, siteConfig } from "@/config";
+import { expressiveCodeConfig, profileConfig, siteConfig } from "@/config";
+import { themeRuntimeScript } from "../utils/theme-runtime";
 import {
-	AUTO_MODE,
 	BANNER_HEIGHT,
 	BANNER_HEIGHT_EXTEND,
 	BANNER_HEIGHT_HOME,
-	DARK_MODE,
-	DEFAULT_THEME,
-	LIGHT_MODE,
 	PAGE_WIDTH,
 } from "../constants/constants";
 import { defaultFavicons } from "../constants/icon";
@@ -39,6 +36,8 @@ const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
 // defines global css variables
 // why doing this in Layout instead of GlobalStyles: https://github.com/withastro/astro/issues/6728#issuecomment-1502203757
 const configHue = siteConfig.themeColor.hue;
+// Main site: `dark` class from the shared model; data-theme is the Expressive Code theme name.
+const themeScript = themeRuntimeScript(false) + `document.documentElement.setAttribute("data-theme",${JSON.stringify(expressiveCodeConfig.theme)});`;
 if (!banner || typeof banner !== "string" || banner.trim() === "") {
 	banner = siteConfig.banner.src;
 }
@@ -118,25 +117,10 @@ const defaultImage = new URL(url("/images/default-thumbnail.webp"), Astro.site);
 			/>
 		))}
 
-		<!-- Set the theme before the page is rendered to avoid a flash -->
-		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
-			// Load the theme from local storage
-			const theme = localStorage.getItem('theme') || DEFAULT_THEME;
-			switch (theme) {
-				case LIGHT_MODE:
-					document.documentElement.classList.remove('dark');
-					break
-				case DARK_MODE:
-					document.documentElement.classList.add('dark');
-					break
-				case AUTO_MODE:
-					if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-						document.documentElement.classList.add('dark');
-					} else {
-						document.documentElement.classList.remove('dark');
-					}
-			}
+		<!-- Theme before first paint (no flash). Never writes storage; light unless the owner chose dark or System. -->
+		<script is:inline set:html={themeScript}></script>
 
+		<script is:inline define:vars={{BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
 			// Load the hue from local storage
 			const hue = localStorage.getItem('hue') || configHue;
 			document.documentElement.style.setProperty('--hue', hue);
@@ -227,7 +211,7 @@ import {
 	// SizeObserverPlugin,
 	// ClickScrollPlugin
 } from 'overlayscrollbars';
-import {getHue, getStoredTheme, setHue, setTheme} from "../utils/setting-utils";
+import {getHue, setHue} from "../utils/setting-utils";
 import {pathsEqual, url} from "../utils/url-utils";
 import {
 	BANNER_HEIGHT,
@@ -301,11 +285,6 @@ setClickOutsideToClose("display-setting", ["display-setting", "display-settings-
 setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"])
 setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"])
 
-
-function loadTheme() {
-	const theme = getStoredTheme()
-	setTheme(theme)
-}
 
 function loadHue() {
 	setHue(getHue())
@@ -390,7 +369,6 @@ function showBanner() {
 
 function init() {
 	// disableAnimation()()		// TODO
-	loadTheme();
 	loadHue();
 	initCustomScrollbar();
 	showBanner();

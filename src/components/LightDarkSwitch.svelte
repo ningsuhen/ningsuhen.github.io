@@ -6,32 +6,15 @@ import Icon from "@iconify/svelte";
 import moon from "@iconify-icons/lucide/moon";
 import sun from "@iconify-icons/lucide/sun";
 import sunMoon from "@iconify-icons/lucide/sun-moon";
-import {
-	applyThemeToDocument,
-	getStoredTheme,
-	setTheme,
-} from "@utils/setting-utils.ts";
+import { getStoredTheme, setTheme } from "@utils/setting-utils.ts";
 import { onMount } from "svelte";
 import type { LIGHT_DARK_MODE } from "@/types/config.ts";
 
-const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE, AUTO_MODE];
+// The stored choice (light | dark | auto). The OS is only followed for auto, which only the panel's System sets.
 let mode: LIGHT_DARK_MODE = DEFAULT_THEME;
 
 onMount(() => {
 	mode = getStoredTheme();
-	const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
-	const changeThemeWhenSchemeChanged: Parameters<
-		typeof darkModePreference.addEventListener<"change">
-	>[1] = (_e) => {
-		applyThemeToDocument(mode);
-	};
-	darkModePreference.addEventListener("change", changeThemeWhenSchemeChanged);
-	return () => {
-		darkModePreference.removeEventListener(
-			"change",
-			changeThemeWhenSchemeChanged,
-		);
-	};
 });
 
 function switchScheme(newMode: LIGHT_DARK_MODE) {
@@ -39,14 +22,9 @@ function switchScheme(newMode: LIGHT_DARK_MODE) {
 	setTheme(newMode);
 }
 
+// The button flips what is shown (light <-> dark). It never picks System, so a click cannot put the site on auto.
 function toggleScheme() {
-	let i = 0;
-	for (; i < seq.length; i++) {
-		if (seq[i] === mode) {
-			break;
-		}
-	}
-	switchScheme(seq[(i + 1) % seq.length]);
+	switchScheme(window.siteTheme.dark() ? LIGHT_MODE : DARK_MODE);
 }
 
 function showPanel() {
