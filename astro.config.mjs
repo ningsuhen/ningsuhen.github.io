@@ -9,6 +9,7 @@ import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 import swup from "@swup/astro";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
+import { unified } from "@astrojs/markdown-remark";
 import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components"; /* Render the custom directive content */
@@ -50,6 +51,10 @@ export default defineConfig({
 	},
 	base: "/",
 	trailingSlash: "always",
+	// Astro 7 defaults to JSX whitespace rules; keep the Astro 5 HTML output.
+	compressHTML: true,
+	// Keeps src/content/config.ts (slug, entry.render()) working; migrate to src/content.config.ts with loaders later.
+	legacy: { collectionsBackwardsCompat: true },
 	redirects: {
 		"/ai-economy/": "/research/ai-economy/",
 		"/brev-tree-benchmark/": "/research/brev-tree-benchmark/",
@@ -132,6 +137,8 @@ export default defineConfig({
 		sitemap({ customPages: standaloneSitemapPages() }),
 	],
 	markdown: {
+		// Astro 7 default processor is Satteri; keep the unified (remark/rehype) pipeline the site was built on.
+		processor: unified({
 		remarkPlugins: [
 			remarkMath,
 			remarkReadingTime,
@@ -181,6 +188,7 @@ export default defineConfig({
 				},
 			],
 		],
+		}),
 	},
 	vite: {
 		// Source maps would publish build-machine source paths; keep them off in every build.
