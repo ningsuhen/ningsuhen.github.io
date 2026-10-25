@@ -6,9 +6,13 @@ on:
 permissions:
   contents: read
 
+# One build, then the checks fan out in parallel. The aggregate `check` job is the single required
+# status for branch protection; the individual legs are for diagnosis. Browser legs retry only on
+# browser-launch (infra) failures, never on assertion failures.
 jobs:
-  check:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
         with:
@@ -18,21 +22,192 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Cache Vite/Astro
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.vite
+          key: vite-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            vite-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:tts
       - run: pnpm test:drafts
       - run: pnpm test:dates
       - run: pnpm build
-      - run: pnpm check:thumbnails
-      - run: pnpm check:source-map
-      - run: pnpm check:markers
-      - run: pnpm check:leaks
-      - run: pnpm check:links
-      - run: pnpm exec playwright-core install --with-deps chromium
-      - run: pnpm check:standalone
-      - run: pnpm check:dates
-      - run: pnpm check:report-history
-      - run: pnpm check:theme
-      - run: pnpm check:design-system
-      - run: pnpm check:listen
-      - run: pnpm check:navigation
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
+  static:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 5
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - name: astro check
+        run: pnpm check
+      - name: thumbnails
+        run: pnpm check:thumbnails
+      - name: source map
+        run: pnpm check:source-map
+      - name: owner markers
+        run: pnpm check:markers
+      - name: internal links
+        run: pnpm check:links
+      - name: leaks (incl. embedded payloads)
+        run: pnpm check:leaks
+
+  standalone:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:standalone
+        run: bash scripts/ci-check.sh standalone "pnpm check:standalone"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: standalone-failure
+          path: standalone.log
+          retention-days: 7
+
+  report-history:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:report-history
+        run: bash scripts/ci-check.sh report-history "pnpm check:report-history"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-history-failure
+          path: report-history.log
+          retention-days: 7
+
+  # theme and navigation are separate legs: together they are the slowest pair and a single
+  # 8-minute job times out on CI runners; split so each gets its own budget.
+  theme:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:theme
+        run: bash scripts/ci-check.sh theme "pnpm check:theme"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: theme-failure
+          path: theme.log
+          retention-days: 7
+
+  navigation:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:navigation
+        run: bash scripts/ci-check.sh navigation "pnpm check:navigation"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-failure
+          path: navigation.log
+          retention-days: 7
+
+  listen:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:listen
+        env:
+          LISTEN_SHOTS: listen-shots
+        run: bash scripts/ci-check.sh listen "pnpm check:listen"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: listen-failure
+          path: |
+            listen.log
+            listen-shots/
+          retention-days: 7
+
+  design-system:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:design-system
+        run: bash scripts/ci-check.sh design-system "pnpm check:design-system"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-system-failure
+          path: design-system.log
+          retention-days: 7
+
+  dates:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:dates
+        run: bash scripts/ci-check.sh dates "pnpm check:dates"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dates-failure
+          path: dates.log
+          retention-days: 7
+
+  # Aggregate status: the single required check for branch protection. Fails if any leg fails.
+  check:
+    runs-on: ubuntu-latest
+    needs: [static, standalone, report-history, theme, navigation, listen, design-system, dates]
+    if: always()
+    timeout-minutes: 2
+    steps:
+      - name: Aggregate result
+        run: |
+          failed=0
+          for j in ${{ needs.static.result }} ${{ needs.standalone.result }} ${{ needs.report-history.result }} ${{ needs.theme.result }} ${{ needs.navigation.result }} ${{ needs.listen.result }} ${{ needs.design-system.result }} ${{ needs.dates.result }}; do
+            if [ "$j" != "success" ]; then
+              echo "::error::a check leg did not pass (result: $j)"
+              failed=1
+            fi
+          done
+          if [ "$failed" = "1" ]; then exit 1; fi
+          echo "all check legs passed"
