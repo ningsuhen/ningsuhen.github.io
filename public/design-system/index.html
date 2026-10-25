@@ -333,6 +333,13 @@
 <div class="rd-callout rd-callout--warn"><p class="rd-callout__title">Caveat</p>Say what is unvalidated, up front.</div>
 <p><span class="rd-chip">draft</span> <span class="rd-chip rd-chip--good">validated</span> <span class="rd-chip rd-chip--warn">partial</span> <span class="rd-chip rd-chip--bad">failed</span></p>
 
+<header class="rd-section__head" id="buttons"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg></span><h2>Buttons</h2></header>
+<p>One <code>.rd-btn</code> per action, a real <code>&lt;button&gt;</code>. The default (no modifier) is the secondary action; <code>--primary</code> is the one main action per view; <code>--ghost</code> is low emphasis with no fill until hover. <code>--sm</code> is one step down in size for dense toolbars (never below the 24px tap-target floor); <code>--icon</code> is a square for toolbar controls. A disabled button is muted and inert. Colours are the <code>--rd-*</code> tokens, so every variant follows the light and dark toggle.</p>
+<div class="rd-card">
+<p><button type="button" class="rd-btn">Secondary</button> <button type="button" class="rd-btn rd-btn--primary">Primary</button> <button type="button" class="rd-btn rd-btn--ghost">Ghost</button> <button type="button" class="rd-btn" disabled>Disabled</button></p>
+<p><button type="button" class="rd-btn rd-btn--sm">Compact</button> <button type="button" class="rd-btn rd-btn--icon" aria-label="Settings"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></button> <button type="button" class="rd-btn rd-btn--primary rd-btn--sm">Compact primary</button></p>
+</div>
+
 <header class="rd-section__head" id="table"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg></span><h2>Table</h2></header>
 <div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Outcome</th><th class="rd-num">12m</th><th class="rd-num">24m</th><th class="rd-num">60m</th></tr></thead>
 <tbody><tr><td>Recession, any quarter</td><td class="rd-num">23%</td><td class="rd-num">43%</td><td class="rd-num">80%</td></tr>

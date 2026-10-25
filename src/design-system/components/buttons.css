@@ -1,0 +1,43 @@
+/* rd-buttons: button variants. The default .rd-btn (the secondary action) lives in the frozen
+   core (base.css); these are the emphasis, ghost, compact, icon and disabled states. Every colour
+   is a --rd-* token. Ships in rd.css only (the research.css compatibility alias stays the frozen
+   core). */
+
+/* Primary: the one main action per view. Filled accent, ink the card ground (white in light mode,
+   dark in dark mode) so it stays 4.5:1+ on the accent in both themes. */
+.rd-btn--primary {
+	background: var(--rd-accent);
+	color: var(--rd-card-bg);
+}
+.rd-btn--primary:hover { background: var(--rd-primary); }
+
+/* Ghost: low emphasis, no fill until hover. For secondary actions next to a primary. */
+.rd-btn--ghost {
+	background: transparent;
+	color: var(--rd-accent-ink);
+}
+.rd-btn--ghost:hover { background: var(--rd-btn-bg); }
+
+/* Compact: one step down in size, for dense toolbars. Never below the 24px tap-target floor. */
+.rd-btn--sm {
+	min-height: max(1.5rem, calc(var(--rd-control-h) - 0.25rem));
+	padding: 0 var(--rd-space-2);
+	font-size: var(--rd-fs-xs);
+}
+
+/* Icon-only: square, for toolbar controls (steppers, toggles). */
+.rd-btn--icon {
+	width: var(--rd-control-h);
+	padding: 0;
+	justify-content: center;
+}
+.rd-btn--icon .rd-icon { width: 1em; height: 1em; }
+
+/* Disabled: muted and inert. A native disabled button is already out of the tab order;
+   [aria-disabled] stays focusable but does nothing on click. */
+.rd-btn:disabled,
+.rd-btn[aria-disabled="true"] {
+	opacity: 0.45;
+	cursor: default;
+	pointer-events: none;
+}
