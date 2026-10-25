@@ -1,6 +1,4 @@
 import sitemap from "@astrojs/sitemap";
-import { readdirSync } from "node:fs";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
@@ -26,7 +24,7 @@ import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import standaloneHeader from "./src/integrations/standalone-header.ts";
-import { draftHrefs, isDraftPage } from "./scripts/lib/draft-pages.mjs";
+import { standalonePages } from "./scripts/lib/standalone-pages.mjs";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
@@ -34,12 +32,8 @@ const SITE = "https://ningsuhen.github.io/";
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 
 /** Standalone pages in public/ (reports, apps) are not Astro routes, so the sitemap needs them listed by hand. */
-function standaloneSitemapPages(dir = fileURLToPath(new URL("./public/", import.meta.url)), prefix = "", drafts = draftHrefs()) {
-	return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-		if (e.isDirectory()) return standaloneSitemapPages(path.join(dir, e.name), `${prefix}${e.name}/`, drafts);
-		if (!e.name.endsWith(".html") || e.name === "template.html" || isDraftPage(prefix + e.name, drafts)) return [];
-		return [new URL(e.name === "index.html" ? prefix : prefix + e.name, SITE).href];
-	});
+function standaloneSitemapPages() {
+	return standalonePages({ exclude: ["template.html"] }).map((rel) => new URL(`/${rel.replace(/index\.html$/, "")}`, SITE).href);
 }
 
 // https://astro.build/config
