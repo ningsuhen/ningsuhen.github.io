@@ -1,5 +1,7 @@
-// History model for tabbed pages (any built page with .rd-tabpanel): every user navigation is one history entry,
-// Back/Forward/reload restore the tab, section, filter and scroll, and deep links open their tab. Run after a build:
+// History model for tabbed pages (any built page with .rd-tabpanel). The tab, the hypothesis filter and its paging are the
+// query string (?tab=, &filter=, &shown=) and are real links, so the browser navigates and keeps its own history. A
+// section is the hash; a section jump inside the current tab pushes one entry. Back, Forward, reload and bfcache restore
+// the tab, filter, section and scroll; they never add an entry. Legacy hash-only tab URLs map to ?tab= on load. Run after a build:
 //   pnpm check:report-history            (every dist page with .rd-tabpanel)
 //   node scripts/check-report-history.mjs <dist-dir>
 // Browser: set CHROME_PATH, or `pnpm exec playwright-core install chromium` (CI does this).
@@ -69,7 +71,7 @@ const snap = (page) =>
 			const p = document.getElementById(t.getAttribute("aria-controls"));
 			return p && p.hidden === (i !== active);
 		});
-		return { len: history.length, hash: location.hash, active, shownOk, y: Math.round(window.scrollY) };
+		return { len: history.length, search: location.search, hash: location.hash, active, shownOk, y: Math.round(window.scrollY) };
 	});
 
 // Smooth scrolling (html has scroll-behavior: smooth): wait until the position stops moving.
@@ -81,6 +83,13 @@ async function settle(page) {
 		last = y;
 		await page.waitForTimeout(60);
 	}
+}
+
+// A link that navigates (tab, filter, paging) or a same-document jump: wait for the navigation, then for the page.
+async function act(page, action) {
+	await action();
+	await page.waitForLoadState("load");
+	await settle(page);
 }
 
 async function open(url) {
@@ -118,77 +127,69 @@ async function testPage(rel) {
 						.map((a) => document.getElementById(a.getAttribute("href").slice(1)))
 						.find((e) => e && panel.contains(e) && e !== target)
 				: null;
-			return { id: t.getAttribute("aria-controls"), target: target?.id ?? null, toc: toc?.id ?? null };
+			return { id: t.getAttribute("aria-controls"), href: t.getAttribute("href"), target: target?.id ?? null, toc: toc?.id ?? null };
 		});
 	});
 	const hasTablist = await probe.page.evaluate(() => document.querySelectorAll('[role="tablist"] [role="tab"]').length > 0);
 	check(label("has a tablist with tabs"), hasTablist);
-	check(label("load without hash: first tab shown, no entry added"), (await snap(probe.page)).active === 0);
+	check(label("tabs are real links to ?tab="), meta.every((m) => m.href === `?tab=${m.id}`), meta.map((m) => m.href).join(" "));
+	check(label("load without a query: first tab shown, no entry added"), (await snap(probe.page)).active === 0);
 	check(label("page script errors on load"), probe.errors.length === 0, probe.errors.join(" | "));
 	await probe.ctx.close();
 	if (!hasTablist) return;
 
-	// 1. Tab clicks: one entry each; Back and Forward walk the tabs.
+	// 1. Tab links: one entry each (a real navigation); Back and Forward walk the tabs.
 	{
 		const { ctx, page, errors } = await open(url);
 		for (let i = 1; i < meta.length; i++) {
 			const before = await snap(page);
-			await page.click(`[role="tab"][aria-controls="${meta[i].id}"]`);
-			await settle(page);
+			await act(page, () => page.click(`[role="tab"][aria-controls="${meta[i].id}"]`));
 			const after = await snap(page);
 			check(label(`tab ${meta[i].id} click: +1 entry`), after.len === before.len + 1, `${before.len}->${after.len}`);
-			check(label(`tab ${meta[i].id} click: hash and tab`), after.hash === `#${meta[i].id}` && after.active === i && after.shownOk, `${after.hash} ${after.active}`);
+			check(label(`tab ${meta[i].id} click: ?tab and tab`), after.search === `?tab=${meta[i].id}` && after.active === i && after.shownOk, `${after.search} ${after.active}`);
 		}
 		const last = meta.length - 1;
-		await page.goBack();
-		await settle(page);
+		await act(page, () => page.goBack());
 		const b1 = await snap(page);
 		check(label("Back from last tab: previous tab"), b1.active === last - 1 && b1.shownOk, `active ${b1.active}`);
-		await page.goForward();
-		await settle(page);
+		await act(page, () => page.goForward());
 		const f1 = await snap(page);
-		check(label("Forward: last tab again"), f1.active === last && f1.hash === `#${meta[last].id}`, `active ${f1.active}`);
-		// Clicking the tab that is already shown adds nothing.
+		check(label("Forward: last tab again"), f1.active === last && f1.search === `?tab=${meta[last].id}`, `active ${f1.active}`);
+		// Following the tab that is already shown adds nothing.
 		const same = await snap(page);
-		await page.click(`[role="tab"][aria-controls="${meta[last].id}"]`);
-		await settle(page);
+		await act(page, () => page.click(`[role="tab"][aria-controls="${meta[last].id}"]`));
 		check(label("click the shown tab: no entry"), (await snap(page)).len === same.len);
 		check(label("page script errors on tab clicks"), errors.length === 0, errors.join(" | "));
 		await ctx.close();
 	}
 
-	// 2. Keyboard on the tab list: arrows, Home, End and Space behave like a click.
+	// 2. Keyboard on the tab list: arrows and Home/End move focus only; Space follows the focused tab (one entry).
 	{
 		const { ctx, page } = await open(url);
 		await page.focus(`[role="tab"][aria-controls="${meta[0].id}"]`);
 		const s0 = await snap(page);
 		await page.keyboard.press("ArrowRight");
-		await settle(page);
-		const s1 = await snap(page);
-		check(label("ArrowRight: +1 entry, next tab"), s1.len === s0.len + 1 && s1.active === 1 && s1.hash === `#${meta[1].id}`, `active ${s1.active}`);
+		const focused = await page.evaluate(() => document.activeElement?.getAttribute("aria-controls"));
+		check(label("ArrowRight: focus on the next tab, no entry"), focused === meta[1 % meta.length].id && (await snap(page)).len === s0.len, `focus ${focused}`);
 		await page.keyboard.press("End");
-		await settle(page);
-		const s2 = await snap(page);
-		check(label("End: +1 entry, last tab"), s2.len === s1.len + 1 && s2.active === meta.length - 1);
+		check(label("End: focus on the last tab"), (await page.evaluate(() => document.activeElement?.getAttribute("aria-controls"))) === meta[meta.length - 1].id);
 		await page.keyboard.press("Home");
-		await settle(page);
-		const s3 = await snap(page);
-		check(label("Home: +1 entry, first tab"), s3.len === s2.len + 1 && s3.active === 0);
 		await page.focus(`[role="tab"][aria-controls="${meta[1].id}"]`);
 		await page.keyboard.press(" ");
-		await settle(page);
+		await page.waitForURL((u) => u.search === `?tab=${meta[1].id}`);
+		await act(page, async () => {});
 		const s4 = await snap(page);
-		check(label("Space on a focused tab: +1 entry, that tab"), s4.len === s3.len + 1 && s4.active === 1);
+		check(label("Space on a focused tab: +1 entry, that tab"), s4.len === s0.len + 1 && s4.active === 1, `active ${s4.active}`);
 		await ctx.close();
 	}
 
-	// 3. Deep links: any section opens its tab, lands below the bar, takes focus, and adds no entry.
+	// 3. Deep links: a section opens its tab (the URL gains ?tab=, no entry), scrolls below the bar and takes focus.
 	for (let i = 0; i < meta.length; i++) {
 		if (!meta[i].target) continue;
 		const { ctx, page, errors } = await open(`${url}#${meta[i].target}`);
 		const s = await snap(page);
 		check(label(`deep link #${meta[i].target}: its tab shown`), s.active === i && s.shownOk, `active ${s.active}`);
-		check(label(`deep link #${meta[i].target}: no entry added`), s.len === 2, `len ${s.len}`);
+		check(label(`deep link #${meta[i].target}: ?tab added, no entry added`), s.len === 2 && s.search === `?tab=${meta[i].id}` && s.hash === `#${meta[i].target}`, `len ${s.len} ${s.search}`);
 		const pos = await page.evaluate((id) => {
 			const el = document.getElementById(id);
 			const bar = document.querySelector('[role="tablist"]');
@@ -200,95 +201,88 @@ async function testPage(rel) {
 		check(label(`deep link #${meta[i].target}: no page errors`), errors.length === 0, errors.join(" | "));
 		await ctx.close();
 	}
+	// A legacy hash-only tab URL (#tab-id) maps to ?tab= with no entry and no hash.
+	{
+		const legacy = await open(`${url}#${meta[meta.length - 1].id}`);
+		const s = await snap(legacy.page);
+		check(label("legacy #tab-id: ?tab, no hash, no entry"), s.len === 2 && s.search === `?tab=${meta[meta.length - 1].id}` && s.hash === "" && s.active === meta.length - 1, `${s.search} ${s.hash}`);
+		await legacy.ctx.close();
+	}
 
-	// 4. "On this page" links: one entry, Back restores the tab and the scroll, Forward goes back to the target.
+	// 4. "On this page" links (the right rail): one pushState entry per jump; Back restores the tab, the section and the
+	// scroll; Forward goes back to the target; reload keeps all of it.
 	for (let i = 0; i < meta.length; i++) {
 		if (!meta[i].toc) continue;
-		const { ctx, page } = await open(url);
-		await page.click(`[role="tab"][aria-controls="${meta[i].id}"]`);
-		await settle(page);
+		const { ctx, page } = await open(`${url}?tab=${meta[i].id}`);
 		await page.evaluate(() => window.scrollTo({ top: 150, behavior: "instant" }));
 		await settle(page);
-		const y0 = (await snap(page)).y;
 		const s0 = await snap(page);
-		await page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`);
-		await settle(page);
+		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
 		const s1 = await snap(page);
-		check(label(`TOC #${meta[i].toc}: +1 entry, hash`), s1.len === s0.len + 1 && s1.hash === `#${meta[i].toc}`, `${s0.len}->${s1.len}`);
-		await page.goBack();
-		await settle(page);
+		check(label(`TOC #${meta[i].toc}: +1 entry, hash, same tab`), s1.len === s0.len + 1 && s1.hash === `#${meta[i].toc}` && s1.active === i && s1.search === s0.search, `${s0.len}->${s1.len}`);
+		await act(page, () => page.goBack());
 		const b = await snap(page);
-		check(label(`TOC #${meta[i].toc}: Back restores tab, hash and scroll`), b.hash === s0.hash && b.active === i && Math.abs(b.y - y0) <= 3, `y ${b.y} vs ${y0}`);
-		await page.goForward();
-		await settle(page);
+		check(label(`TOC #${meta[i].toc}: Back restores hash, tab and scroll`), b.hash === s0.hash && b.active === i && Math.abs(b.y - s0.y) <= 3, `y ${b.y} vs ${s0.y}`);
+		await act(page, () => page.goForward());
 		const f = await snap(page);
 		check(label(`TOC #${meta[i].toc}: Forward restores the target`), f.hash === `#${meta[i].toc}` && f.active === i && Math.abs(f.y - s1.y) <= 3, `y ${f.y} vs ${s1.y}`);
-		// Already there: the same link adds nothing.
-		await page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`);
-		await settle(page);
+		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
 		check(label(`TOC #${meta[i].toc} again while there: no entry`), (await snap(page)).len === f.len);
-		// Reload keeps the scroll position of the entry.
-		await page.reload({ waitUntil: "load" });
-		await settle(page);
+		await act(page, () => page.reload());
 		const r = await snap(page);
-		check(label(`TOC #${meta[i].toc}: reload keeps tab and scroll`), r.hash === f.hash && r.active === i && Math.abs(r.y - f.y) <= 3, `y ${r.y} vs ${f.y}`);
+		check(label(`TOC #${meta[i].toc}: reload keeps tab and scroll`), r.hash === f.hash && r.search === f.search && r.active === i && Math.abs(r.y - f.y) <= 3, `y ${r.y} vs ${f.y}`);
 		await ctx.close();
 	}
 
-	// 5. Controls that change the view (aria-pressed filters, "Show more"): one entry per change, Back and Forward
-	// restore them. Each tab is tried, so the control is found wherever it lives.
+	// 5. Filter and paging links on the hypotheses tab: a real navigation each (one entry), Back and Forward restore them.
 	for (let i = 0; i < meta.length; i++) {
-		const { ctx, page } = await open(url);
-		await page.click(`[role="tab"][aria-controls="${meta[i].id}"]`);
-		await settle(page);
-		const toggle = page.locator(".rd-tabpanel:not([hidden]) button[aria-pressed]");
+		const { ctx, page } = await open(`${url}?tab=${meta[i].id}`);
+		const filterLink = page.locator('.rd-tabpanel:not([hidden]) #ledger-filters a[data-filter]:not([aria-current="true"])').first();
+		if (!(await filterLink.count())) {
+			await ctx.close();
+			continue;
+		}
+		const value = await filterLink.getAttribute("data-filter");
+		const s0 = await snap(page);
+		await act(page, () => filterLink.click());
+		const s1 = await snap(page);
+		check(label(`filter ${value}: +1 entry, ?filter`), s1.len === s0.len + 1 && s1.search.includes(`filter=${value}`) && s1.active === i, `len ${s0.len}->${s1.len}`);
+		check(label(`filter ${value}: the link is the current one`), (await page.locator(`#ledger-filters a[data-filter="${value}"][aria-current="true"]`).count()) === 1);
+		await act(page, () => page.goBack());
+		check(label(`filter ${value}: Back restores the previous filter`), (await snap(page)).search === s0.search && (await page.locator('.rd-tabpanel:not([hidden]) #ledger-filters a[aria-current="true"]').getAttribute("data-filter")) === "all");
+		await act(page, () => page.goForward());
+		check(label(`filter ${value}: Forward restores it`), (await snap(page)).search.includes(`filter=${value}`));
+		await ctx.close();
+	}
+	for (let i = 0; i < meta.length; i++) {
+		const { ctx, page } = await open(`${url}?tab=${meta[i].id}`);
 		const more = page.locator(".rd-tabpanel:not([hidden]) #ledger-more:not([hidden])");
-		let k = -1;
-		for (let j = 0; j < (await toggle.count()); j++) {
-			if ((await toggle.nth(j).getAttribute("aria-pressed")) !== "true") { k = j; break; }
+		if (!(await more.count())) {
+			await ctx.close();
+			continue;
 		}
-		if (k >= 0) {
-			const b = toggle.nth(k);
-			const s0 = await snap(page);
-			await b.click();
-			await settle(page);
-			const s1 = await snap(page);
-			check(label(`filter on ${meta[i].id}: +1 entry, pressed`), s1.len === s0.len + 1 && (await b.getAttribute("aria-pressed")) === "true", `len ${s0.len}->${s1.len}`);
-			check(label(`filter on ${meta[i].id}: scroll unchanged`), Math.abs(s1.y - s0.y) <= 3, `y ${s0.y}->${s1.y}`);
-			await page.goBack();
-			await settle(page);
-			check(label(`filter on ${meta[i].id}: Back restores the previous state`), (await b.getAttribute("aria-pressed")) === "false" && (await snap(page)).active === i);
-			await page.goForward();
-			await settle(page);
-			check(label(`filter on ${meta[i].id}: Forward restores it`), (await b.getAttribute("aria-pressed")) === "true");
-		}
-		if (await more.count()) {
-			const count0 = await page.locator("#ledger-count").textContent();
-			const s0 = await snap(page);
-			await more.click();
-			await settle(page);
-			const s1 = await snap(page);
-			check(label("Show more: +1 entry"), s1.len === s0.len + 1, `${s0.len}->${s1.len}`);
-			await page.goBack();
-			await settle(page);
-			check(label("Show more: Back restores the count"), (await page.locator("#ledger-count").textContent()) === count0);
-		}
+		const count0 = await page.locator("#ledger-count").textContent();
+		const s0 = await snap(page);
+		await act(page, () => more.click());
+		const s1 = await snap(page);
+		check(label("Show more: +1 entry, ?shown"), s1.len === s0.len + 1 && s1.search.includes("shown="), `${s0.len}->${s1.len}`);
+		await act(page, () => page.goBack());
+		check(label("Show more: Back restores the count"), (await page.locator("#ledger-count").textContent()) === count0);
 		await ctx.close();
 	}
 
-	// 6. bfcache restore (pageshow persisted) re-syncs without writing an entry, and a bad hash falls back to tab 0.
+	// 6. bfcache restore (pageshow persisted) re-syncs without an entry; an unknown tab or hash falls back to tab 0.
 	{
 		const { ctx, page, errors } = await open(url);
-		await page.click(`[role="tab"][aria-controls="${meta[meta.length - 1].id}"]`);
-		await settle(page);
+		await act(page, () => page.click(`[role="tab"][aria-controls="${meta[meta.length - 1].id}"]`));
 		const s0 = await snap(page);
 		await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
 		await settle(page);
 		const s1 = await snap(page);
-		check(label("pageshow persisted: no entry, tab and hash agree"), s1.len === s0.len && s1.active === s0.active && s1.shownOk);
+		check(label("pageshow persisted: no entry, tab and query agree"), s1.len === s0.len && s1.active === s0.active && s1.shownOk && s1.search === s0.search);
 		await ctx.close();
-		const bad = await open(`${url}#no-such-id`);
-		check(label("unknown hash: first tab, no error"), (await snap(bad.page)).active === 0 && bad.errors.length === 0, bad.errors.join(" | "));
+		const bad = await open(`${url}?tab=no-such-tab#no-such-id`);
+		check(label("unknown tab and hash: first tab, no error"), (await snap(bad.page)).active === 0 && bad.errors.length === 0, bad.errors.join(" | "));
 		await bad.ctx.close();
 		check(label("page script errors"), errors.length === 0, errors.join(" | "));
 	}

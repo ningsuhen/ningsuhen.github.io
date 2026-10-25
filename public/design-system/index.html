@@ -352,11 +352,12 @@
 <header class="rd-section__head" id="tabs"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-history"/></svg></span><h2>Tabbed pages</h2></header>
 <p>A page with tabs (a <code>role="tablist"</code> bar and one <code>.rd-tabpanel</code> per tab) follows one history rule. The reference is the tab script of <code>research/brev-tree-benchmark</code>, which is copied into the page, not into this template. <code>pnpm check:report-history</code> asserts the rule on every built page that has a tab panel.</p>
 <ul>
-<li>Every user navigation adds exactly one entry: a tab, an "On this page" link, an in-page cross-reference, a filter, a page of cards. None when the view is already there.</li>
-<li>Back, Forward, reload and bfcache restore re-sync the tab, section, filter and scroll from the entry. They never add an entry.</li>
+<li>The state lives in the URL. The tab, the filter and the paging are the query string: <code>?tab=results&amp;filter=confirmed&amp;shown=16</code>. A section is the hash (<code>#h-board</code>). Tabs, filters and paging are real links (<code>&lt;a role="tab" href="?tab=results"&gt;</code>), so the browser navigates and keeps its own history: one entry per click, no script.</li>
+<li>A section jump inside the current tab (an "On this page" link, an in-page cross-reference, a card) is one <code>history.pushState</code> entry with the hash and the scroll. None when the view is already there. A section in another tab is a real navigation to <code>?tab=&lt;tab&gt;#&lt;section&gt;</code>.</li>
+<li>Back, Forward, reload and bfcache restore re-sync the tab, filter, section and scroll from the URL and the entry's state. They never add an entry. <code>replaceState</code> only saves the scroll position into the current entry, and maps a legacy hash-only tab URL (<code>#results</code>) to <code>?tab=results</code> on load.</li>
 <li>Scroll is restored from the entry's state, so the page sets <code>history.scrollRestoration = 'manual'</code> and restores with <code>behavior: 'instant'</code>.</li>
 <li>A deep link (<code>#h-board</code>) opens its tab, scrolls the section below the bar after layout, and moves focus to its heading (<code>tabindex="-1"</code>).</li>
-<li>Arrows, Home, End and Space on the tab list behave like a click. Reduced motion turns smooth scrolling off.</li>
+<li>Arrows, Home and End on the tab list move focus; Enter and Space follow the focused tab. Reduced motion turns smooth scrolling off.</li>
 </ul>
 
 <header class="rd-section__head" id="checklist"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Checklist for a new report</h2></header>
