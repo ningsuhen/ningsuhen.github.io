@@ -14,6 +14,7 @@
 	--hue: 250;
 	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
 	--rd-navbar-width: 73rem;
+	--rd-navbar-gap: 1rem; /* space between the injected navbar card and the section bar under it (the main site's 16px rhythm) */
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
 	--rd-radius-md: 0.75rem;
@@ -451,21 +452,28 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 /* ======================================================================
    Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
    ====================================================================== */
-/* Experiment navbar: full width, sticky at top: 0. The site bar above it (56px, not sticky) scrolls
-   away, so the two never overlap. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
+/* Section bar (rd-expnav): the navbar-width frame, one gap (--rd-navbar-gap) under the injected navbar card. Its first
+   link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
+   container padding. Sticky at top: 0 once the navbar has scrolled away (the site bar is not sticky, so the two never
+   overlap). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
+   link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 .rd-expnav {
 	position: sticky;
 	top: 0;
 	z-index: 20;
+	box-sizing: border-box;
 	display: flex;
 	gap: 0.125rem;
+	width: 100%;
+	max-width: var(--rd-navbar-width);
+	margin: var(--rd-navbar-gap) auto 0;
+	padding: 0 var(--rd-space-4);
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
-	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade (phones) shows more */
+	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
 	min-height: var(--rd-expnav-h);
-	padding: 0 max(var(--rd-space-4), calc((100% - var(--rd-content-width)) / 2));
 	background: var(--rd-page-bg);
-	box-shadow: 0 1px 0 var(--rd-line);
+	border-bottom: 1px solid var(--rd-line);
 }
 .rd-expnav::-webkit-scrollbar { display: none; }
 .rd-expnav a {
@@ -487,10 +495,14 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 .rd-expnav a.is-active { color: var(--rd-accent); box-shadow: inset 0 -3px 0 var(--rd-accent); }
 .rd-expnav a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
 .rd-expnav .rd-icon { color: var(--rd-accent); }
-@media (max-width: 600px) {
-	/* Phones: the track runs off the right edge; a short fade says so. */
-	.rd-expnav { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); padding-right: var(--rd-space-6); }
+/* Edge fades: the scroll-spy sets .is-fade-start / .is-fade-end only while links are hidden on that side. The fades are
+   sticky pseudo-elements with zero flow width, so the bar's own background stays opaque under them. */
+.rd-expnav::before, .rd-expnav::after { content: none; }
+.rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
+	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
 }
+.rd-expnav.is-fade-start::before { left: 0; margin-right: -2.5rem; background: linear-gradient(to right, var(--rd-page-bg) 30%, transparent); }
+.rd-expnav.is-fade-end::after { right: 0; margin-left: -2.5rem; background: linear-gradient(to left, var(--rd-page-bg) 30%, transparent); }
 @media (prefers-reduced-motion: no-preference) {
 	html:has(.rd-expnav) { scroll-behavior: smooth; }
 }
@@ -519,7 +531,6 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-.rd-expnav[role="tablist"] { max-width: var(--rd-navbar-width); margin: 0 auto; padding-inline: var(--rd-space-4); }
 .rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem 0 4rem; }
 .rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
