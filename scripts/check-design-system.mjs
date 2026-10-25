@@ -77,6 +77,7 @@ const RULES = {
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
 	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
 	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
+	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -319,6 +320,21 @@ const probeStructure = (canon) => {
 			operable: el.matches("button") || el.getAttribute("role") === "button",
 			pressed: el.hasAttribute("aria-pressed"),
 		})),
+		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
+		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
+		// screen readers and most users.
+		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
+			const id = el.id;
+			const labelledBy = el.getAttribute("aria-labelledby");
+			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
+			return {
+				labelled:
+					hasFor ||
+					!!el.getAttribute("aria-label") ||
+					!!labelledBy ||
+					!!el.closest("label"),
+			};
+		}),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -728,6 +744,7 @@ await Promise.all(pages.map(async (rel) => {
 				[s.btns.some((b) => !b.operable), "button", "a .rd-btn is not a keyboard-operable <button> (or role=button)"],
 				[s.filters.some((f) => !f.operable), "filter", "a .rd-filter is not a keyboard-operable <button> (or role=button)"],
 				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
+				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
