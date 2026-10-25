@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      # One PR per week instead of one per package: minor/patch updates are grouped so
+      # the lockfile churn stays reviewable.
+      minor-patch:
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+    ignore:
+      # Astro majors are breaking (7 changed the default Markdown processor to Satteri and
+      # dropped the legacy remark/rehype config); bump them deliberately, not via dependabot.
+      - dependency-name: astro
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@astrojs/*"
+        update-types: ["version-update:semver-major"]
