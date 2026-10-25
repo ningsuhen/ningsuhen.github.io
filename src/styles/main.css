@@ -36,7 +36,7 @@
         @apply -translate-y-1 opacity-0 pointer-events-none
     }
     .search-panel mark {
-        @apply bg-transparent text-[var(--primary)]
+        @apply bg-transparent text-[var(--btn-content)]
     }
 
     .btn-card {
@@ -48,14 +48,14 @@
     }
     .btn-plain {
         @apply transition relative flex items-center justify-center bg-none
-        text-black/75 hover:text-[var(--primary)] dark:text-white/75 dark:hover:text-[var(--primary)];
+        text-black/75 hover:text-[var(--btn-content)] dark:text-white/75 dark:hover:text-[var(--btn-content)];
         &:not(.scale-animation) {
             @apply hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
         }
         &.scale-animation {
             @apply expand-animation;
             &.current-theme-btn {
-                @apply before:scale-100 before:opacity-100 before:bg-[var(--btn-plain-bg-hover)] text-[var(--primary)]
+                @apply before:scale-100 before:opacity-100 before:bg-[var(--btn-plain-bg-hover)] text-[var(--btn-content)]
             }
         }
     }
@@ -92,8 +92,9 @@
     .text-75 {
         @apply text-black/75 dark:text-white/75
     }
+    /* Secondary text (meta, TOC, search). 0.56 in light: 4.5:1+ on card, page, button and TOC-active grounds. */
     .text-50 {
-        @apply text-black/50 dark:text-white/50
+        @apply text-black/[0.56] dark:text-white/50
     }
     .text-30 {
         @apply text-black/30 dark:text-white/30

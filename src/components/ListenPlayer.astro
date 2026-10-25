@@ -213,6 +213,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 			height: 1rem;
 		}
 	}
+	/* Control scale: 2.25rem buttons and selects (2rem docked), the player's own size; every hit area stays >= 24px. */
 	.listen-btn {
 		display: inline-flex;
 		align-items: center;
@@ -264,6 +265,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		display: none;
 		flex: 1;
 		min-width: 0;
+		height: max(1.5rem, 24px); /* tap target; the native track and thumb stay as drawn */
 		accent-color: var(--primary);
 	}
 	.listen-pos {
@@ -355,9 +357,9 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		margin: 0;
 	}
 	.listen-note sup {
-		font-size: 0.65em;
+		font-size: max(0.65em, 11px);
 		font-weight: 600;
-		color: var(--primary);
+		color: var(--btn-content);
 		margin-left: 0.125rem;
 	}
 	.listen-dialog {
@@ -498,7 +500,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		font-size: 0.8125rem;
 	}
 	listen-player[data-docked] .listen-pos {
-		font-size: 0.75rem;
+		font-size: max(0.75rem, 12px);
 	}
 	listen-player[data-docked]:not([data-open]) .listen-panel {
 		display: none;
