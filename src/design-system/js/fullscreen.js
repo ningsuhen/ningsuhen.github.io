@@ -4,6 +4,10 @@
 // exits. A ResizeObserver fires rd:resize so charts re-render; focus is kept inside; scroll is locked
 // and restored; safe-area insets are honoured.
 //
+// Wheel-only-after-focus: the expanded region is focusable and is focused on enter. A wheel over it
+// scrolls it only while it holds focus — wheeling with focus elsewhere (e.g. on the toggle, which may
+// sit outside the container) is swallowed, so the page behind never scrolls by accident.
+//
 // Opt-in: a page puts data-rd="fullscreen" on the container and provides a toggle button
 // (data-rd-fullscreen-toggle, an aria-pressed button with a Lucide maximize/minimize icon). rd.js
 // (index.js) mounts this. Without JS the button is inert (no expansion), which is the safe default.
@@ -48,8 +52,7 @@ export function mountFullscreen(container, opts = {}) {
 		mode = "overlay";
 		lockScroll();
 		container.classList.add("is-expanded");
-		const first = focusable(container)[0];
-		if (first) first.focus();
+		container.focus(); // wheel-only-after-focus: the region must hold focus to scroll by wheel
 	}
 	function enter() {
 		if (mode !== "none") return;
@@ -59,7 +62,18 @@ export function mountFullscreen(container, opts = {}) {
 			if (p && p.catch) p.catch(enterOverlay); // request failed (e.g. iOS) → overlay
 			else mode = "fullscreen";
 		} else enterOverlay();
+		container.focus();
 		icon("minimize");
+	}
+	// Wheel-only-after-focus: scroll the expanded region with the wheel only while focus is in it
+	// (the container or a control inside). Wheeling with focus outside — e.g. on the toggle, which may
+	// sit outside the container, or on the page behind — is swallowed so the page never scrolls by
+	// accident. passive:false so preventDefault is honoured.
+	function onWheel(e) {
+		if (mode === "none") return;
+		const a = document.activeElement;
+		if (a === container || container.contains(a)) return; // focus is in the region: native scroll
+		e.preventDefault();
 	}
 	function exit() {
 		if (mode === "fullscreen") {
@@ -95,8 +109,12 @@ export function mountFullscreen(container, opts = {}) {
 	const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => container.dispatchEvent(new CustomEvent("rd:resize"))) : null;
 	if (ro) ro.observe(container);
 
+	// The container must be programmatically focusable for wheel-only-after-focus (container.focus()).
+	if (container.tabIndex < 0) container.tabIndex = -1;
+
 	const onToggle = () => (mode === "none" ? enter() : exit());
 	if (toggle) toggle.addEventListener("click", onToggle);
+	container.addEventListener("wheel", onWheel, { passive: false });
 	document.addEventListener("fullscreenchange", onFsChange);
 	document.addEventListener("webkitfullscreenchange", onFsChange);
 	document.addEventListener("keydown", onKey, true);
@@ -108,6 +126,7 @@ export function mountFullscreen(container, opts = {}) {
 			if (mode !== "none") exit();
 			if (ro) ro.disconnect();
 			if (toggle) toggle.removeEventListener("click", onToggle);
+			container.removeEventListener("wheel", onWheel);
 			document.removeEventListener("fullscreenchange", onFsChange);
 			document.removeEventListener("webkitfullscreenchange", onFsChange);
 			document.removeEventListener("keydown", onKey, true);

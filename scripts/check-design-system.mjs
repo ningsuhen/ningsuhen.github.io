@@ -79,6 +79,7 @@ const RULES = {
 	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
 	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
 	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
+	"fullscreen-toggle": "every data-rd=fullscreen container has a [data-rd-fullscreen-toggle] button with aria-pressed and is focusable (wheel-only-after-focus)",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -341,6 +342,14 @@ const probeStructure = (canon) => {
 		choices: [...document.querySelectorAll(".rd-choice")].map((el) => ({
 			hasInput: !!el.querySelector("input[type=radio], input[type=checkbox]"),
 		})),
+		// Fullscreen: each data-rd=fullscreen container must carry an operable, accessible toggle
+		// (a [data-rd-fullscreen-toggle] button with aria-pressed). The container's focusability
+		// (tabindex=-1, for wheel-only-after-focus) is added by rd.js at mount, so it is not checked here.
+		fullscreen: [...document.querySelectorAll('[data-rd="fullscreen"]')].map((el) => {
+			const t = el.querySelector("[data-rd-fullscreen-toggle]");
+				hasToggle: !!t,
+				isButton: t?.matches("button") || t?.getAttribute("role") === "button",
+				ariaPressed: t?.hasAttribute("aria-pressed"),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -657,7 +666,18 @@ async function tabChecks(page, ok) {
 	const p = await open(ctx, page);
 	const tabs = await p.$$("[role=tablist] [role=tab]");
 	if (tabs.length) {
-		const selected = () => p.$eval("[role=tablist] [role=tab][aria-selected=true]", (el) => el.textContent.trim());
+		// Wait for a selected tab before reading it: the tab is selected pre-paint (statically, and by
+		// rd.js synchronously), but a bare $eval throws on the instant a navigation re-sync has not
+		// settled. Bounded wait + a clear finding, not a crash.
+		const selected = async (what) => {
+			try {
+				await p.waitForSelector('[role=tablist] [role=tab][aria-selected="true"]', { timeout: 3000 });
+				return await p.$eval('[role=tablist] [role=tab][aria-selected="true"]', (el) => el.textContent.trim());
+			} catch {
+				if (!ok.has("tab-aria")) add(page, "tab-aria", `no tab is selected ${what} (bounded 3s wait)`);
+				return null;
+			}
+		};
 		const aria = await p.evaluate(() => {
 			const tabsEl = [...document.querySelectorAll("[role=tablist] [role=tab]")];
 			const issues = [];
@@ -681,7 +701,7 @@ async function tabChecks(page, ok) {
 		// History: click a tab that is not selected: one entry; Back restores the previous tab.
 		const flags = await p.$$eval("[role=tablist] [role=tab]", (els) => els.map((e) => e.getAttribute("aria-selected") === "true"));
 		const k = flags.findIndex((f) => !f);
-		const before = await selected();
+		const before = await selected("after load");
 		const h0 = await p.evaluate(() => history.length);
 		await tabs[k].click();
 		await p.waitForTimeout(150);
@@ -691,7 +711,7 @@ async function tabChecks(page, ok) {
 		if (!/[?&]tab=|#./.test(hash) && !ok.has("tab-deeplink")) add(page, "tab-deeplink", "tab click sets neither ?tab= nor a hash");
 		await p.goBack();
 		await p.waitForTimeout(150);
-		const back = await selected();
+		const back = await selected("after Back");
 		if (back !== before && !ok.has("tab-history")) add(page, "tab-history", `Back did not restore the previous tab ("${back}", expected "${before}")`);
 		if (hash && !ok.has("tab-deeplink")) {
 			const d = await newCtx({ width: 1440, height: DESKTOP_H }, "light");
@@ -752,6 +772,9 @@ await Promise.all(pages.map(async (rel) => {
 				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
 				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
 				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
+				[s.fullscreen.some((f) => !f.hasToggle), "fullscreen-toggle", `a data-rd=fullscreen container has no [data-rd-fullscreen-toggle]`],
+				[s.fullscreen.some((f) => f.hasToggle && !f.isButton), "fullscreen-toggle", "a fullscreen toggle is not a button (use <button> or role=button)"],
+				[s.fullscreen.some((f) => f.hasToggle && !f.ariaPressed), "fullscreen-toggle", "a fullscreen toggle lacks aria-pressed"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
