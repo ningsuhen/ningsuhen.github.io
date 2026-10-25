@@ -27,13 +27,13 @@ Most of the rewrite work has no before-and-after benchmark. For the full rewrite
 
 ## Startup was the clearest win
 
-A small helper script that ran on every event in a long-lived session was written in Python. Its import step took 7.5 seconds. With 30 to 40 of them starting at once, the machine went past 150 percent CPU. I replaced it with a self-contained Rust binary. My commit message says it starts in about 12 ms.
+A small helper script that ran on every call in a long-running process was written in Python. Its import step took 7.5 seconds. With 30 to 40 of them starting at once, the machine went past 150 percent CPU. I replaced it with a self-contained Rust binary. My commit message says it starts in about 12 ms.
 
 That is a commit-message number, not a benchmark. The comparison also mixes the language with the import tree. A lazy-import Python version would show how much of the gap is the language. For a long-running server I have no Python-versus-Rust timing.
 
 ## The FFI boundary took a lot back
 
-For the numeric parts I used PyO3 and kept the Python code as a fallback. A day-by-day simulation loop ran 6.9 times faster per run, 8 ms against 55 ms with marshalling included, on a 2,000-day input. That result looked great.
+For the numeric parts I used PyO3 and kept the Python code as a fallback. A day-by-day loop ran 6.9 times faster per run, 8 ms against 55 ms with marshalling included, on a 2,000-day input. That result looked great.
 
 A metrics function did not hold up. It was 5.1 times faster on 200 items and 2.3 times faster on 1,000, because the cost of passing each column across the boundary grows with the input.
 
@@ -47,27 +47,27 @@ So count the boundary before you count the compute.
 
 ## The biggest wins were not the language
 
-The largest documented speedup I have is a git history scan. A cold call dropped from 2,195 ms to 832 ms. A memo hit still takes 308 ms under live load, mostly for listing refs. The gain came from filtering before parsing and caching per ref snapshot. Any language would need that.
+The largest documented speedup I have is a git history scan. A cold call dropped from 2,195 ms to 832 ms. A memo hit still takes 308 ms under real load, mostly for listing refs. The gain came from filtering before parsing and caching per ref snapshot. Any language would need that.
 
-A second one: a lookup behind a status call made about 1,000 connection checkouts per call. One query replaced them, and it measured 28 ms for 512 pairs on the live database. Again, an algorithm change.
+A second one: a lookup behind a status call made about 1,000 connection checkouts per call. One query replaced them, and it measured 28 ms for 512 pairs on the production database. Again, an algorithm change.
 
-A replay step is the reverse case. The first Rust version was slower than the code it replaced. Fixing how the replay did its work per bar took a session from 132 ms to 11 ms (commit message). The Rust code was not fast on its own.
+A per-step loop is the reverse case. The first Rust version was slower than the code it replaced. Fixing how the loop did its work per step took a run from 132 ms to 11 ms (commit message). The Rust code was not fast on its own.
 
-A third is a memory change. Switching a service to mimalloc cut its peak memory by 23 percent on a replay with identical output. That comparison is Rust against Rust, so it says nothing about Python.
+A third is a memory change. Switching a service to mimalloc cut its peak memory by 23 percent on a rerun with identical output. That comparison is Rust against Rust, so it says nothing about Python.
 
 ## Reliability: fewer runtime-error fixes, same kinds of failure
 
 I counted fix commits on each side of the rewrite, using subject lines only. These are rough tallies of commit messages, not defect rates.
 
-- **Counted:** about six months of this year, before the last phase of the rewrite: 495 fix commits. Sixteen (about 3 percent) had an error word in the subject: bare or broad except, AttributeError, NoneType, KeyError, TypeError, ValueError, traceback, swallowed, silent.
-- **Counted:** the 2.8 months after the Python tree was deleted: 1,780 fix commits. Nine (about 0.5 percent) had the same words.
-- **Counted:** import and environment fixes (venv, pip, requirements, ImportError and similar): 7 in the first window, 1 in the second.
+- **Counted:** about six months of this year, before the last phase of the rewrite: about 500 fix commits. A few (about 3 percent) had an error word in the subject: bare or broad except, AttributeError, NoneType, KeyError, TypeError, ValueError, traceback, swallowed, silent.
+- **Counted:** the 2.8 months after the Python tree was deleted: about 1,800 fix commits. A few (about 0.5 percent) had the same words.
+- **Counted:** import and environment fixes (venv, pip, requirements, ImportError and similar): a handful in the first window, one in the second.
 - **Counted:** CI memory fixes (worker counts, container limits, OOM retries): about 30 Python-era subjects between late December and mid July, against one in the Rust era, a JavaScript test runner.
 - **Judged:** explicit error types made the error paths visible in the code. I read the diffs more than I counted them, and I believe most of the drop comes from that.
 
 Limits, in the same breath. The later window is shorter and covers more features, including a new admin UI and a lot of research code. I think a rewrite attracts fixes in its first weeks whatever the language. Rust fixes also use different words: they say "panic" or "unwrap", not AttributeError. So the drop is real in these counts, but I cannot separate it from the rewrite's own churn.
 
-Python-era fixes looked like this. An assertion fired on None data, and a None value reached a max() call. A timeout never fired at all: the exception was raised in a timer thread and went to the default hook. One cleanup pass replaced twelve bare except blocks with specific types. Python let me catch broadly and move on. That habit is my opinion of the cause, not something the commits prove.
+Python-era fixes looked like this. An assertion fired on None data, and a None value reached a max() call. A timeout never fired at all: the exception was raised in a timer thread and went to the default handler. One cleanup pass replaced a dozen bare except blocks with specific types. Python let me catch broadly and move on. That habit is my opinion of the cause, not something the commits prove.
 
 The Rust era still had failures, and they belong in this section:
 
@@ -75,7 +75,7 @@ The Rust era still had failures, and they belong in this section:
 - A cache client with no timeouts hung every call when the server accepted connections and then stopped answering.
 - A logging layer deadlocked itself, because a warning logged while the writer lock was held came back into the same layer.
 - An audit found a file read that blocked the async runtime. The planned fix is to move it onto a blocking task.
-- **Counted, by path and rough:** about 4,600 unwrap calls, 2,150 expect calls and 470 panic! calls outside test code. Panics are still possible in this code.
+- **Counted, by path and rough:** a few thousand unwrap calls, a couple thousand expect calls and a few hundred panic! calls, outside test code. Panics are still possible in this code.
 - **Memory:** the runtime memory failure I hit was a design error. An analytics endpoint loaded the full stored payloads for tens of thousands of records on every request, and the process ran out of memory. The fix was to stop loading the payloads. Rust did not cause that, and it did not prevent it. A separate fix stopped a background drain task from leaking.
 
 ## A miss
