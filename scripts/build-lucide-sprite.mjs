@@ -1,10 +1,10 @@
-// Lucide icon sprite for the research design system (public/design-system/).
+// Lucide icon sprite for the research design system (public/design-system/) and the report pages (public/research/<slug>/).
 // The icons a page uses are every `#i-<name>` it references. This script:
 //   1. writes public/design-system/lucide-sprite.svg (union of all referenced icons, for external use);
 //   2. rewrites the <!-- lucide-sprite:start --> … <!-- lucide-sprite:end --> block of each design-system page
 //      with only that page's symbols, so self-contained pages inline their icons (no request).
 // Runs as `prebuild`; idempotent. To add an icon: reference `<use href="#i-<name>"/>` in a page, then run it.
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const DIR = path.resolve("public/design-system");
@@ -20,10 +20,18 @@ function symbol(name) {
 	return `<symbol id="i-${name}" viewBox="0 0 ${w} ${h}">${icon.body}</symbol>`;
 }
 
-const pages = readdirSync(DIR).filter((f) => f.endsWith(".html")).sort();
+// Pages are paths relative to public/: the design-system pages, then each report page (research/<slug>/index.html).
+const PUBLIC = path.resolve("public");
+const pages = [
+	...readdirSync(DIR).filter((f) => f.endsWith(".html")).sort().map((f) => path.join("design-system", f)),
+	...readdirSync(path.join(PUBLIC, "research"), { withFileTypes: true })
+		.filter((d) => d.isDirectory() && statSync(path.join(PUBLIC, "research", d.name, "index.html"), { throwIfNoEntry: false }))
+		.map((d) => path.join("research", d.name, "index.html"))
+		.sort(),
+];
 const used = new Map(); // page -> sorted icon names
 for (const page of pages) {
-	const names = [...new Set([...readFileSync(path.join(DIR, page), "utf8").matchAll(/#i-([a-z0-9-]+)/g)].map((m) => m[1]))].sort();
+	const names = [...new Set([...readFileSync(path.join(PUBLIC, page), "utf8").matchAll(/#i-([a-z0-9-]+)/g)].map((m) => m[1]))].sort();
 	used.set(page, names);
 }
 
@@ -33,7 +41,7 @@ writeFileSync(path.join(DIR, "lucide-sprite.svg"), `${SPRITE_HEAD}\n<svg xmlns="
 
 for (const [page, names] of used) {
 	if (!names.length) continue;
-	const file = path.join(DIR, page);
+	const file = path.join(PUBLIC, page);
 	const src = readFileSync(file, "utf8");
 	const s = src.indexOf(START);
 	const e = src.indexOf(END);
