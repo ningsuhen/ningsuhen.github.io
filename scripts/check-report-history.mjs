@@ -75,29 +75,41 @@ const snap = (page) =>
 	});
 
 // Smooth scrolling (html has scroll-behavior: smooth): wait until the position stops moving.
+// Smooth scrolling (html has scroll-behavior: smooth): wait until the position is unchanged over several reads in a row
+// (one unchanged read can be a frame gap under load, not the end of the scroll).
 async function settle(page) {
 	let last = -1;
-	for (let i = 0; i < 50; i++) {
+	let still = 0;
+	for (let i = 0; i < 80 && still < 3; i++) {
 		const y = await page.evaluate(() => window.scrollY);
-		if (y === last) return;
+		still = y === last ? still + 1 : 0;
 		last = y;
 		await page.waitForTimeout(60);
 	}
+}
+
+// The page sets data-history-ready on <html> once its restore has run (load, then fonts). Every tabbed page must set it,
+// so a page without the marker fails the check instead of being read too early.
+async function ready(page) {
+	await page.waitForFunction(() => document.documentElement.hasAttribute("data-history-ready"), null, { timeout: 15000 });
 }
 
 // A link that navigates (tab, filter, paging) or a same-document jump: wait for the navigation, then for the page.
 async function act(page, action) {
 	await action();
 	await page.waitForLoadState("load");
+	await ready(page);
 	await settle(page);
 }
 
-async function open(url) {
+// marker: wait for the restore marker (not for the probe, which decides whether a page is tabbed at all).
+async function open(url, marker = true) {
 	const ctx = await browser.newContext({ viewport: VIEWPORT });
 	const page = await ctx.newPage();
 	const errors = [];
 	page.on("pageerror", (e) => errors.push(e.message));
 	await page.goto(base + url, { waitUntil: "load" });
+	if (marker) await ready(page);
 	await settle(page);
 	return { ctx, page, errors };
 }
@@ -110,13 +122,14 @@ async function testPage(rel) {
 	const label = (s) => `${url} ${s}`;
 
 	// Discover tabs, one deep-link target per panel, and one "On this page" link per panel.
-	const probe = await open(url);
+	const probe = await open(url, false);
 	// Text that only quotes the markup (a guide's code sample) is not a tabbed page: a real panel element is required.
 	if (!(await probe.page.evaluate(() => document.querySelector(".rd-tabpanel") !== null))) {
 		await probe.ctx.close();
 		return;
 	}
 	tested.push(url);
+	await ready(probe.page);
 	const meta = await probe.page.evaluate(() => {
 		const tabs = [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
 		return tabs.map((t) => {

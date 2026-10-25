@@ -3059,7 +3059,9 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
 //
 // History rule (spec in public/design-system/index.html, "Tabbed pages"):
 // - One entry per user navigation; none when the view already is that.
-// - replaceState only saves the scroll position into the current entry (state.y) and maps a legacy URL on load.
+// - replaceState only saves the scroll position into the current entry (state.y) and maps a legacy URL on load. Every
+//   scroll also goes to sessionStorage under the entry's key: a reload reads it, because a write made in pagehide never
+//   reaches the entry a reload restores from.
 // - Back, Forward, popstate, hashchange and bfcache restore re-sync the tab, filter, section and scroll from the URL and
 //   the entry's state. They never write an entry. history.scrollRestoration is 'manual' because this script restores scroll.
 // - A jump to a section moves focus to its heading (tabindex -1). Reduced motion: no smooth scrolling.
@@ -3165,8 +3167,21 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   function saveScroll() {
     clearTimeout(saveTimer);
     var y = Math.round(window.scrollY);
-    yByKey[keyOf()] = y;
+    remember(keyOf(), y);
     history.replaceState(Object.assign({}, history.state, { y: y }), '');
+  }
+  // The scroll of an entry, in memory (Back and Forward) and in sessionStorage (reload). Synchronous and not rate limited,
+  // so it holds the last scroll even when the reload follows a scroll by less than the saveScroll debounce.
+  function remember(k, y) {
+    yByKey[k] = y;
+    try { sessionStorage.setItem('rd-y:' + k, String(y)); } catch (e) {}
+  }
+  // Only for an entry this page wrote (state is set): a fresh visit to the same URL starts at the top.
+  function recalled(k) {
+    if (!history.state) return undefined;
+    var v = null;
+    try { v = sessionStorage.getItem('rd-y:' + k); } catch (e) {}
+    return v === null ? undefined : Number(v);
   }
   // Shows a tab, then the scroll: a saved y wins; else the section; else the tab's start (only when the tab is below the bar).
   function showLoc(loc, o) {
@@ -3186,7 +3201,8 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     var v = viewFromUrl();
     var st = history.state || {};
     var key = keyOf();
-    var y = typeof yByKey[key] === 'number' ? yByKey[key] : typeof st.y === 'number' ? st.y : null;
+    var saved = yByKey[key] !== undefined ? yByKey[key] : recalled(key);
+    var y = typeof saved === 'number' ? saved : typeof st.y === 'number' ? st.y : null;
     if (ledger) ledger.apply(ledger.view(v.el, { filter: v.filter, shown: v.shown }));
     showLoc({ tab: v.tab, el: v.el }, { y: y, focus: !!v.el, smooth: false, tabStart: true });
     saveScroll();
@@ -3213,8 +3229,9 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     if (next !== base) {
       saveScroll();
       seq += 1;
-      yByKey[String(seq)] = Math.round(window.scrollY);
-      history.pushState({ k: seq, y: yByKey[String(seq)] }, '', next);
+      var y0 = Math.round(window.scrollY);
+      remember(String(seq), y0);
+      history.pushState({ k: seq, y: y0 }, '', next);
     }
     if (v) ledger.apply(v);
     showLoc({ tab: loc.tab, el: loc.el }, { smooth: true, focus: !!loc.el, tabStart: false });
@@ -3243,7 +3260,7 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   window.addEventListener('pageshow', function (e) { if (e.persisted) resync(); });
   window.addEventListener('pagehide', saveScroll);
   window.addEventListener('scroll', function () {
-    yByKey[keyOf()] = Math.round(window.scrollY);
+    remember(keyOf(), Math.round(window.scrollY));
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveScroll, 150);
   }, { passive: true });
@@ -3341,7 +3358,7 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   // First paint. A legacy URL (hash only, or a tab id in the hash) is mapped to the query with replaceState: no entry.
   // A deep link opens its tab and scrolls to its target after layout. A reload restores the saved position.
   var v0 = viewFromUrl();
-  var restoreY = typeof (history.state || {}).y === 'number' ? history.state.y : null;
+  var restoreY = recalled(keyOf()) !== undefined ? recalled(keyOf()) : typeof (history.state || {}).y === 'number' ? history.state.y : null;
   var touched = false;
   ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
     window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
@@ -3352,11 +3369,22 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     history.replaceState(history.state, '', urlFor(v0.tab, st0.filter, st0.shown, v0.el ? v0.el.id : ''));
   }
   resync();
-  window.addEventListener('load', function () {
+  function restoreFirst() {
     if (touched) return;
     if (v0.el) focusTarget(v0.el);
     if (restoreY !== null) window.scrollTo({ top: restoreY, behavior: 'instant' });
     else if (v0.el) v0.el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
+  // Late fonts can move the page after load: the saved position is put back once more when they are in (unless the reader
+  // has moved). data-history-ready on <html> is set when the restore is done; the check waits for it.
+  window.addEventListener('load', function () {
+    restoreFirst();
+    var mark = function () { document.documentElement.setAttribute('data-history-ready', ''); };
+    var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    fonts.then(function () {
+      if (!touched && restoreY !== null && Math.abs(window.scrollY - restoreY) > 2) window.scrollTo({ top: restoreY, behavior: 'instant' });
+      mark();
+    }, mark);
   }, { once: true });
 })();
 </script>
