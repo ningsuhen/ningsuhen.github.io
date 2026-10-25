@@ -594,7 +594,8 @@ async function tabChecks(page, ok) {
 	return external;
 }
 
-for (const rel of pages) {
+// Pages run in parallel: each one has its own browser contexts and only writes to `found` (synchronous).
+await Promise.all(pages.map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page);
 	// Each width x theme: chrome against the live reference. At 1440 also the structure, typography, axe.
@@ -664,7 +665,7 @@ for (const rel of pages) {
 		await ctx.close();
 	}
 	await tabChecks(page, ok);
-}
+}));
 await browser.close();
 server.close();
 
