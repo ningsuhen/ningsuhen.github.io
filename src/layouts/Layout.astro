@@ -90,6 +90,8 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 		<meta charset="UTF-8" />
 		<meta name="description" content={description || pageTitle}>
 		<meta name="author" content={profileConfig.name}>
+		<meta name="tdm-reservation" content="1">
+		<meta name="tdm-policy" content={new URL("license/", Astro.site).href}>
 
 		<meta property="og:site_name" content={siteConfig.title}>
 		<link rel="canonical" href={canonicalUrl}>
