@@ -3076,7 +3076,7 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
   var wide = window.matchMedia('(min-width: 1100px)');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var navH = function () { return bar.offsetHeight; };
+  var navH = function () { return bar.getBoundingClientRect().bottom; }; // the bar is stuck one gap under the navbar: content starts below its bottom
   var saveTimer = 0;
   var seq = Date.now(); // keys of the entries this document pushes (unique across reloads)
   var yByKey = {};

@@ -305,7 +305,8 @@ for (const rel of tabbed) {
 // Section bar (rd-expnav) block for scripts/check-standalone-pages.mjs. Inserted before the "Drift" comment.
 // Section bar (rd-expnav) on every standalone page with one: one gap (--rd-navbar-gap) under the navbar card at 768px and up
 // (the main site's first card sits at least that far below its navbar), the first link on the navbar's brand edge from 1200px
-// up (the container padding below), and once scrolled 800px the bar is pinned at top 0 with the navbar card gone above it.
+// up (the container padding below). Once scrolled 800px the navbar stays on top (sticky, like the main site) and the bar
+// sticks one gap (16px) under it. Jump targets land below both bars: scroll-margin-top clears the navbar and the bar.
 const BAR_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
 const barPages = pages.filter((p) => /<nav\b[^>]*class=["'][^"']*\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
 const MAIN_GAP_PX = 16; // the main site's rhythm (MainGridLayout gap-4; the TOC sits 16px from the navbar card). A fixed reference, not --rd-navbar-gap: the token must match it.
@@ -346,6 +347,18 @@ for (const rel of barPages) {
 		if (s.scrollY < 799) failures.push(`${tag}: page too short to scroll 800px (reached ${s.scrollY})`);
 		else if (Math.abs(s.navTop) > 0.5) failures.push(`${tag}: navbar not sticky at the top (top ${s.navTop.toFixed(1)}px, scrollY ${s.scrollY})`);
 		else if (Math.abs(s.top - s.navBottom - MAIN_GAP_PX) > 0.5) failures.push(`${tag}: stuck section bar at ${s.top.toFixed(1)}px, expected ${MAIN_GAP_PX}px under the navbar (bottom ${s.navBottom.toFixed(1)}px, scrollY ${s.scrollY})`);
+		// Jump targets (section links in the bar) land below both bars: scroll-margin-top clears the navbar and the bar.
+		const jump = await page.evaluate(async () => {
+			const bar = document.querySelector(".rd-expnav");
+			const link = [...bar.querySelectorAll('a[href^="#"]')].find((a) => document.getElementById(a.getAttribute("href").slice(1))?.offsetParent);
+			if (!link) return null;
+			const target = document.getElementById(link.getAttribute("href").slice(1));
+			target.scrollIntoView({ block: "start", behavior: "instant" });
+			await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+			const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1;
+			return { id: target.id, gap: target.getBoundingClientRect().top - bar.getBoundingClientRect().bottom, atEnd };
+		});
+		if (jump && !jump.atEnd && jump.gap < -0.5) failures.push(`${tag}: jump target #${jump.id} lands ${(-jump.gap).toFixed(1)}px under the stuck section bar`);
 		await ctx.close();
 	}
 }
