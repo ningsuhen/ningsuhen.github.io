@@ -111,6 +111,15 @@ const browser = await chromium.launch({
 	executablePath: findChrome(),
 	ignoreDefaultArgs: ["--hide-scrollbars"],
 });
+// No live giscus in this check: its widget (or its outage error) swaps the 372px comments skeleton for a
+// different height at an arbitrary moment, which made layout probes depend on a third-party service.
+// Every context blocks it, so the comments host settles the same way on every run.
+const newContext = browser.newContext.bind(browser);
+browser.newContext = async (options) => {
+	const ctx = await newContext(options);
+	await ctx.route("https://giscus.app/**", (route) => route.abort());
+	return ctx;
+};
 const failures = [];
 const expect = (ok, message) => {
 	if (!ok) failures.push(message);
