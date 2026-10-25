@@ -4,7 +4,7 @@
   "fontFamily": "Roboto, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
   "htmlLabels": false,
   "themeVariables": {
-    "fontSize": "15px",
+    "fontSize": "14px",
     "primaryColor": "#ffffff",
     "primaryBorderColor": "#666666",
     "primaryTextColor": "#222222",
@@ -14,20 +14,23 @@
   "flowchart": {
     "htmlLabels": false,
     "curve": "basis",
-    "nodeSpacing": 30,
-    "rankSpacing": 30,
-    "padding": 14,
+    "nodeSpacing": 36,
+    "rankSpacing": 44,
+    "padding": 12,
     "useMaxWidth": false
   },
   "sequence": {
     "htmlLabels": false,
     "useMaxWidth": false,
-    "actorMargin": 56,
+    "actorMargin": 50,
     "boxMargin": 8,
-    "messageMargin": 38,
-    "width": 150,
-    "height": 46,
+    "messageMargin": 30,
+    "width": 130,
+    "height": 40,
     "mirrorActors": false,
-    "showSequenceNumbers": false
+    "showSequenceNumbers": false,
+    "actorFontSize": 14,
+    "noteFontSize": 14,
+    "messageFontSize": 14
   }
 }

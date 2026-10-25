@@ -20,7 +20,7 @@ theme**. Only the pre-rendered SVG/PNG ships.
 | `control` | `--rd-cat-4` | routers, schedulers, policy |
 | `data` | `--rd-cat-5` | payloads, files, streams |
 | `external` | `--rd-cat-6` | third-party or out-of-scope services |
-| `good` / `warn` / `bad` | `--rd-good` / `--rd-warn` / `--rd-bad` | status |
+| `good` / `warn` / `bad` | `--rd-good` / `--rd-warn` / `--rd-bad` | status (solid fill, bold text: never confused with a role) |
 
 ```
 flowchart LR
@@ -46,6 +46,8 @@ colours, and keeps only var() colours. Name output files uniquely per page.
 
 Chrome: puppeteer needs a Chrome. If it has none, set `MERMAID_CHROME` (or `CHROME_PATH`) to any
 Chrome/Chromium binary, for example the Playwright Chromium.
+
+The SVG carries its intrinsic size (text is 14px everywhere, never scaled); wide diagrams scroll inside the figure. `examples/legend.mmd` shows all nine classes and doubles as a regression view.
 
 Inline the SVG in `<figure class="rd-figure" aria-label="...">`. Show the `.mmd` source in a code block.
 
