@@ -76,6 +76,7 @@ const RULES = {
 	"rail-highlight": "every heading in view is highlighted in the rail, as on the main post",
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
 	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
+	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -312,6 +313,11 @@ const probeStructure = (canon) => {
 		// A div/span styled as a button is not focusable and breaks keyboard use.
 		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
 			operable: el.matches("button") || el.getAttribute("role") === "button",
+		})),
+		// Filters: every .rd-filter is a keyboard-operable toggle with an explicit aria-pressed state.
+		filters: [...document.querySelectorAll(".rd-filter")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+			pressed: el.hasAttribute("aria-pressed"),
 		})),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
@@ -720,6 +726,8 @@ await Promise.all(pages.map(async (rel) => {
 				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
 				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
 				[s.btns.some((b) => !b.operable), "button", "a .rd-btn is not a keyboard-operable <button> (or role=button)"],
+				[s.filters.some((f) => !f.operable), "filter", "a .rd-filter is not a keyboard-operable <button> (or role=button)"],
+				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
