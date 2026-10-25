@@ -16,8 +16,8 @@
 
 :root {
 	--hue: 250;
-	/* Layout: site page width (75rem) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
-	--rd-page-width: 75rem;
+	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
+	--rd-navbar-width: 73rem;
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
 	--rd-radius-md: 0.75rem;
@@ -196,8 +196,8 @@
 	-webkit-font-smoothing: antialiased;
 }
 
-/* Width contract: default = the main site's content column. Use --wide only when the content
-   genuinely needs it (wide charts, dense tables, dashboards): it is the full site page width. */
+/* Width contract: default = the main site's content column (54.5rem). --wide = the navbar's width (1168px):
+   the content edges line up with the navbar card. Use it for tabbed reports, never for a single column. */
 .rd-container {
 	box-sizing: border-box;
 	width: 100%;
@@ -205,7 +205,7 @@
 	margin: 0 auto;
 	padding: var(--rd-gap-block) var(--rd-space-4) var(--rd-gap-section);
 }
-.rd-container--wide { max-width: var(--rd-page-width); }
+.rd-container--wide { max-width: var(--rd-navbar-width); } /* matches the injected navbar width */
 
 /* ---- Cards ---- */
 .rd-card {
@@ -501,10 +501,11 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 
 /* Tabs: the expnav with role="tablist" and role="tab" links; one <div class="rd-tabpanel" role="tabpanel">
    per tab (the page's JS sets [hidden] on the inactive ones). Without JS every panel shows.
-   Each panel is a .rd-with-toc: the content, and an "On this page" .rd-toc. Wide (1340px+): the content keeps
-   the 54.5rem post column, centred exactly like the navbar, and the .rd-toc sits sticky in a 12rem column on the
-   right. Narrow: the .rd-toc is a disclosure above the content (open by default, so no-JS sees every link). */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-content-width); margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+   Each panel is a .rd-with-toc: the content, and an "On this page" .rd-toc. The tabbed column is the navbar's width
+   (1168px, same edges as the navbar card). Wide (1100px+): the content fills the left column and the .rd-toc sits
+   sticky in a 12rem column on the right, inside that width. Narrow: the .rd-toc is a disclosure above the content
+   (open by default, so no-JS sees every link). */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 .rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
 .rd-with-toc > .rd-toc { margin: 0; }
@@ -518,9 +519,8 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 .rd-toc a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
 .rd-toc a[aria-current="location"] { color: var(--rd-accent); font-weight: 600; }
 .rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
-@media (min-width: 1340px) {
-	.rd-tabbed { max-width: none; width: calc(var(--rd-content-width) + 13.5rem); margin: 0 0 0 calc(50% - var(--rd-content-width) / 2); padding: 1.5rem 0 4rem; }
-	.rd-with-toc { grid-template-columns: minmax(0, var(--rd-content-width)) minmax(0, 1fr); column-gap: 1.5rem; align-items: start; }
+@media (min-width: 1100px) {
+	.rd-with-toc { grid-template-columns: minmax(0, 1fr) 12rem; column-gap: 1.5rem; align-items: start; }
 	.rd-with-toc > .rd-toc { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--rd-expnav-h) + var(--rd-space-4)); max-height: calc(100vh - var(--rd-expnav-h) - 2rem); overflow-y: auto; }
 	.rd-with-toc > .rd-toc summary { display: none; }
 	.rd-with-toc > .rd-tab__body { grid-column: 1; grid-row: 1; }
@@ -763,7 +763,7 @@ a { color: var(--rd-accent) }
 <symbol id="i-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 14.66V17a1 1 0 0 1-1 1a2 2 0 0 0-2 2v2m7-7.34V17a1 1 0 0 0 1 1a2 2 0 0 1 2 2v2m.916-12H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"/></g></symbol>
 </svg>
 <!-- lucide-sprite:end -->
-<main class="rd-tabbed rd-prose">
+<main class="rd-tabbed rd-container--wide rd-prose">
 
   <header class="rd-hero">
     <span class="eyebrow">Brev research · experiment E1 · Banking77</span>
@@ -2924,7 +2924,7 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   if (!bar) return;
   var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
   var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
-  var wide = window.matchMedia('(min-width: 1340px)');
+  var wide = window.matchMedia('(min-width: 1100px)');
   var navH = function () { return bar.offsetHeight; };
 
   function tabOf(id) {
