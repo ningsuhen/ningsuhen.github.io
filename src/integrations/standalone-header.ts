@@ -93,7 +93,7 @@ export default function standaloneHeader(): AstroIntegration {
 function transform(html: string, script: string, extra: string, footer: string, urlPath: string, base: string, site: string): string {
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
-	return withThemeScript(ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href));
+	return withThemeScript(ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
 }
 
 // The theme script goes at the end of <head>, or right after <html> when the export has no </head>.
@@ -111,20 +111,64 @@ function withThemeScript(html: string): string {
 	return html.replace(/<html(?=[\s>])[^>]*>/i, (tag) => tag + HEAD_THEME);
 }
 
+// The /research/ and /experiments/ cards carry a one-line summary; use it as the social description when the
+// exported page has no <meta name="description"> of its own.
+function entrySummaries(): Map<string, string> {
+	const out = new Map<string, string>();
+	for (const file of ["research.json", "experiments.json"]) {
+		try {
+			const data = JSON.parse(readFileSync(path.resolve(`src/data/${file}`), "utf8")) as { items?: { href?: string; summary?: string }[] };
+			for (const item of data.items ?? []) if (item.href && item.summary) out.set(item.href, item.summary);
+		} catch {
+			/* no data file: fall back to the page/site description */
+		}
+	}
+	return out;
+}
+
+// Open Graph / Twitter cards for a standalone page: the visible title (minus the created/updated stamp) and the
+// page's own description when it has one, so a share is not a blank card. Head-only: it lands in the "late" group
+// (after the charset/viewport metas), so the design-system head-order rule — charset then viewport first — holds.
+function buildSocialMeta(html: string, canonical: string, site: string): string {
+	if (/<meta[^>]+property=["']og:title["']/i.test(html)) return ""; // the page already declares OG
+	let title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? siteConfig.title).trim();
+	title = title.replace(/\s*[·•]\s*created \d{4}-\d{2}-\d{2}\s*[·•]\s*updated \d{4}-\d{2}-\d{2}\s*$/i, "").trim();
+	const descTag = html.match(/<meta[^>]+name=["']description["'][^>]*>/i)?.[0] ?? "";
+	const ownDescription = descTag.match(/content=["']([^"']*)["']/i)?.[1]?.trim() ?? "";
+	const urlPath = new URL(canonical, site).pathname;
+	const description = ownDescription || entrySummaries().get(urlPath) || siteConfig.subtitle || "";
+	const image = new URL("/images/default-thumbnail.webp", site).href;
+	const og = (k: string, v: string) => `<meta property="${k}" content="${esc(v)}">`;
+	const tw = (k: string, v: string) => `<meta name="twitter:${k}" content="${esc(v)}">`;
+	return [
+		og("og:type", "website"),
+		og("og:site_name", siteConfig.title),
+		og("og:title", title),
+		og("og:description", description),
+		og("og:url", canonical),
+		og("og:image", image),
+		tw("card", "summary_large_image"),
+		tw("title", title),
+		tw("description", description),
+		tw("image", image),
+	].join("");
+}
+
 // Exported pages often lose these tags. Without a doctype the page renders in quirks mode (BackCompat);
 // without a charset, "·" renders as "Â·"; without a viewport, phones show a zoomed-out desktop page; without
 // lang, screen readers guess the language. Prepend whichever is missing (valid at the very start of the file).
-function ensureHead(html: string, canonical: string): string {
+function ensureHead(html: string, canonical: string, site: string): string {
 	const head = html.slice(0, 4096);
 	const doctype = html.match(/^\s*<!doctype[^>]*>/i)?.[0];
-	// charset and viewport must stay the first two head elements, so they go in front; icon and canonical go
-	// before </head>, after whatever the page already declares (a page's own charset is never pushed back).
+	// charset and viewport must stay the first two head elements, so they go in front; icon, canonical and the
+	// social cards go before </head>, after whatever the page already declares (a page's own charset is never pushed back).
 	const early: string[] = [];
 	const late: string[] = [];
 	if (!/<meta[^>]+charset=/i.test(head)) early.push('<meta charset="utf-8">');
 	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) early.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
 	if (!/<link[^>]+rel=["']icon["']/i.test(html)) late.push(FAVICONS);
 	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) late.push(`<link rel="canonical" href="${esc(canonical)}">`);
+	late.push(buildSocialMeta(html, canonical, site));
 	let rest = withHtmlLang(doctype ? html.slice(doctype.length) : html);
 	const headEnd = rest.search(/<\/head>/i);
 	if (headEnd !== -1) rest = rest.slice(0, headEnd) + late.join("") + rest.slice(headEnd);
