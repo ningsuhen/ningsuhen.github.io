@@ -28,6 +28,8 @@ const redact = (s) => `${s.slice(0, 4)}...(${s.length} chars)`;
 /** textOnly rules skip binary files (random bytes match them). @type {{id: string, re: RegExp, docs: boolean, textOnly?: boolean, allow?: (m: string, file: string) => boolean, canary: string}[]} */
 const RULES = [
 	{ id: "home-path", re: /\/Users\/[\w.-]+|\/home\/[a-z][\w.-]*\/|\b[A-Za-z]:\\+(?:Users|Documents)\b|file:\/\/\/?[A-Za-z]/g, docs: true, allow: (m, file) => /^\/(?:Users|home)\/runner\/?$/.test(m) && VENDOR_DIR.test(file), canary: "/Users/alice/git" },
+	// Compiler paths baked into Rust wasm (panic locations, registry sources): they name the builder's home and toolchain.
+	{ id: "build-path", re: /\/rustc\/[0-9a-f]{12,}|\.cargo\/registry|\.rustup\/toolchains/g, docs: true, allow: (_m, file) => VENDOR_DIR.test(file), canary: "/rustc/0123456789abcdef0123456789abcdef01234567/library/core" },
 	{ id: "home-tilde", re: /(?<=[\s"'`(=,>])~\/[\w.-]/g, docs: true, textOnly: true, canary: "open ~/git/app" },
 	{ id: "worktree-path", re: /\.worktrees\b|\.claude\/(?:worktrees|projects)\b/g, docs: false, textOnly: true, canary: ".worktrees/task" },
 	{ id: "machine-name", re: /\bmac-?mini[\w-]*|\bmacmini\b/gi, docs: true, canary: "mac-mini" },
@@ -111,6 +113,15 @@ function escapingLinks(file, text, root) {
 	return out;
 }
 
+/**
+ * Vendored ORT builds whose bytes are pinned by sha384 integrity in public/tts/kokoro.js. Their last line is a
+ * bare `sourceMappingURL=<name>.map` comment; the map itself is never shipped and the name leaks nothing.
+ * Stripping the comment would change the bytes and break the pinned hash, so these exact paths are exempt.
+ */
+const SOURCEMAP_KEPT = ["tts/vendor/ort/ort.webgpu.min.js"];
+/** True for the pinned file at any scan root (public/ or dist/). */
+const isSourceMapKept = (rel) => SOURCEMAP_KEPT.some((p) => rel === p || rel.endsWith(`/${p}`));
+
 /** Problems in one file, as {rule, line, match}. */
 function scanFile(file, root, { docs }) {
 	const problems = [];
@@ -137,7 +148,7 @@ function scanFile(file, root, { docs }) {
 		denylist.forEach((term, k) => {
 			if (lower.includes(term)) problems.push({ rule: "denylist", line: i + 1, match: `private term #${k + 1}` });
 		});
-		if (!docs && line.includes("sourceMappingURL=")) problems.push({ rule: "source-map", line: i + 1, match: "sourceMappingURL" });
+		if (!docs && line.includes("sourceMappingURL=") && !isSourceMapKept(path.relative(ROOT, file))) problems.push({ rule: "source-map", line: i + 1, match: "sourceMappingURL" });
 	});
 	if (!docs && /\.(html?|css)$/i.test(name)) {
 		for (const ref of escapingLinks(file, text, root)) problems.push({ rule: "escaping-link", line: 0, match: ref });

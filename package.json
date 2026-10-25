@@ -26,6 +26,7 @@
     "check:leaks": "node scripts/check-public-leaks.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "check:listen": "node scripts/check-listen.mjs",
+    "check:kokoro": "node scripts/check-kokoro.mjs",
     "new-experiment": "node scripts/new-experiment.mjs",
     "new-research": "node scripts/new-experiment.mjs --research",
     "sync": "sh scripts/sync-dev-next.sh",

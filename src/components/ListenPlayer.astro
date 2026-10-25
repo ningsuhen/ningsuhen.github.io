@@ -8,9 +8,20 @@ interface Props {
 	title: string;
 }
 const { title } = Astro.props;
+// Where ONNX Runtime Web is served from. Set PUBLIC_KOKORO_ORT_BASE at build time to point at a CDN instead.
+const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor/ort/");
 ---
 
-<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")}>
+<script is:inline>
+	// Neural voice switch. Off until the owner decides how the ONNX Runtime files and the 4.6 MB lexicon ship
+	// (vendored under public/tts vs CDN + SRI). Turn on only with public/tts/vendor/ort and lexicon-en-us.txt deployed.
+	var KOKORO_ENABLED = false;
+	// CPU tier (q8f16 on wasm): off until fp16 on wasm is verified. It returns NaN chunks for some inputs today.
+	window.__KOKORO_CPU = false;
+	// Offers the neural voice only where it can run: WebAssembly, BigInt64Array (int64 model inputs), DecompressionStream (lexicon).
+	window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
+</script>
+<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase}>
 	<div class="listen-bar">
 		<button type="button" class="listen-btn listen-toggle" data-toggle aria-expanded="false" aria-controls="listen-panel">
 			<Icon name="lucide:headphones" class="listen-headphones" />
@@ -51,6 +62,7 @@ const { title } = Astro.props;
 		</label>
 		<p class="listen-note">
 			<span data-note-local>Realtime audio generated on your device<sup data-accel hidden></sup>. Nothing is uploaded.</span>
+			<span class="listen-credit" data-notice hidden></span>
 			<span data-note-remote hidden>This voice is a remote service: the sentence text is sent to it.</span>
 		</p>
 		<p class="listen-status" data-status aria-live="polite"></p>
@@ -59,10 +71,16 @@ const { title } = Astro.props;
 	<dialog class="listen-dialog" data-consent aria-labelledby="listen-consent-title">
 		<form method="dialog">
 			<h2 id="listen-consent-title">Download a neural voice?</h2>
-			<p>The model is about 86 to 326 MB, depending on the variant your device can run. It is downloaded once, cached in your browser, and runs locally on your device. Nothing is uploaded.</p>
+			<p>The model comes from Hugging Face, is downloaded once and cached in your browser, and runs on your device. Nothing you read is uploaded. Downloads include the voice runtime and pronunciation list.</p>
+			<ul class="listen-variants">
+				<li><strong>Fast: GPU</strong>, about 355 MB. Uses WebGPU; runs faster than real time.</li>
+				<li><strong>Light: CPU</strong>, about 105 MB. Works without WebGPU; may pause between sentences.</li>
+			</ul>
+			<p class="listen-credit">Speech by Kokoro-82M (hexgrad, Apache-2.0), ONNX export by onnx-community. Training data includes Koniwa (CC BY 3.0) and SIWIS (CC BY 4.0).</p>
 			<menu>
 				<button type="submit" value="cancel" class="listen-btn listen-text">Cancel</button>
-				<button type="submit" value="ok" class="listen-btn listen-primary">Download and use</button>
+				<button type="submit" value="q8f16" class="listen-btn" data-variant="q8f16">Light: CPU</button>
+				<button type="submit" value="fp32" class="listen-btn listen-primary" data-variant="fp32">Fast: GPU</button>
 			</menu>
 		</form>
 	</dialog>
