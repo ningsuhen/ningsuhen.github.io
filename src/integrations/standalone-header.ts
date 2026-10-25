@@ -98,7 +98,21 @@ function transform(html: string, script: string, extra: string, footer: string, 
 	const comments = commentsFor(html, urlPath);
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
-	return withThemeScript(ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+	return withThemeScript(ensureHead(versionedCssLinks(body), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+}
+
+// Cache-bust the design-system bundle: append ?v=<hash> to its <link> so a new bundle is fetched, not
+// the cached copy. The hash comes from the committed manifest.json (the shipped bundle's content hash).
+// Pages that still inline the CSS (no <link>) are untouched — the bundle-linked check nudges them to link.
+function versionedCssLinks(html: string): string {
+	let v = "";
+	try {
+		v = (JSON.parse(readFileSync(path.resolve("public/design-system/manifest.json"), "utf8")) as { hash?: string }).hash ?? "";
+	} catch {
+		return html; // no manifest yet (pre-build): leave the links as-is
+	}
+	if (!v) return html;
+	return html.replace(/(<link\b[^>]*\bhref=["'])(\/design-system\/(?:research|rd)\.css)(["'])/gi, (m, pre, href, quote) => `${pre}${href}?v=${v}${quote}`);
 }
 
 // The theme script goes at the end of <head>, or right after <html> when the export has no </head>.

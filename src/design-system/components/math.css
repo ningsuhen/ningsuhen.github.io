@@ -1,0 +1,77 @@
+
+/* ======================================================================
+   Scientific writing: math, numbered equations/figures/tables, theorems,
+   proofs, citations, references, footnotes, abstract.
+   Math is rendered with KaTeX (pinned 0.16.27). Markdown posts get it from the site
+   ($...$ inline, $$...$$ display; escape a literal dollar as \$). Standalone reports pre-render
+   with katex.renderToString at build time and link katex.min.css; no runtime JS needed.
+   ====================================================================== */
+.rd-prose { counter-reset: rd-eq rd-fig rd-tbl rd-thm; }
+
+.rd-authors { color: var(--rd-text-strong); font-weight: 500; margin: var(--rd-space-1) 0; }
+.rd-affil { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); margin: 0 0 var(--rd-gap-block); }
+.rd-abstract { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-base); }
+.rd-abstract > .rd-abstract__title { font-weight: 700; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-1); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--rd-fs-xs); }
+.rd-keywords { color: var(--rd-text-muted); font-size: var(--rd-fs-xs); margin-top: var(--rd-space-2); }
+.rd-keywords strong { color: var(--rd-text); }
+
+/* Math */
+.rd-prose .katex { font-size: 1.05em; color: inherit; }
+.rd-prose .katex-display { margin: 0; overflow-x: auto; overflow-y: hidden; padding: var(--rd-space-1) 0; }
+.rd-prose .katex-display > .katex { white-space: nowrap; }
+
+/* Numbered display equation: <div class="rd-equation" id="eq-model"> <KaTeX display> </div> */
+.rd-equation { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--rd-space-4); margin: var(--rd-gap-block) 0; counter-increment: rd-eq; }
+.rd-equation::after { content: "(" counter(rd-eq) ")"; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
+.rd-equation--unnumbered { counter-increment: none; }
+.rd-equation--unnumbered::after { content: ""; }
+.rd-equation:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
+
+/* Theorem-like blocks share one counter, like amsthm with [theorem] numbering */
+.rd-theorem, .rd-lemma, .rd-proposition, .rd-definition, .rd-corollary {
+	margin: var(--rd-gap-block) 0; padding: var(--rd-pad-callout); background: var(--rd-card-bg);
+	border-left: 0.25rem solid var(--rd-primary); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0;
+	counter-increment: rd-thm;
+}
+.rd-theorem::before { content: "Theorem " counter(rd-thm) ". "; }
+.rd-lemma::before { content: "Lemma " counter(rd-thm) ". "; }
+.rd-proposition::before { content: "Proposition " counter(rd-thm) ". "; }
+.rd-corollary::before { content: "Corollary " counter(rd-thm) ". "; }
+.rd-definition::before { content: "Definition " counter(rd-thm) ". "; }
+.rd-theorem::before, .rd-lemma::before, .rd-proposition::before, .rd-corollary::before, .rd-definition::before {
+	font-weight: 700; color: var(--rd-text-strong);
+}
+.rd-theorem, .rd-lemma, .rd-proposition, .rd-corollary { font-style: italic; }
+.rd-definition { font-style: normal; }
+.rd-proof { margin: var(--rd-gap-block) 0 var(--rd-gap-section); padding-right: 1.5rem; position: relative; }
+.rd-proof::before { content: "Proof. "; font-style: italic; font-weight: 700; color: var(--rd-text-strong); }
+.rd-proof::after { content: "\220E"; position: absolute; right: 0; bottom: 0; color: var(--rd-text-muted); }
+.rd-remark::before { content: "Remark. "; font-style: italic; font-weight: 700; }
+
+/* Auto-numbered figure and table captions */
+.rd-figure { counter-increment: rd-fig; }
+.rd-figure figcaption::before { content: "Figure " counter(rd-fig) ". "; font-weight: 700; color: var(--rd-text-strong); }
+.rd-table-wrap { counter-increment: rd-tbl; }
+.rd-table caption { caption-side: top; text-align: left; padding: 0 0 var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-table caption::before { content: "Table " counter(rd-tbl) ". "; font-weight: 700; color: var(--rd-text-strong); }
+.rd-ref { color: var(--rd-accent); }
+
+/* Citations and references: <a class="rd-cite" href="#ref-dean">[1]</a>; <ol class="rd-refs"><li id="ref-dean"> */
+.rd-cite { color: var(--rd-accent); text-decoration: none; white-space: nowrap; }
+.rd-cite:hover { text-decoration: underline; }
+.rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-sm); }
+.rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: var(--rd-space-2) 0; }
+.rd-refs li::before { content: "[" counter(rd-ref) "]"; position: absolute; left: 0; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
+.rd-refs li:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
+.rd-refs .rd-doi { color: var(--rd-accent); word-break: break-all; }
+
+/* Footnotes: <sup class="rd-fn"><a href="#fn1" id="fnref1">1</a></sup> */
+sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
+.rd-fn a { color: var(--rd-accent); text-decoration: none; }
+.rd-footnotes { border-top: 1px solid var(--rd-line); margin-top: var(--rd-gap-section); padding-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-footnotes li:target { background: var(--rd-btn-bg); }
+
+@media print {
+	.rd-equation, .rd-theorem, .rd-lemma, .rd-proposition, .rd-definition, .rd-corollary, .rd-proof { break-inside: avoid; }
+	.rd-prose a { color: inherit; text-decoration: none; }
+}
