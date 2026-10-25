@@ -111,6 +111,15 @@ const browser = await chromium.launch({
 	executablePath: findChrome(),
 	ignoreDefaultArgs: ["--hide-scrollbars"],
 });
+// No live giscus in this check: its widget (or its outage error) swaps the 372px comments skeleton for a
+// different height at an arbitrary moment, which made layout probes depend on a third-party service.
+// Every context blocks it, so the comments host settles the same way on every run.
+const newContext = browser.newContext.bind(browser);
+browser.newContext = async (options) => {
+	const ctx = await newContext(options);
+	await ctx.route("https://giscus.app/**", (route) => route.abort());
+	return ctx;
+};
 const failures = [];
 const expect = (ok, message) => {
 	if (!ok) failures.push(message);
@@ -262,7 +271,14 @@ for (const [name, viewport, theme] of [
 		return {
 			top: el.getBoundingClientRect().top,
 			docked: el.hasAttribute("data-docked"),
-			docHeight: document.documentElement.scrollHeight,
+			// Document offset of the first rendered element after the player: docking must not move it. Not the page
+			// height: the giscus host at the bottom shrinks from its skeleton when giscus loads (372 -> 150px), which
+			// can land between the two reads and made this check flaky.
+			after: (() => {
+				let n = el.nextElementSibling;
+				while (n && n.getBoundingClientRect().height === 0) n = n.nextElementSibling;
+				return n ? n.getBoundingClientRect().top + window.scrollY : Number.NaN;
+			})(),
 		};
 	});
 	expect(
@@ -309,7 +325,12 @@ for (const [name, viewport, theme] of [
 			height: r.height,
 			docked: el.hasAttribute("data-docked"),
 			covered,
-			docHeight: document.documentElement.scrollHeight,
+			// Same probe as the inline read above.
+			after: (() => {
+				let n = el.nextElementSibling;
+				while (n && n.getBoundingClientRect().height === 0) n = n.nextElementSibling;
+				return n ? n.getBoundingClientRect().top + window.scrollY : Number.NaN;
+			})(),
 			barOverflow: bar.scrollWidth - bar.clientWidth,
 			railShown,
 			overlapsRail,
@@ -326,8 +347,8 @@ for (const [name, viewport, theme] of [
 	);
 	expect(docked.covered, `${name}: page content visible above the player`);
 	expect(
-		Math.abs(docked.docHeight - inline.docHeight) <= 1,
-		`${name}: layout shift ${docked.docHeight - inline.docHeight}px on docking`,
+		Math.abs(docked.after - inline.after) <= 1,
+		`${name}: layout shift ${docked.after - inline.after}px on docking (content after the player)`,
 	);
 	expect(!docked.overlapsRail, `${name}: docked player overlaps the TOC rail`);
 	expect(
