@@ -80,6 +80,7 @@ const RULES = {
 	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
 	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
 	"stepper": "every .rd-stepper has a minus and a plus <button> and a value region",
+	"chat": "every .rd-chat__msg has a variant (--me or --them) and every .rd-chat__input input is labelled",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -347,6 +348,15 @@ const probeStructure = (canon) => {
 		steppers: [...document.querySelectorAll(".rd-stepper")].map((el) => ({
 			buttons: el.querySelectorAll("button").length,
 			hasValue: !!el.querySelector(".rd-stepper__value"),
+		})),
+		// Chat: every message bubble carries a variant (--me / --them) so it is styled and
+		// aligned, and the input row's field is associated with a label.
+		chats: [...document.querySelectorAll(".rd-chat")].map((el) => ({
+			msgs: [...el.querySelectorAll(".rd-chat__msg")].map((m) => m.classList.contains("rd-chat__msg--me") || m.classList.contains("rd-chat__msg--them")),
+			inputLabelled: [...el.querySelectorAll(".rd-chat__input .rd-input")].every((i) => {
+				const id = i.id;
+				return (id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`)) || !!i.getAttribute("aria-label") || !!i.getAttribute("aria-labelledby") || !!i.closest("label");
+			}),
 		})),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
@@ -761,6 +771,8 @@ await Promise.all(pages.map(async (rel) => {
 				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
 				[s.steppers.some((s) => s.buttons < 2), "stepper", "a .rd-stepper has fewer than two <button> controls (minus and plus)"],
 				[s.steppers.some((s) => !s.hasValue), "stepper", "a .rd-stepper has no .rd-stepper__value region"],
+				[s.chats.some((c) => c.msgs.some((v) => !v)), "chat", "a .rd-chat__msg has no variant (must be --me or --them)"],
+				[s.chats.some((c) => !c.inputLabelled), "chat", "a .rd-chat__input input has no associated label"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {

@@ -43,6 +43,7 @@
 <symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></symbol>
 <symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
 <symbol id="i-list-checks" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></symbol>
+<symbol id="i-message-square" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></symbol>
 <symbol id="i-microscope" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18h8M3 22h18m-7 0a7 7 0 1 0 0-14h-1m-4 6h2m-2-2a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Zm3-6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></symbol>
 <symbol id="i-minus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/></symbol>
 <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
@@ -367,6 +368,17 @@
 <div class="rd-card">
 <p><span class="rd-stepper"><button type="button" class="rd-btn rd-btn--icon" aria-label="Decrease"><svg class="rd-icon" aria-hidden="true"><use href="#i-minus"/></svg></button><span class="rd-stepper__value" aria-live="polite">3</span><button type="button" class="rd-btn rd-btn--icon" aria-label="Increase"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg></button></span>
 <span class="rd-stepper"><button type="button" class="rd-btn rd-btn--icon" aria-label="Decrease" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-minus"/></svg></button><span class="rd-stepper__value" aria-live="polite">0</span><button type="button" class="rd-btn rd-btn--icon" aria-label="Increase"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg></button></span></p>
+</div>
+
+<header class="rd-section__head" id="chat"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-square"/></svg></span><h2>Chat</h2></header>
+<p>A <code>.rd-chat</code> is a message thread. Each message is a <code>.rd-chat__msg</code> with a variant: <code>--me</code> (the user's, right-aligned and filled with the accent) and <code>--them</code> (the assistant's, left-aligned on the card ground). Bubbles cap at 85% of the column so long messages wrap. The input row reuses <code>.rd-input</code> and <code>.rd-btn</code>.</p>
+<div class="rd-card">
+<div class="rd-chat">
+<div class="rd-chat__msg rd-chat__msg--them">What is the drawdown risk?</div>
+<div class="rd-chat__msg rd-chat__msg--me">Show me the 12-month numbers.</div>
+<div class="rd-chat__msg rd-chat__msg--them">A 30% drawdown has a 1% chance in 12 months.</div>
+<div class="rd-chat__input"><input class="rd-input" id="chat-demo" type="text" aria-label="Message" placeholder="Type a message"><button type="button" class="rd-btn rd-btn--primary">Send</button></div>
+</div>
 </div>
 
 <header class="rd-section__head" id="table"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg></span><h2>Table</h2></header>
