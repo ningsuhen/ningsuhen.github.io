@@ -2,14 +2,14 @@
   "items": [
     {
       "title": "Brev tree traversal",
-      "summary": "Type or pick a message and watch the tree walk node by node: which question is asked, how confident the model is at each step, where it lands, and how that compares with the flat-rules and 27B answers from the benchmark. Scores are precomputed from a real run; it replays them in your browser.",
+      "summary": "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, then compare it with flat rules and a 27B model.",
       "href": "/experiments/brev-tree-traversal/",
+      "post": "/posts/brev-tree-traversal/",
       "started": "2026-10-24",
-      "status": "Coming soon",
+      "updated": "2026-10-24",
+      "status": "Live",
       "tags": [
-        "AI",
-        "Interactive",
-        "Rust"
+        "Experiment"
       ]
     }
   ]
