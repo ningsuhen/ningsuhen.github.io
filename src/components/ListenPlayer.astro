@@ -23,6 +23,21 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	if (window.__KOKORO_READY === undefined) window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
 </script>
 <listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase} data-kokoro-manifest={url("/tts/manifest.json")}>
+	<!-- Shown (via data-loading) while the engine loads, at the bar's exact size, so the post never shifts down. -->
+	<div class="listen-skeleton" aria-hidden="true">
+		<span class="skeleton listen-skeleton-toggle"></span>
+		<span class="skeleton listen-skeleton-btn"></span>
+		<span class="skeleton listen-skeleton-btn"></span>
+		<span class="skeleton listen-skeleton-btn"></span>
+		<span class="skeleton listen-skeleton-range"></span>
+		<span class="skeleton listen-skeleton-pos"></span>
+	</div>
+	<div class="listen-skeleton-panel" aria-hidden="true">
+		<span class="skeleton listen-skeleton-field"></span>
+		<span class="skeleton" style="width: 8rem"></span>
+		<span class="skeleton" style="width: 11rem"></span>
+		<span class="skeleton listen-skeleton-note"></span>
+	</div>
 	<div class="listen-bar">
 		<button type="button" class="listen-btn listen-toggle" data-toggle aria-expanded="false" aria-controls="listen-panel">
 			<Icon name="lucide:headphones" class="listen-headphones" />
@@ -103,6 +118,18 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		</form>
 	</dialog>
 </listen-player>
+<script is:inline>
+	// Reveal the placeholder before first paint when an engine can run; the module script settles it later.
+	(function () {
+		var p = document.currentScript && document.currentScript.previousElementSibling;
+		if (!p || p.localName !== "listen-player" || p.hasAttribute("data-settled")) return;
+		var canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+		if (canSpeak || window.__KOKORO_READY === true) {
+			p.setAttribute("data-loading", "");
+			p.removeAttribute("hidden");
+		}
+	})();
+</script>
 
 <script>
 	import "../scripts/tts/listen-player";
@@ -127,11 +154,64 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	listen-player [hidden] {
 		display: none !important;
 	}
-	.listen-bar {
+	.listen-bar,
+	.listen-skeleton {
 		display: flex;
 		align-items: center;
 		gap: 0.375rem;
 		padding: 0.5rem 0.625rem;
+	}
+	.listen-skeleton,
+	listen-player[data-loading] .listen-bar,
+	listen-player[data-loading] .listen-panel {
+		display: none;
+	}
+	listen-player[data-loading] .listen-skeleton {
+		display: flex;
+	}
+	.listen-skeleton .skeleton {
+		height: 2.25rem;
+		flex: none;
+	}
+	.listen-skeleton-toggle {
+		width: 6.25rem;
+	}
+	.listen-skeleton-btn {
+		width: 2.25rem;
+	}
+	.listen-skeleton .listen-skeleton-range {
+		display: none;
+		flex: 1;
+		height: 0.375rem;
+	}
+	.listen-skeleton .listen-skeleton-pos {
+		width: 3rem;
+		height: 1rem;
+		margin-left: auto;
+	}
+	/* Desktop shows the settings row under the bar; its placeholder keeps the same height (measured: 5.125rem). */
+	.listen-skeleton-panel {
+		display: none;
+	}
+	@media (min-width: 768px) {
+		listen-player[data-loading] .listen-skeleton-panel {
+			display: flex;
+			flex-wrap: wrap;
+			align-content: flex-start;
+			gap: 0.5rem 1.25rem;
+			height: 5.125rem;
+			padding: 0 0.75rem 0.75rem;
+		}
+		.listen-skeleton-panel .skeleton {
+			height: 2.25rem;
+		}
+		.listen-skeleton-panel .listen-skeleton-field {
+			flex: 1 1 14rem;
+		}
+		.listen-skeleton-panel .listen-skeleton-note {
+			width: 60%;
+			height: 1rem;
+		}
 	}
 	.listen-btn {
 		display: inline-flex;
@@ -320,10 +400,12 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	}
 
 	@media (min-width: 768px) {
-		.listen-toggle {
+		.listen-toggle,
+		.listen-skeleton .listen-skeleton-toggle {
 			display: none;
 		}
-		.listen-range {
+		.listen-range,
+		.listen-skeleton .listen-skeleton-range {
 			display: block;
 		}
 		.listen-panel {
@@ -337,8 +419,10 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		.listen-field {
 			width: auto;
 		}
+		/* min-width: 0 keeps the row from re-wrapping when long voice names arrive after load. */
 		.listen-field:first-child {
 			flex: 1 1 14rem;
+			min-width: 0;
 		}
 		.listen-note,
 		.listen-status {
