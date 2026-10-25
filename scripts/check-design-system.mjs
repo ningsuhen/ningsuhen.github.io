@@ -11,6 +11,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
+import { checkFresh as spriteFresh } from "./build-lucide-sprite.mjs";
 import { standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
@@ -31,6 +32,7 @@ const RULES = {
 	"title-stamp": "title and visible h1 end with · created YYYY-MM-DD · updated YYYY-MM-DD",
 	"css-canonical": "research.css is linked, or inlined verbatim (whitespace-insensitive)",
 	"bundle-fresh": "the shipped design-system bundle (rd.css, research.css alias, manifest.json) equals a fresh build of src/design-system/",
+	"sprite-fresh": "the shipped Lucide sprite (lucide-sprite.svg and each page's inlined block) equals a fresh build of the pages' icon references",
 	"bundle-linked": "the page links the design-system bundle instead of inlining a frozen copy",
 	"body-class": '<body class="rd-body">',
 	"container-class": "main content uses rd-container, rd-container--wide or rd-tabbed",
@@ -151,6 +153,9 @@ const add = (page, rule, msg) => {
 // bundle-fresh (repo-level): the committed generated files must equal a fresh build of the sources.
 // A stale bundle means someone edited src/design-system/ without running `pnpm build:design-system`.
 for (const problem of (await checkFresh()).problems) failures.push(`bundle-fresh: ${problem}`);
+// sprite-fresh (repo-level): the committed Lucide sprite must equal a fresh build of the pages' icon
+// references. A stale sprite means a page added an icon reference without running `pnpm build`.
+for (const problem of (await spriteFresh()).problems) failures.push(`sprite-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
