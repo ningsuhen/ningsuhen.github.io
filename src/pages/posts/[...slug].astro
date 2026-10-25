@@ -29,7 +29,7 @@ const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 
 const { remarkPluginFrontmatter } = await render(entry);
-const licensed = entry.data.tags.includes("Research") || entry.data.tags.includes("Experiment");
+const licensed = ["Research", "Experiment", "Idea"].some((t) => entry.data.tags.includes(t));
 
 const jsonLd = {
 	"@context": "https://schema.org",

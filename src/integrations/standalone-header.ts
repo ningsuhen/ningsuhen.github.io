@@ -186,8 +186,9 @@ a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer;backgrou
 .brand:hover::before,nav a:hover::before,.end button:hover::before,.menu-panel a:hover::before{background:var(--hover);transform:scale(1)}
 .brand:active::before,nav a:active::before,.end button:active::before,.menu-panel a:active::before{background:var(--active)}
 a:hover,button:hover{color:var(--prime)}
-.brand{height:3.25em;padding:0 1.25em;color:var(--prime);font-weight:700;flex:none}
-.brand svg{width:1.75em;height:1.75em;margin:0 .5em .25em 0;flex:none}
+/* The brand shrinks and wraps when the links need the room, as the main navbar's does (measured parity at 1024px). */
+.brand{height:3.25em;padding:0 1.25em;color:var(--prime);font-weight:700;white-space:normal;text-align:center}
+.brand svg{width:1.75em;height:1.75em;margin:0 .5em .25em 0}
 .brand:active,nav a:active,.end button:active{transform:scale(.95)}
 nav{display:none;align-items:center}
 nav a{height:2.75em;padding:0 1.25em;font-weight:700}
@@ -307,7 +308,7 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 	);
 }
 
-// Copyright footer for every standalone page: research here may not be reused without permission.
+// Copyright footer for every standalone page: research, experiments and ideas here may not be reused without permission.
 // Mounted on <html> after <body> (like the navbar), so page styling can't offset or hide it.
 function buildLicenseScript(base: string, hue: number): string {
 	const prefix = base.replace(/\/$/, "");
@@ -329,7 +330,7 @@ function buildLicenseScript(base: string, hue: number): string {
 	const markup =
 		`<style>${css}</style><footer>` +
 		`<p class="copy">\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</p>` +
-		`<p>Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission.</p>` +
+		`<p>Research, experiments and ideas on this site may not be reused, copied, republished or used to train models without my written permission.</p>` +
 		`<p>Short quotes with attribution and a link are fine.</p>` +
 		`<p class="links"><a href="${esc(prefix)}/license/">${icon}License</a> &middot; <a href="${esc(prefix)}/rss.xml">RSS</a> &middot; <a href="${esc(prefix)}/sitemap-index.xml">Sitemap</a></p>` +
 		`<p class="power">Powered by <a href="https://astro.build" target="_blank" rel="noopener">Astro</a> &amp; <a href="https://github.com/saicaca/fuwari" target="_blank" rel="noopener">Fuwari</a></p></footer>`;
