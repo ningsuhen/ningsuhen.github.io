@@ -127,9 +127,11 @@ function addBreadcrumb(html: string, urlPath: string, base: string, site: string
 	const masked = html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<!--[\s\S]*?-->/gi, (m) => " ".repeat(m.length));
 	const main = masked.match(/<main\b[^>]*>/i);
 	const mainTag = main?.[0] ?? "";
-	// After <body>; a fragment export with no <body> tag gets it right before its <main> (the parser opens body earlier).
+	// After <body>; a fragment export with no <body> tag gets it before its first body element (the first tag that cannot
+	// live in <head>), which is where the parser opens <body>.
 	const body = masked.match(/<body(?=[\s>])[^>]*>/i);
-	const at = body?.index !== undefined ? body.index + body[0].length : main?.index;
+	const firstBodyTag = masked.match(/<(?!\/|!|(?:html|head|title|meta|link|style|script|base|noscript)\b)[a-z][^>]*>/i);
+	const at = body?.index !== undefined ? body.index + body[0].length : firstBodyTag?.index;
 	if (at === undefined) return html;
 	// The trail lines up with the page's text column: rd-container (default), --wide, rd-tabbed, or a page-owned column.
 	const tabbed = /\brd-tabbed\b/.test(mainTag);
@@ -167,6 +169,7 @@ function pageTitle(html: string): string {
 	const text = raw.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 	const decoded = text.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 	return decoded.replace(DATE_SUFFIX, "").trim();
+}
 
 // Cache-bust the design-system bundle: append ?v=<hash> to its <link> so a new bundle is fetched, not
 // the cached copy. The hash comes from the committed manifest.json (the shipped bundle's content hash).

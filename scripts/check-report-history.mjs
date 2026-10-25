@@ -227,7 +227,20 @@ async function testPage(rel) {
 	for (let i = 0; i < meta.length; i++) {
 		if (!meta[i].toc) continue;
 		const { ctx, page } = await open(`${url}?tab=${meta[i].id}`);
-		await page.evaluate(() => window.scrollTo({ top: 150, behavior: "instant" }));
+		// Start from a scrolled position (so Back has a non-zero y to restore) where the link is clear of the sticky chrome
+		// (navbar, breadcrumb band, section bar and any page bar under them): a covered link would make the click scroll the
+		// page first, and the test would then compare against the wrong start. 150px when that is clear, else just above it.
+		const startY = await page.evaluate((sel) => {
+			const link = document.querySelector(sel);
+			if (!link) return 150;
+			const chrome = Math.max(0, ...[...document.querySelectorAll("body *, [data-site-navbar]")]
+				.filter((el) => !el.closest(".rd-tabpanel") && getComputedStyle(el).position === "sticky" && el.getClientRects().length)
+				.map((el) => parseFloat(getComputedStyle(el).top) + el.getBoundingClientRect().height)
+				.filter((b) => Number.isFinite(b) && b < window.innerHeight / 2));
+			const clear = Math.floor(link.getBoundingClientRect().top + window.scrollY - chrome - 24);
+			return Math.max(1, Math.min(150, clear));
+		}, `#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`);
+		await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
 		await settle(page);
 		const s0 = await snap(page);
 		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
