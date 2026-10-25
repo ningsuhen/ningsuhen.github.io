@@ -4,4 +4,4 @@
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" >/dev/null 2>&1 # current default node, survives upgrades
 cd "${0:A:h}/.." || exit 1
-exec pnpm dev --host 127.0.0.1 --port 4321
+exec pnpm dev # port 4321 and host come from astro.config.mjs (strictPort: fails loudly if taken)
