@@ -400,6 +400,9 @@ function buildLicenseScript(base: string, hue: number): string {
 
 const COMMENTS_CSS = [
 	".rd-comments{box-sizing:border-box;width:100%;max-width:var(--rd-content-width,54.5rem);margin:0 auto;padding:var(--rd-gap-section,2rem) var(--rd-space-4,1rem);font:var(--rd-fs-base,.875rem)/var(--rd-lh,1.5) var(--rd-font,Roboto,system-ui,sans-serif);color:var(--rd-text)}",
+	// Tabbed pages are wide and their content starts at the tab bar's left edge: the 872px column starts there too, instead
+	// of sitting centred where it lines up with nothing on the page. Below the navbar width the margin is 0, as before.
+	"html:has(.rd-tabbed) .rd-comments{margin-left:max(0px,calc((100% - var(--rd-navbar-width,73rem)) / 2));margin-right:auto}",
 	".rd-comments__head{display:flex;align-items:center;gap:var(--rd-space-3,.75rem);margin-bottom:var(--rd-gap-block,.75rem)}",
 	".rd-comments .rd-icon{display:inline-block;flex:none;width:1.25em;height:1.25em;font-size:var(--rd-fs-h2,1.2rem);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--rd-accent)}",
 	".rd-comments h2{margin:0;font-size:var(--rd-fs-h2,1.2rem);line-height:1.3;color:var(--rd-text-strong)}",
@@ -408,7 +411,7 @@ const COMMENTS_CSS = [
 	".rd-comments__slot:focus{outline:none}",
 	".rd-comments__slot:focus-visible,.rd-comments__load:focus-visible{outline:2px solid var(--rd-accent);outline-offset:2px}",
 	".rd-comments__note{margin:0;color:var(--rd-text-muted);font-size:var(--rd-fs-sm,.8125rem)}",
-	".rd-comments__load{display:inline-flex;align-items:center;min-height:2.5rem;padding:0 var(--rd-space-4,1rem);border:0;border-radius:var(--rd-radius-sm,.5rem);background:var(--rd-btn-bg);color:var(--rd-accent);font:500 var(--rd-fs-base,.875rem) var(--rd-font,Roboto,system-ui,sans-serif);cursor:pointer}",
+	".rd-comments__load{display:inline-flex;align-items:center;min-height:2.5rem;padding:0 var(--rd-space-4,1rem);border:0;border-radius:var(--rd-radius-sm,.5rem);background:var(--rd-btn-bg);color:var(--rd-accent-ink,var(--rd-accent));font:500 var(--rd-fs-base,.875rem) var(--rd-font,Roboto,system-ui,sans-serif);cursor:pointer}",
 	".rd-comments__load:hover{background:var(--rd-btn-bg-hover)}",
 	// No animation here, so nothing needs a reduced-motion rule.
 ].join("");

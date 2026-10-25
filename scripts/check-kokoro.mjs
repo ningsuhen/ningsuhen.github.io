@@ -90,6 +90,11 @@ try {
 		if (!ALLOWED_HOST.test(host)) failures.push(`request to ${host} (${req.url().slice(0, 80)})`);
 	});
 	page.on("pageerror", (e) => failures.push(`page error: ${e.message}`));
+	// ONNX Runtime's node-assignment note is noise (sessions run with logSeverityLevel 3); any copy is a regression.
+	page.on("console", (m) => {
+		if ((m.type() === "warning" || m.type() === "error") && /VerifyEachNodeIsAssignedToAnEp/.test(m.text()))
+			failures.push(`ORT console line: ${m.text().slice(0, 120)}`);
+	});
 	await page.goto(`${base}/__kokoro-check.html${MODE === "cpu" ? "?mode=cpu" : ""}`);
 
 	const result = await page.evaluate(
@@ -120,7 +125,7 @@ try {
 			}
 			const beacons = window.__beacons;
 			engine.dispose();
-			return { accelerator: engine.accelerator, initMs, beacons, runs };
+			return { accelerator: engine.accelerator, initMs, beacons, runs, voices: engine.voices().map((v) => v.id) };
 		},
 		{ sentences: SENTENCES, mode: MODE, modelBase: MODEL_BASE },
 	);
@@ -147,6 +152,8 @@ try {
 		if (seconds < 1 || seconds > 8) failures.push(`implausible duration ${seconds.toFixed(2)} s for "${run.text}"`);
 	}
 	metrics.hosts = Object.fromEntries(hosts);
+	// The player's default neural voice is Heart (af_heart).
+	if (result.voices[0] !== "af_heart") failures.push(`default voice is ${result.voices[0]}, expected af_heart`);
 	console.log(JSON.stringify(metrics, null, 2));
 } finally {
 	await browser.close();

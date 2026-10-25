@@ -1,6 +1,18 @@
 {
   "items": [
     {
+      "title": "Wikipedia, but in the age of AI",
+      "summary": "An idea, not a product: each claim keeps its own sources, people sign what they checked, and machine drafts stay labelled. Nothing is built or measured.",
+      "href": "/ideas/wikipedia-ai-age/",
+      "post": "/posts/wikipedia-ai-age/",
+      "started": "2026-10-24",
+      "updated": "2026-10-25",
+      "status": "Live",
+      "tags": [
+        "Idea"
+      ]
+    },
+    {
       "title": "Office tools where the cloud cannot read your files",
       "summary": "An idea, not a product: mail, documents and files kept on your own machines, with the cloud holding only encrypted copies. Here is the design and where it gets hard.",
       "href": "/ideas/decentralized-office/",
