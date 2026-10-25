@@ -20,7 +20,7 @@ Most of the port work has no before-and-after benchmark. For the full rewrites I
 
 ## Startup was the clearest win
 
-A hook script that ran for every agent pane was written in Python. Its import step took 7.5 seconds. With 30 to 40 of them starting at once, the machine went past 150 percent CPU. I replaced it with a self-contained Rust binary. My commit message says it starts in about 12 ms. That is a commit-message number, not a benchmark, but the gap is big enough that I believe the direction.
+A small helper script that ran on every event in a long-lived session was written in Python. Its import step took 7.5 seconds. With 30 to 40 of them starting at once, the machine went past 150 percent CPU. I replaced it with a self-contained Rust binary. My commit message says it starts in about 12 ms. That is a commit-message number, not a benchmark, but the gap is big enough that I believe the direction.
 
 This is the case where I would credit the language most: a short-lived process that pays the import cost on every call. For a long-running server I have no Python-versus-Rust timing.
 
@@ -40,15 +40,15 @@ So count the boundary before you count the compute.
 
 ## The biggest win was not the language
 
-The largest documented speedup I have is a git history scan. A cold call dropped from 2,195 ms to 832 ms. A memo hit still takes 308 ms under live load, mostly for listing refs. The gain came from asking git to filter by task id before parsing, and from caching per ref snapshot. Any language would need that change. I wrote it in Rust, but Rust is not what made it fast.
+The largest documented speedup I have is a git history scan. A cold call dropped from 2,195 ms to 832 ms. A memo hit still takes 308 ms under live load, mostly for listing refs. The gain came from asking git to filter before parsing, and from caching per ref snapshot. Any language would need that change. I wrote it in Rust, but Rust is not what made it fast.
 
-A second one: a lookup behind a status endpoint made about 1,000 connection checkouts per call. One query replaced them, and it measured 28 ms for 512 pairs on the live database. Again, an algorithm change.
+A second one: a lookup behind a status call made about 1,000 connection checkouts per call. One query replaced them, and it measured 28 ms for 512 pairs on the live database. Again, an algorithm change.
 
 The third is a memory change. Switching a service to mimalloc cut its peak memory by 23 percent and retired instructions by 35 percent, on a replay of several hundred sessions with identical output. That comparison is Rust against Rust, so it says nothing about Python.
 
 ## A miss
 
-A spreadsheet engine I built on a formula library missed most of its targets. On a 100,000-row sheet, a full recompute took about 15.6 seconds against a 1.5 second target. A single edit took about 1.6 seconds against 30 ms. Loading a snapshot took 19 ms, well inside its target.
+A calculation engine I built on a formula library missed most of its targets. On a 100,000-row sheet, a full recompute took about 15.6 seconds against a 1.5 second target. A single edit took about 1.6 seconds against 30 ms. Loading a snapshot took 19 ms, well inside its target.
 
 The pinned formula library has no partial-evaluation API, so every edit is a full pass over 400,000 formula cells. The regression gate only checks for a 20 percent slowdown against the last baseline, not against the target. I have not fixed it.
 
@@ -59,16 +59,16 @@ The borrow checker cost me some time, but not the kind that mattered. These did:
 - A blocking database mutex was taken on async worker threads. The server went silent five times in six hours, with 15 of 16 workers parked on the same lock. The fix was a bounded lock and a watchdog thread. The proper fix, a writer actor, is still pending.
 - A cache cleanup step on a shared CI runner pruned the cargo home that other jobs were using, so unrelated builds failed. I made the cache opt-in on shared runners.
 - `cargo test` runs every test in one process, so a test that changes an environment variable breaks its neighbours. The fix was to inject paths instead of changing the environment.
-- A parity audit of one port found 164 gaps between the Python reference and the Rust code. Some functions existed only for tests and were never wired into the real call path.
+- A parity audit of one port found well over a hundred gaps between the Python reference and the Rust code. Some functions existed only for tests and were never wired into the real call path.
 - Rust and SciPy floats differed by 1 to 3 ULPs in some summations. My tests use tolerances between 1e-9 and 1e-6, depending on the helper.
 - A bare `except` around the Rust calls hid failures. A logged warning fixed that, and I should have had it from the start.
 - In one repo the port was "essentially complete" but the wiring was not. Seven ported modules sat orphaned until an audit caught them.
 
 ## Timeline
 
-- **One tool:** a small Rust hooks binary in February, the server port in June, the CLI in July. The Python source tree, about 326 files, was deleted on 23 July. The PyO3 crates went on 24 July.
-- **Another:** the first Rust crate on 5 July, a dual-run harness on 9 July to compare outputs side by side, then a 28 July checkpoint that deleted the Python engine tree (548 files).
-- **A bridge package:** Python retired on 4 July in a commit titled "final Rust cutover".
+- **One tool:** a small Rust helper first, the server port a few months later, then the CLI. The Python source tree was deleted in one commit shortly after, and the PyO3 crates went the day after.
+- **Another:** the first Rust crate, then a dual-run harness to compare outputs side by side, then a checkpoint that deleted the whole Python engine tree.
+- **A bridge package:** Python retired in a commit I titled "final Rust cutover".
 
 ## What stayed in Python
 
@@ -87,6 +87,6 @@ These are my own opinions, not conclusions from the numbers above.
 - Never hold a blocking lock on an async worker thread.
 - Keep the Python reference until a parity audit has run, not until the port looks finished.
 
-## Summary
+## Where I am
 
 Rust made a few short processes much faster. It made some numeric loops faster until the boundary ate part of the gain. The biggest real wins were algorithm changes made during the port. I do not have a clean Python-versus-Rust number for a whole tool yet, and that is the next thing I want to measure.
