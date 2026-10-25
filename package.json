@@ -40,7 +40,8 @@
     "sync": "sh scripts/sync-dev-next.sh",
     "merge-pr": "sh scripts/merge-pr.sh",
     "test:hooks": "sh scripts/test-pre-push.sh",
-    "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs"
+    "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs",
+    "test:leaks-embedded": "node --test scripts/test-leak-embedded.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
