@@ -19,7 +19,8 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	// CPU tier (q8f16 on wasm): off until fp16 on wasm is verified. It returns NaN chunks for some inputs today.
 	window.__KOKORO_CPU = false;
 	// Offers the neural voice only where it can run: WebAssembly, BigInt64Array (int64 model inputs), DecompressionStream (lexicon).
-	window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
+	// A value set before this script runs wins (check:listen forces it to test the consent path); otherwise the switch decides.
+	if (window.__KOKORO_READY === undefined) window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
 </script>
 <listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase}>
 	<div class="listen-bar">
