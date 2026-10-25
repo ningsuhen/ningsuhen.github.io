@@ -31,7 +31,9 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. Then set the entry's status to `Live` (or `Coming soon`).
 - `pnpm sync`: local-only dev/next sync (see below). `pnpm merge-pr <n>`: squash-merge a PR, then sync.
 - `pnpm test:hooks`: tests the pre-push guard.
-- Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 4321) against the branch checked out in the project root. It only picks up merged work after `pnpm sync`. Log: `~/Library/Logs/ningsuhen-github-io/dev.log`.
+- `pnpm check:leaks`: scans the built site, `public/`, `src/content/`, `src/data/` and these docs for leaks (see CRITICAL "No leaks"). `node scripts/check-public-leaks.mjs <dir>` scans any export folder.
+- `scripts/leak-denylist.local.txt` (gitignored, never committed): optional extra private terms, one per line, read by `check:leaks`.
+- Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 4321) against the branch checked out in the project root. It only picks up merged work after `pnpm sync`. Its log is the LaunchAgent log file under the user's Library/Logs.
 
 ## Rules
 
@@ -41,8 +43,8 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - CRITICAL, posts: every post (new or substantially edited) must be in the owner's voice: run `/tmc-brainstorm` on it for title/outline/voice and apply it; learn the voice from the owner's own old posts, About page and `local-llms-getting-easier` (casual first person, short plain sentences, honest about what is unmeasured, no hype or AI filler, no emoji). Keep a claim table (claim | source | verified) and delete unverified claims; never invent personal facts; never name private projects, hosts, paths or employers (leak-scan before merging). First-person or sensitive posts are merged only after the owner confirms the voice.
 - In Markdown, escape every literal dollar sign as `\$` (math renderer).
 - Card thumbnails: every published post (`draft: false`) must have a purpose-made square `thumbnail` (800x800 `thumb.webp`, ONE focal element, no text, under 60 KB). If the post has no suitable image, generate one from its content (AI image tool if available, else a programmatic illustration). Never auto-crop covers or body images. `pnpm check:thumbnails` fails for a missing or non-conforming thumbnail; the build warns about the same posts. `public/images/default-thumbnail.webp` is only the fallback for drafts.
-- Before publishing, redact internal host names (e.g. `*.mac-mini-eby`) from posts and reports.
-- The check must pass before a PR: `pnpm build && CHROME_PATH=$(fd -t f 'chrome-headless-shell$' ~/Library/Caches/ms-playwright -d 4 | tail -1) pnpm check:standalone`.
+- CRITICAL, no leaks: nothing published (posts, reports, experiments, exported pages, images, build output, commit messages, PR text) may contain local absolute or home-relative paths, `../` links that escape the site, machine, user or host names, internal URLs or ports, IP addresses, personal email (commits use the GitHub noreply address), tokens or keys, private project, employer or agreement names, or image metadata (EXIF, XMP, text chunks). `pnpm check:leaks` must pass (CI runs it) and agents run it before every PR. Exported pages from other projects are scanned before merge. History-only leaks are reported to the owner, never rewritten without an explicit go.
+- The check must pass before a PR: `pnpm build && CHROME_PATH=<chrome-headless-shell path> pnpm check:standalone`.
 - Shell: `rg`, `fd`, `rm -f`, never `git reset --hard`, never `--no-verify`.
 
 ## Git and PR flow
