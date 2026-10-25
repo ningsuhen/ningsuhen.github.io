@@ -362,4 +362,4 @@ function main() {
 // Run only when invoked directly, so the decoder can be imported by the unit test without scanning the repo.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
 
-export { decodePayload, scanEmbedded, scanLines, B64_BLOBS };
+export { decodePayload, scanEmbedded, scanLines, scanFile, B64_BLOBS };

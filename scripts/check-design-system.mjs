@@ -349,6 +349,21 @@ const probeStructure = (canon) => {
 			buttons: el.querySelectorAll("button").length,
 			hasValue: !!el.querySelector(".rd-stepper__value"),
 		})),
+		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
+		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
+		// screen readers and most users.
+		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
+			const id = el.id;
+			const labelledBy = el.getAttribute("aria-labelledby");
+			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
+			return {
+				labelled:
+					hasFor ||
+					!!el.getAttribute("aria-label") ||
+					!!labelledBy ||
+					!!el.closest("label"),
+			};
+		}),
 		// Fullscreen: each data-rd=fullscreen container must carry an operable, accessible toggle
 		// (a [data-rd-fullscreen-toggle] button with aria-pressed). The container's focusability
 		// (tabindex=-1, for wheel-only-after-focus) is added by rd.js at mount, so it is not checked here.
