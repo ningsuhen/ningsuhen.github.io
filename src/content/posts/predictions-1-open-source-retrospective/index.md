@@ -8,17 +8,25 @@ category: Thoughts
 draft: false
 ---
 
+<!-- owner:scene Why start a Predictions series now? The opening says what the series is, not what made you start it. -->
+
 This is the first post in a series I'm calling Predictions. Each one states a prediction or an idea, dates it, and says how I'll check it later. Every post in the series gets the `Predictions` tag, and I mark predictions as predictions and opinions as opinions.
+
+<!-- owner:confirm The original said this first one "is a look back"; the rewrite says it "starts with a look back" because the post also makes forward predictions. Is that change OK? -->
 
 This first one starts with a look back.
 
 ## What I thought would happen
+
+<!-- owner:fact When did you first have the open-source rewrite idea, and which software was it? The post only says "some of the software I use". -->
 
 I thought about writing open-source versions of some of the software I use. It stayed a thought, and I never got to a first version.
 
 ## What happened instead
 
 A project called StoryTold came out. It's a GitHub organization of open-source Rust apps, and several are described as clean-room rewrites of commercial programs: WordCraft for Microsoft Word, DeckCraft for PowerPoint, GridCraft for Excel-style spreadsheets, SoundCraft for Pro Tools and CADCraft for AutoCAD-style drafting ([storytold repos](https://github.com/storytold)).
+
+<!-- owner:fact PhotoCraft (72,393 stars) is cited but is not in the list of rewrites above. What does PhotoCraft rewrite, if you know? -->
 
 The first app repositories were created on 30 September 2026, and the Word, PowerPoint, spreadsheet and audio apps on 7 October 2026 ([GitHub API](https://api.github.com/orgs/storytold/repos)). When I read the API on 24 October, PhotoCraft had 72,393 stars. The [WordCraft README](https://github.com/storytold/wordcraft) says it is in alpha, dual-licensed under MIT or Apache-2.0, and "built from public specifications and observation".
 
@@ -29,6 +37,8 @@ I don't know how close this is to what I had in mind, and I don't claim it came 
 Because of my full-time job and the agreements that come with it, I can't publish open-source software right now. That's the whole reason.
 
 ## What I got right so far, and what I'm not sure about
+
+<!-- owner:fact When and where did you predict that Rust would become a preferred language for AI? A date or a link would make the retrospective checkable. -->
 
 I predicted that Rust would become a preferred language for AI. I think that's partly right.
 

@@ -8,6 +8,8 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
+<!-- owner:scene Why did you build this simulation? The post opens with what it is, not why. One true line ("I wanted to see X") would carry the opening. -->
+
 I built a simulation of the US economy with an AI investment boom in it. It's a stock-flow-consistent model. I ran 50,000 paths, each one run of the model from 2026Q3 to 2031Q3, and exported 10,000 of them. The full report is at [/research/ai-economy/](/research/ai-economy/). Data is as of 2026-10-17.
 
 This is not a forecast. The model hasn't been backtested or checked against out-of-sample history, and the last section lists what I don't trust yet.
@@ -20,7 +22,11 @@ The headline odds below are the share of exported paths where each event starts 
 
 In the model, a recession within five years is more likely than not. Recession odds in any quarter are 9% at 6 months, 23% at 12 months, 43% at 24 months and 80% at 60 months. Over 20 quarters the model's long run is about 80%, while history from 1953 to 2026 gives 74.9% under the same rule (two negative quarters or a jump in unemployment). So the model runs a few points above history.
 
+<!-- owner:question Did any result surprise you? For example the AI boom being a smaller lever than the yield curve, or the model sitting below Polymarket. One honest reaction, only if you had one. -->
+
 The AI boom is not the biggest lever. A flatter yield curve adds about 8 points to the odds of entering a recession. The report gives the AI boom 4.3 points in its chart and about 5 in its text.
+
+<!-- owner:confirm Is "watched the 24-month odds move from their 43% baseline" a fair description of how you ran the sensitivity sweep? -->
 
 I set each parameter to its low and high bound, one at a time, and watched the 24-month odds move from their 43% baseline. The top three drivers were baseline recession risk (29% to 69%), how strongly credit spreads raise recession risk (29% to 68%) and recession-risk calibration (35% to 54%). None is AI. The answer depends more on my assumptions than on the boom.
 

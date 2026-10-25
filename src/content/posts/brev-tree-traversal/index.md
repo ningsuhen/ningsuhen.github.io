@@ -9,13 +9,19 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
+<!-- owner:scene Why did you build the replay page? The opening is an invitation, not a reason. One true sentence from you would fix that. -->
+
 Here you can watch laya, the 400M encoder in my Brev project, walk a decision tree on the Banking77 test set, one question at a time. It is a replay of one thing I measured. [Open the experiment](/playground/brev-tree-traversal/).
 
 ## The tree
 
 The tree has 23 nodes and 77 intents. The root asks which of 7 groups a message belongs to: payments, cards, account and so on. Each group asks one more question, down to one intent. At each node laya reads the option names and a short criterion for each, scores every option, and follows the highest.
 
+<!-- owner:fact This paragraph contradicts itself: "I wrote the tree myself" and "A separate model, gpt-oss-120b, did the writing." Did you write the tree, or did gpt-oss-120b write it from your prompt? Rewrite the paragraph to say which. -->
+
 I wrote the tree myself, from the label names and five training examples per label. A separate model, gpt-oss-120b, did the writing, and it never saw a test message.
+
+<!-- owner:question When the v5b export lands, should this post describe the in-browser speed test from PR #134? This section is unchanged for now. -->
 
 ## How to use the page
 

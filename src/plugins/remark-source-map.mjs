@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { parseOwnerMarkers } from "./owner-markers.mjs";
 
 /**
  * Source map for in-place editing (the browser extension's post editor reads it).
@@ -82,6 +83,8 @@ export function remarkSourceMap({ root }) {
 		file.data.astro.frontmatter.editSource = {
 			path: path.relative(root, file.path).split(path.sep).join("/"),
 			blob,
+			// Count only (the editor reads the markers from the source); no marker text is shipped.
+			markers: parseOwnerMarkers(text).length,
 		};
 	};
 }

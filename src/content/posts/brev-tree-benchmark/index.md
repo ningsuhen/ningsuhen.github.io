@@ -8,6 +8,8 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
+<!-- owner:scene Why did you start building Brev, or what made you want a small local router in the first place? The post gives only the research question. -->
+
 I have been building Brev. Its small model is laya, a 400M encoder that walks a decision tree and reads only the criteria on the path it takes. I wanted to know if the tree could hold the knowledge, so laya could match a 27B model given a short instruction, without the 27B's latency.
 
 On its own, it couldn't. The tree lost by a lot. What worked was a chain of cheaper steps in front of the big model.
@@ -15,6 +17,8 @@ On its own, it couldn't. The tree lost by a lot. What worked was a chain of chea
 I tested on Banking77 (77 intents), then on 196 intents, then on a 478-intent set, and kept a ledger of every hypothesis, the failed ones too. The full report is [here](/research/brev-tree-benchmark/).
 
 ![Top results table from the Brev report: hypotheses with accuracy, p50 and p95 latency, and status](./top-results.webp)
+
+<!-- owner:voice The seven numbered claims became section headings. Keep the headings, or bring the numbered list back? -->
 
 ## The chain I ended with
 
@@ -27,6 +31,8 @@ Measured live, end to end, the chain got 93.3% on the 300 rows. The 27B scored 9
 ## The tree walk is fast, but not good
 
 laya's greedy walk takes 52 ms at p50 and gets 47.0% on Banking77. The 27B with a short instruction gets 77.8% at 306 ms. That is 30.8 points behind (95% CI -32.8 to -28.9).
+
+<!-- owner:question Was anything here a surprise to you, for example the shuffled-criteria 8.9%, or the TF-IDF head beating the pipeline? One honest reaction would help the voice. -->
 
 The criteria carry the knowledge. Names only get 36.8%, opaque ids plus criteria 40.6%, and both 47.0%. Shuffle the criteria between siblings and it falls to 8.9%. laya follows the text, even when the text is wrong.
 
