@@ -1,0 +1,25 @@
+/* rd-choice: a selectable option — a radio (single) or checkbox (multi) row. A <label> wrapping a
+   native input and its text, so the input is associated with its label for free. The native control
+   keeps its shape; accent-color tints it with the design-system accent. min-height floors at the
+   24px tap target. Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-choice {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-2);
+	min-height: 1.5rem;
+	padding: var(--rd-space-1) var(--rd-space-2);
+	border-radius: var(--rd-radius-sm);
+	cursor: pointer;
+}
+.rd-choice:hover { background: var(--rd-plain-hover); }
+.rd-choice input {
+	width: 1em;
+	height: 1em;
+	margin: 0;
+	accent-color: var(--rd-accent);
+}
+.rd-choice:has(input:disabled) {
+	color: var(--rd-text-muted);
+	cursor: default;
+}

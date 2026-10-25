@@ -78,6 +78,7 @@ const RULES = {
 	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
 	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
 	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
+	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
 	"fullscreen-toggle": "every data-rd=fullscreen container has a [data-rd-fullscreen-toggle] button with aria-pressed and is focusable (wheel-only-after-focus)",
 };
 
@@ -320,6 +321,26 @@ const probeStructure = (canon) => {
 		filters: [...document.querySelectorAll(".rd-filter")].map((el) => ({
 			operable: el.matches("button") || el.getAttribute("role") === "button",
 			pressed: el.hasAttribute("aria-pressed"),
+		})),
+		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
+		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
+		// screen readers and most users.
+		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
+			const id = el.id;
+			const labelledBy = el.getAttribute("aria-labelledby");
+			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
+			return {
+				labelled:
+					hasFor ||
+					!!el.getAttribute("aria-label") ||
+					!!labelledBy ||
+					!!el.closest("label"),
+			};
+		}),
+		// Choices: every .rd-choice wraps a native <input> (radio/checkbox). A div styled as a
+		// choice without a real input is not keyboard-operable and breaks screen readers.
+		choices: [...document.querySelectorAll(".rd-choice")].map((el) => ({
+			hasInput: !!el.querySelector("input[type=radio], input[type=checkbox]"),
 		})),
 		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
 		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
@@ -768,6 +789,7 @@ await Promise.all(pages.map(async (rel) => {
 				[s.filters.some((f) => !f.operable), "filter", "a .rd-filter is not a keyboard-operable <button> (or role=button)"],
 				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
 				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
+				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
 				[s.fullscreen.some((f) => !f.hasToggle), "fullscreen-toggle", `a data-rd=fullscreen container has no [data-rd-fullscreen-toggle]`],
 				[s.fullscreen.some((f) => f.hasToggle && !f.isButton), "fullscreen-toggle", "a fullscreen toggle is not a button (use <button> or role=button)"],
 				[s.fullscreen.some((f) => f.hasToggle && !f.ariaPressed), "fullscreen-toggle", "a fullscreen toggle lacks aria-pressed"],

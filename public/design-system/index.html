@@ -354,6 +354,13 @@
 <div class="rd-field"><label class="rd-field__label" for="f-bad">Value</label><input class="rd-input" id="f-bad" type="text" aria-invalid="true" value="12.5"><p class="rd-field__error">Must be a whole number.</p></div>
 </div>
 
+<header class="rd-section__head" id="choice"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Choice</h2></header>
+<p>A <code>.rd-choice</code> is a selectable option — a radio (pick one) or a checkbox (pick many). It is a <code>&lt;label&gt;</code> wrapping a native input and its text, so the input is associated with its label for free and stays keyboard-operable and screen-reader-friendly. The native control keeps its shape; <code>accent-color</code> tints it with the design-system accent. The <code>min-height</code> floors at the 24px tap target.</p>
+<div class="rd-card">
+<p><label class="rd-choice"><input type="radio" name="c-density" checked>Compact</label> <label class="rd-choice"><input type="radio" name="c-density">Comfortable</label> <label class="rd-choice"><input type="radio" name="c-density">Dense</label></p>
+<p><label class="rd-choice"><input type="checkbox" checked>Validated</label> <label class="rd-choice"><input type="checkbox">Partial</label> <label class="rd-choice"><input type="checkbox" disabled>Locked</label></p>
+</div>
+
 <header class="rd-section__head" id="table"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg></span><h2>Table</h2></header>
 <div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Outcome</th><th class="rd-num">12m</th><th class="rd-num">24m</th><th class="rd-num">60m</th></tr></thead>
 <tbody><tr><td>Recession, any quarter</td><td class="rd-num">23%</td><td class="rd-num">43%</td><td class="rd-num">80%</td></tr>
