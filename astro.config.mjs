@@ -183,6 +183,8 @@ export default defineConfig({
 		],
 	},
 	vite: {
+		// Source maps would publish build-machine source paths; keep them off in every build.
+		build: { sourcemap: false },
 		server: {
 			// Only `pnpm dev:agent` (npm_lifecycle_event) may fall back to the next free port.
 			strictPort: process.env.npm_lifecycle_event !== "dev:agent",

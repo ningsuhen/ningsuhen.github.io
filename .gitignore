@@ -32,3 +32,6 @@ yarn.lock
 
 # scratch / temp
 .tmp/
+
+# private leak terms for check:leaks (never commit)
+scripts/leak-denylist.local.txt

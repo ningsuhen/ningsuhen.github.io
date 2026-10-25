@@ -21,6 +21,7 @@
     "check:standalone": "node scripts/check-standalone-pages.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
+    "check:leaks": "node scripts/check-public-leaks.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "check:listen": "node scripts/check-listen.mjs",
     "new-experiment": "node scripts/new-experiment.mjs",
