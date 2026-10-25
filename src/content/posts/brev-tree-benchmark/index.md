@@ -39,13 +39,13 @@ The 27B with every rule in the prompt: 90.4% at 685 ms p50. The best 27B cascade
 ![Setup table at 196 intents: 27B with the whole knowledge base in the prompt at 90.4% and 685 ms; laya cascades at 75.4% to 80.0%](./scaling-196.webp)
 
 **5. A small model is fast alone, and slower under load.**
-The 4B with every rule in the prompt, about 18k tokens, gets 77.1% at 159 ms p50 in the 196-intent run. Two separate timing runs use a cached rules prompt: 447 ms p50 with 4 requests in flight, and 938 ms with 8. Those timing runs have no accuracy numbers. The cache hit rate in them stayed at 99.6 to 99.9%.
+The 4B with every rule in the prompt, about 18.8k tokens, gets 77.1% at 159 ms median in the 196-intent run. That run was served from llama.cpp's prefix cache: 99.9% of prompt tokens were cached, one request at a time. I didn't measure it without the cache. Two timing runs on the same cache, with no accuracy numbers, take 447 ms with 4 requests in flight and 938 ms with 8. The cache hit rate stayed at 99.6 to 99.9%, so the slowdown is queueing, not cache loss.
 
 **6. Cache order matters.**
 Appending a rule invalidated 2% of the cache (first request 589 ms). Alphabetical order invalidated about 51%, and the first request took 5.5 s. Inserting at the front invalidated 99.8%, and the first request took 9.4 s. Accuracy did not change.
 
 **7. The boring part carries it.**
-A TF-IDF character n-gram head in front of the pipeline answers about 65% of rows locally at 97% precision. It cuts hosted-classifier spend by about half. The accuracy goes up too: 91.3% against 88.5% for my headline pipeline (paired CI +1.7 to +3.9 points). Its p50 is about 8 ms, against 219 ms.
+A TF-IDF character n-gram head in front of the pipeline answers about 65% of rows locally at 97% precision. It cuts hosted-classifier spend by 56% at k=50, from \$0.29 to \$0.13 per 1k. The accuracy goes up too: 91.3% against 88.5% for my headline pipeline (paired CI +1.7 to +3.9 points). Its p50 is about 8 ms, against 219 ms.
 
 The report's short answer: the headline pipeline holds up, and a cheap trained head in front improves both accuracy and cost.
 
@@ -60,7 +60,7 @@ Learning new intents from a few examples is the weak part.
 - The example labels in the 4B stage are simulated 27B-style noise, not live 27B output.
 - Banking77 is public, so the models may have seen it. The control with opaque ids scored 81.2% vs 81.9% with real names, so the names do not explain the 27B's lead. The 478-intent set includes CLINC150 labels, which are public too.
 - The 27B runs on a shared endpoint, so its latency includes queueing. The 4B and laya run on one RTX 4060.
-- The 27B's latency is 685 ms p50 in the 196-intent run. The report also shows 858 ms once, in the headline table, with no run named.
+- The 27B's latency differs between runs. The headline 196-intent run gives 685 ms p50. An earlier, separate run (H93) gave 857 ms.
 - The learn-as-you-go result uses a simulated teacher. A strong sign, not proof.
 - The "top results" table is curated by hand. The ledger is the source of truth.
 
