@@ -2,22 +2,22 @@
 
 @layer components {
     /* Keyboard focus indicator for interactive elements (mouse clicks don't trigger it).
-       Matches the --primary focus rings already used by LicenseNote and the listen player. */
+       Accent ink (--btn-content, like LicenseNote): 3:1+ against card and page; --primary is only 2.3-2.7:1 in light. */
     a:focus-visible,
     button:focus-visible,
     summary:focus-visible,
     [tabindex]:focus-visible {
-        @apply outline-2 outline-[var(--primary)] outline-offset-2;
+        @apply outline-2 outline-[var(--btn-content)] outline-offset-2;
     }
 
     /* Keyboard-only skip link: off-screen until focused, then pinned above the navbar. */
     .skip-link {
         @apply fixed top-2 left-2 z-[100] px-4 py-2 rounded-lg font-bold
-        bg-[var(--card-bg)] text-[var(--primary)] shadow-lg
+        bg-[var(--card-bg)] text-[var(--btn-content)] shadow-lg
         transform -translate-y-[200%] transition;
     }
     .skip-link:focus {
-        @apply translate-y-0 outline-2 outline-[var(--primary)] outline-offset-2;
+        @apply translate-y-0 outline-2 outline-[var(--btn-content)] outline-offset-2;
     }
 
     .card-base {
