@@ -5,6 +5,7 @@ import Navbar from "@components/Navbar.astro";
 import SideBar from "@components/widget/SideBar.astro";
 import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon/components";
+import Breadcrumb, { type Crumb } from "../components/Breadcrumb.astro";
 import ImageWrapper from "../components/misc/ImageWrapper.astro";
 import TOC from "../components/widget/TOC.astro";
 import { siteConfig } from "../config";
@@ -28,6 +29,8 @@ interface Props {
 	// Set when the page renders its own visible <h1> (research, experiments, license, 404), so the
 	// shared screen-reader heading below is not duplicated.
 	hasOwnHeading?: boolean;
+	// Breadcrumb trail for this page (the last item is the current page). Omit it for pages without one.
+	breadcrumb?: Crumb[];
 }
 
 const {
@@ -40,6 +43,7 @@ const {
 	headings = [],
 	ogImage,
 	hasOwnHeading = false,
+	breadcrumb,
 } = Astro.props;
 const hasBannerCredit =
 	siteConfig.banner.enable && siteConfig.banner.credit.enable;
@@ -97,6 +101,7 @@ const mainPanelTop = siteConfig.banner.enable
                          so without this the page has no top-level heading and content starts at level 2.
                          Inside the Swup container so it updates on SPA navigation. -->
                     {!hasOwnHeading && <h1 class="sr-only">{title || siteConfig.title}</h1>}
+                    {breadcrumb && <Breadcrumb items={breadcrumb} />}
                     <!-- the overflow-hidden here prevent long text break the layout-->
                     <!-- make id different from windows.swup global property -->
                     <slot></slot>
