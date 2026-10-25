@@ -337,11 +337,12 @@ for (const rel of barPages) {
 		const s = await page.evaluate(() => {
 			const bar = document.querySelector(".rd-expnav");
 			const host = document.querySelector("div[data-site-navbar]");
-			return { top: bar.getBoundingClientRect().top, navBottom: host.shadowRoot.querySelector("header").getBoundingClientRect().bottom, scrollY: window.scrollY };
+			const hd = host.shadowRoot.querySelector("header").getBoundingClientRect();
+			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY, ua: navigator.userAgent.slice(0, 80) };
 		});
 		if (s.scrollY < 799) failures.push(`${tag}: page too short to scroll 800px (reached ${s.scrollY})`);
 		else if (Math.abs(s.top) > 0.5) failures.push(`${tag}: stuck section bar at top ${s.top.toFixed(1)}px, expected 0`);
-		else if (s.navBottom > 0.5) failures.push(`${tag}: navbar card still visible above the stuck section bar (bottom ${s.navBottom.toFixed(1)}px)`);
+		else if (s.navBottom > 0.5) failures.push(`${tag}: navbar card still visible above the stuck section bar (navbar bottom ${s.navBottom.toFixed(1)}px, scrollY ${s.scrollY}, bar top ${s.top.toFixed(1)}px, navbar top ${s.navTop.toFixed(1)}px, ${s.ua})`);
 		await ctx.close();
 	}
 }
