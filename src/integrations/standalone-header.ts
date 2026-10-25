@@ -64,7 +64,7 @@ export default function standaloneHeader(): AstroIntegration {
 				// folders (page and data) are removed here, before pagefind indexes the output.
 				const drafts = draftHrefs();
 				for (const href of drafts) {
-					if (!/^\/(research|experiments|ideas)\/[^/]+\/$/.test(href)) throw new Error(`Draft href is not a standalone page folder: ${href}`);
+					if (!/^\/(research|playground|ideas)\/[^/]+\/$/.test(href)) throw new Error(`Draft href is not a standalone page folder: ${href}`);
 					await rm(path.join(outDir, href), { recursive: true, force: true });
 				}
 				for (const rel of await htmlFiles(publicDir)) {

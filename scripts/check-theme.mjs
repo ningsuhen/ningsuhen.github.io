@@ -11,8 +11,8 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 
 const DIST = path.resolve(process.env.THEME_DIST ?? "dist");
-const MAIN = ["/archive/", "/posts/ai-boom-trajectories/", "/research/", "/experiments/", "/ideas/"];
-const STANDALONE = ["/research/ai-economy/", "/research/brev-tree-benchmark/", "/experiments/brev-tree-traversal/", "/design-system/"];
+const MAIN = ["/archive/", "/posts/ai-boom-trajectories/", "/research/", "/playground/", "/ideas/"];
+const STANDALONE = ["/research/ai-economy/", "/research/brev-tree-benchmark/", "/playground/brev-tree-traversal/", "/design-system/"];
 const SEEDS = [null, "garbage", "light", "dark", "auto"];
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
 

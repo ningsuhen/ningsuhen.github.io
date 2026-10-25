@@ -11,7 +11,7 @@ import { getSortedPosts, postThumbnailUrl } from "@utils/content-utils";
 import { getPostUrlBySlug } from "@utils/url-utils";
 import { render } from "astro:content";
 import { Icon } from "astro-icon/components";
-import { licenseConfig } from "src/config";
+import { licenseConfig, sourceRepo } from "src/config";
 import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import PostMetadata from "../../components/PostMeta.astro";
 import { profileConfig, siteConfig } from "../../config";
@@ -29,16 +29,16 @@ const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 
 const { remarkPluginFrontmatter } = await render(entry);
-const licensed = ["Research", "Experiment", "Idea"].some((t) => entry.data.tags.includes(t));
+const licensed = ["Research", "Playground", "Idea"].some((t) => entry.data.tags.includes(t));
 
 // Card thumbnail as an absolute URL: the og:image, twitter:image and JSON-LD image all point at it.
 const thumbnailUrl = postThumbnailUrl(entry, Astro.site!.href);
 
-// Breadcrumb section: the post's category (else its tag) picks Research, Experiments or Ideas. Other posts sit under Archive,
+// Breadcrumb section: the post's category (else its tag) picks Research, Playground or Ideas. Other posts sit under Archive,
 // the site's list of every post (there is no category page).
 const SECTIONS = [
 	{ key: "Research", name: "Research", url: "/research/" },
-	{ key: "Experiment", name: "Experiments", url: "/experiments/" },
+	{ key: "Playground", name: "Playground", url: "/playground/" },
 	{ key: "Idea", name: "Ideas", url: "/ideas/" },
 ];
 const category = entry.data.category?.trim() ?? "";
@@ -48,6 +48,11 @@ const breadcrumb = [
 	section ?? { name: i18n(I18nKey.archive), url: "/archive/" },
 	{ name: entry.data.title, url: getPostUrlBySlug(entry.id) },
 ];
+
+// In-place editor contract: which file and blob this page was built from (src/plugins/remark-source-map.mjs).
+const editSource = remarkPluginFrontmatter.editSource
+	? JSON.stringify({ v: 1, ...sourceRepo, ...remarkPluginFrontmatter.editSource })
+	: null;
 
 const jsonLd = {
 	"@context": "https://schema.org",
@@ -69,6 +74,7 @@ const jsonLd = {
 ---
 <MainGridLayout license={licensed} banner={entry.data.image}title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings} ogImage={thumbnailUrl} breadcrumb={breadcrumb}>
     <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+    {editSource && <meta slot="head" name="edit-source" content={editSource} />}
     <div class="flex w-full rounded-[var(--radius-large)] overflow-clip relative mb-4">
         <div id="post-container" class:list={["card-base !overflow-clip z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
             {}

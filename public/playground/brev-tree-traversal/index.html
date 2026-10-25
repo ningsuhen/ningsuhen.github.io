@@ -6,7 +6,7 @@
 <meta name="ds-allow" content="rail-type: the shared rail uses the main TOC 14px entry text; the check reads the main TOC 12px label. Design-system decision.">
 <title>Brev tree traversal · created 2026-10-24 · updated 2026-10-25</title>
 <meta name="description" content="Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, see how that walk scores against flat rules and a 27B model, and time the same encoder on your own GPU in the browser.">
-<!-- Experiment page with three tabs: Walk (a replay of a recorded run), Speed test (live, in the visitor's browser), Caveats & sources.
+<!-- Playground page with three tabs: Walk (a replay of a recorded run), Speed test (live, in the visitor's browser), Caveats & sources.
      The site build injects the navbar, light/dark toggle and licence footer; none are hand-rolled here.
      Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Colours only via --rd-*.
      Width: rd-tabbed + rd-container--wide (the navbar's width, 73rem): the walker uses two columns (node card left, path and
@@ -124,7 +124,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
 </style>
 </head>
 <body class="rd-body">
-<nav class="rd-expnav" role="tablist" aria-label="Experiment sections">
+<nav class="rd-expnav" role="tablist" aria-label="Playground sections">
 <a role="tab" id="tab-walk" href="?tab=walk" aria-controls="walk" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-route"/></svg>Walk</a>
 <a role="tab" id="tab-speed" href="?tab=speed" aria-controls="speed" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg>Speed test</a>
 <a role="tab" id="tab-about" href="?tab=about" aria-controls="about" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Caveats &amp; sources</a>
@@ -168,7 +168,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
 <!-- rd-tabbed + rd-container--wide: the walker, compare table, failure strip and speed tables need the navbar's width; prose keeps --rd-measure. -->
 <main class="rd-tabbed rd-container--wide rd-prose">
   <header class="rd-hero">
-    <p class="rd-eyebrow">Experiment · brev-tree-traversal</p>
+    <p class="rd-eyebrow">Playground · brev-tree-traversal</p>
     <h1>Brev tree traversal<span class="tt-stamp"> · created 2026-10-24 · updated 2026-10-25</span></h1>
     <p class="rd-hero__lede">Pick a customer message and watch a 400M encoder (laya) walk a 23-node, 7-group intent tree on Banking77, one question at a time; see how that walk scores against flat rules and a 27B model, and why it fails when it does. Then time the same encoder on your own GPU, in this browser.</p>
     <p class="rd-hero__meta">
@@ -1378,7 +1378,7 @@ function updateCard() {
   const lr = L && L.runs.length ? L.runs : null;
   if (lr) {
     const dps = median(lr.map((x) => x.dps)), p50 = median(lr.map((x) => x.p50)), p95 = median(lr.map((x) => x.p95)), wp = median(lr.map((x) => x.walkP50)), same = median(lr.map((x) => x.same));
-    lines.push('Brev tree traversal, speed test (ningsuhen.github.io/experiments/brev-tree-traversal/?tab=speed), 2026-10-25 build');
+    lines.push('Brev tree traversal, speed test (ningsuhen.github.io/playground/brev-tree-traversal/?tab=speed), 2026-10-25 build');
     lines.push('Browser: ' + browserName() + '; WebGPU adapter: ' + adapterName(dev) + (dev && dev.software ? ' (SOFTWARE RENDERER)' : ''));
     lines.push('Memory reported: ' + (dev && dev.mem != null ? dev.mem + ' GB' : 'n/a') + '; threads: ' + (dev && dev.cores != null ? dev.cores : 'n/a') + '; shader-f16: ' + (dev && dev.f16 ? 'yes' : 'no'));
     lines.push('laya fp16 (' + (L.cpu ? 'CPU wasm' : 'WebGPU') + '), batch 1, 50 decisions x ' + lr.length + ' runs: ' + f1(dps) + ' decisions/s, per-pass p50 ' + f1(p50) + ' ms, p95 ' + f1(p95) + ' ms, walk p50 ' + f1(wp) + ' ms (mean depth ' + depth + ')');

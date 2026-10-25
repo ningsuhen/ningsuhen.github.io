@@ -3,7 +3,7 @@ import { esc } from "./util";
 
 export const LICENSE_MARKER = "data-site-license";
 
-// Copyright footer for every standalone page: research, experiments and ideas here may not be reused without permission.
+// Copyright footer for every standalone page: research, playground demos and ideas here may not be reused without permission.
 // Mounted on <html> after <body> (like the navbar), so page styling can't offset or hide it.
 export function buildLicenseScript(base: string): string {
 	const hue = siteConfig.themeColor.hue;
@@ -26,7 +26,7 @@ export function buildLicenseScript(base: string): string {
 	const markup =
 		`<style>${css}</style><footer>` +
 		`<p class="copy">© ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</p>` +
-		`<p>Research, experiments and ideas on this site may not be reused, copied, republished or used to train AI models without my written permission.</p>` +
+		`<p>Research, playground demos and ideas on this site may not be reused, copied, republished or used to train AI models without my written permission.</p>` +
 		`<p>Short quotes with attribution and a link are fine.</p>` +
 		`<p class="links"><a href="${esc(prefix)}/license/">${icon}License</a> &middot; <a href="${esc(prefix)}/rss.xml">RSS</a> &middot; <a href="${esc(prefix)}/sitemap-index.xml">Sitemap</a></p>` +
 		`<p class="power">Powered by <a href="https://astro.build" target="_blank" rel="noopener">Astro</a> &amp; <a href="https://github.com/saicaca/fuwari" target="_blank" rel="noopener">Fuwari</a></p></footer>`;

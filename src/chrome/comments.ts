@@ -2,8 +2,8 @@ import { commentConfig } from "../config";
 
 export const COMMENTS_MARKER = "data-site-comments";
 export const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
-// Reports, live experiments and ideas get comments (one folder deep, e.g. /research/<slug>/). The design-system pages don't.
-export const COMMENTS_PAGE = /^\/(research|experiments|ideas)\/[^/]+\/$/;
+// Reports, playground demos and ideas get comments (one folder deep, e.g. /research/<slug>/). The design-system pages don't.
+export const COMMENTS_PAGE = /^\/(research|playground|ideas)\/[^/]+\/$/;
 
 const COMMENTS_CSS = [
 	".rd-comments{box-sizing:border-box;width:100%;max-width:var(--rd-content-width,54.5rem);margin:0 auto;padding:var(--rd-gap-section,2rem) var(--rd-space-4,1rem);font:var(--rd-fs-base,.875rem)/var(--rd-lh,1.5) var(--rd-font,Roboto,system-ui,sans-serif);color:var(--rd-text)}",
@@ -23,7 +23,7 @@ const COMMENTS_CSS = [
 	// No animation here, so nothing needs a reduced-motion rule.
 ].join("");
 
-// Comments for reports, live experiments and ideas: the same giscus repo and category as the posts (src/config.ts).
+// Comments for reports, playground demos and ideas: the same giscus repo and category as the posts (src/config.ts).
 // Nothing reaches giscus.app until the reader presses "Load comments"; then the client script is added, like the posts' one.
 export function commentsFor(html: string, urlPath: string): string {
 	if (!COMMENTS_PAGE.test(urlPath) || html.includes(COMMENTS_MARKER) || COMMENTS_OPT_OUT.test(html)) return "";

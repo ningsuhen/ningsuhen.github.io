@@ -1,4 +1,4 @@
-// Design-system conformance for standalone pages (public/research/**, public/experiments/**, public/ideas/**), measured in a real browser
+// Design-system conformance for standalone pages (public/research/**, public/playground/**, public/ideas/**), measured in a real browser
 // over the built dist. Every page is held to the research design system (public/design-system/index.html, "Conformance")
 // and to the main site's post page, which is rendered in the same run at 1280/1440/1920, light and dark.
 // Run after `pnpm build`:  pnpm check:design-system  (CHROME_PATH, or `pnpm exec playwright-core install chromium`).
@@ -11,7 +11,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
-import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
+import { standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -77,15 +77,7 @@ const RULES = {
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
 };
 
-function htmlPages(dir = "") {
-	return readdirSync(path.join(PUBLIC, dir), { withFileTypes: true }).flatMap((e) => {
-		const rel = path.join(dir, e.name);
-		if (e.isDirectory()) return htmlPages(rel);
-		return e.name.endsWith(".html") ? [rel] : [];
-	});
-}
-const drafts = draftHrefs();
-const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
+const pages = standalonePages({ sections: SECTIONS, depth: 3 });
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));

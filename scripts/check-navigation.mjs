@@ -13,18 +13,18 @@ const VIEWPORTS = [
 	{ width: 1440, height: 900 },
 	{ width: 375, height: 800 },
 ];
-const SITE = ["/", "/archive/", "/about/", "/research/", "/experiments/", "/posts/ai-boom-trajectories/"];
+const SITE = ["/", "/archive/", "/about/", "/research/", "/playground/", "/posts/ai-boom-trajectories/"];
 // Standalone pages that a list page links to: public/<section>/<slug>/index.html with a Live (or Coming soon-free) entry.
 // Found from the data files, so a new report is covered without editing this script.
-const STANDALONE = ["research", "experiments"].flatMap((section) => {
+const STANDALONE = ["research", "playground"].flatMap((section) => {
 	const entries = JSON.parse(readFileSync(path.resolve("src/data", `${section}.json`), "utf8")).items;
 	return entries
 		.filter((e) => !["draft", "coming soon"].includes(e.status.toLowerCase()))
 		.map((e) => e.href)
 		.filter((href) => existsSync(path.resolve("public", href.replace(/^\/|\/$/g, ""), "index.html")));
 });
-const LIST_OF = (page) => (page.startsWith("/research/") ? "/research/" : "/experiments/");
-const NAV = ["/", "/archive/", "/about/", "/research/", "/experiments/"];
+const LIST_OF = (page) => (page.startsWith("/research/") ? "/research/" : "/playground/");
+const NAV = ["/", "/archive/", "/about/", "/research/", "/playground/"];
 const STEPS = 14;
 const IGNORE = /giscus|Failed to load resource|pagefind\.js/; // third-party embeds and the Pagefind search import (aborted on leave)
 const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".xml": "application/xml", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
@@ -118,13 +118,13 @@ async function clickLink(page, href) {
 	return true;
 }
 
-// Owner report: Experiments and Research from other pages, Back/Forward chains, a standalone report, reloads, hash jumps.
+// Owner report: Playground and Research from other pages, Back/Forward chains, a standalone report, reloads, hash jumps.
 const RESEARCH = STANDALONE.filter((p) => p.startsWith("/research/"));
 const [FIRST_REPORT, LAST_REPORT] = [RESEARCH[0], RESEARCH[RESEARCH.length - 1]]; // both on /research/, reached from its list
 const SCRIPT = [
 	["goto", "/"], ["click", "/research/"], ["scroll", 900], ["click", FIRST_REPORT], ["scroll", 1200],
 	["back"], ["forward"], ["back"], ["click", "/archive/"], ["click", "/about/"], ["click", "/research/"],
-	["click", FIRST_REPORT], ["scroll", 1500], ["click", "/experiments/"], ["back"], ["back"], ["back"],
+	["click", FIRST_REPORT], ["scroll", 1500], ["click", "/playground/"], ["back"], ["back"], ["back"],
 	["reload"], ["scroll", 800], ["hash"], ["click", "/research/"], ["click", LAST_REPORT], ["back"], ["reload"],
 ];
 // Visit every standalone page from its list page, then Back, so none is only reached by a random goto.

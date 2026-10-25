@@ -49,8 +49,8 @@ export const navBarConfig: NavBarConfig = {
 			url: "/research/",
 		},
 		{
-			name: "Experiments",
-			url: "/experiments/",
+			name: "Playground",
+			url: "/playground/",
 		},
 		{
 			name: "Ideas",
@@ -110,3 +110,9 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 	// Please select a dark theme, as this blog theme currently only supports dark background color
 	theme: "github-dark",
 };
+
+// Where post sources live, for the in-place editor (`<meta name="edit-source">` on post pages).
+export const sourceRepo = {
+	repo: "ningsuhen/ningsuhen.github.io",
+	branch: "master",
+} as const;

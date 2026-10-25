@@ -7,7 +7,7 @@ import { esc } from "./util";
 export const CRUMB_MARKER = "data-site-breadcrumb";
 const OPT_OUT_CRUMB = /<meta[^>]+name=["']rd-breadcrumb["'][^>]+content=["']off["']/i;
 // Section label by first path segment. A page at the section's own URL (/design-system/) is its own current item.
-const SECTIONS: Record<string, string> = { research: "Research", experiments: "Experiments", ideas: "Ideas", "design-system": "Design system" };
+const SECTIONS: Record<string, string> = { research: "Research", playground: "Playground", ideas: "Ideas", "design-system": "Design system" };
 const DATE_SUFFIX = /\s*·\s*created\s+\d{4}-\d{2}-\d{2}\s*·\s*updated\s+\d{4}-\d{2}-\d{2}\s*$/;
 
 export function addBreadcrumb(html: string, urlPath: string, base: string, site: string): string {

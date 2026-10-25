@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
-import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
+import { standalonePages } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -15,14 +15,6 @@ const VIEWPORTS = [
 	{ width: 375, height: 800 },
 ];
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
-
-function htmlPages(dir = "") {
-	return readdirSync(path.join(PUBLIC, dir), { withFileTypes: true }).flatMap((e) => {
-		const rel = path.join(dir, e.name);
-		if (e.isDirectory()) return htmlPages(rel);
-		return e.name.endsWith(".html") ? [rel] : [];
-	});
-}
 
 function findChrome() {
 	if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
@@ -59,8 +51,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 // Headless Chrome hides scrollbars by default, which would hide a 15px page scrollbar from this check.
 const browser = await chromium.launch({ executablePath: findChrome(), ignoreDefaultArgs: ["--hide-scrollbars"] });
 const failures = [];
-const drafts = draftHrefs();
-const pages = htmlPages().filter((rel) => !isDraftPage(rel, drafts));
+const pages = standalonePages();
 for (const rel of pages) {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
 	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
@@ -130,7 +121,7 @@ for (const rel of pages) {
 // Navigation regression: from a site page, a link to a standalone page must be a normal full navigation,
 // and Back must restore the site page intact (Swup used to intercept the link and corrupt the page).
 const standaloneUrls = new Set(pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`));
-for (const sitePath of ["/experiments/", "/research/", "/ideas/"]) {
+for (const sitePath of ["/playground/", "/research/", "/ideas/"]) {
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	const resp = await page.goto(base + sitePath, { waitUntil: "load" });
@@ -151,11 +142,11 @@ for (const sitePath of ["/experiments/", "/research/", "/ideas/"]) {
 	}
 	await ctx.close();
 }
-// URL structure: a report lives at /research/<slug>/, a live experiment at /experiments/<slug>/. Every standalone page in
+// URL structure: a report lives at /research/<slug>/, a live demo at /playground/<slug>/. Every standalone page in
 // those folders must be linked from its list page (a page nobody can reach is a bug), and no folder index may shadow the Astro page.
 for (const [section, listPath] of [
 	["research", "/research/"],
-	["experiments", "/experiments/"],
+	["playground", "/playground/"],
 	["ideas", "/ideas/"],
 ]) {
 	if (pages.includes(path.join(section, "index.html"))) failures.push(`public/${section}/index.html exists: the Astro page owns /${section}/`);
@@ -188,7 +179,7 @@ for (const [, from, to] of redirectBlock.matchAll(/"([^"]+)":\s*"([^"]+)"/g)) {
 	await ctx.close();
 }
 // Site pages: the navbar used to overflow the page between 768 and 1023px (links shown at md, search only at lg).
-for (const sitePath of ["/", "/archive/", "/research/", "/experiments/", "/ideas/"]) {
+for (const sitePath of ["/", "/archive/", "/research/", "/playground/", "/ideas/"]) {
 	for (const vp of [375, 768, 1024, 1280, 1440].map((width) => ({ width, height: 1000 }))) {
 		const ctx = await browser.newContext({ viewport: vp });
 		const page = await ctx.newPage();
@@ -214,7 +205,7 @@ for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
 }
 // Every main page must have exactly one <h1>: the shared layout supplies a screen-reader heading on
 // pages whose visible title is a styled div, and the section/404 pages render their own visible <h1>.
-for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments/", "/ideas/", "/license/", "/posts/ai-boom-trajectories/"]) {
+for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/playground/", "/ideas/", "/license/", "/posts/ai-boom-trajectories/"]) {
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	await page.goto(base + sitePath, { waitUntil: "load" });
@@ -482,7 +473,7 @@ const licensedPosts = readdirSync(path.join(DIST, "posts"), { withFileTypes: tru
 const within = (inner, outer) => inner[0] >= outer[0] - 0.5 && inner[1] <= outer[1] + 0.5;
 const fmt = (r) => r.map(Math.round).join("..");
 for (const width of FOOTER_WIDTHS) {
-	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/experiments/", "/ideas/", ...licensedPosts]) {
+	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/playground/", "/ideas/", ...licensedPosts]) {
 		const isStandalone = standaloneUrls.has(urlPath);
 		const hasLicense = isStandalone || readFileSync(path.join(DIST, urlPath, "index.html"), "utf8").includes(LICENSE_ASIDE);
 		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
@@ -611,11 +602,11 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 	}
 }
 
-// Comments (giscus, click to load). Reports, live experiments and ideas get a section above the license card; other
+// Comments (giscus, click to load). Reports, playground demos and ideas get a section above the license card; other
 // standalone pages get none (static, from the built HTML). In a browser: nothing reaches giscus.app before "Load comments"
 // is pressed; after it the client script loads, the section keeps the column and the footer order, and a theme change
 // reaches the giscus frame. giscus.app is stubbed here (no network), so this checks our side of the contract only.
-const COMMENTS_PAGE = /^\/(research|experiments|ideas)\/[^/]+\/$/;
+const COMMENTS_PAGE = /^\/(research|playground|ideas)\/[^/]+\/$/;
 const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
 const commentsSrc = readFileSync("src/config.ts", "utf8");
 const commentCfg = (key) => commentsSrc.match(new RegExp(`\\b${key}: "([^"]+)"`))?.[1];
@@ -703,7 +694,7 @@ const crumbTargetExists = (href) => existsSync(path.join(DIST, href.endsWith("/"
 // Breadcrumb (rd-breadcrumb, injected by standalone-header.ts) on every standalone page: exactly one, the trail the path
 // and title give, real links that resolve, the current item as text, JSON-LD that matches, clear of the navbar and the
 // section bar, one line, no overflow, 24px tap targets, and aligned with the page's heading (it is the first child of <main>).
-const CRUMB_SECTIONS = { research: "Research", experiments: "Experiments", ideas: "Ideas", "design-system": "Design system" };
+const CRUMB_SECTIONS = { research: "Research", playground: "Playground", ideas: "Ideas", "design-system": "Design system" };
 const CRUMB_WIDTHS = [1440, 768, 375];
 const CRUMB_SITE = "https://ningsuhen.github.io/";
 const decodeEntities = (t) => t.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
