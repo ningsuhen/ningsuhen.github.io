@@ -112,7 +112,10 @@
 	/* Controls: tap targets stay >= 24px (WCAG 2.2 target size). */
 	--rd-control-h: 1.75rem; /* 28px */
 	--rd-navbar-h: 4.5rem; /* the injected navbar card: 4.5em of its 16px font (standalone-header.ts) */
-	--rd-navbar-gap: 1rem; /* space between the navbar card and the section bar under it */
+	--rd-navbar-width: 73rem; /* the injected navbar card (standalone-header.ts): the breadcrumb band uses its frame */
+	--rd-navbar-gap: 1rem; /* height of the empty breadcrumb band (pages with no trail) */
+	--rd-crumb-h: 2.5rem; /* the breadcrumb band under the navbar card: opaque, holds the trail (standalone-header.ts) */
+	--rd-crumb-fs: 0.8125rem; /* breadcrumb text: 13px at every density */
 	--rd-expnav-h: 2.5rem; /* 40px */
 	/* Prose line length, inside the 54.5rem column. */
 	--rd-measure: 75ch;
@@ -464,15 +467,94 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 .rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
 
 /* ======================================================================
+   Breadcrumb band (rd-crumb-band) and trail (rd-breadcrumb). standalone-header.ts injects the band at the top of
+   <body>. It is sticky directly under the navbar card (top: --rd-navbar-h), opaque (--rd-page-bg) and --rd-crumb-h
+   tall, with the navbar card's frame: full width below 768px, the card's width and left edge from 768px up. Content
+   scrolls under it and is hidden; the section bar sticks under it. A page with no trail (opted out, or no title) keeps
+   an empty band one gap tall (--rd-navbar-gap), so the gap under the navbar is never transparent.
+   The trail inside lines up with the page's own text column (default, --wide, --tabbed, or --page for a page-owned
+   column). All frames are centred and standalone pages have no layout scrollbar, so 100vw is the html width.
+   One line: a long title ends in an ellipsis. The separator is a CSS mask of Lucide chevron-right (no glyph).
+   Pages never write the band by hand.
+   ====================================================================== */
+:root { --rd-frame-w: min(100vw - 2rem, var(--rd-navbar-width)); } /* the navbar card's frame from 768px up; the tabbed column at every width */
+.rd-crumb-band {
+	--rd-crumb-band-w: 100vw;
+	position: sticky;
+	top: var(--rd-navbar-h);
+	z-index: 999; /* above any page content (it must hide what scrolls under it), below the navbar (1000) */
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	width: var(--rd-crumb-band-w);
+	height: var(--rd-crumb-h);
+	margin: 0 calc((100% - var(--rd-crumb-band-w)) / 2);
+	background: var(--rd-page-bg);
+}
+@media (min-width: 768px) { .rd-crumb-band { --rd-crumb-band-w: var(--rd-frame-w); } }
+html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
+.rd-crumb-band .rd-breadcrumb {
+	--rd-crumb-col: min(100vw, var(--rd-content-width)); /* rd-container: 872px with a 16px inset */
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	flex: none;
+	width: var(--rd-crumb-col);
+	height: 100%;
+	margin: 0 calc((100% - var(--rd-crumb-col)) / 2);
+	padding: 0 var(--rd-space-4);
+	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
+	color: var(--rd-text-muted);
+}
+.rd-crumb-band--wide .rd-breadcrumb { --rd-crumb-col: min(100vw, var(--rd-navbar-width)); }
+.rd-crumb-band--tabbed .rd-breadcrumb { --rd-crumb-col: var(--rd-frame-w); padding: 0; }
+.rd-crumb-band--page .rd-breadcrumb { --rd-crumb-col: min(100vw, var(--rd-content-width) + 2 * var(--rd-space-4)); }
+.rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
+.rd-breadcrumb li:last-child { flex: 0 1 auto; }
+.rd-breadcrumb li + li::before {
+	content: "";
+	flex: none;
+	width: 1rem;
+	height: 1rem;
+	margin: 0 0.25rem;
+	background: var(--rd-text-faint);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rd-breadcrumb a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.5rem; /* 24px tap target at every width */
+	border-radius: var(--rd-radius-sm);
+	color: inherit;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color 0.15s ease-out;
+}
+.rd-breadcrumb a:hover { color: var(--rd-accent); }
+.rd-breadcrumb a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+.rd-breadcrumb [aria-current="page"] {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.5rem;
+	color: var(--rd-text);
+}
+@media print { .rd-crumb-band { display: none; } }
+
+/* ======================================================================
    Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
    ====================================================================== */
-/* Experiment navbar: full width. The injected navbar is sticky (standalone-header.ts), so the bar sticks one gap
-   (--rd-navbar-gap) under it at top: --rd-navbar-h + --rd-navbar-gap. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
+/* Experiment navbar: full width. The injected navbar is sticky (standalone-header.ts), so the bar sticks under the
+   breadcrumb band at top: --rd-navbar-h + --rd-crumb-h. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 @media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
 .rd-expnav {
 	position: sticky;
-	top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap));
-	margin: var(--rd-navbar-gap) 0 0;
+	top: calc(var(--rd-navbar-h) + var(--rd-crumb-h));
+	margin: 0;
 	z-index: 20;
 	display: flex;
 	gap: 0.125rem;
@@ -534,7 +616,7 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 @media (min-width: 1340px) {
 	.rd-tabbed { max-width: none; width: calc(var(--rd-content-width) + 13.5rem); margin: 0 0 0 calc(50% - var(--rd-content-width) / 2); padding: 1.5rem 0 4rem; }
 	.rd-with-toc { grid-template-columns: minmax(0, var(--rd-content-width)) minmax(0, 1fr); column-gap: 1.5rem; align-items: start; }
-	.rd-with-toc > .rd-toc { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-navbar-gap) - var(--rd-expnav-h) - 2rem); overflow-y: auto; }
+	.rd-with-toc > .rd-toc { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - 2rem); overflow-y: auto; }
 	.rd-with-toc > .rd-toc summary { display: none; }
 	.rd-with-toc > .rd-tab__body { grid-column: 1; grid-row: 1; }
 	.rd-toc ol { flex-direction: column; flex-wrap: nowrap; gap: 0; border-left: 1px solid var(--rd-line); }
@@ -543,7 +625,7 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
-.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
 .rd-prose .rd-section__head h2::before { content: none; }
 .rd-section__icon {
@@ -558,7 +640,7 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 	color: var(--rd-accent);
 }
 .rd-section__icon .rd-icon { width: 1em; height: 1em; }
-.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 
 /* Hero: eyebrow, h1, lede, a row of status chips and meta. */
 .rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }
@@ -817,7 +899,7 @@ th, td { text-align: left; padding: var(--sp-6) var(--sp-10); border-bottom: 1px
 .rest-odds { margin-top: var(--sp-16); }
 .rest-odds summary { cursor: pointer; font-family: var(--font-data); font-size: .78rem; color: var(--accent); padding: var(--sp-6) 0; }
 /* P5.1 navigation and conditioning bar. */
-.sticky-top { position: sticky; top: 0; z-index: 30; }
+.sticky-top { position: sticky; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h)); z-index: 30; } /* under the navbar and the breadcrumb band */
 .section-nav { background: var(--surface); border-bottom: 1px solid var(--rule); }
 .section-nav-inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-6) var(--sp-14); padding: var(--sp-5) 0; }
 .section-nav-inner::-webkit-scrollbar { display: none; }
