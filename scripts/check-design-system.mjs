@@ -78,6 +78,7 @@ const RULES = {
 	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
 	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
 	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
+	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -335,6 +336,11 @@ const probeStructure = (canon) => {
 					!!el.closest("label"),
 			};
 		}),
+		// Choices: every .rd-choice wraps a native <input> (radio/checkbox). A div styled as a
+		// choice without a real input is not keyboard-operable and breaks screen readers.
+		choices: [...document.querySelectorAll(".rd-choice")].map((el) => ({
+			hasInput: !!el.querySelector("input[type=radio], input[type=checkbox]"),
+		})),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -745,6 +751,7 @@ await Promise.all(pages.map(async (rel) => {
 				[s.filters.some((f) => !f.operable), "filter", "a .rd-filter is not a keyboard-operable <button> (or role=button)"],
 				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
 				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
+				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
