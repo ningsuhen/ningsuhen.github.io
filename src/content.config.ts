@@ -18,6 +18,8 @@ const postsCollection = defineCollection({
 		lang: z.string().optional().default(""),
 		/* Hide the Listen player on this post. Single blocks can opt out with a data-no-listen attribute. */
 		noListen: z.boolean().optional().default(false),
+		/* Listen player: term -> spoken form for this post, over src/data/pronunciations.json. Readers never see it. */
+		pronounce: z.record(z.string(), z.string()).optional(),
 
 		/* For internal use */
 		prevTitle: z.string().default(""),

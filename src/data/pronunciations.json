@@ -1,0 +1,10 @@
+{
+	"$comment": "Listen player: words the speech engines mispronounce, as term -> plain-English respelling read by both engines (Kokoro and the browser voice). Whole word, case-sensitive. Acronyms live in src/scripts/tts/normalize.ts (SPELL, SAY). A post overrides with `pronounce:` front matter or inline :say[term]{as=\"...\"}. Evidence per entry: `kokoro` = Kokoro G2P phonemes for the respelling, `was` = phonemes for the written word, `heard` = what a speech recogniser (Parakeet TDT) transcribed from Kokoro's audio, written word -> respelling.",
+	"entries": [
+		{ "term": "Wikipedia", "say": "wicky pedia", "kokoro": "wˈɪki pˈidɪə", "was": "wˈIkɪpədɪə", "heard": "Why Cepedia -> Wikipedia" },
+		{ "term": "Clippy", "say": "Clippie", "kokoro": "klˈɪpi", "was": "klˈIpi", "heard": "Klipee -> clippy" },
+		{ "term": "Ollama", "say": "oh lama", "kokoro": "ˈO lˈɑmə", "was": "ˈOləmə", "heard": "Olima -> OLAMA" },
+		{ "term": "Redis", "say": "Red iss", "kokoro": "ɹˈɛd ˈɪs", "was": "ɹˈidɪs", "heard": "readus -> red is" },
+		{ "term": "Jekyll", "say": "Jeck ul", "kokoro": "ʤˈɛk ˈʌl", "was": "ʤˈikɪl", "heard": "GKL -> Jekyll" }
+	]
+}

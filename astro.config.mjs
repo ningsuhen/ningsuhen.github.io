@@ -11,6 +11,7 @@ import { unified } from "@astrojs/markdown-remark";
 import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components"; /* Render the custom directive content */
+import { h } from "hastscript";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive"; /* Handle directives */
@@ -163,6 +164,8 @@ export default defineConfig({
 						important: (x, y) => AdmonitionComponent(x, y, "important"),
 						caution: (x, y) => AdmonitionComponent(x, y, "caution"),
 						warning: (x, y) => AdmonitionComponent(x, y, "warning"),
+						// :say[term]{as="spoken"}: the Listen player says "spoken"; readers see only "term".
+						say: (props, children) => h("span", props?.as ? { "data-say": props.as } : {}, children),
 					},
 				},
 			],

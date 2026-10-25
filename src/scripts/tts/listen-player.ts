@@ -11,7 +11,13 @@ import {
 	type TtsEngine,
 	type Voice,
 } from "./engine";
+import lexicon from "../../data/pronunciations.json";
 import { extractSentences, type Sentence } from "./extract";
+import {
+	lexiconMap,
+	mergePronunciations,
+	type Pronunciations,
+} from "./pronounce";
 import { loadKokoroEngine, loadOrtRuntime, prepareOrtRuntime } from "./kokoro-engine";
 import {
 	type FileSpec,
@@ -33,6 +39,9 @@ import { pauseAfter, scaledPause } from "./pauses";
 type EngineId = "web-speech" | "kokoro";
 /** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
 type KokoroChoice = KokoroVariant | "web";
+
+/** Words both engines mispronounce (src/data/pronunciations.json). */
+const GLOBAL_PRONUNCIATIONS = lexiconMap(lexicon.entries);
 
 /** Neural-voice speed guard. Past these the player offers the browser voice; playback never pauses for it. */
 const SLOW_FIRST_AUDIO_MS = 8000;
@@ -274,12 +283,23 @@ class ListenPlayer extends HTMLElement {
 		document.documentElement.style.scrollPaddingTop = "";
 	}
 
+	/** Global lexicon, then the post's `pronounce:` front matter (data-pronounce), which wins. */
+	private pronunciations(): Pronunciations {
+		let post: Pronunciations | null = null;
+		try {
+			post = JSON.parse(this.dataset.pronounce ?? "null");
+		} catch {
+			post = null;
+		}
+		return mergePronunciations(GLOBAL_PRONUNCIATIONS, post);
+	}
+
 	private async init(signal: AbortSignal): Promise<void> {
 		const root = document.querySelector<HTMLElement>(this.dataset.target ?? "");
 		const engineOffered =
 			webSpeechAvailable() || window.__KOKORO_READY === true;
 		if (!root || !engineOffered) return this.settle(false);
-		this.sentences = extractSentences(root);
+		this.sentences = extractSentences(root, this.pronunciations());
 		if (this.sentences.length === 0) return this.settle(false);
 
 		const prefs = readStorage<Prefs>(PREFS_KEY, {});
