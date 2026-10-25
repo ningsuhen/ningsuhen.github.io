@@ -468,16 +468,16 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 
 /* ======================================================================
    Breadcrumb band (rd-crumb-band) and trail (rd-breadcrumb). standalone-header.ts injects the band at the top of
-   <body>. It is sticky directly under the navbar card (top: --rd-navbar-h), opaque (--rd-page-bg) and --rd-crumb-h
-   tall, with the navbar card's frame: full width below 768px, the card's width and left edge from 768px up. Content
-   scrolls under it and is hidden; the section bar sticks under it. A page with no trail (opted out, or no title) keeps
-   an empty band one gap tall (--rd-navbar-gap), so the gap under the navbar is never transparent.
-   The trail inside lines up with the page's own text column (default, --wide, --tabbed, or --page for a page-owned
-   column). All frames are centred and standalone pages have no layout scrollbar, so 100vw is the html width.
+   <body>. It is sticky directly under the navbar card (top: --rd-navbar-h) and --rd-crumb-h tall. Its opaque surface
+   (::before, --rd-page-bg) has the navbar card's frame: full width below 768px, the card's width and left edge from
+   768px up. Content scrolls under it and is hidden; the section bar sticks under it. A page with no trail (opted out,
+   or no title) keeps an empty band one gap tall (--rd-navbar-gap), so the gap under the navbar is never transparent.
+   The band box itself spans the body's content box, so the trail inside uses the same column rules as the page's own
+   container (default, --wide, --tabbed, or --page for a page-owned column) and lines up with its text.
+   Frames are centred and standalone pages have no layout scrollbar, so 100vw is the html width.
    One line: a long title ends in an ellipsis. The separator is a CSS mask of Lucide chevron-right (no glyph).
    Pages never write the band by hand.
    ====================================================================== */
-:root { --rd-frame-w: min(100vw - 2rem, var(--rd-navbar-width)); } /* the navbar card's frame from 768px up; the tabbed column at every width */
 .rd-crumb-band {
 	--rd-crumb-band-w: 100vw;
 	position: sticky;
@@ -486,29 +486,36 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 	box-sizing: border-box;
 	display: flex;
 	align-items: center;
-	width: var(--rd-crumb-band-w);
 	height: var(--rd-crumb-h);
-	margin: 0 calc((100% - var(--rd-crumb-band-w)) / 2);
+	margin: 0;
+}
+@media (min-width: 768px) { .rd-crumb-band { --rd-crumb-band-w: min(100vw - 2rem, var(--rd-navbar-width)); } } /* the navbar card: calc(min(100%, 75em) - 2em) */
+.rd-crumb-band::before {
+	content: "";
+	position: absolute;
+	z-index: -1;
+	top: 0;
+	bottom: 0;
+	left: calc(50% - var(--rd-crumb-band-w) / 2);
+	width: var(--rd-crumb-band-w);
 	background: var(--rd-page-bg);
 }
-@media (min-width: 768px) { .rd-crumb-band { --rd-crumb-band-w: var(--rd-frame-w); } }
 html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 .rd-crumb-band .rd-breadcrumb {
-	--rd-crumb-col: min(100vw, var(--rd-content-width)); /* rd-container: 872px with a 16px inset */
 	box-sizing: border-box;
 	display: flex;
 	align-items: center;
-	flex: none;
-	width: var(--rd-crumb-col);
+	flex: 1 1 auto;
+	min-width: 0;
+	max-width: var(--rd-content-width); /* rd-container */
 	height: 100%;
-	margin: 0 calc((100% - var(--rd-crumb-col)) / 2);
+	margin: 0 auto;
 	padding: 0 var(--rd-space-4);
 	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
 	color: var(--rd-text-muted);
 }
-.rd-crumb-band--wide .rd-breadcrumb { --rd-crumb-col: min(100vw, var(--rd-navbar-width)); }
-.rd-crumb-band--tabbed .rd-breadcrumb { --rd-crumb-col: var(--rd-frame-w); padding: 0; }
-.rd-crumb-band--page .rd-breadcrumb { --rd-crumb-col: min(100vw, var(--rd-content-width) + 2 * var(--rd-space-4)); }
+.rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: var(--rd-navbar-width); }
+.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); }
 .rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
 .rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
 .rd-breadcrumb li:last-child { flex: 0 1 auto; }
