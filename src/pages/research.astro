@@ -1,16 +1,14 @@
 ---
 import EntryCards from "@components/EntryCards.astro";
-import LicenseNote from "@components/LicenseNote.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import data from "../data/research.json";
 import type { Entry } from "../types/entry";
 ---
 
-<MainGridLayout title="Research" description="Reports from things I build and study. Every number links back to its source.">
+<MainGridLayout license title="Research"description="Reports from things I build and study. Every number links back to its source.">
     <div class="card-base px-9 py-6 w-full">
         <h1 class="text-3xl font-bold text-90 mb-1">Research</h1>
         <p class="text-50 mb-6">Reports from things I build and study. Every number links back to its source.</p>
         <EntryCards items={data.items as Entry[]} kind="report" />
     </div>
-    <LicenseNote class="mt-4" />
 </MainGridLayout>

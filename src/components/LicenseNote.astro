@@ -6,13 +6,18 @@ interface Props {
 	class?: string;
 }
 const className = Astro.props.class;
+const link = "underline underline-offset-2 hover:text-[var(--primary)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-2 rounded-sm";
 ---
-<aside class:list={["card-base px-6 py-5 text-sm text-75", className]} aria-label="Copyright and license">
-	<p class="font-semibold text-base text-90">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</p>
-	<p class="mt-2">Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission.</p>
-	<p class="mt-2 text-75">Short quotes with attribution and a link are fine.</p>
-	<a href={url("/license/")} class="inline-flex items-center gap-2 mt-4 min-h-11 px-4 py-2 rounded-lg border border-[var(--primary)] text-90 font-medium hover:bg-black/5 dark:hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-[3px]">
-		<Icon name="lucide:scale" aria-hidden="true" class="w-[1.125rem] h-[1.125rem] text-[var(--primary)]" />
-		License
-	</a>
+<aside class:list={["card-base px-4 py-3 text-[12px] leading-normal text-black/65 dark:text-white/65 border border-black/10 dark:border-white/10", className]} aria-label="Copyright and license">
+	<p class="font-semibold text-black/80 dark:text-white/85">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</p>
+	<p class="mt-1">Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission.</p>
+	<p class="mt-1">Short quotes with attribution and a link are fine.</p>
+	<p class="mt-1">
+		<a href={url("/license/")} class:list={["inline-flex items-center gap-1 font-medium text-black/80 dark:text-white/85", link]}><Icon name="lucide:scale" aria-hidden="true" class="w-3.5 h-3.5" />License</a>
+		<span aria-hidden="true"> · </span>
+		<a href={url("rss.xml")} class:list={["text-black/80 dark:text-white/85", link]}>RSS</a>
+		<span aria-hidden="true"> · </span>
+		<a href={url("sitemap-index.xml")} class:list={["text-black/80 dark:text-white/85", link]}>Sitemap</a>
+	</p>
+	<p class="mt-1">Powered by <a href="https://astro.build" target="_blank" rel="noopener" class={link}>Astro</a> & <a href="https://github.com/saicaca/fuwari" target="_blank" rel="noopener" class={link}>Fuwari</a></p>
 </aside>
