@@ -36,6 +36,17 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - `scripts/leak-denylist.local.txt` (gitignored, never committed): optional extra private terms, one per line, read by `check:leaks`.
 - Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 4321) against the branch checked out in the project root. It only picks up merged work after `pnpm sync`. Its log is the LaunchAgent log file under the user's Library/Logs.
 
+## Repo contents: shipped output only (CRITICAL)
+
+This repo holds the site and the compiled output that research and experiments need to run. Everything else lives in its own repo.
+
+- Allowed: the Astro site source, posts and their images, and for each report or experiment its built files only (`index.html`, minified JS, WASM, CSS, fonts, data the page loads, thumbnails).
+- Not allowed: source code of experiments, games or simulations (Rust, Python, TypeScript sources, generators, notebooks, build scripts for them), model weights, raw datasets, logs, intermediate or debug outputs, unminified bundles when a minified build exists, duplicate versions of an artifact (keep the current one; history has the rest).
+- Build and develop in the owning project's repo, then copy in only the compiled result. Record where it came from (project name and a build hash) in the PR, never a local path.
+- Keep payloads small: strip source maps and unused assets, prefer gzip-friendly formats, and ask before adding anything over 1 MB. Large models are fetched from their public host at runtime, never committed.
+- Before adding a file ask: does the live page need it at runtime? If not, it does not belong here.
+- Periodically audit `public/` for files no page references and remove them.
+
 ## Rules
 
 - Navbar and license footer are injected by the build. Never hand-roll them in a standalone page. Standalone pages set `<html data-theme>`; light is the default. The navbar mounts on `<html>` before `<body>`.
