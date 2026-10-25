@@ -409,7 +409,7 @@ const COMMENTS_CSS = [
 	".rd-comments__slot:focus{outline:none}",
 	".rd-comments__slot:focus-visible,.rd-comments__load:focus-visible{outline:2px solid var(--rd-accent);outline-offset:2px}",
 	".rd-comments__note{margin:0;color:var(--rd-text-muted);font-size:var(--rd-fs-sm,.8125rem)}",
-	".rd-comments__load{display:inline-flex;align-items:center;min-height:2.5rem;padding:0 var(--rd-space-4,1rem);border:0;border-radius:var(--rd-radius-sm,.5rem);background:var(--rd-btn-bg);color:var(--rd-accent);font:500 var(--rd-fs-base,.875rem) var(--rd-font,Roboto,system-ui,sans-serif);cursor:pointer}",
+	".rd-comments__load{display:inline-flex;align-items:center;min-height:2.5rem;padding:0 var(--rd-space-4,1rem);border:0;border-radius:var(--rd-radius-sm,.5rem);background:var(--rd-btn-bg);color:var(--rd-accent-ink);font:500 var(--rd-fs-base,.875rem) var(--rd-font,Roboto,system-ui,sans-serif);cursor:pointer}",
 	".rd-comments__load:hover{background:var(--rd-btn-bg-hover)}",
 	// No animation here, so nothing needs a reduced-motion rule.
 ].join("");
