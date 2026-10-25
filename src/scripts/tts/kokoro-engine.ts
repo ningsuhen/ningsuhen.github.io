@@ -1,37 +1,58 @@
 /**
- * NOT IMPLEMENTED (phase 1 placeholder). The neural engine is built separately and served as /tts/kokoro.js.
- *
- * Contract (see engine.ts): the player offers this engine only when window.__KOKORO_READY === true,
- * shows a consent dialog, then imports the module and calls its exported createEngine().
- * This class only marks the slot: every method throws or does nothing, so it can never produce audio.
+ * Loader for the neural engine served as /tts/kokoro.js (contract: engine.ts). The module exports
+ * createEngine(); nothing is downloaded until the engine's init() runs (see listen-player.ts).
  */
-import type { Accelerator, SpeakOptions, TtsEngine, Voice } from "./engine";
+import type { TtsEngine } from "./engine";
 
-export class KokoroEngine implements TtsEngine {
-	readonly id = "kokoro";
-	readonly label = "Neural voice (Kokoro)";
-	readonly requiresDownloadMB = 86;
-	readonly accelerator: Accelerator = "none";
-
-	async init(): Promise<void> {
-		throw new Error("KokoroEngine is not implemented yet");
-	}
-
-	voices(): Voice[] {
-		return [];
-	}
-
-	speak(_text: string, _opts: SpeakOptions): Promise<void> {
-		return Promise.reject(new Error("KokoroEngine is not implemented yet"));
-	}
-
-	cancel(): void {}
-
-	dispose(): void {}
+/** Counts ONNX Runtime session creations per page, for the check that one init makes one session. */
+interface Diagnostics {
+	sessionCreates: number;
 }
 
-/** Loads the neural engine from the loader contract. Rejects if the module is missing or has no createEngine. */
+interface OrtLike {
+	env: { logLevel?: string };
+	InferenceSession: { create: (...args: unknown[]) => Promise<unknown> };
+}
+
+declare global {
+	interface Window {
+		__kokoroDiagnostics?: Diagnostics;
+	}
+}
+
+/**
+ * ONNX Runtime logs a full wasm stack for every routine "node not assigned to the preferred execution
+ * provider" note. Its logLevel is set as soon as its script defines `ort` (the loader assigns it), so only
+ * errors reach the console. Session creations are counted for diagnostics.
+ */
+let ortTuned = false;
+function tuneOrt(): void {
+	if (ortTuned) return;
+	ortTuned = true;
+	const existing = Object.getOwnPropertyDescriptor(window, "ort");
+	if (existing && !existing.configurable) return;
+	const diagnostics: Diagnostics = (window.__kokoroDiagnostics ??= { sessionCreates: 0 });
+	// Until the real script runs, `window.ort` is an empty object: the loader reads `window.ort[INIT_SYMBOL]`
+	// and would throw on undefined (which surfaced as "reading 'then'" inside the glue).
+	let current: OrtLike | undefined;
+	Object.defineProperty(window, "ort", {
+		configurable: true,
+		get: () => current ?? {},
+		set: (value: OrtLike) => {
+			current = value;
+			value.env.logLevel = "error";
+			const create = value.InferenceSession.create.bind(value.InferenceSession);
+			value.InferenceSession.create = (...args: unknown[]) => {
+				diagnostics.sessionCreates += 1;
+				return create(...args);
+			};
+		},
+	});
+}
+
+/** Loads the neural engine module. Rejects if the module is missing or has no createEngine. */
 export async function loadKokoroEngine(src: string): Promise<TtsEngine> {
+	tuneOrt();
 	const mod: unknown = await import(/* @vite-ignore */ src);
 	if (
 		typeof mod !== "object" ||
