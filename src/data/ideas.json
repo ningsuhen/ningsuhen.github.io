@@ -1,6 +1,18 @@
 {
   "items": [
     {
+      "title": "Editing an Astro blog on GitHub Pages, in place",
+      "summary": "An idea, with a rough version in progress: fix your own post on the live page, see the Markdown diff, and let a pull request carry it to the source. Astro makes the way back easier. Nothing is measured.",
+      "href": "/ideas/edit-blog-in-place/",
+      "post": "/posts/edit-blog-in-place/",
+      "started": "2026-10-25",
+      "updated": "2026-10-25",
+      "status": "Live",
+      "tags": [
+        "Idea"
+      ]
+    },
+    {
       "title": "Wikipedia, but in the age of AI",
       "summary": "An idea, not a product: each claim keeps its own sources, people sign what they checked, and machine drafts stay labelled. Nothing is built or measured.",
       "href": "/ideas/wikipedia-ai-age/",
