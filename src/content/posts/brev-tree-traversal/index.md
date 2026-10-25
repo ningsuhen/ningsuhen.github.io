@@ -8,13 +8,13 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
-This is a replay of one thing I measured. The encoder is laya, the 400M model in my Brev project. It walks a decision tree on the Banking77 test set, one question at a time. [Open the experiment](/experiments/brev-tree-traversal/).
+Here you can watch laya, the 400M encoder in my Brev project, walk a decision tree on the Banking77 test set, one question at a time. It is a replay of one thing I measured. [Open the experiment](/experiments/brev-tree-traversal/).
 
 ## The tree
 
-The tree has 23 nodes and 77 intents. The root asks which of 7 groups a message belongs to: payments, cards, account and so on. Each group asks one more question, and so on down to one intent. At each node laya scores every option, and the walk follows the highest one. It reads the option names and a short criterion for each option.
+The tree has 23 nodes and 77 intents. The root asks which of 7 groups a message belongs to: payments, cards, account and so on. Each group asks one more question, down to one intent. At each node laya reads the option names and a short criterion for each, scores every option, and follows the highest.
 
-I wrote the tree myself, from the label names and five training examples per label. A separate model, gpt-oss-120b, did the writing. It never saw a test message.
+I wrote the tree myself, from the label names and five training examples per label. A separate model, gpt-oss-120b, did the writing, and it never saw a test message.
 
 ## How to use the page
 
@@ -24,20 +24,20 @@ Step through the walk with Next, Back, the arrow keys or Auto-play. Each step sh
 
 ## What it shows
 
-On the 3,080 test messages, the greedy walk gets 47.0% right. A 27B model with a short prompt gets 77.8% right. A 4B model with 70-word rules for each intent also gets 77.8%, but I did not record its latency.
+The walk is fast, but it goes wrong early and does not recover. On the 3,080 test messages the greedy walk gets 47.0% right. A 27B model with a short prompt gets 77.8%. A 4B model with 70-word rules for each intent also gets 77.8%, but I did not record its latency.
 
-The walk goes wrong early and does not recover. For 865 messages it leaves the gold path at the root question. A wrong group at the top cannot be fixed further down.
+For 865 messages the walk leaves the gold path at the root question. A wrong group at the top cannot be fixed further down.
 
-Speed is the part that holds up. The walk's p50 is 52 ms, one forward pass per level, on one RTX 4060. Holding the lowest-margin 15% of walks for the 27B lifts the tree to 55.2%, in the ledger.
+Speed is the part that holds up. The walk's p50 is 52 ms, one forward pass per level, on one RTX 4060. In the ledger, holding the lowest-margin 15% of walks for the 27B lifts the tree to 55.2%.
 
 ## What it does not show
 
 - It is a replay. The probabilities were recorded from a real run. Nothing on the page calls a model, and there is no box to type your own message.
-- The 60 messages are a sample. I weighted it toward errors and short texts on purpose. Do not read accuracy off it.
-- One run, one tree, one dataset. The arms differ in model, prompt and hardware. The latencies are not like-for-like: laya ran locally, and the 27B figure includes the network and a shared queue.
-- Banking77 is public. Any of these models may have seen it in training. I have not checked that.
+- The 60 messages are a sample, weighted toward errors and short texts on purpose. Do not read accuracy off it.
+- One run, one tree, one dataset. The arms differ in model, prompt and hardware, so the latencies are not like-for-like: laya ran locally, and the 27B figure includes the network and a shared queue.
+- Banking77 is public, so any of these models may have seen it in training. I have not checked that.
 
-The full report and the hypothesis ledger are at [the Brev tree benchmark](/research/brev-tree-benchmark/). The ledger says the criteria carry most of the knowledge: names alone get 36.8%, opaque ids with the criteria get 40.6%, and both together get 47.0%.
+The full report and the hypothesis ledger are at [the Brev tree benchmark](/research/brev-tree-benchmark/). The ledger says the criteria carry most of the knowledge: names alone get 36.8%, opaque ids with the criteria 40.6%, both together 47.0%.
 
 ## What I don't trust yet
 
