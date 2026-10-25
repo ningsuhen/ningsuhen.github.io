@@ -20,12 +20,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:tts
+      - run: pnpm test:dates
       - run: pnpm build
       - run: pnpm check:thumbnails
       - run: pnpm check:leaks
       - run: pnpm check:links
       - run: pnpm exec playwright-core install --with-deps chromium
       - run: pnpm check:standalone
+      - run: pnpm check:dates
       - run: pnpm check:report-history
       - run: pnpm check:theme
       - run: pnpm check:design-system
