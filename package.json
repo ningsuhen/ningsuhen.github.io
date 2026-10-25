@@ -22,6 +22,7 @@
     "check:report-history": "node scripts/check-report-history.mjs",
     "check:theme": "node scripts/check-theme.mjs",
     "check:design-system": "node scripts/check-design-system.mjs",
+    "check:navigation": "node scripts/check-navigation.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
     "check:leaks": "node scripts/check-public-leaks.mjs",
