@@ -8,9 +8,9 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
-I have been thinking about Wikipedia and AI. On Wikipedia a citation is a footnote at the end of a sentence, and as far as I can tell it doesn't record which passage, which version, or which part of the sentence the source backs. That was fine when a person wrote the source and a person might open it. I'm less sure now, so I wrote down an idea. I haven't built it, and I haven't measured anything.
+Recently, I have been thinking about how AI will change or replace many of the existing products on the internet - decentralized office software, open source versions of almost all major proprietary softwares and so on. One of them is how Wikipedia is still like the old simple text based internet. What if AI could make a new version of Wikipedia that is interactive , visual and easy to learn? What if you don't need an expensive book or AI to learn about history or science for free?
 
-The [idea page](/ideas/wikipedia-ai-age/) has the diagrams, a glossary, a short quiz and a question box that answers only from the page's own notes.
+So, I created an [idea page](/ideas/wikipedia-ai-age/)  for a Wikipedia in the age of AI. 
 
 ## The idea
 
