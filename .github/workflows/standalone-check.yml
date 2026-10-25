@@ -134,6 +134,9 @@ jobs:
     needs: build
     timeout-minutes: 8
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/check-setup
         with:
           need-dist: "true"
