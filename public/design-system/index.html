@@ -38,6 +38,7 @@
 <symbol id="i-layout-dashboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></g></symbol>
 <symbol id="i-lightbulb" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 14c.2-1 .7-1.7 1.5-2.5c1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5c.7.7 1.3 1.5 1.5 2.5m0 4h6m-5 4h4"/></symbol>
 <symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
 <symbol id="i-list-checks" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></symbol>
 <symbol id="i-microscope" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18h8M3 22h18m-7 0a7 7 0 1 0 0-14h-1m-4 6h2m-2-2a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Zm3-6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></symbol>
 <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
@@ -63,6 +64,7 @@
 <a href="#use" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg>Use it</a>
 <a href="#density"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Density</a>
 <a href="#width"><svg class="rd-icon" aria-hidden="true"><use href="#i-ruler"/></svg>Width</a>
+<a href="#tabbed"><svg class="rd-icon" aria-hidden="true"><use href="#i-panel-top"/></svg>Tabbed report</a>
 <a href="#colour"><svg class="rd-icon" aria-hidden="true"><use href="#i-palette"/></svg>Colour</a>
 <a href="#icons"><svg class="rd-icon" aria-hidden="true"><use href="#i-sparkles"/></svg>Icons</a>
 <a href="#components"><svg class="rd-icon" aria-hidden="true"><use href="#i-layout-dashboard"/></svg>Components</a>
@@ -184,6 +186,51 @@
 &lt;a href="#method"&gt;&lt;svg class="rd-icon" aria-hidden="true"&gt;&lt;use href="#i-flask-conical"/&gt;&lt;/svg&gt;Method&lt;/a&gt;
 &lt;/nav&gt;</code></pre>
 <p>Put the nav directly under <code>&lt;body&gt;</code>, before <code>&lt;main&gt;</code>, so it spans the page. Each link targets a section header, <code>&lt;header class="rd-section__head" id="method"&gt;</code>. The template has the nav and the script ready to copy.</p>
+
+<header class="rd-section__head" id="tabbed"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-panel-top"/></svg></span><h2>Tabbed report layout</h2></header>
+<p>Long reports split into tabs. The tab bar and the content use the <strong>navbar card's width</strong> (<code>--rd-navbar-width</code>, 1168px from 1200px up), so their edges line up with the card above them. The "On this page" rail is <strong>outside</strong> that width, in the right page margin, the way the main post page's table of contents sits outside its column. Each tab has its own rail, listing that tab's sections.</p>
+<figure class="rd-figure" aria-label="Tabbed report layout diagram">
+<svg viewBox="0 0 1440 240" role="img" aria-hidden="true" style="width:100%;height:auto">
+<rect x="136" y="16" width="1168" height="36" rx="12" style="fill:var(--rd-card-bg)"/>
+<text x="152" y="39" style="font-size:13px;fill:var(--rd-text-muted)">Navbar card, 1168px (injected)</text>
+<rect x="136" y="64" width="1168" height="32" rx="8" style="fill:var(--rd-btn-bg)"/>
+<text x="152" y="85" style="font-size:13px;fill:var(--rd-text-strong)">Tab bar, 1168px: the same left and right edges as the navbar card</text>
+<rect x="136" y="108" width="1168" height="112" rx="12" style="fill:var(--rd-card-bg);stroke:var(--rd-line)"/>
+<text x="152" y="134" style="font-size:13px;fill:var(--rd-text-muted)">Content, 1168px: cards, tables, figures; prose capped at 75ch</text>
+<rect x="1368" y="64" width="152" height="156" rx="12" style="fill:none;stroke:var(--rd-accent);stroke-dasharray:4 3"/>
+<text x="1376" y="92" style="font-size:12px;fill:var(--rd-accent)">On this page</text>
+<text x="1376" y="112" style="font-size:12px;fill:var(--rd-text-muted)">rail, 1536px+</text>
+<text x="1304" y="250" text-anchor="end" style="font-size:12px;fill:var(--rd-text-muted)">16px gap, then the rail to the viewport edge less 16px</text>
+</svg>
+<figcaption class="rd-source">1440px viewport. The rail sits in the margin: 136px on each side, and it starts 16px right of the navbar card.</figcaption>
+</figure>
+<p>Below 1536px the rail has no room in the margin, so it becomes the collapsed "On this page" disclosure above the content, open by default. That is the same breakpoint the main site uses for its table of contents (Tailwind <code>2xl</code>, 1536px).</p>
+<table class="rd-table">
+<thead><tr><th>Measured</th><th>Main post page</th><th>Report</th></tr></thead>
+<tbody>
+<tr><td>Rail appears</td><td>1536px and up</td><td>1536px and up (same rule)</td></tr>
+<tr><td>Rail x and width at 1536 / 1920</td><td>1368 / 152 and 1560 / 344</td><td>1368 / 152 and 1560 / 344</td></tr>
+<tr><td>Rail top and first entry</td><td>fixed at 56px, first badge at 96px</td><td>fixed at 56px, first badge at 96px</td></tr>
+<tr><td>Entry</td><td>36px min, 8px padding, 20px numbered badge, 14px text</td><td>same values (<code>.rd-toc a</code>, <code>.rd-toc__badge</code>)</td></tr>
+<tr><td>Highlight</td><td>dashed bar spans every heading whose section meets the viewport</td><td>same rule (the report's script ports the main script)</td></tr>
+<tr><td>Content width</td><td>1200px page, 872px column</td><td>1168px, the navbar card's width</td></tr>
+</tbody>
+</table>
+<p class="rd-callout rd-callout--warn">The main page's TOC fades in only after its banner scrolls away. Reports have no banner, so the rail is always shown. The report rail also has no fade-out at the page end, and it does not show the h3 and h4 dots (reports use only h2 sections).</p>
+<pre><code>&lt;main class="rd-tabbed rd-container--wide rd-prose"&gt;
+&lt;div class="rd-tabpanel rd-with-toc" id="summary" role="tabpanel"&gt;
+  &lt;nav class="rd-toc" aria-label="On this page"&gt;
+    &lt;details open&gt;&lt;summary&gt;&lt;svg class="rd-icon" aria-hidden="true"&gt;&lt;use href="#i-list"/&gt;&lt;/svg&gt;On this page&lt;/summary&gt;
+      &lt;ol&gt;&lt;li&gt;&lt;a href="#h-top"&gt;&lt;span class="rd-toc__badge"&gt;1&lt;/span&gt;&lt;span class="rd-toc__text"&gt;Top results&lt;/span&gt;&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;
+    &lt;/details&gt;
+    &lt;div class="rd-toc__indicator" aria-hidden="true"&gt;&lt;/div&gt;
+  &lt;/nav&gt;
+  &lt;div class="rd-tab__body"&gt;
+    &lt;section class="rd-tabsec" id="h-top"&gt;&lt;header class="rd-section__head"&gt;…&lt;h2 id="h-top-t"&gt;Top results&lt;/h2&gt;&lt;/header&gt;…&lt;/section&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;/main&gt;</code></pre>
+<p>The tab bar is <code>nav.rd-expnav[role="tablist"]</code> directly above <code>main</code>. Tab switching and the rail's scroll-spy are plain scripts, one block each, and the page works with no JavaScript (every panel and every rail link shows). The report page's scripts are the reference; the template has the tabbed skeleton as a comment.</p>
 
 <header class="rd-section__head" id="components"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layout-dashboard"/></svg></span><h2>Report components</h2></header>
 <p>The building blocks of a research report. Every example below is illustrative, not a result.</p>

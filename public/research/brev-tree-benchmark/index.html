@@ -499,34 +499,61 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 	html:has(.rd-expnav) { scroll-behavior: smooth; }
 }
 
-/* Tabs: the expnav with role="tablist" and role="tab" links; one <div class="rd-tabpanel" role="tabpanel">
-   per tab (the page's JS sets [hidden] on the inactive ones). Without JS every panel shows.
-   Each panel is a .rd-with-toc: the content, and an "On this page" .rd-toc. The tabbed column is the navbar's width
-   (1168px, same edges as the navbar card). Wide (1100px+): the content fills the left column and the .rd-toc sits
-   sticky in a 12rem column on the right, inside that width. Narrow: the .rd-toc is a disclosure above the content
-   (open by default, so no-JS sees every link). */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+/* Tabbed reports. The tab bar and the content use the navbar card's width (--rd-navbar-width, 1168px from 1200px up),
+   so their edges line up with the navbar card. The "On this page" rail (.rd-toc) sits OUTSIDE that width in the right
+   page margin, as the main post page's TOC does (Fuwari, src/components/widget/TOC.astro; measured on /posts/rust-learnings/):
+   from 1536px up (the main site's 2xl breakpoint) it is position:fixed at top 3.5rem, width (100vw - navbar) / 2 - 1rem,
+   height calc(100vh - 20rem), a 2rem spacer at the top and bottom, and a dashed indicator bar spanning every section that
+   intersects the viewport (the report's scroll-spy script ports TOC.astro's logic; keep them in step).
+   Below 1536px the rail is a disclosure ("On this page") above the content, open by default so no-JS sees every link. */
+:root {
+  --rd-toc-width: calc((100vw - var(--rd-navbar-width)) / 2 - 2rem); /* = the main TOC: the 16px gap to the navbar card, 16px to the viewport edge */
+  --rd-toc-badge-bg: oklch(0.89 0.05 var(--hue));
+  --rd-toc-hover: oklch(0.926 0.015 var(--hue));
+  --rd-toc-active: oklch(0.9 0.015 var(--hue));
+  --rd-toc-text: rgba(0, 0, 0, 0.5);
+  --rd-toc-text-faint: rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"],
+:root.dark {
+  --rd-toc-badge-bg: var(--rd-btn-bg);
+  --rd-toc-hover: oklch(0.22 0.02 var(--hue));
+  --rd-toc-active: oklch(0.25 0.02 var(--hue));
+  --rd-toc-text: rgba(255, 255, 255, 0.5);
+  --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
+}
+html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
+.rd-expnav[role="tablist"] { max-width: var(--rd-navbar-width); margin: 0 auto; padding-inline: var(--rd-space-4); }
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem 0 4rem; }
 .rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
-.rd-with-toc > .rd-toc { margin: 0; }
 .rd-tab__body { display: grid; gap: var(--rd-gap-block); min-width: 0; }
-.rd-toc { font-size: var(--rd-fs-sm); }
-.rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); color: var(--rd-text-muted); font-weight: 600; cursor: pointer; list-style: none; }
+.rd-toc { min-width: 0; }
+.rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
 .rd-toc summary .rd-icon { color: var(--rd-accent); }
-.rd-toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; }
-.rd-toc a { display: block; padding: 0.25rem 0.6rem; border-radius: var(--rd-radius-sm); color: var(--rd-text); text-decoration: none; }
-.rd-toc a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
-.rd-toc a[aria-current="location"] { color: var(--rd-accent); font-weight: 600; }
+.rd-toc ol { list-style: none; margin: 0; padding: 0; position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0 0.5rem; }
+.rd-toc li { margin: 0; min-width: 0; }
+/* Entries: the main TOC's markup and metrics (px-2 py-2 gap-2, min-h 36px, rounded-xl; 20px badge, rounded-lg; text-sm 14px/20px). */
+.rd-toc a { position: relative; display: flex; gap: 0.5rem; width: 100%; min-height: 2.25rem; box-sizing: border-box; padding: 0.5rem; border-radius: 0.75rem; color: inherit; text-decoration: none; transition: background-color 0.15s ease; }
+.rd-toc a:hover { background: var(--rd-toc-hover); }
+.rd-toc a:active { background: var(--rd-toc-active); }
 .rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
-@media (min-width: 1100px) {
-	.rd-with-toc { grid-template-columns: minmax(0, 1fr) 12rem; column-gap: 1.5rem; align-items: start; }
-	.rd-with-toc > .rd-toc { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--rd-expnav-h) + var(--rd-space-4)); max-height: calc(100vh - var(--rd-expnav-h) - 2rem); overflow-y: auto; }
-	.rd-with-toc > .rd-toc summary { display: none; }
-	.rd-with-toc > .rd-tab__body { grid-column: 1; grid-row: 1; }
-	.rd-toc ol { flex-direction: column; flex-wrap: nowrap; gap: 0; border-left: 1px solid var(--rd-line); }
-	.rd-toc a { padding: 0.3rem 0.75rem; margin-left: -1px; border-left: 2px solid transparent; border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; }
-	.rd-toc a[aria-current="location"] { border-left-color: var(--rd-accent); }
+.rd-toc__badge { display: flex; align-items: center; justify-content: center; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; background: var(--rd-toc-badge-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 700; }
+.rd-toc__text { min-width: 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--rd-toc-text); overflow-wrap: anywhere; }
+.rd-toc__indicator { display: none; position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: -1; box-sizing: border-box; border: 2px dashed var(--rd-toc-hover); border-radius: 0.75rem; background: var(--rd-toc-hover); pointer-events: none; transition: all 0.15s ease; }
+/* Narrow: the disclosure. The highlighted entries get the hover fill (the indicator bar is the rail's form). */
+@media (max-width: 1535px) {
+  .rd-toc a.visible { background: var(--rd-toc-hover); }
+}
+/* Wide (1536px+): the rail, fixed in the right margin, like the main post page's TOC. */
+@media (min-width: 1536px) {
+  .rd-toc { position: fixed; top: 3.5rem; left: calc(50% + var(--rd-navbar-width) / 2 + 1rem); z-index: 1; width: var(--rd-toc-width); height: calc(100vh - 20rem); box-sizing: border-box; padding: 2rem 0; overflow-x: hidden; overflow-y: scroll; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); }
+  .rd-toc::-webkit-scrollbar { display: none; }
+  .rd-toc summary { display: none; }
+  .rd-toc ol { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .rd-toc.is-live .rd-toc__indicator { display: block; }
+  .rd-toc:hover .rd-toc__indicator { background: transparent; border-color: var(--rd-toc-active); }
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
@@ -725,7 +752,6 @@ a { color: var(--rd-accent) }
 #brainstorm h3 { break-after: avoid; margin: 1rem 0 0.25rem; }
 #brainstorm > h3:first-child { margin-top: 0; }
 #brainstorm ul { break-inside: avoid; }
-.rd-tabbed .rd-toc { margin: 0; }
 @media print {
   .ledger .hyp.is-off { display: grid; }
   .rd-ledger-tools { display: none; }
@@ -781,10 +807,11 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-top">Top results</a></li>
-          <li><a href="#h-fail">What did not work</a></li>
+          <li><a href="#h-top"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Top results</span></a></li>
+          <li><a href="#h-fail"><span class="rd-toc__badge">2</span><span class="rd-toc__text">What did not work</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-top" aria-labelledby="h-top-t">
@@ -819,10 +846,11 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-board">Scoreboard</a></li>
-          <li><a href="#h-plot">Accuracy against latency</a></li>
+          <li><a href="#h-board"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Scoreboard</span></a></li>
+          <li><a href="#h-plot"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Accuracy against latency</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-board" aria-labelledby="h-board-t">
@@ -847,9 +875,10 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-scale">Scaling to 196 intents</a></li>
+          <li><a href="#h-scale"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Scaling to 196 intents</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-scale" aria-labelledby="h-scale-t">
@@ -866,10 +895,11 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-diffs">Paired differences</a></li>
-          <li><a href="#h-tree">Inside the walk</a></li>
+          <li><a href="#h-diffs"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Paired differences</span></a></li>
+          <li><a href="#h-tree"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Inside the walk</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-diffs" aria-labelledby="h-diffs-t">
@@ -892,14 +922,11 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#m-data">Data</a></li>
-          <li><a href="#m-tree">Tree</a></li>
-          <li><a href="#m-laya">laya arms</a></li>
-          <li><a href="#m-27b">27B arms</a></li>
-          <li><a href="#m-ablations">Ablations</a></li>
-          <li><a href="#h-progress">Run progress</a></li>
+          <li><a href="#h-method"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Method</span></a></li>
+          <li><a href="#h-progress"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Run progress</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-method" aria-labelledby="h-method-t">
@@ -924,9 +951,10 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-ledger">Hypotheses</a></li>
+          <li><a href="#h-ledger"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Hypotheses</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-ledger" aria-labelledby="h-ledger-t">
@@ -947,9 +975,10 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-bs">Brainstorm synthesis</a></li>
+          <li><a href="#h-bs"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Brainstorm synthesis</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-bs" aria-labelledby="h-bs-t">
@@ -964,10 +993,11 @@ a { color: var(--rd-accent) }
       <details open>
         <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
         <ol>
-          <li><a href="#h-caveats">Caveats</a></li>
-          <li><a href="#h-rw">Related work</a></li>
+          <li><a href="#h-caveats"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Caveats</span></a></li>
+          <li><a href="#h-rw"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Related work</span></a></li>
         </ol>
       </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
     </nav>
   <div class="rd-tab__body">
   <section class="rd-tabsec" id="h-caveats" aria-labelledby="h-caveats-t">
@@ -2910,6 +2940,104 @@ function brainstorm() {
 
 progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside(); brainstorm();
 </script>
+<script>
+// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
+// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
+// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
+// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
+(function () {
+  if (window.__rdToc) return;
+  window.__rdToc = true;
+  var wide = window.matchMedia('(min-width: 1536px)');
+  function Rail(nav) {
+    var self = this;
+    this.nav = nav;
+    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+    this.indicator = nav.querySelector('.rd-toc__indicator');
+    this.sections = [];
+    this.index = new Map();
+    this.active = [];
+    this.anchorNavTarget = null;
+    this.links.forEach(function (a, i) {
+      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      self.sections.push(sec);
+      self.active.push(false);
+      if (sec) self.index.set(sec, i);
+    });
+    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
+    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
+    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
+    nav.classList.add('is-live');
+    this.fallback();
+    this.update();
+  }
+  Rail.prototype.onIntersect = function (entries) {
+    var self = this;
+    entries.forEach(function (e) {
+      var i = self.index.get(e.target);
+      if (i !== undefined) self.active[i] = e.isIntersecting;
+      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
+    });
+    if (this.active.indexOf(true) < 0) this.fallback();
+    this.update();
+  };
+  Rail.prototype.fallback = function () {
+    var vh = window.innerHeight;
+    for (var i = 0; i < this.sections.length; i++) {
+      var s = this.sections[i];
+      if (!s) continue;
+      var r = s.getBoundingClientRect();
+      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
+      else if (r.top > vh) break;
+    }
+  };
+  Rail.prototype.update = function () {
+    var self = this;
+    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
+  };
+  Rail.prototype.toggle = function () {
+    var links = this.links, a = this.active;
+    var i = links.length - 1, min = links.length - 1, max = -1;
+    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
+    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
+    while (i >= 0) { links[i].classList.remove('visible'); i--; }
+    if (!this.indicator) return;
+    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
+    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
+    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
+    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
+    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
+  };
+  Rail.prototype.scroll = function () {
+    if (this.anchorNavTarget || !wide.matches) return;
+    var vis = this.nav.querySelectorAll('a.visible');
+    if (!vis.length) return;
+    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
+    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
+    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
+  };
+  Rail.prototype.onClick = function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+  };
+  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
+  function openForWide() {
+    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
+  }
+  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
+  wide.addEventListener('change', refresh);
+  window.addEventListener('resize', refresh, { passive: true });
+  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
+  var mo = new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
+    });
+  });
+  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+  openForWide();
+})();
+</script>
+
 <script>
 // Tabs: one panel per tab, the tab id in the URL hash (one history entry per tab change), deep links to any
 // section (#h-board opens its tab and scrolls to it), keyboard (arrows, Home, End), and an "On this page" list per tab.
