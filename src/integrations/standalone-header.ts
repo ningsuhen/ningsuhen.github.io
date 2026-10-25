@@ -8,6 +8,7 @@ import { MARKER, buildScript } from "../chrome/navbar";
 import { LICENSE_MARKER, buildLicenseScript } from "../chrome/license";
 import { commentsFor } from "../chrome/comments";
 import { addBreadcrumb } from "../chrome/breadcrumb";
+import { addPagefindBody } from "../chrome/pagefind";
 import { buildSocialMeta } from "../chrome/social";
 import { withThemeScript } from "../chrome/theme";
 import { esc } from "../chrome/util";
@@ -87,7 +88,8 @@ function transform(html: string, script: string, extra: string, footer: string, 
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	const withCrumbs = addBreadcrumb(body, urlPath, base, site);
-	return withThemeScript(ensureHead(versionedBundle(withCrumbs), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+	const withPagefind = addPagefindBody(withCrumbs);
+	return withThemeScript(ensureHead(versionedBundle(withPagefind), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
 }
 
 const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
