@@ -1,0 +1,21 @@
+
+/* ======================================================================
+   Icons: Lucide, from the inlined sprite (scripts/build-lucide-sprite.mjs writes the
+   <symbol>s between the lucide-sprite markers of each page). Stroke comes from this class.
+   <svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>
+   ====================================================================== */
+.rd-icon {
+	display: inline-block;
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.2em;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.rd-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, 100%), 1fr)); gap: var(--rd-space-2); list-style: none; padding: 0; margin: var(--rd-gap-block) 0; }
+.rd-icon-grid li { display: flex; align-items: center; gap: var(--rd-space-2); padding: var(--rd-space-2) var(--rd-space-3); background: var(--rd-card-bg); border-radius: var(--rd-radius-sm); font-size: var(--rd-fs-sm); color: var(--rd-text-muted); overflow-wrap: anywhere; }
+.rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
