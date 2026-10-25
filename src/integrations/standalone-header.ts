@@ -155,75 +155,76 @@ async function htmlFiles(root: string, dir = ""): Promise<string[]> {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
+// Sizes are em of the header's own font size, which is the main site's root size: 16px from 768px, 14px below
+// (html text-[14px] md:text-[16px]). A Tailwind rem on the main navbar is the same number of em here, so every
+// measure matches at every width. Breakpoints: links and the search field from 1024px (lg), like the main bar.
 const CSS = `
-:host{all:initial;display:block;--hue:250;--bg:#fff;--fg:#2b2b2e;--muted:#6b6b72;--line:rgba(0,0,0,.08);--accent:oklch(.55 .15 var(--hue));--prime:oklch(.70 .14 var(--hue));--hover:oklch(.95 .03 var(--hue))}
-:host([data-theme=dark]){--bg:oklch(.2 .015 var(--hue));--fg:rgba(255,255,255,.9);--muted:rgba(255,255,255,.55);--line:rgba(255,255,255,.12);--accent:oklch(.75 .14 var(--hue));--prime:oklch(.75 .14 var(--hue));--hover:oklch(.3 .04 var(--hue))}
-header{box-sizing:border-box;display:flex;align-items:center;gap:12px;height:72px;width:min(100%,1168px);margin:0 auto;padding:0 16px;background:#fff;color:var(--fg);border-radius:0 0 16px 16px;font:700 16px/1 RobotoNav,Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
-:host([data-theme=dark]) header{background:oklch(.23 .015 var(--hue))}
-a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer}
-.brand{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px;border-radius:8px;color:var(--prime);white-space:nowrap}
-.brand svg{width:28px;height:28px;fill:currentColor;stroke:none}
-nav{display:flex;align-items:center;gap:0;min-width:0;flex:0 1 auto;justify-content:flex-start;margin-left:88.8px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
-nav::-webkit-scrollbar{display:none}
-.brand{flex:none}
-.end{display:flex;flex:none;margin-left:auto;align-items:center}
-.search{display:none;align-items:center;gap:8px;width:160px;height:44px;margin-right:8px;padding:0 12px;box-sizing:border-box;border-radius:8px;background:oklch(.95 .01 var(--hue));color:var(--muted);font-weight:400;font-size:14px}
-:host([data-theme=dark]) .search{background:oklch(.3 .035 var(--hue))}
-.search svg{width:20px;height:20px;flex:none}
-.q{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--fg);font:400 14px/1 inherit;font-family:inherit}
-.q::placeholder{color:var(--muted)}
-.sbtn{display:inline-flex}
-@media(min-width:1024px){.sbtn{display:none}.q2{display:none}}
-.sp{position:absolute;top:76px;right:16px;width:min(30rem,calc(100% - 32px));max-height:70vh;overflow:auto;padding:12px;border-radius:16px;background:var(--bg);box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:1}
-.sp[hidden]{display:none}
-.q2{box-sizing:border-box;width:100%;height:44px;padding:0 12px;margin-bottom:8px;border-radius:8px;background:oklch(.95 .01 var(--hue))}
-:host([data-theme=dark]) .q2{background:oklch(.3 .035 var(--hue))}
-.res a{display:block;padding:10px 12px;border-radius:8px;font-weight:400;font-size:14px;line-height:1.4}
-.res a:hover{background:var(--hover)}
-.res b{display:block;color:var(--prime);font-size:15px}
-.res mark{background:transparent;color:var(--prime);font-weight:700}
-.res p{margin:0;padding:8px 12px;color:var(--muted);font-size:14px}
+:host{all:initial;display:block;position:sticky;top:0;z-index:1000;--hue:250;--u:16px;--card:#fff;--float:#fff;--link:rgba(0,0,0,.75);--prime:oklch(.70 .14 var(--hue));--hover:oklch(.95 .025 var(--hue));--active:oklch(.98 .01 var(--hue));--field:rgba(0,0,0,.04);--field-hover:rgba(0,0,0,.06);--ph:rgba(0,0,0,.5);--ico:rgba(0,0,0,.3);--muted:#6b6b72}
+@media(max-width:767.98px){:host{--u:14px}}
+:host([data-theme=dark]){--card:oklch(.23 .015 var(--hue));--float:oklch(.19 .015 var(--hue));--link:rgba(255,255,255,.75);--prime:oklch(.75 .14 var(--hue));--hover:oklch(.30 .035 var(--hue));--active:oklch(.27 .025 var(--hue));--field:rgba(255,255,255,.05);--field-hover:rgba(255,255,255,.10);--ph:rgba(255,255,255,.5);--ico:rgba(255,255,255,.3);--muted:rgba(255,255,255,.55)}
+header{box-sizing:border-box;position:relative;display:flex;align-items:center;justify-content:space-between;height:4.5em;width:min(100%,75em);margin:0 auto;padding:0 1em;background:var(--card);color:var(--link);border-radius:0 0 1em 1em;font:700 var(--u)/1 RobotoNav,Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
+a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer;background:none;border:0;position:relative;isolation:isolate;transition:background-color .2s ease-out,color .15s ease-out,transform .15s ease-out}
+.brand,nav a,.end button,.menu-panel a{display:inline-flex;align-items:center;justify-content:center;border-radius:.5em;white-space:nowrap}
+.brand::before,nav a::before,.end button::before,.menu-panel a::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;background:transparent;transform:scale(.85);transition:transform .2s ease-out,background-color .2s ease-out}
+.brand:hover::before,nav a:hover::before,.end button:hover::before,.menu-panel a:hover::before{background:var(--hover);transform:scale(1)}
+.brand:active::before,nav a:active::before,.end button:active::before,.menu-panel a:active::before{background:var(--active)}
+a:hover,button:hover{color:var(--prime)}
+.brand{height:3.25em;padding:0 1.25em;color:var(--prime);font-weight:700;flex:none}
+.brand svg{width:1.75em;height:1.75em;margin:0 .5em .25em 0;flex:none}
+.brand:active,nav a:active,.end button:active{transform:scale(.95)}
+nav{display:none;align-items:center}
+nav a{height:2.75em;padding:0 1.25em;font-weight:700}
+.end{display:flex;align-items:center;flex:none}
+button{width:2.75em;height:2.75em;flex:none;padding:0;font-weight:400}
+.end button:active{transform:scale(.9)}
+@media(min-width:1024px){nav{display:flex}.end .sbtn,.end .menu{display:none}}
+@media(min-width:768px){header{width:calc(min(100%,75em) - 2em)}}
+svg{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ext{width:.875em;height:.875em;margin-left:.25em;opacity:.25}
+.search{position:relative;display:none;align-items:center;box-sizing:border-box;width:10em;height:2.75em;margin-right:.5em;border-radius:.5em;background:var(--field);transition:width .15s ease-out,background-color .15s}
+.search:hover,.search:focus-within{background:var(--field-hover)}
+.search:focus-within{width:15em}
+.search svg{position:absolute;left:.75em;top:50%;transform:translateY(-50%);color:var(--ico);pointer-events:none}
+.q{box-sizing:border-box;width:100%;height:100%;padding:0 .75em 0 2.5em;border:0;outline:0;background:transparent;color:var(--ph);font-family:inherit;font-size:.875em;font-weight:400}
+.q::placeholder,.q2::placeholder{color:var(--ico)}
 @media(min-width:1024px){.search{display:flex}}
-.ext{width:14px;height:14px;margin-left:4px;opacity:.25}
-header{position:relative}
-.panel{position:absolute;top:76px;right:16px;width:260px;padding:16px;border-radius:16px;background:var(--bg);box-shadow:0 8px 32px rgba(0,0,0,.18);font-size:14px;z-index:1}
-.panel[hidden]{display:none}
-.panel label{display:flex;justify-content:space-between;margin-bottom:12px}
+.sp,.panel,.menu-panel{position:absolute;z-index:1;box-sizing:border-box;top:5.25em;right:1em;border-radius:1em;background:var(--float);transition:opacity .15s ease,transform .15s ease,visibility .15s}
+.closed{opacity:0;transform:translateY(-.25em);visibility:hidden;pointer-events:none}
+.sp{top:5em;left:1em;right:1em;max-height:70vh;overflow:auto;padding:.5em}
+@media(min-width:768px){.sp{left:auto;width:30em}}
+.q2{display:block;box-sizing:border-box;width:100%;height:2.75em;padding:0 .75em;border:0;outline:0;border-radius:.5em;background:var(--field);color:var(--link);font-family:inherit;font-size:.875em}
+.res:not(:empty){margin-top:.5em}
+@media(min-width:1024px){.q2{display:none}}
+.res a{display:block;padding:.625em .75em;border-radius:.5em;font-weight:400;font-size:.875em;line-height:1.4}
+.res a:hover{background:var(--hover)}
+.res b{display:block;color:var(--prime);font-size:.9375em}
+.res mark{background:transparent;color:var(--prime);font-weight:700}
+.res p{margin:0;padding:.5em .75em;color:var(--muted);font-size:.875em}
+.panel{width:20em;padding:1em}
+.panel label{display:flex;justify-content:space-between;margin-bottom:.75em;font-size:.875em}
 .panel input{width:100%;accent-color:var(--prime)}
-nav a,button{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 20px;border:0;border-radius:8px;background:transparent}
-nav a:hover,button:hover,.brand:hover{background:var(--hover);color:var(--accent)}
-button{width:44px;flex:none;justify-content:center;padding:0}
-svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ni{display:none}
+.menu-panel{display:flex;flex-direction:column;padding:.5em}
+.menu-panel a{justify-content:space-between;gap:2em;padding:.5em .25em .5em .75em;font-weight:700;line-height:1.5}
+.menu-panel .chev{width:1.25em;height:1.25em;color:var(--prime)}
 :host(:not([data-theme=dark])) .moon,:host([data-theme=dark]) .sun{display:none}
-@media(max-width:560px){nav{margin-left:0}header{gap:6px;padding:0 8px;height:63px}nav a,.brand{padding:0 10px}.brand{margin-left:6px}}
 `;
+
+// Page-level rules the header needs: the main site hides its page scrollbar (OverlayScrollbars), so standalone pages
+// hide theirs too; a visible 15px bar would take layout width and shift the centred navbar.
+const HEAD_CSS = FONT_FACE + "html{scrollbar-width:none}html::-webkit-scrollbar{display:none}";
 
 // Lucide (ISC) icon bodies, copied from @iconify-json/lucide. Inline so standalone pages make no icon requests;
 // stroke/fill come from the `svg` rule above.
 const LUCIDE = {
 	house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-	archive: '<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8m-10 4h4"/>',
-	user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-	"flask-conical": '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/>',
-	microscope: '<path d="M6 18h8M3 22h18m-7 0a7 7 0 1 0 0-14h-1m-4 6h2m-2-2a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Zm3-6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>',
 	sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
 	moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
+	"chevron-right": '<path d="m9 18 6-6-6-6"/>',
+	menu: '<path d="M4 12h16M4 6h16M4 18h16"/>',
 } as const;
-
-// Icon per navbar link name (same names as navBarConfig / presets).
-const NAV_ICONS: Record<string, keyof typeof LUCIDE> = {
-	Home: "house",
-	Archive: "archive",
-	About: "user",
-	Experiments: "flask-conical",
-	Research: "microscope",
-};
 
 const svgIcon = (name: keyof typeof LUCIDE, cls: string) =>
 	`<svg class="${cls}" viewBox="0 0 24 24">${LUCIDE[name]}</svg>`;
-
-const HOME = '<svg viewBox="0 0 24 24"><path d="M6 19h3v-6h6v6h3v-9l-6-4.5L6 10zm-2 2V9l8-6l8 6v12h-7v-6h-2v6zm8-8.75"/></svg>';
 
 const EXT = '<svg class="ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
 const SEARCH = '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
@@ -233,24 +234,28 @@ const ICONS = svgIcon("sun", "sun") + svgIcon("moon", "moon");
 
 // Script (not markup) so it works for HTML fragments without <body>; shadow DOM isolates it from page CSS.
 function buildScript(items: NavItem[], title: string, hue: number): string {
-	const links = items
-		.map((i) => {
-			const icon = NAV_ICONS[i.name];
-			const lead = icon ? svgIcon(icon, "ni") : "";
-			return `<a href="${esc(i.url)}"${i.external ? ' target="_blank" rel="noopener"' : ""}>${lead}${esc(i.name)}${i.external ? EXT : ""}</a>`;
-		})
+	const home = esc(items[0]?.url ?? "/");
+	const target = (i: NavItem) => (i.external ? ' target="_blank" rel="noopener"' : "");
+	const links = items.map((i) => `<a href="${esc(i.url)}"${target(i)}>${esc(i.name)}${i.external ? EXT : ""}</a>`).join("");
+	const rows = items
+		.map((i) => `<a href="${esc(i.url)}"${target(i)}><span>${esc(i.name)}</span>${i.external ? EXT : svgIcon("chevron-right", "chev")}</a>`)
 		.join("");
 	const markup =
-		`<style>${CSS}</style><header><a class="brand" href="${esc(items[0]?.url ?? "/")}">${HOME}${esc(title)}</a>` +
-		`<nav>${links}</nav><span class="end"><label class="search">${SEARCH}<input class="q" type="search" placeholder="Search" aria-label="Search" autocomplete="off"></label><button type="button" class="sbtn" aria-label="Search">${SEARCH}</button>` +
-		`<button type="button" class="pal" aria-label="Display settings">${PALETTE}</button><button type="button" class="theme" aria-label="Toggle light/dark theme">${ICONS}</button></span>` +
-		`<div class="sp" hidden><input class="q q2" type="search" placeholder="Search" aria-label="Search" autocomplete="off"><div class="res"></div></div><div class="panel" hidden><label>Theme color <output></output></label><input type="range" min="0" max="360" aria-label="Theme color"></div></header>`;
+		`<style>${CSS}</style><header><a class="brand" href="${home}">${svgIcon("house", "")}${esc(title)}</a>` +
+		`<nav>${links}</nav><span class="end"><label class="search">${SEARCH}<input class="q" type="search" placeholder="Search" aria-label="Search" autocomplete="off"></label>` +
+		`<button type="button" class="sbtn" aria-label="Search Panel" aria-expanded="false">${SEARCH}</button>` +
+		`<button type="button" class="pal" aria-label="Display Settings" aria-expanded="false">${PALETTE}</button>` +
+		`<button type="button" class="theme" aria-label="Light/Dark Mode">${ICONS}</button>` +
+		`<button type="button" class="menu" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu-panel">${svgIcon("menu", "")}</button></span>` +
+		`<div class="sp closed"><input class="q q2" type="search" placeholder="Search" aria-label="Search" autocomplete="off"><div class="res"></div></div>` +
+		`<div class="panel closed"><label>Theme color <output></output></label><input type="range" min="0" max="360" aria-label="Theme color"></div>` +
+		`<div class="menu-panel closed" id="nav-menu-panel">${rows}</div></header>`;
 	const pfUrl = (items[0]?.url ?? "/") + "pagefind/pagefind.js";
 	const html = JSON.stringify(markup).replace(/<\/(script)/gi, "<\\/$1");
 
 	return (
 		`<script ${MARKER}>(function(){` +
-		`var f=document.createElement("style");f.textContent=${JSON.stringify(FONT_FACE)};document.documentElement.appendChild(f);` +
+		`var f=document.createElement("style");f.textContent=${JSON.stringify(HEAD_CSS)};document.documentElement.appendChild(f);` +
 		`var host=document.createElement("div");host.setAttribute("${MARKER}","");` +
 		`var root=host.attachShadow({mode:"open"});root.innerHTML=${html};` +
 		`function get(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}` +
@@ -262,19 +267,24 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`window.siteTheme.set(host.getAttribute("data-theme")==="dark"?"light":"dark")});` +
 		`var pn=root.querySelector(".panel"),rg=pn.querySelector("input"),ou=pn.querySelector("output");` +
 		`function setHue(h){host.style.setProperty("--hue",h);rg.value=h;ou.textContent=h}setHue(get("hue","${hue}"));` +
-		`root.querySelector(".pal").addEventListener("click",function(){pn.hidden=!pn.hidden});` +
 		`rg.addEventListener("input",function(){setHue(rg.value);try{localStorage.setItem("hue",rg.value)}catch(e){}});` +
-		`var sp=root.querySelector(".sp"),res=sp.querySelector(".res"),qs=root.querySelectorAll(".q"),pf=null,tm=0;` +
+		`var sb=root.querySelector(".sbtn"),pl=root.querySelector(".pal"),mn=root.querySelector(".menu"),mp=root.querySelector(".menu-panel"),sp=root.querySelector(".sp"),res=sp.querySelector(".res"),qs=root.querySelectorAll(".q"),pf=null,tm=0,panels=[sp,pn,mp];` +
+		`function isOpen(p){return !p.classList.contains("closed")}` +
+		`function syncAria(){sb.setAttribute("aria-expanded",String(isOpen(sp)));pl.setAttribute("aria-expanded",String(isOpen(pn)));mn.setAttribute("aria-expanded",String(isOpen(mp)))}` +
+		`function open(p){panels.forEach(function(o){if(o!==p)o.classList.add("closed")});p.classList.remove("closed");syncAria()}` +
+		`function shut(){panels.forEach(function(o){o.classList.add("closed")});syncAria()}` +
+		`sb.addEventListener("click",function(){if(isOpen(sp))shut();else{open(sp);root.querySelector(".q2").focus()}});` +
+		`pl.addEventListener("click",function(){if(isOpen(pn))shut();else open(pn)});` +
+		`mn.addEventListener("click",function(){if(isOpen(mp))shut();else{open(mp);mp.querySelector("a").focus()}});` +
+		`mp.addEventListener("click",function(e){if(e.target.closest&&e.target.closest("a"))shut()});` +
+		`addEventListener("keydown",function(e){if(e.key==="Escape"&&panels.some(isOpen)){var back=isOpen(mp)?mn:isOpen(pn)?pl:sb;var inside=!!root.activeElement;shut();if(inside)back.focus()}});` +
+		`document.addEventListener("click",function(e){if(e.composedPath().indexOf(host)<0)shut()});` +
 		`function E(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}` +
-		`function run(q){clearTimeout(tm);tm=setTimeout(async function(){if(!q.trim()){sp.hidden=true;return}sp.hidden=false;res.innerHTML="<p>Searching…</p>";` +
+		`function run(q){clearTimeout(tm);tm=setTimeout(async function(){if(!q.trim()){sp.classList.add("closed");syncAria();return}open(sp);res.innerHTML="<p>Searching…</p>";` +
 		`try{pf=pf||await import(${JSON.stringify(pfUrl)});var r=await pf.search(q),d=await Promise.all(r.results.slice(0,6).map(function(x){return x.data()}));` +
 		`res.innerHTML=d.length?"":"<p>No results</p>";d.forEach(function(x){var a=document.createElement("a");a.href=x.url;a.innerHTML="<b>"+E((x.meta&&x.meta.title)||x.url)+"</b>"+x.excerpt;res.appendChild(a)})}` +
 		`catch(e){res.innerHTML="<p>Search is only available on the built site.</p>"}},150)}` +
 		`qs.forEach(function(i){i.addEventListener("input",function(){qs.forEach(function(o){if(o!==i)o.value=i.value});run(i.value)});i.addEventListener("focus",function(){if(i.value)run(i.value)})});` +
-		`root.querySelector(".sbtn").addEventListener("click",function(){pn.hidden=true;sp.hidden=!sp.hidden;if(!sp.hidden){var q2=sp.querySelector(".q2");q2.focus()}});` +
-		`root.querySelector(".pal").addEventListener("click",function(){sp.hidden=true});` +
-		`addEventListener("keydown",function(e){if(e.key==="Escape"){sp.hidden=true;pn.hidden=true}});` +
-		`document.addEventListener("click",function(e){if(e.composedPath().indexOf(host)<0){sp.hidden=true;pn.hidden=true}});` +
 		// Mount on <html>, before <body>: the page's own body margin/padding/max-width can then never offset the bar.
 		`document.documentElement.insertBefore(host,document.body)})()</script>`
 	);

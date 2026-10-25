@@ -55,7 +55,8 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}`;
 
-const browser = await chromium.launch({ executablePath: findChrome() });
+// Headless Chrome hides scrollbars by default, which would hide a 15px page scrollbar from this check.
+const browser = await chromium.launch({ executablePath: findChrome(), ignoreDefaultArgs: ["--hide-scrollbars"] });
 const failures = [];
 const pages = htmlPages();
 for (const rel of pages) {
@@ -408,6 +409,90 @@ for (const width of FOOTER_WIDTHS) {
 		await ctx.close();
 	}
 }
+
+// Navbar parity with the main site: on a standalone page the navbar must match the main navbar's rects, colours and
+// fonts at every width (short and scrolling pages), take no width from the page scrollbar, stick to the top, and its
+// open panels must be the topmost thing at their centre (not under a page's sticky bar).
+const PARITY_PAGE = "/research/brev-tree-benchmark/";
+const PARITY_WIDTHS = [375, 768, 1024, 1280, 1440, 1920];
+const navState = () => {
+	const host = document.querySelector("[data-site-navbar]");
+	const root = host ? host.shadowRoot : document;
+	const bar = host ? root.querySelector("header") : document.querySelector("#navbar .card-base");
+	const controls = {};
+	for (const el of bar.querySelectorAll("a, button")) {
+		if (el.closest(".closed, .float-panel-closed")) continue;
+		const r = el.getBoundingClientRect();
+		const cs = getComputedStyle(el);
+		if (cs.display === "none" || r.width === 0) continue;
+		const name = (el.getAttribute("aria-label") || el.textContent || "").trim();
+		controls[name] = { x: r.left, w: r.width, h: r.height, color: cs.color, fs: cs.fontSize, fw: cs.fontWeight };
+	}
+	const br = bar.getBoundingClientRect();
+	return { bar: { x: br.left, w: br.width, h: br.height, bg: getComputedStyle(bar).backgroundColor }, controls, sbw: innerWidth - document.documentElement.clientWidth, scrollable: document.documentElement.scrollHeight > innerHeight };
+};
+if (standaloneUrls.has(PARITY_PAGE)) {
+	const near = (a, b) => Math.abs(a - b) <= 1;
+	const load = async (urlPath, theme, width, height) => {
+		const ctx = await browser.newContext({ viewport: { width, height } });
+		await ctx.addInitScript((t) => { try { localStorage.setItem("theme", t); } catch {} }, theme);
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.waitForSelector(urlPath === "/" ? "#navbar .card-base" : "[data-site-navbar]", { timeout: 15000 });
+		await page.waitForTimeout(300);
+		return { ctx, page };
+	};
+	for (const theme of ["light", "dark"]) for (const w of PARITY_WIDTHS) for (const h of [900, 4000]) {
+		const tag = `${PARITY_PAGE} ${theme} @${w}x${h} navbar parity`;
+		const m = await load("/", theme, w, h);
+		const main = await m.page.evaluate(navState);
+		await m.ctx.close();
+		const s = await load(PARITY_PAGE, theme, w, h);
+		const std = await s.page.evaluate(navState);
+		if (h === 900) {
+			// Panels: open each trigger that shows at this width, after scrolling so a sticky page bar sits under them.
+			await s.page.evaluate(() => window.scrollTo(0, 800));
+			await s.page.waitForTimeout(100);
+			for (const sel of ["button.sbtn", "button.pal", "button.menu"]) {
+				if (!(await s.page.locator(sel).first().isVisible())) continue;
+				try {
+					await s.page.click(sel, { timeout: 5000 });
+				} catch {
+					failures.push(`${PARITY_PAGE} @${w} ${sel}: not clickable (covered by page content)`);
+					continue;
+				}
+				await s.page.waitForTimeout(300);
+				const hit = await s.page.evaluate((sel) => {
+					const host = document.querySelector("[data-site-navbar]");
+					const panel = host.shadowRoot.querySelector(sel === "button.sbtn" ? ".sp" : sel === "button.pal" ? ".panel" : ".menu-panel");
+					const r = panel.getBoundingClientRect();
+					const cx = r.left + r.width / 2, cy = Math.min(r.top + r.height / 2, r.bottom - 4);
+					const inner = host.shadowRoot.elementFromPoint(cx, cy);
+					return { open: !panel.classList.contains("closed") && r.width > 0, inside: panel.contains(inner), onTop: document.elementFromPoint(cx, cy) === host };
+				}, sel);
+				if (!hit.open || !hit.inside || !hit.onTop) failures.push(`${PARITY_PAGE} @${w} ${sel}: panel not open, or covered (open=${hit.open} inside=${hit.inside} onTop=${hit.onTop})`);
+			}
+			const sticky = await s.page.evaluate(() => {
+				const host = document.querySelector("[data-site-navbar]");
+				const cs = getComputedStyle(host);
+				return { pos: cs.position, z: +cs.zIndex, top: host.getBoundingClientRect().top };
+			});
+			if (sticky.pos !== "sticky" || sticky.z < 1000 || sticky.top !== 0) failures.push(`${PARITY_PAGE} @${w}: navbar not sticky above content (position=${sticky.pos}, z=${sticky.z}, top=${sticky.top})`);
+		}
+		await s.ctx.close();
+		if (main.bar.bg !== std.bar.bg || !near(main.bar.x, std.bar.x) || !near(main.bar.w, std.bar.w) || !near(main.bar.h, std.bar.h)) failures.push(`${tag}: bar ${JSON.stringify(std.bar)} vs main ${JSON.stringify(main.bar)}`);
+		if (std.sbw !== 0) failures.push(`${tag}: page scrollbar takes ${std.sbw}px of layout width (main takes 0)`);
+		if (std.scrollable !== main.scrollable && h === 900) failures.push(`${tag}: scroll state differs (main ${main.scrollable}, standalone ${std.scrollable})`);
+		for (const [name, mc] of Object.entries(main.controls)) {
+			const sc = std.controls[name];
+			if (!sc) { failures.push(`${tag}: "${name}" missing from the standalone navbar`); continue; }
+			if (!near(mc.x, sc.x) || !near(mc.w, sc.w) || !near(mc.h, sc.h)) failures.push(`${tag}: "${name}" at ${sc.x}/${sc.w}x${sc.h}, main ${mc.x}/${mc.w}x${mc.h}`);
+			if (name !== "Ning Waikhom" && (mc.color !== sc.color || mc.fs !== sc.fs || mc.fw !== sc.fw)) failures.push(`${tag}: "${name}" is ${sc.color} ${sc.fs} ${sc.fw}, main ${mc.color} ${mc.fs} ${mc.fw}`);
+		}
+		for (const name of Object.keys(std.controls)) if (!main.controls[name]) failures.push(`${tag}: "${name}" only in the standalone navbar`);
+	}
+}
+
 await browser.close();
 server.close();
 
