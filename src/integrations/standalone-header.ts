@@ -259,19 +259,20 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 // Sizes are em of the header's own font size, which is the main site's root size: 16px from 768px, 14px below
 // (html text-[14px] md:text-[16px]). A Tailwind rem on the main navbar is the same number of em here, so every
 // measure matches at every width. Breakpoints: links and the search field from 1024px (lg), like the main bar.
+// Colours: --ink is text (brand, hover, results; = main --btn-content), --prime only fills and icons (= main --primary).
 const CSS = `
-:host{all:initial;display:block;position:sticky;top:0;z-index:1000;--hue:250;--u:16px;--card:#fff;--float:#fff;--link:rgba(0,0,0,.75);--prime:oklch(.70 .14 var(--hue));--hover:oklch(.95 .025 var(--hue));--active:oklch(.98 .01 var(--hue));--field:rgba(0,0,0,.04);--field-hover:rgba(0,0,0,.06);--ph:rgba(0,0,0,.5);--ico:rgba(0,0,0,.3);--muted:#6b6b72}
+:host{all:initial;display:block;position:sticky;top:0;z-index:1000;--hue:250;--u:16px;--card:#fff;--float:#fff;--link:rgba(0,0,0,.75);--prime:oklch(.70 .14 var(--hue));--ink:oklch(.5 .12 var(--hue));--hover:oklch(.95 .025 var(--hue));--active:oklch(.98 .01 var(--hue));--field:rgba(0,0,0,.04);--field-hover:rgba(0,0,0,.06);--ph:rgba(0,0,0,.56);--ico:rgba(0,0,0,.3);--muted:#6b6b72}
 @media(max-width:767.98px){:host{--u:14px}}
-:host([data-theme=dark]){--card:oklch(.23 .015 var(--hue));--float:oklch(.19 .015 var(--hue));--link:rgba(255,255,255,.75);--prime:oklch(.75 .14 var(--hue));--hover:oklch(.30 .035 var(--hue));--active:oklch(.27 .025 var(--hue));--field:rgba(255,255,255,.05);--field-hover:rgba(255,255,255,.10);--ph:rgba(255,255,255,.5);--ico:rgba(255,255,255,.3);--muted:rgba(255,255,255,.55)}
+:host([data-theme=dark]){--card:oklch(.23 .015 var(--hue));--float:oklch(.19 .015 var(--hue));--link:rgba(255,255,255,.75);--prime:oklch(.75 .14 var(--hue));--ink:oklch(.75 .1 var(--hue));--hover:oklch(.30 .035 var(--hue));--active:oklch(.27 .025 var(--hue));--field:rgba(255,255,255,.05);--field-hover:rgba(255,255,255,.10);--ph:rgba(255,255,255,.5);--ico:rgba(255,255,255,.3);--muted:rgba(255,255,255,.55)}
 header{box-sizing:border-box;position:relative;display:flex;align-items:center;justify-content:space-between;height:4.5em;width:min(100%,75em);margin:0 auto;padding:0 1em;background:var(--card);color:var(--link);border-radius:0 0 1em 1em;font:700 var(--u)/1 RobotoNav,Roboto,system-ui,-apple-system,"Segoe UI",sans-serif}
 a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer;background:none;border:0;position:relative;isolation:isolate;transition:background-color .2s ease-out,color .15s ease-out,transform .15s ease-out}
 .brand,nav a,.end button,.menu-panel a{display:inline-flex;align-items:center;justify-content:center;border-radius:.5em;white-space:nowrap}
 .brand::before,nav a::before,.end button::before,.menu-panel a::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;background:transparent;transform:scale(.85);transition:transform .2s ease-out,background-color .2s ease-out}
 .brand:hover::before,nav a:hover::before,.end button:hover::before,.menu-panel a:hover::before{background:var(--hover);transform:scale(1)}
 .brand:active::before,nav a:active::before,.end button:active::before,.menu-panel a:active::before{background:var(--active)}
-a:hover,button:hover{color:var(--prime)}
+a:hover,button:hover{color:var(--ink)}
 /* The brand shrinks and wraps when the links need the room, as the main navbar's does (measured parity at 1024px). */
-.brand{height:3.25em;padding:0 1.25em;color:var(--prime);font-weight:700;white-space:normal;text-align:center}
+.brand{height:3.25em;padding:0 1.25em;color:var(--ink);font-weight:700;white-space:normal;text-align:center}
 .brand svg{width:1.75em;height:1.75em;margin:0 .5em .25em 0}
 .brand:active,nav a:active,.end button:active{transform:scale(.95)}
 nav{display:none;align-items:center}
@@ -299,8 +300,8 @@ svg{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-wi
 @media(min-width:1024px){.q2{display:none}}
 .res a{display:block;padding:.625em .75em;border-radius:.5em;font-weight:400;font-size:.875em;line-height:1.4}
 .res a:hover{background:var(--hover)}
-.res b{display:block;color:var(--prime);font-size:.9375em}
-.res mark{background:transparent;color:var(--prime);font-weight:700}
+.res b{display:block;color:var(--ink);font-size:.9375em}
+.res mark{background:transparent;color:var(--ink);font-weight:700}
 .res p{margin:0;padding:.5em .75em;color:var(--muted);font-size:.875em}
 .panel{width:20em;padding:1em}
 .panel label{display:flex;justify-content:space-between;margin-bottom:.75em;font-size:.875em}
@@ -370,7 +371,7 @@ function buildScript(items: NavItem[], title: string, hue: number): string {
 		`root.querySelector(".theme").addEventListener("click",function(){` +
 		`window.siteTheme.set(host.getAttribute("data-theme")==="dark"?"light":"dark")});` +
 		`var pn=root.querySelector(".panel"),rg=pn.querySelector("input"),ou=pn.querySelector("output");` +
-		`function setHue(h){host.style.setProperty("--hue",h);rg.value=h;ou.textContent=h}setHue(get("hue","${hue}"));` +
+		`function setHue(h){host.style.setProperty("--hue",h);document.documentElement.style.setProperty("--hue",h);rg.value=h;ou.textContent=h}setHue(get("hue","${hue}"));` +
 		`rg.addEventListener("input",function(){setHue(rg.value);try{localStorage.setItem("hue",rg.value)}catch(e){}});` +
 		`var sb=root.querySelector(".sbtn"),pl=root.querySelector(".pal"),mn=root.querySelector(".menu"),mp=root.querySelector(".menu-panel"),sp=root.querySelector(".sp"),res=sp.querySelector(".res"),qs=root.querySelectorAll(".q"),pf=null,tm=0,panels=[sp,pn,mp];` +
 		`function isOpen(p){return !p.classList.contains("closed")}` +
