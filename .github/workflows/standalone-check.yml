@@ -56,6 +56,8 @@ jobs:
       - uses: ./.github/actions/check-setup
         with:
           need-dist: "true"
+      - name: script syntax
+        run: pnpm check:syntax
       - name: astro check
         run: pnpm check
       - name: thumbnails
@@ -66,6 +68,8 @@ jobs:
         run: pnpm check:markers
       - name: internal links
         run: pnpm check:links
+      - name: fragment contract
+        run: pnpm check:export
       - name: leaks (incl. embedded payloads)
         run: pnpm check:leaks
 
