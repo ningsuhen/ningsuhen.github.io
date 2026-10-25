@@ -873,3 +873,31 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	cursor: default;
 	pointer-events: none;
 }
+/* rd-filter: a chip-styled toggle for filtering a set (facet, status, tag). A real <button> with
+   aria-pressed; the pressed state is filled. Distinct from the passive .rd-chip label (frozen core):
+   this one is interactive. min-height floors at the 24px tap target. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+	min-height: 1.5rem;
+	padding: var(--rd-pad-chip);
+	border: 1px solid var(--rd-line);
+	border-radius: 999px;
+	background: var(--rd-card-bg);
+	color: var(--rd-text-muted);
+	font: 500 var(--rd-fs-xs) var(--rd-font);
+	cursor: pointer;
+}
+.rd-filter:hover { background: var(--rd-btn-bg); color: var(--rd-text); }
+.rd-filter .rd-icon { width: 1em; height: 1em; }
+
+/* Pressed: filled accent, ink the card ground (white in light, dark in dark) — 4.5:1+ on the accent. */
+.rd-filter[aria-pressed="true"] {
+	background: var(--rd-accent);
+	border-color: var(--rd-accent);
+	color: var(--rd-card-bg);
+}
+.rd-filter[aria-pressed="true"]:hover { background: var(--rd-primary); }
