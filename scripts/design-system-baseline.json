@@ -140,12 +140,6 @@
 		},
 		{
 			"page": "/experiments/brev-tree-traversal/",
-			"rule": "nav-card",
-			"owner": "site",
-			"reason": "Main post navbar sits at 56px at 1280 with a classic scrollbar; standalone pages sit at 48.5px (centred on the content box). Measured on both; the cause on the main site is not traced yet."
-		},
-		{
-			"page": "/experiments/brev-tree-traversal/",
 			"rule": "prose-type",
 			"owner": "site",
 			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
@@ -157,28 +151,10 @@
 			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
 		},
 		{
-			"page": "/experiments/brev-tree-traversal/",
-			"rule": "scrollbar-gutter",
-			"owner": "site",
-			"reason": "Navbar moves 7.5px when a classic scrollbar appears (short page to long page). Fix: scrollbar-gutter: stable on the navbar injection and the main site, then update the width expectation in check-standalone-pages.mjs."
-		},
-		{
 			"page": "/research/ai-economy/",
 			"rule": "footer-gap",
 			"owner": "site",
 			"reason": "Gap above the license card (32px) differs from the main post's footer spacing. Decide one spacing for both."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "nav-card",
-			"owner": "site",
-			"reason": "Main post navbar sits at 56px at 1280 with a classic scrollbar; this page at 48.5px. Shared with the main-site navbar offset; see the site entries."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "scrollbar-gutter",
-			"owner": "site",
-			"reason": "Navbar moves 7.5px when a classic scrollbar appears. Shared standalone-shell issue; see the site entries."
 		},
 		{
 			"page": "/research/brev-tree-benchmark/",
@@ -197,12 +173,6 @@
 			"rule": "footer-type",
 			"owner": "site",
 			"reason": "License card text is 15px and muted differently from the main site footer text (14px). One footer style for both."
-		},
-		{
-			"page": "/research/brev-tree-benchmark/",
-			"rule": "nav-card",
-			"owner": "site",
-			"reason": "Main post navbar sits at 56px at 1280 with a classic scrollbar; standalone pages sit at 48.5px (centred on the content box). Measured on both; the cause on the main site is not traced yet."
 		},
 		{
 			"page": "/research/brev-tree-benchmark/",
@@ -233,12 +203,6 @@
 			"rule": "rail-type",
 			"owner": "site",
 			"reason": "Standalone rail text is 13px; the main TOC is 12px."
-		},
-		{
-			"page": "/research/brev-tree-benchmark/",
-			"rule": "scrollbar-gutter",
-			"owner": "site",
-			"reason": "Navbar moves 7.5px when a classic scrollbar appears (short page to long page). Fix: scrollbar-gutter: stable on the navbar injection and the main site, then update the width expectation in check-standalone-pages.mjs."
 		},
 		{
 			"page": "/research/brev-tree-benchmark/",
