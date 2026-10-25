@@ -229,9 +229,9 @@ class ListenPlayer extends HTMLElement {
 		const root = document.querySelector<HTMLElement>(this.dataset.target ?? "");
 		const engineOffered =
 			webSpeechAvailable() || window.__KOKORO_READY === true;
-		if (!root || !engineOffered) return;
+		if (!root || !engineOffered) return this.settle(false);
 		this.sentences = extractSentences(root);
-		if (this.sentences.length === 0) return;
+		if (this.sentences.length === 0) return this.settle(false);
 
 		const prefs = readStorage<Prefs>(PREFS_KEY, {});
 		const savedRate = prefs.rate ?? 1;
@@ -250,12 +250,22 @@ class ListenPlayer extends HTMLElement {
 				  window.__KOKORO_READY === true
 				? "kokoro"
 				: "web-speech";
+		// The placeholder holds the bar's space while the engine loads (a saved neural voice can take seconds).
+		this.setAttribute("data-loading", "");
+		this.removeAttribute("hidden");
 		const engine =
 			(await this.ensureEngine(wanted, false)) ?? (await this.activateWebSpeech());
-		if (!engine) return;
-		this.removeAttribute("hidden");
+		if (!engine) return this.settle(false);
+		this.settle(true);
 		this.observeDock();
 		this.setIndex(0, false);
+	}
+
+	/** End the loading state: show the real bar, or hide the player when no engine can run. */
+	private settle(show: boolean): void {
+		this.removeAttribute("data-loading");
+		this.toggleAttribute("hidden", !show);
+		this.setAttribute("data-settled", "");
 	}
 
 	/* ---------- docking ---------- */
@@ -546,20 +556,21 @@ class ListenPlayer extends HTMLElement {
 		const voices = engine.voices();
 		const select = this.querySelector<HTMLSelectElement>("[data-voice]");
 		if (select) {
+			// The browser can list its voices late (Chrome fires voiceschanged after load). Keep the field in place
+			// with the system default until they arrive, so the panel never collapses and then grows again.
 			select.replaceChildren(
-				...voices.map(
-					(v) =>
-						new Option(
-							`${v.name} (${v.lang})${v.local ? "" : " · remote"}`,
-							v.id,
-						),
-				),
+				...(voices.length === 0
+					? [new Option("System default", "")]
+					: voices.map(
+							(v) =>
+								new Option(
+									`${v.name} (${v.lang})${v.local ? "" : " · remote"}`,
+									v.id,
+								),
+						)),
 			);
-			select.value = this.voice ?? "";
-			{
-				const wrap = select.closest<HTMLElement>("[data-voice-wrap]");
-				if (wrap) wrap.hidden = voices.length === 0;
-			}
+			select.disabled = voices.length === 0;
+			select.value = voices.length === 0 ? "" : (this.voice ?? "");
 		}
 		const remote =
 			activeEngineId === "web-speech" &&
