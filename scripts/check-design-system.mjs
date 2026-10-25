@@ -635,7 +635,18 @@ async function tabChecks(page, ok) {
 	const p = await open(ctx, page);
 	const tabs = await p.$$("[role=tablist] [role=tab]");
 	if (tabs.length) {
-		const selected = () => p.$eval("[role=tablist] [role=tab][aria-selected=true]", (el) => el.textContent.trim());
+		// Wait for a selected tab before reading it: the tab is selected pre-paint (statically, and by
+		// rd.js synchronously), but a bare $eval throws on the instant a navigation re-sync has not
+		// settled. Bounded wait + a clear finding, not a crash.
+		const selected = async (what) => {
+			try {
+				await p.waitForSelector('[role=tablist] [role=tab][aria-selected="true"]', { timeout: 3000 });
+				return await p.$eval('[role=tablist] [role=tab][aria-selected="true"]', (el) => el.textContent.trim());
+			} catch {
+				if (!ok.has("tab-aria")) add(page, "tab-aria", `no tab is selected ${what} (bounded 3s wait)`);
+				return null;
+			}
+		};
 		const aria = await p.evaluate(() => {
 			const tabsEl = [...document.querySelectorAll("[role=tablist] [role=tab]")];
 			const issues = [];
@@ -659,7 +670,7 @@ async function tabChecks(page, ok) {
 		// History: click a tab that is not selected: one entry; Back restores the previous tab.
 		const flags = await p.$$eval("[role=tablist] [role=tab]", (els) => els.map((e) => e.getAttribute("aria-selected") === "true"));
 		const k = flags.findIndex((f) => !f);
-		const before = await selected();
+		const before = await selected("after load");
 		const h0 = await p.evaluate(() => history.length);
 		await tabs[k].click();
 		await p.waitForTimeout(150);
@@ -669,7 +680,7 @@ async function tabChecks(page, ok) {
 		if (!/[?&]tab=|#./.test(hash) && !ok.has("tab-deeplink")) add(page, "tab-deeplink", "tab click sets neither ?tab= nor a hash");
 		await p.goBack();
 		await p.waitForTimeout(150);
-		const back = await selected();
+		const back = await selected("after Back");
 		if (back !== before && !ok.has("tab-history")) add(page, "tab-history", `Back did not restore the previous tab ("${back}", expected "${before}")`);
 		if (hash && !ok.has("tab-deeplink")) {
 			const d = await newCtx({ width: 1440, height: DESKTOP_H }, "light");
