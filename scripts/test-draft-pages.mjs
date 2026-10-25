@@ -32,7 +32,7 @@ function fixture() {
 test("draftHrefs collects Draft entries from all three data files", () => {
 	const { root, data } = fixture();
 	try {
-		assert.deepEqual([...draftHrefs(data)].sort(), ["/playground/ecosimulation/", "/ideas/idea/"]);
+		assert.deepEqual([...draftHrefs(data)].sort(), ["/ideas/idea/", "/playground/ecosimulation/"]);
 	} finally {
 		rmSync(root, { recursive: true, force: true });
 	}
