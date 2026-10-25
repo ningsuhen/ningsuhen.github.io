@@ -754,9 +754,10 @@ a { color: var(--rd-accent) }
 .rd-ledger-tools { display: grid; gap: 0.5rem; margin: 0 0 1rem; }
 .rd-ledger-tools[hidden] { display: none; }
 .rd-ledger-tools__row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
-.rd-ledger-tools button { font: inherit; font-size: 0.85rem; min-height: var(--rd-control-h); padding: 0 0.75rem; border: 0; border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-text); cursor: pointer; }
-.rd-ledger-tools button:hover { background: var(--rd-btn-bg-hover); }
-.rd-ledger-tools button[aria-pressed="true"] { color: var(--rd-accent); box-shadow: inset 0 0 0 2px var(--rd-accent); }
+.rd-ledger-tools a { display: inline-flex; align-items: center; font: inherit; font-size: 0.85rem; min-height: var(--rd-control-h); padding: 0 0.75rem; border: 0; border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-text); text-decoration: none; cursor: pointer; }
+.rd-ledger-tools a:hover { background: var(--rd-btn-bg-hover); }
+.rd-ledger-tools [hidden] { display: none; }
+.rd-ledger-tools a[aria-current="true"] { color: var(--rd-accent); box-shadow: inset 0 0 0 2px var(--rd-accent); }
 .rd-ledger-tools__count { font-size: 0.85rem; color: var(--rd-text-muted); margin: 0; }
 .ledger .hyp.is-off { display: none; }
 #brainstorm { column-width: 20rem; column-gap: 2rem; }
@@ -770,14 +771,14 @@ a { color: var(--rd-accent) }
 </style>
 <body class="rd-body">
 <nav class="rd-expnav" role="tablist" aria-label="Report sections">
-<a role="tab" id="tab-summary" href="#summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
-<a role="tab" id="tab-results" href="#results" aria-controls="results" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Results</a>
-<a role="tab" id="tab-scale" href="#scale" aria-controls="scale" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Scaling</a>
-<a role="tab" id="tab-comparisons" href="#comparisons" aria-controls="comparisons" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg>Comparisons</a>
-<a role="tab" id="tab-method" href="#method" aria-controls="method" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Method</a>
-<a role="tab" id="tab-hypotheses" href="#hypotheses" aria-controls="hypotheses" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg>Hypotheses</a>
-<a role="tab" id="tab-synthesis" href="#synthesis" aria-controls="synthesis" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Brainstorm</a>
-<a role="tab" id="tab-caveats" href="#caveats" aria-controls="caveats" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Caveats &amp; sources</a>
+<a role="tab" id="tab-summary" href="?tab=summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
+<a role="tab" id="tab-results" href="?tab=results" aria-controls="results" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Results</a>
+<a role="tab" id="tab-scale" href="?tab=scale" aria-controls="scale" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Scaling</a>
+<a role="tab" id="tab-comparisons" href="?tab=comparisons" aria-controls="comparisons" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg>Comparisons</a>
+<a role="tab" id="tab-method" href="?tab=method" aria-controls="method" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Method</a>
+<a role="tab" id="tab-hypotheses" href="?tab=hypotheses" aria-controls="hypotheses" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg>Hypotheses</a>
+<a role="tab" id="tab-synthesis" href="?tab=synthesis" aria-controls="synthesis" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Brainstorm</a>
+<a role="tab" id="tab-caveats" href="?tab=caveats" aria-controls="caveats" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Caveats &amp; sources</a>
 </nav>
 <!-- lucide-sprite:start -->
 <svg style="display:none" aria-hidden="true">
@@ -973,7 +974,7 @@ a { color: var(--rd-accent) }
     <div class="rd-ledger-tools" id="ledger-tools" hidden>
       <div class="rd-ledger-tools__row" id="ledger-filters" role="group" aria-label="Filter by status"></div>
       <p class="rd-ledger-tools__count" id="ledger-count" aria-live="polite"></p>
-      <div class="rd-ledger-tools__row"><button type="button" id="ledger-more">Show 8 more</button><button type="button" id="ledger-all">Show all</button></div>
+      <div class="rd-ledger-tools__row"><a id="ledger-more" href="?tab=hypotheses#ledger-count">Show 8 more</a><a id="ledger-all" href="?tab=hypotheses#ledger-count">Show all</a></div>
     </div>
     <div class="ledger" id="ledger"></div>
   </section>
@@ -3049,17 +3050,18 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
 </script>
 
 <script>
-// Tabs: one panel per tab. A tab id, a section id or a card id is the URL hash, so a deep link (#h-board) opens its
-// tab and scrolls to it. Keyboard: arrows, Home, End, Space. An "On this page" list per tab. The hypothesis filter
-// and paging. Progressive: with no JS every panel and every card shows.
+// Tabs, the hypothesis filter and its paging live in the query string: ?tab=results&filter=confirmed&shown=16. A section
+// is the hash (#h-board). Tabs, filters and paging are real links: the browser navigates and keeps its own history.
+// A section jump inside the current tab ("On this page", cross-references, cards) pushes one entry; a section in another
+// tab is a real navigation to ?tab=<tab>#<section>. Legacy hash-only URLs (#results, #h-board) map to the query on load.
+// Keyboard on the tab list: ArrowLeft/Right, Home and End move focus; Enter follows the link, Space follows it too.
+// Progressive: with no JS every panel and every card shows.
 //
-// History rule (every intra-page navigation; spec in public/design-system/index.html, "Tabbed pages"):
-// - A user action that changes the view pushes exactly one entry: a tab, an in-page link (TOC, cross-reference,
-//   footnote, card jump), a filter or a page of cards. None when the view already is that (same hash, same filter).
-// - An entry's state is {k, y, ledger}: a key, the scroll position, the hypothesis filter. The scroll is saved into the
-//   current entry (replaceState, no new entry) before a push and once scrolling stops.
-// - Back, Forward, hashchange, reload and bfcache restore (pageshow persisted) re-sync the tab, section, filter and
-//   scroll from the entry. They never write an entry. history.scrollRestoration is 'manual' because of that.
+// History rule (spec in public/design-system/index.html, "Tabbed pages"):
+// - One entry per user navigation; none when the view already is that.
+// - replaceState only saves the scroll position into the current entry (state.y) and maps a legacy URL on load.
+// - Back, Forward, popstate, hashchange and bfcache restore re-sync the tab, filter, section and scroll from the URL and
+//   the entry's state. They never write an entry. history.scrollRestoration is 'manual' because this script restores scroll.
 // - A jump to a section moves focus to its heading (tabindex -1). Reduced motion: no smooth scrolling.
 (function () {
   // Guarded: a bfcache restore reuses this document, so the init must never run twice on it.
@@ -3068,17 +3070,16 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   var bar = document.querySelector('.rd-expnav[role="tablist"]');
   if (!bar) return;
   var PAGE = 8;
-  var DEFAULT_LEDGER = { status: 'all', shown: PAGE };
   var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
   var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
   var wide = window.matchMedia('(min-width: 1100px)');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   var navH = function () { return bar.offsetHeight; };
-  var seq = Date.now();
-  var lastKey = null; // key of the current entry
-  var yByKey = {};    // scroll per entry, kept in memory: a Back right after a jump still finds the position
   var saveTimer = 0;
-  var ledger = null; // { now, apply, reveal } when the page has a hypothesis filter
+  var seq = Date.now(); // keys of the entries this document pushes (unique across reloads)
+  var yByKey = {};
+  var ledger = null; // { state, apply, view } when the page has a hypothesis filter
+  var ledgerTab = -1;
 
   history.scrollRestoration = 'manual';
 
@@ -3090,13 +3091,40 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     for (var i = 0; i < panels.length; i++) if (panels[i] && panels[i].contains(el)) return i;
     return -1;
   }
-  // What a hash names: a tab; an element (its tab is the panel that holds it, -1 outside the tabs); or nothing.
+  // What a hash names: a tab (a legacy #tab-id, el null); an element (its tab is the panel that holds it, -1 outside the
+  // tabs); or nothing.
   function locate(id) {
     if (!id) return null;
     var t = tabOf(id);
     if (t >= 0) return { tab: t, el: null };
     var el = document.getElementById(id);
     return el ? { tab: panelOf(el), el: el } : null;
+  }
+  function currentTab() {
+    var i = panels.findIndex(function (p) { return p && !p.hidden; });
+    return i < 0 ? 0 : i;
+  }
+  function shownOf(s) {
+    if (s === 'all') return Infinity;
+    var n = parseInt(s || '', 10);
+    return n > 0 ? n : PAGE;
+  }
+  function ledgerNow() { return ledger ? ledger.state() : { filter: 'all', shown: PAGE }; }
+  // The view a URL names: ?tab wins; else the tab that holds the hash's element; else the first tab.
+  function viewFromUrl() {
+    var q = new URLSearchParams(location.search);
+    var loc = locate(decodeURIComponent(location.hash.slice(1)));
+    var t = tabOf(q.get('tab') || '');
+    if (t < 0) t = loc && loc.tab >= 0 ? loc.tab : 0;
+    return { tab: t, el: loc && loc.el ? loc.el : null, filter: q.get('filter') || 'all', shown: shownOf(q.get('shown')) };
+  }
+  // The URL of a view: ?tab, then &filter and &shown when they are not the defaults, then the section.
+  function urlFor(tab, filter, shown, id) {
+    var q = new URLSearchParams();
+    q.set('tab', panels[tab].id);
+    if (filter && filter !== 'all') q.set('filter', filter);
+    if (shown !== PAGE) q.set('shown', shown === Infinity ? 'all' : String(shown));
+    return location.pathname + '?' + q.toString() + (id ? '#' + id : '');
   }
   // Section bar: the bar scrolls sideways (not the page). Keep the active tab in view and show an edge fade while tabs are hidden.
   function barEdges() {
@@ -3127,23 +3155,20 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     t.setAttribute('tabindex', '-1');
     t.focus({ preventScroll: true });
   }
-  function nowLedger() { return ledger ? ledger.now() : null; }
-  function ledgerChanged(a, b) { return !!a && !!b && (a.status !== b.status || a.shown !== b.shown); }
+  // An entry's key: the k of a pushState entry, else its URL. yByKey holds the live scroll of every entry in this document,
+  // so a Back right after a jump still finds the position; state.y is the copy a reload or a bfcache restore reads.
+  function keyOf() {
+    var k = history.state && history.state.k;
+    return k ? String(k) : 'url:' + location.pathname + location.search + location.hash;
+  }
   // Saves the scroll position into the current entry. replaceState: no entry is added.
   function saveScroll() {
     clearTimeout(saveTimer);
     var y = Math.round(window.scrollY);
-    if (lastKey) yByKey[lastKey] = y;
+    yByKey[keyOf()] = y;
     history.replaceState(Object.assign({}, history.state, { y: y }), '');
   }
-  // One new entry for one user action. hash null keeps the current URL.
-  function push(hash, ledgerState) {
-    saveScroll();
-    seq += 1;
-    lastKey = String(seq);
-    history.pushState({ k: lastKey, y: Math.round(window.scrollY), ledger: ledgerState === undefined ? nowLedger() : ledgerState }, '', hash || location.href);
-  }
-  // Shows a location: its tab, then its scroll (a saved y wins; else the section; else the tab's start).
+  // Shows a tab, then the scroll: a saved y wins; else the section; else the tab's start (only when the tab is below the bar).
   function showLoc(loc, o) {
     if (loc.tab >= 0) show(loc.tab);
     if (loc.el && o.focus) focusTarget(loc.el);
@@ -3156,37 +3181,19 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
       if (top < navH()) window.scrollTo({ top: window.scrollY + top - navH() - 8, behavior: behavior });
     }
   }
-  // A user action: a tab, an in-page link or a jump. One entry, unless the view already is that.
-  function navigate(id, loc, how) {
-    var before = nowLedger();
-    if (loc.el && ledger) ledger.reveal(loc.el);
-    var filterMoved = ledgerChanged(before, nowLedger());
-    if (decodeURIComponent(location.hash.slice(1)) !== id || filterMoved) push('#' + id);
-    showLoc(loc, { smooth: true, focus: !!loc.el, tabStart: how === 'tab' });
-  }
-  // Back, Forward, hashchange, reload, bfcache restore: re-sync from the entry. Writes nothing.
-  function resync(force) {
+  // Back, Forward, popstate, hashchange, bfcache restore: re-sync from the URL and the entry. Writes no entry.
+  function resync() {
+    var v = viewFromUrl();
     var st = history.state || {};
-    var key = st.k || 'hash:' + location.hash;
-    if (!force && key === lastKey) return; // popstate and hashchange for the same entry
-    lastKey = key;
-    clearTimeout(saveTimer);
-    var id = decodeURIComponent(location.hash.slice(1));
-    var loc = locate(id) || { tab: 0, el: null };
-    if (ledger) {
-      if (st.ledger) ledger.apply(st.ledger);
-      else {
-        ledger.apply(DEFAULT_LEDGER);
-        if (loc.el) ledger.reveal(loc.el);
-      }
-    }
-    var y = st.k && yByKey[st.k] !== undefined ? yByKey[st.k] : st.y;
-    showLoc(loc, { y: typeof y === 'number' ? y : loc.el ? null : 0, focus: !!loc.el, smooth: false });
-    saveScroll(); // the entry now holds the position it was restored to (a reload reads it)
+    var key = keyOf();
+    var y = typeof yByKey[key] === 'number' ? yByKey[key] : typeof st.y === 'number' ? st.y : null;
+    if (ledger) ledger.apply(ledger.view(v.el, { filter: v.filter, shown: v.shown }));
+    showLoc({ tab: v.tab, el: v.el }, { y: y, focus: !!v.el, smooth: false, tabStart: true });
+    saveScroll();
   }
 
-  // Every in-page link (tabs, "On this page", cross-references, footnotes) is a navigation of this model.
-  // Links to ids that are not on this page keep the browser's behaviour.
+  // Every in-page link is handled here: a section in the current tab is one pushState entry; a section in another tab
+  // is a real navigation; ids that are not on this page keep the browser's behaviour.
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null;
@@ -3195,11 +3202,29 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     var loc = locate(id);
     if (!loc) return;
     e.preventDefault();
-    var tab = a.getAttribute('role') === 'tab';
-    if (tab && tabs[loc.tab].getAttribute('aria-selected') === 'true') return;
-    navigate(id, loc, tab ? 'tab' : 'link');
+    var secId = loc.el ? id : ''; // a legacy tab id (#results) names a tab, not a section
+    var v = ledger && loc.tab === ledgerTab ? ledger.view(loc.el, ledger.state()) : null;
+    if (loc.tab !== currentTab()) {
+      location.assign(urlFor(loc.tab, v ? v.filter : 'all', v ? v.shown : PAGE, secId));
+      return;
+    }
+    var base = location.pathname + location.search + location.hash;
+    var next = v ? urlFor(loc.tab, v.filter, v.shown, secId) : location.pathname + location.search + (secId ? '#' + secId : '');
+    if (next !== base) {
+      saveScroll();
+      seq += 1;
+      yByKey[String(seq)] = Math.round(window.scrollY);
+      history.pushState({ k: seq, y: yByKey[String(seq)] }, '', next);
+    }
+    if (v) ledger.apply(v);
+    showLoc({ tab: loc.tab, el: loc.el }, { smooth: true, focus: !!loc.el, tabStart: false });
   });
-  // Keyboard on the tab list: arrows and Home/End move and activate (one entry, as a click); Space activates.
+  // A tab is a real link. Following the tab that is already shown adds no entry.
+  bar.addEventListener('click', function (e) {
+    var t = e.target instanceof Element ? e.target.closest('[role="tab"]') : null;
+    if (t && t.getAttribute('aria-selected') === 'true' && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) e.preventDefault();
+  });
+  // Keyboard on the tab list: arrows, Home and End move focus; Space follows the focused tab (a link does not do that itself).
   bar.addEventListener('keydown', function (e) {
     var i = tabs.indexOf(document.activeElement);
     if (i < 0) return;
@@ -3212,14 +3237,13 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
     if (n === null) return;
     e.preventDefault();
     tabs[n].focus();
-    tabs[n].click();
   });
-  window.addEventListener('popstate', function () { resync(false); });
-  window.addEventListener('hashchange', function () { resync(false); });
-  window.addEventListener('pageshow', function (e) { if (e.persisted) resync(true); });
+  window.addEventListener('popstate', resync);
+  window.addEventListener('hashchange', resync);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) resync(); });
   window.addEventListener('pagehide', saveScroll);
   window.addEventListener('scroll', function () {
-    if (lastKey) yByKey[lastKey] = Math.round(window.scrollY);
+    yByKey[keyOf()] = Math.round(window.scrollY);
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveScroll, 150);
   }, { passive: true });
@@ -3249,85 +3273,90 @@ progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside
   }
   window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
 
-  // Hypothesis filter and paging (the ledger cards are rendered by the page script above). Each change is one entry.
+  // Hypothesis filter and paging. The state is the URL (?filter, ?shown); every control is a real link, so each change
+  // is one navigation. The cards are rendered by the page script above; with no JS every card shows.
   var list = document.getElementById('ledger');
   var tools = document.getElementById('ledger-tools');
   if (list && tools) {
     var cards = Array.prototype.slice.call(list.querySelectorAll('.hyp'));
-    var status = DEFAULT_LEDGER.status;
-    var shown = DEFAULT_LEDGER.shown;
     var filters = document.getElementById('ledger-filters');
     var count = document.getElementById('ledger-count');
     var more = document.getElementById('ledger-more');
     var all = document.getElementById('ledger-all');
-    var buttons = [];
+    var links = [];
     var tally = {};
+    var cur = { filter: 'all', shown: PAGE };
+    ledgerTab = panelOf(list);
     cards.forEach(function (c) {
       var chip = c.querySelector('.chip');
       c.dataset.status = chip ? chip.textContent.trim() : 'pending';
       tally[c.dataset.status] = (tally[c.dataset.status] || 0) + 1;
     });
+    function known(f) { return f === 'all' || !!tally[f]; }
     function pick(value, label) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = label;
-      b.addEventListener('click', function () { setLedger({ status: value, shown: PAGE }); });
-      filters.appendChild(b);
-      buttons.push([value, b]);
+      var a = document.createElement('a');
+      a.href = urlFor(ledgerTab, value, PAGE, '');
+      a.dataset.filter = value;
+      a.textContent = label;
+      filters.appendChild(a);
+      links.push(a);
     }
     pick('all', 'All (' + cards.length + ')');
     Object.keys(tally).sort().forEach(function (s) { pick(s, s.charAt(0).toUpperCase() + s.slice(1) + ' (' + tally[s] + ')'); });
-    function matches() { return cards.filter(function (c) { return status === 'all' || c.dataset.status === status; }); }
+    function matchesFor(f) { return cards.filter(function (c) { return f === 'all' || c.dataset.status === f; }); }
     function render() {
-      var m = matches();
+      var m = matchesFor(cur.filter);
       cards.forEach(function (c) { c.classList.add('is-off'); });
-      m.slice(0, shown).forEach(function (c) { c.classList.remove('is-off'); });
-      var left = Math.max(0, m.length - shown);
-      count.textContent = 'Showing ' + Math.min(shown, m.length) + ' of ' + m.length + ' hypotheses';
+      m.slice(0, cur.shown).forEach(function (c) { c.classList.remove('is-off'); });
+      var left = Math.max(0, m.length - cur.shown);
+      count.textContent = 'Showing ' + Math.min(cur.shown, m.length) + ' of ' + m.length + ' hypotheses';
       more.hidden = left === 0;
       all.hidden = left === 0;
       more.textContent = 'Show ' + Math.min(PAGE, left) + ' more';
-      buttons.forEach(function (pair) { pair[1].setAttribute('aria-pressed', pair[0] === status ? 'true' : 'false'); });
-    }
-    function apply(s) { status = s.status; shown = s.shown; render(); }
-    function setLedger(next) {
-      if (status === next.status && shown === next.shown) return;
-      push(null, next);
-      apply(next);
+      more.href = urlFor(ledgerTab, cur.filter, cur.shown + PAGE, 'ledger-count');
+      all.href = urlFor(ledgerTab, cur.filter, Infinity, 'ledger-count');
+      links.forEach(function (a) {
+        if (a.dataset.filter === cur.filter) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
     }
     ledger = {
-      now: function () { return { status: status, shown: shown }; },
-      apply: apply,
-      // A jump to a card that the filter or the paging hides shows it (same action, same entry).
-      reveal: function (el) {
-        var card = el.closest ? el.closest('.hyp') : null;
-        if (!card || cards.indexOf(card) < 0) return;
-        if (matches().indexOf(card) < 0) status = 'all';
-        var pos = matches().indexOf(card);
-        if (pos >= shown) shown = Math.ceil((pos + 1) / PAGE) * PAGE;
-        render();
+      state: function () { return { filter: cur.filter, shown: cur.shown }; },
+      apply: function (s) { cur = { filter: known(s.filter) ? s.filter : 'all', shown: s.shown }; render(); },
+      // The state that shows an element: the base state, widened just enough when the element is a card the base hides.
+      view: function (el, base) {
+        var card = el && el.closest ? el.closest('.hyp') : null;
+        if (!card || cards.indexOf(card) < 0) return base;
+        var f = known(base.filter) ? base.filter : 'all';
+        if (matchesFor(f).indexOf(card) < 0) f = 'all';
+        var pos = matchesFor(f).indexOf(card);
+        var s = base.shown;
+        if (pos >= s) s = Math.ceil((pos + 1) / PAGE) * PAGE;
+        return { filter: f, shown: s };
       }
     };
-    more.addEventListener('click', function () { setLedger({ status: status, shown: shown + PAGE }); });
-    all.addEventListener('click', function () { setLedger({ status: status, shown: Infinity }); });
     tools.hidden = false;
   }
 
-  // First paint. A deep link opens its tab and scrolls to its target after layout. A reload restores the saved position.
-  // The browser's own fragment navigation runs after the first paint and moves the scroll and the focus, so on load
-  // both are put back (unless the reader has already scrolled or clicked).
-  var firstLoc = locate(decodeURIComponent(location.hash.slice(1)));
+  // First paint. A legacy URL (hash only, or a tab id in the hash) is mapped to the query with replaceState: no entry.
+  // A deep link opens its tab and scrolls to its target after layout. A reload restores the saved position.
+  var v0 = viewFromUrl();
   var restoreY = typeof (history.state || {}).y === 'number' ? history.state.y : null;
   var touched = false;
   ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
     window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
   });
+  if (ledger) ledger.apply(ledger.view(v0.el, { filter: v0.filter, shown: v0.shown }));
+  if (!new URLSearchParams(location.search).has('tab') || tabOf(decodeURIComponent(location.hash.slice(1))) >= 0) {
+    var st0 = ledgerNow();
+    history.replaceState(history.state, '', urlFor(v0.tab, st0.filter, st0.shown, v0.el ? v0.el.id : ''));
+  }
+  resync();
   window.addEventListener('load', function () {
     if (touched) return;
-    if (firstLoc && firstLoc.el) focusTarget(firstLoc.el);
+    if (v0.el) focusTarget(v0.el);
     if (restoreY !== null) window.scrollTo({ top: restoreY, behavior: 'instant' });
-    else if (firstLoc && firstLoc.el) firstLoc.el.scrollIntoView({ block: 'start', behavior: 'instant' });
+    else if (v0.el) v0.el.scrollIntoView({ block: 'start', behavior: 'instant' });
   }, { once: true });
-  resync(true);
 })();
 </script>

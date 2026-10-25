@@ -268,7 +268,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
   var T = D.tree, M = D.msgs;
   var KIND = { all: 'All 60 messages', correct: 'Correct', wrong_root: 'Wrong at the root', wrong_below: 'Wrong below the root', low_conf: 'Lowest confidence', short: 'Shortest to read' };
   var $ = function (id) { return document.getElementById(id); };
-  var cur = null, step = 0, walk = [], timer = null, seq = 0;
+  var cur = null, step = 0, walk = [], timer = null, own = 0; // own: entries this page added with its steps
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function icon(name) { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('class', 'rd-icon'); s.setAttribute('aria-hidden', 'true'); var u = document.createElementNS('http://www.w3.org/2000/svg', 'use'); u.setAttribute('href', '#i-' + name); s.appendChild(u); return s; }
@@ -310,19 +310,18 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     if (keep != null && visible().some(function (m) { return m.i === keep; })) s.value = keep;
   }
 
-  /* ---- hash: #m=<test index>&s=<step>. User steps and message picks push a history entry
-     (state.tt = entry number); auto-play and reloads replace it. Browser Back restores the earlier step. ---- */
+  /* ---- URL. The filter (?kind, ?intent) is the query string: a filter change is a real navigation. The message and the
+     step are the hash, #m=<test index>&s=<step>: each user step or message pick assigns location.hash, one entry, no
+     reload. Auto-play writes no URL. Back uses history.back() for the entries this page added. ---- */
   function readHash() { var h = /^#m=(\d+)(?:&s=(\d+))?$/.exec(location.hash); return h ? { i: +h[1], s: h[2] ? +h[2] : 0 } : null; }
-  function writeHash(push) {
-    var h = '#m=' + cur.i + (step ? '&s=' + step : '');
+  function commit(i, s) {
+    var h = '#m=' + i + (s ? '&s=' + s : '');
     if (location.hash === h) return;
-    try {
-      if (push) history.pushState({ tt: ++seq }, '', h);
-      else history.replaceState({ tt: seq }, '', h);
-    } catch (e) { /* ignore */ }
+    own += 1;
+    location.hash = h;
   }
 
-  function select(i, s, push) {
+  function select(i, s) {
     var m = M.filter(function (x) { return x.i === i; })[0] || visible()[0] || M[0];
     cur = m; walk = computeWalk(m);
     step = Math.max(0, Math.min(s || 0, walk.length));
@@ -335,7 +334,6 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     meta.appendChild(chip(KIND[m.k], 'neutral'));
     meta.appendChild(document.createTextNode('Banking77 test #' + m.i));
     render();
-    writeHash(push);
   }
 
   /* ---- render one step ---- */
@@ -400,11 +398,11 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
   /* ---- controls ---- */
   /* aria-disabled, not disabled: a button that disables under keyboard focus drops the focus to the page top. */
   function setDisabled(id, on) { $(id).setAttribute('aria-disabled', on ? 'true' : 'false'); }
-  function go(d, push) { var s = Math.max(0, Math.min(step + d, walk.length)); if (s === step) return; step = s; render(); writeHash(push); }
-  /* Back: use the browser's history when the previous entry is this page's own step; otherwise step back in place. */
+  function go(d, write) { var s = Math.max(0, Math.min(step + d, walk.length)); if (s === step) return; step = s; render(); if (write) commit(cur.i, step); }
+  /* Back: the browser's history while this page has entries of its own; otherwise step back in place. */
   function back() {
     stop();
-    if (seq > 0 && history.state && history.state.tt === seq) history.back(); else go(-1, false);
+    if (own > 0) { own -= 1; history.back(); } else go(-1, true);
   }
   function stop() { if (timer) { clearInterval(timer); timer = null; } var b = $('b-play'); b.setAttribute('aria-pressed', 'false'); b.querySelector('span').textContent = 'Auto-play'; b.replaceChild(icon('play'), b.querySelector('svg')); }
   function play() {
@@ -418,23 +416,28 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
   press('b-next', function () { stop(); go(1, true); });
   press('b-back', back);
   press('b-play', play);
-  press('b-reset', function () { stop(); step = 0; render(); writeHash(true); });
+  press('b-reset', function () { stop(); step = 0; render(); commit(cur.i, 0); });
   $('walker').addEventListener('keydown', function (e) {
     var t = e.target.tagName;
     if (t === 'SELECT' || t === 'INPUT' || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'ArrowRight') { e.preventDefault(); stop(); go(1, true); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); back(); }
   });
-  $('f-kind').addEventListener('change', function () { fillIntent(); fillMsg(); select(+$('f-msg').value, 0, true); });
-  $('f-intent').addEventListener('change', function () { fillMsg(); select(+$('f-msg').value, 0, true); });
-  $('f-msg').addEventListener('change', function () { select(+$('f-msg').value, 0, true); });
-  function onNav() {
-    var h = readHash(); if (!h) return;
-    seq = (history.state && history.state.tt) || 0;
-    if (!cur || h.i !== cur.i || h.s !== step) select(h.i, h.s, false);
+  // The filter is the query string: a real navigation to the same page with the new ?kind / ?intent and the first message.
+  function filterUrl(i) {
+    var q = new URLSearchParams();
+    if ($('f-kind').value !== 'all') q.set('kind', $('f-kind').value);
+    if ($('f-intent').value) q.set('intent', $('f-intent').value);
+    return location.pathname + (q.toString() ? '?' + q.toString() : '') + '#m=' + i;
   }
-  window.addEventListener('popstate', onNav);
-  window.addEventListener('hashchange', onNav);
+  $('f-kind').addEventListener('change', function () { fillIntent(); fillMsg(); location.assign(filterUrl(+$('f-msg').value)); });
+  $('f-intent').addEventListener('change', function () { fillMsg(); location.assign(filterUrl(+$('f-msg').value)); });
+  $('f-msg').addEventListener('change', function () { commit(+$('f-msg').value, 0); });
+  // A hash change (a message pick, a step, Back or Forward) shows that state. It writes nothing.
+  window.addEventListener('hashchange', function () {
+    var h = readHash(); if (!h) return;
+    if (!cur || h.i !== cur.i || h.s !== step) select(h.i, h.s);
+  });
 
   /* ---- static: replay numbers and failure strip ---- */
   $('replay-n').textContent = D.replay.correct.toLocaleString('en-US') + ' of ' + D.replay.n.toLocaleString('en-US');
@@ -492,10 +495,15 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
     update();
   })();
 
-  fillKind(); fillIntent(); fillMsg();
+  // First paint: the filter from the query, the message and step from the hash (none: the first message the filter shows).
+  var q = new URLSearchParams(location.search);
+  fillKind();
+  if (q.get('kind')) $('f-kind').value = q.get('kind');
+  fillIntent();
+  if (q.get('intent')) $('f-intent').value = q.get('intent');
+  fillMsg();
   var h = readHash();
-  seq = (history.state && history.state.tt) || 0;
-  select(h ? h.i : M[0].i, h ? h.s : 0, false);
+  select(h ? h.i : (visible()[0] || M[0]).i, h ? h.s : 0);
 })();
 </script>
 </body>
