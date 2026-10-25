@@ -12,6 +12,7 @@
     "prebuild": "node scripts/build-lucide-sprite.mjs && node scripts/build-design-system.mjs",
     "build:design-system": "node scripts/build-design-system.mjs",
     "check:bundle": "node scripts/build-design-system.mjs --check",
+    "check:sprite": "node scripts/build-lucide-sprite.mjs --check",
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "tsc --noEmit --isolatedDeclarations",
