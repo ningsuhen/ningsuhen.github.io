@@ -14,3 +14,7 @@ Ex-Google, Ex-Adobe. Focus: AI | ML | Rust | Python | TypeScript. My path ran fr
 - ⌨️ **TypeScript** — web and full-stack.
 
 Manhattan, New York
+
+## Disclaimer
+
+This is my personal site. The views here are my own. They are not my employer's, and my employer hasn't endorsed anything here. More in the [disclaimer](/license/#disclaimer).
