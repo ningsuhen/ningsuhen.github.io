@@ -36,6 +36,3 @@ yarn.lock
 # private leak terms for check:leaks (never commit)
 scripts/leak-denylist.local.txt
 
-# Kokoro neural voice: ~24 MB ONNX Runtime + 4.6 MB lexicon stay local until the owner decides vendor vs CDN+SRI.
-/public/tts/vendor/
-/public/tts/lexicon-en-us.txt
