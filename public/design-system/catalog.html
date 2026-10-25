@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-density="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System · Control Catalog · created 2026-10-25 · updated 2026-10-25</title>
+<link rel="stylesheet" href="/design-system/rd.css">
+<script type="module" src="/design-system/rd.js"></script>
+</head>
+<body class="rd-body">
+<!-- Lucide sprite: generated between the markers by scripts/build-lucide-sprite.mjs (pnpm build runs it); it keeps only the icons this page uses. -->
+<!-- lucide-sprite:start -->
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-gauge" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+<symbol id="i-help-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"/></g></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
+<symbol id="i-list-checks" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></symbol>
+<symbol id="i-message-square" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7v14"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></g></symbol>
+</svg>
+<!-- lucide-sprite:end -->
+
+<!-- Experiment navbar: one hash link per section id below. data-rd="expnav" makes rd.js mark the section in view. -->
+<nav class="rd-expnav" data-rd="expnav" aria-label="Sections">
+<a href="#buttons" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>Buttons</a>
+<a href="#filter"><svg class="rd-icon" aria-hidden="true"><use href="#i-tag"/></svg>Filter</a>
+<a href="#field"><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>Field</a>
+<a href="#choice"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg>Choice</a>
+<a href="#stepper"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg>Stepper</a>
+<a href="#chat"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-square"/></svg>Chat</a>
+<a href="#quiz"><svg class="rd-icon" aria-hidden="true"><use href="#i-help-circle"/></svg>Quiz</a>
+<a href="#meter"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg>Meter</a>
+</nav>
+
+<main class="rd-container rd-prose">
+<div class="rd-hero">
+<p class="rd-eyebrow">Research · design system</p>
+<h1>Control Catalog · created 2026-10-25 · updated 2026-10-25</h1>
+<p class="rd-hero__lede">The interactive controls in the design system, each with a live example and the classes to use. All ship in <code>rd.css</code>; the <code>research.css</code> compatibility alias stays the frozen core. The full guide (tokens, density, colour, conformance) is at <a href="/design-system/">the design system</a>.</p>
+</div>
+
+<header class="rd-section__head" id="buttons"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg></span><h2>Buttons</h2></header>
+<p>A <code>.rd-btn</code> is a keyboard-operable <code>&lt;button&gt;</code>. Variants: <code>--primary</code> (accent fill), <code>--ghost</code> (text only), <code>--sm</code> (compact), <code>--icon</code> (square, icon only). A disabled button is muted and inert.</p>
+<div class="rd-card">
+<p><button type="button" class="rd-btn rd-btn--primary">Primary</button>
+<button type="button" class="rd-btn rd-btn--ghost">Ghost</button>
+<button type="button" class="rd-btn rd-btn--sm">Small</button>
+<button type="button" class="rd-btn rd-btn--icon" aria-label="Add"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg></button>
+<button type="button" class="rd-btn rd-btn--primary" disabled>Disabled</button></p>
+</div>
+
+<header class="rd-section__head" id="filter"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-tag"/></svg></span><h2>Filter</h2></header>
+<p>A <code>.rd-filter</code> is a toggle chip: a <code>&lt;button&gt;</code> with <code>aria-pressed</code>. Pressed, it fills with the accent. The <code>min-height</code> floors at the 24px tap target.</p>
+<div class="rd-card">
+<p><button type="button" class="rd-filter" aria-pressed="true"><svg class="rd-icon" aria-hidden="true"><use href="#i-tag"/></svg>Validated</button>
+<button type="button" class="rd-filter" aria-pressed="false"><svg class="rd-icon" aria-hidden="true"><use href="#i-tag"/></svg>Partial</button></p>
+</div>
+
+<header class="rd-section__head" id="field"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg></span><h2>Field</h2></header>
+<p>A <code>.rd-field</code> is a labelled control: a <code>.rd-field__label</code>, an <code>.rd-input</code> or <code>.rd-select</code>, and an optional <code>.rd-field__hint</code> (muted) or <code>.rd-field__error</code> (bad colour). An invalid input gets <code>aria-invalid</code> and a bad-colour border.</p>
+<div class="rd-card">
+<div class="rd-field"><label class="rd-field__label" for="cat-name">Name</label><input class="rd-input" id="cat-name" type="text" placeholder="Type a name"><p class="rd-field__hint">Shown when empty.</p></div>
+<div class="rd-field"><label class="rd-field__label" for="cat-model">Model</label><select class="rd-select" id="cat-model"><option>82M</option><option>800M</option></select></div>
+<div class="rd-field"><label class="rd-field__label" for="cat-value">Value</label><input class="rd-input" id="cat-value" type="text" aria-invalid="true" value="12.5"><p class="rd-field__error">Must be a whole number.</p></div>
+</div>
+
+<header class="rd-section__head" id="choice"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Choice</h2></header>
+<p>A <code>.rd-choice</code> is a selectable option: a <code>&lt;label&gt;</code> wrapping a native radio (pick one) or checkbox (pick many). The native control keeps its shape; <code>accent-color</code> tints it with the accent. The <code>min-height</code> floors at the 24px tap target.</p>
+<div class="rd-card">
+<p><label class="rd-choice"><input type="radio" name="cat-density" checked>Compact</label> <label class="rd-choice"><input type="radio" name="cat-density">Comfortable</label> <label class="rd-choice"><input type="radio" name="cat-density">Dense</label></p>
+<p><label class="rd-choice"><input type="checkbox" checked>Validated</label> <label class="rd-choice"><input type="checkbox">Partial</label> <label class="rd-choice"><input type="checkbox" disabled>Locked</label></p>
+</div>
+
+<header class="rd-section__head" id="stepper"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg></span><h2>Stepper</h2></header>
+<p>A <code>.rd-stepper</code> is a value control: a minus button, a read-only value, and a plus button. The buttons are the compact icon variant (<code>.rd-btn--icon</code>); the value is an <code>aria-live</code> region so a screen reader announces each change.</p>
+<div class="rd-card">
+<p><span class="rd-stepper"><button type="button" class="rd-btn rd-btn--icon" aria-label="Decrease"><svg class="rd-icon" aria-hidden="true"><use href="#i-minus"/></svg></button><span class="rd-stepper__value" aria-live="polite">3</span><button type="button" class="rd-btn rd-btn--icon" aria-label="Increase"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg></button></span></p>
+</div>
+
+<header class="rd-section__head" id="chat"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-square"/></svg></span><h2>Chat</h2></header>
+<p>A <code>.rd-chat</code> is a message thread. Each message is a <code>.rd-chat__msg</code> with a variant: <code>--me</code> (the user's, right-aligned and filled) and <code>--them</code> (the assistant's, left-aligned on the card ground). Bubbles cap at 85% so long messages wrap. The input row reuses <code>.rd-input</code> and <code>.rd-btn</code>.</p>
+<div class="rd-card">
+<div class="rd-chat">
+<div class="rd-chat__msg rd-chat__msg--them">What is the drawdown risk?</div>
+<div class="rd-chat__msg rd-chat__msg--me">Show me the 12-month numbers.</div>
+<div class="rd-chat__msg rd-chat__msg--them">A 30% drawdown has a 1% chance in 12 months.</div>
+<div class="rd-chat__input"><input class="rd-input" id="cat-chat" type="text" aria-label="Message" placeholder="Type a message"><button type="button" class="rd-btn rd-btn--primary">Send</button></div>
+</div>
+</div>
+
+<header class="rd-section__head" id="quiz"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-help-circle"/></svg></span><h2>Quiz</h2></header>
+<p>A <code>.rd-quiz</code> is a question with selectable options and a feedback line. The options reuse <code>.rd-choice</code> (labelled native radios). The feedback line uses the semantic <code>--good</code> / <code>--bad</code> colours to announce the result.</p>
+<div class="rd-card">
+<div class="rd-quiz">
+<p class="rd-quiz__q">What is the 12-month drawdown risk?</p>
+<div class="rd-quiz__opts">
+<label class="rd-choice"><input type="radio" name="cat-q" checked>1%</label>
+<label class="rd-choice"><input type="radio" name="cat-q">11%</label>
+<label class="rd-choice"><input type="radio" name="cat-q">42%</label>
+</div>
+<p class="rd-quiz__feedback rd-quiz__feedback--good" aria-live="polite">Correct — 1%.</p>
+</div>
+</div>
+
+<header class="rd-section__head" id="meter"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2>Meter</h2></header>
+<p>A <code>.rd-meter</code> is a progress bar: a track (button ground) with a fill (accent). The fill width is set inline because it is data-driven. Give it <code>role="progressbar"</code> and an <code>aria-valuenow</code> so a screen reader can announce the value.</p>
+<div class="rd-card">
+<div class="rd-meter" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><span class="rd-meter__fill" style="width: 60%"></span></div>
+<div class="rd-meter" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"><span class="rd-meter__fill" style="width: 25%"></span></div>
+</div>
+
+</main>
+</body>
+</html>
