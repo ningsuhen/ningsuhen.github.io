@@ -299,12 +299,13 @@ for (const rel of tabbed) {
 	}
 }
 // Section bar (rd-expnav) block for scripts/check-standalone-pages.mjs. Inserted before the "Drift" comment.
-// Section bar (rd-expnav) on every standalone page with one: one gap (--rd-navbar-gap) under the navbar card at 768px and up
-// (the main site's first card sits at least that far below its navbar), the first link on the navbar's brand edge from 1200px
-// up (the container padding below). Once scrolled 800px the navbar stays on top (sticky, like the main site) and the bar
-// sticks one gap (16px) under it. Jump targets land below both bars: scroll-margin-top clears the navbar and the bar.
+// Section bar (rd-expnav) on every standalone page with one: directly under the breadcrumb band, which sits directly under
+// the navbar card (--rd-crumb-h, 40px; 16px when the page has no trail), the first link on the navbar's brand edge from 1200px
+// up (the container padding below). Once scrolled 800px the navbar stays on top (sticky, like the main site), the band
+// sticks under it and the bar under the band. Jump targets land below all three: scroll-margin-top clears them.
 const BAR_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
 const barPages = pages.filter((p) => /<nav\b[^>]*class=["'][^"']*\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
+const CRUMB_BAND_PX = 40; // --rd-crumb-h (2.5rem): the breadcrumb band under the navbar card
 const MAIN_GAP_PX = 16; // the main site's rhythm (MainGridLayout gap-4; the TOC sits 16px from the navbar card). A fixed reference, not --rd-navbar-gap: the token must match it.
 for (const rel of barPages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
@@ -319,13 +320,23 @@ for (const rel of barPages) {
 			return {
 				navb: R(host?.shadowRoot?.querySelector("header")), brandL: R(host?.shadowRoot?.querySelector(".brand"))?.l,
 				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l, padL: bar ? parseFloat(getComputedStyle(bar).paddingLeft) : null,
+				band: R(document.querySelector(".rd-crumb-band")), bandEmpty: !!document.querySelector(".rd-crumb-band--empty"),
+				bandBg: getComputedStyle(document.querySelector(".rd-crumb-band") ?? document.body, "::before").backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
 			};
 		});
 		const tag = `${urlPath} @${width}`;
 		if (!m.navb || !m.bar || m.firstL == null) failures.push(`${tag}: navbar card or section bar not found`);
 		else {
-			const gap = MAIN_GAP_PX;
-			if (width >= 768 && Math.abs(m.bar.t - m.navb.b - gap) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.navb.b).toFixed(1)}px below the navbar card, expected ${gap}px (the main site rhythm)`);
+			// The band (.rd-crumb-band) sits directly under the navbar card and holds the trail; the section bar sits directly under it.
+			// A page without a band (its own shell) keeps the main site's 16px rhythm.
+			const bandH = m.band ? m.band.b - m.band.t : null;
+			const gap = m.band && !m.bandEmpty ? CRUMB_BAND_PX : MAIN_GAP_PX;
+			if (m.band) {
+				if (Math.abs(m.band.t - m.navb.b) > 0.5) failures.push(`${tag}: band top ${m.band.t.toFixed(1)}px, navbar card bottom ${m.navb.b.toFixed(1)}px`);
+				if (Math.abs(bandH - gap) > 0.5) failures.push(`${tag}: band ${bandH.toFixed(1)}px tall, expected ${gap}px`);
+				if (m.bandBg !== m.bodyBg) failures.push(`${tag}: band background ${m.bandBg} is not the page background ${m.bodyBg} (must be opaque)`);
+				if (width >= 768 && Math.abs(m.bar.t - m.band.b) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.band.b).toFixed(1)}px below the band, expected 0`);
+			} else if (width >= 768 && Math.abs(m.bar.t - m.navb.b - gap) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.navb.b).toFixed(1)}px below the navbar card, expected ${gap}px (the main site rhythm)`);
 			const edge = width >= 1200 ? m.brandL : m.bar.l + m.padL;
 			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (${width >= 1200 ? "navbar brand edge" : "container padding"})`);
 		}
@@ -337,12 +348,26 @@ for (const rel of barPages) {
 			const bar = document.querySelector(".rd-expnav");
 			const host = document.querySelector("div[data-site-navbar]");
 			const hd = host.shadowRoot.querySelector("header").getBoundingClientRect();
-			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY };
+			const band = document.querySelector(".rd-crumb-band");
+			const bb = band?.getBoundingClientRect();
+			// Nothing may show through the band: at every sample point inside it, the topmost element is the band (or its content),
+			// and its background is opaque (alpha 1), so the page never shows through at this scroll position.
+			const hits = bb ? [0.02, 0.5, 0.98].map((k) => {
+				const x = bb.left + bb.width * k;
+				const el = document.elementFromPoint(x, bb.top + bb.height / 2);
+				return !!el?.closest(".rd-crumb-band");
+			}) : [];
+			const alpha = bb ? getComputedStyle(band, "::before").backgroundColor : "";
+			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY, bandTop: bb?.top ?? null, bandBottom: bb?.bottom ?? null, hits, bandBg: alpha, bodyBg: getComputedStyle(document.body).backgroundColor };
 		});
-		// The navbar is sticky (parity with the main site), so the section bar sticks one gap (16px) beneath it, never under it.
+		// The navbar is sticky (parity with the main site); the band sticks under it and the section bar under the band.
 		if (s.scrollY < 799) failures.push(`${tag}: page too short to scroll 800px (reached ${s.scrollY})`);
 		else if (Math.abs(s.navTop) > 0.5) failures.push(`${tag}: navbar not sticky at the top (top ${s.navTop.toFixed(1)}px, scrollY ${s.scrollY})`);
-		else if (Math.abs(s.top - s.navBottom - MAIN_GAP_PX) > 0.5) failures.push(`${tag}: stuck section bar at ${s.top.toFixed(1)}px, expected ${MAIN_GAP_PX}px under the navbar (bottom ${s.navBottom.toFixed(1)}px, scrollY ${s.scrollY})`);
+		else if (s.bandTop !== null && Math.abs(s.bandTop - s.navBottom) > 0.5) failures.push(`${tag}: stuck band at ${s.bandTop.toFixed(1)}px, expected directly under the navbar (bottom ${s.navBottom.toFixed(1)}px)`);
+		else if (s.bandTop !== null && Math.abs(s.top - s.bandBottom) > 0.5) failures.push(`${tag}: stuck section bar at ${s.top.toFixed(1)}px, expected directly under the band (bottom ${s.bandBottom.toFixed(1)}px, scrollY ${s.scrollY})`);
+		else if (s.bandTop === null && Math.abs(s.top - s.navBottom - MAIN_GAP_PX) > 0.5) failures.push(`${tag}: stuck section bar at ${s.top.toFixed(1)}px, expected ${MAIN_GAP_PX}px under the navbar (bottom ${s.navBottom.toFixed(1)}px, scrollY ${s.scrollY})`);
+		if (s.bandTop !== null && s.hits.some((h) => !h)) failures.push(`${tag}: content shows through the band at scrollY ${s.scrollY} (another element is on top of the band)`);
+		if (s.bandTop !== null && s.bandBg !== s.bodyBg) failures.push(`${tag}: band background not opaque at scrollY ${s.scrollY}`);
 		// Jump targets (section links in the bar) land below both bars: scroll-margin-top clears the navbar and the bar.
 		const jump = await page.evaluate(async () => {
 			const bar = document.querySelector(".rd-expnav");
@@ -669,6 +694,248 @@ for (const rel of pages) {
 		await page.waitForFunction(() => (window.__posted || []).some((p) => p[1] === "https://giscus.app" && p[0].giscus?.setConfig?.theme === "dark"), null, { timeout: 3000 }).catch(() => {});
 		const synced = await page.evaluate(() => (window.__posted || []).some((p) => p[1] === "https://giscus.app" && p[0].giscus?.setConfig?.theme === "dark"));
 		if (!synced) failures.push(`${tag}: theme change to dark was not posted to the giscus frame`);
+		await ctx.close();
+	}
+}
+
+// A breadcrumb link must resolve to a page or file in dist (directory links end in /).
+const crumbTargetExists = (href) => existsSync(path.join(DIST, href.endsWith("/") ? path.join(href, "index.html") : href));
+// Breadcrumb (rd-breadcrumb, injected by standalone-header.ts) on every standalone page: exactly one, the trail the path
+// and title give, real links that resolve, the current item as text, JSON-LD that matches, clear of the navbar and the
+// section bar, one line, no overflow, 24px tap targets, and aligned with the page's heading (it is the first child of <main>).
+const CRUMB_SECTIONS = { research: "Research", experiments: "Experiments", ideas: "Ideas", "design-system": "Design system" };
+const CRUMB_WIDTHS = [1440, 768, 375];
+const CRUMB_SITE = "https://ningsuhen.github.io/";
+const decodeEntities = (t) => t.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+for (const rel of pages) {
+	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	const segs = urlPath.split("/").filter(Boolean);
+	const section = CRUMB_SECTIONS[segs[0] ?? ""];
+	const onSection = !!section && segs.length === 1;
+	// Pages on the design system (linked research.css, or an inlined copy with the band rules) get the band; a fragment
+	// export without <body> gets it before its <main>. Other pages keep their own shell.
+	const onDs = /design-system\/(?:research|rd)\.css/.test(src) || src.includes(".rd-crumb-band {");
+	const optedOut = /<meta[^>]+name=["']rd-breadcrumb["'][^>]+content=["']off["']/i.test(src);
+	const titleRaw = src.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+	const pageTitle = decodeEntities(titleRaw.replace(/\s*·\s*created\s+\d{4}-\d{2}-\d{2}\s*·\s*updated\s+\d{4}-\d{2}-\d{2}\s*$/, "").trim());
+	const names = ["Home", ...(section && !onSection ? [section] : []), onSection ? section : pageTitle];
+	const hrefs = ["/", ...(section && !onSection ? [`/${segs[0]}/`] : [])];
+	const tag = `${urlPath} [breadcrumb]`;
+	const wantCount = onDs && !optedOut ? 1 : 0;
+	for (const w of CRUMB_WIDTHS) {
+		const ctx = await browser.newContext({ viewport: { width: w, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(`${base}${urlPath}`, { waitUntil: "load" });
+		const m = await page.evaluate(() => {
+			const r = (el) => (el ? el.getBoundingClientRect() : null);
+			const nav = document.querySelector('nav[aria-label="Breadcrumb"]');
+			const host = document.querySelector("div[data-site-navbar]");
+			const header = host?.shadowRoot?.querySelector("header");
+			const expnav = document.querySelector(".rd-expnav");
+			const h1 = [...document.querySelectorAll("h1")].find((h) => h.offsetParent !== null);
+			const textLeft = (el) => {
+				if (!el) return null;
+				const range = document.createRange();
+				range.selectNodeContents(el);
+				return range.getBoundingClientRect().left;
+			};
+			const items = nav ? [...nav.querySelectorAll("li")] : [];
+			let ld = null;
+			try { ld = JSON.parse(nav?.previousElementSibling?.textContent ?? "null"); } catch { ld = "unparseable"; }
+			const cur = nav?.querySelector('[aria-current="page"]');
+			return {
+				count: document.querySelectorAll('nav[aria-label="Breadcrumb"]').length,
+				bands: document.querySelectorAll(".rd-crumb-band").length,
+				labels: items.map((li) => li.textContent.trim()),
+				hrefs: items.map((li) => li.querySelector("a")?.getAttribute("href") ?? null),
+				currentOk: !!cur && cur.tagName === "SPAN" && !cur.closest("a") && cur === items[items.length - 1]?.firstElementChild,
+				ld,
+				navBox: r(nav) && { x: r(nav).left, w: r(nav).width, top: r(nav).top, bottom: r(nav).bottom },
+				headerBottom: header ? header.getBoundingClientRect().bottom : null,
+				expnavTop: r(expnav)?.top ?? null,
+				olH: nav ? nav.querySelector("ol").getBoundingClientRect().height : 0,
+				linkH: nav ? [...nav.querySelectorAll("a")].map((a) => a.getBoundingClientRect().height) : [],
+				pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+				navOverflow: nav ? nav.scrollWidth - nav.clientWidth : 0,
+				textLeft: nav ? textLeft(nav.querySelector("li")) : null,
+				h1Left: textLeft(h1),
+				vw: document.documentElement.clientWidth,
+			};
+		});
+		await ctx.close();
+		if (m.count !== wantCount) { failures.push(`${tag} @${w}: ${m.count} breadcrumb(s), expected ${wantCount}`); continue; }
+		if (m.bands !== (onDs ? 1 : 0)) failures.push(`${tag} @${w}: ${m.bands} breadcrumb band(s), expected ${onDs ? 1 : 0} (the band holds the trail)`);
+		if (!wantCount) continue;
+		const tg = `${tag} @${w}`;
+		if (JSON.stringify(m.labels) !== JSON.stringify(names)) failures.push(`${tg}: trail "${m.labels.join(" > ")}", expected "${names.join(" > ")}"`);
+		if (JSON.stringify(m.hrefs.slice(0, -1)) !== JSON.stringify(hrefs)) failures.push(`${tg}: links ${JSON.stringify(m.hrefs)}, expected ${JSON.stringify(hrefs)}`);
+		if (m.hrefs[m.hrefs.length - 1] !== null || !m.currentOk) failures.push(`${tg}: current item must be aria-current text, not a link`);
+		for (const h of m.hrefs.filter(Boolean)) if (!crumbTargetExists(h)) failures.push(`${tg}: link ${h} does not resolve in dist`);
+		if (!m.ld || typeof m.ld === "string" || m.ld["@type"] !== "BreadcrumbList") failures.push(`${tg}: JSON-LD BreadcrumbList missing`);
+		else {
+			const items = m.ld.itemListElement ?? [];
+			if (JSON.stringify(items.map((i) => i.name)) !== JSON.stringify(names)) failures.push(`${tg}: JSON-LD names ${JSON.stringify(items.map((i) => i.name))}`);
+			const last = items[items.length - 1]?.item ?? "";
+			if (!last.startsWith(CRUMB_SITE) || last !== CRUMB_SITE + urlPath.slice(1)) failures.push(`${tg}: JSON-LD last item ${last}, expected ${CRUMB_SITE}${urlPath.slice(1)}`);
+		}
+		const b = m.navBox;
+		if (m.headerBottom !== null && b.top < m.headerBottom - 0.5) failures.push(`${tg}: top ${Math.round(b.top)} under the navbar (bottom ${Math.round(m.headerBottom)})`);
+		if (m.expnavTop !== null && m.expnavTop < b.bottom - 0.5) failures.push(`${tg}: section bar at ${Math.round(m.expnavTop)} overlaps the trail (bottom ${Math.round(b.bottom)})`);
+		if (m.olH > 26) failures.push(`${tg}: trail wraps (${Math.round(m.olH)}px tall, one line is 24px)`);
+		if (m.pageOverflow > 0 || m.navOverflow > 0) failures.push(`${tg}: horizontal overflow (page ${m.pageOverflow}px, trail ${m.navOverflow}px)`);
+		if (w === 375 && m.linkH.some((h) => h < 23.5)) failures.push(`${tg}: link under 24px tall (${m.linkH.map(Math.round).join(", ")})`);
+		if (m.textLeft !== null && m.h1Left !== null && Math.abs(m.textLeft - m.h1Left) > 1.5) failures.push(`${tg}: trail text at ${Math.round(m.textLeft)}, page heading at ${Math.round(m.h1Left)}`);
+	}
+}
+
+// Breadcrumb band opacity: the band under the navbar card must never let the page show through. On every page with a band,
+// at 375, 768 and 1440, light and dark, at four scroll positions: the band has the navbar card's frame (same left edge and
+// width), sits directly under the card at --rd-crumb-h (16px when empty), the topmost element at a grid of points inside it is
+// the band (or its trail), and the screenshot pixels of its top and bottom strips (clear of the 24px text line) are exactly
+// the page background. A transparent or covered band shows content there.
+const BAND_WIDTHS = [375, 768, 1440];
+const bandPages = pages.filter((rel) => {
+	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	return /design-system\/(?:research|rd)\.css/.test(src) || src.includes(".rd-crumb-band {");
+});
+for (const rel of bandPages) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	for (const theme of ["light", "dark"]) for (const width of BAND_WIDTHS) {
+		const tag = `${urlPath} ${theme} @${width} [band]`;
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		await ctx.addInitScript((t) => { try { localStorage.setItem("theme", t); } catch {} }, theme);
+		const page = await ctx.newPage();
+		await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
+		const maxY = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+		for (const y of [0, Math.round(maxY * 0.25), Math.round(maxY * 0.6), maxY]) {
+			await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), y);
+			await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+			const m = await page.evaluate(() => {
+				const band = document.querySelector("[data-site-breadcrumb]");
+				const hd = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
+				if (!band || !hd) return null;
+				// The opaque surface is the band's ::before (the navbar card's frame); the band box spans the body's content box.
+				const r = band.getBoundingClientRect();
+				const sur = getComputedStyle(band, "::before");
+				const b = { left: r.left + parseFloat(sur.left), width: parseFloat(sur.width), top: r.top, height: r.height };
+				const covered = [];
+				for (const kx of [0.01, 0.25, 0.5, 0.75, 0.99]) for (const ky of [0.1, 0.5, 0.9]) {
+					const x = b.left + b.width * kx, yy = b.top + b.height * ky;
+					const el = document.elementFromPoint(x, yy);
+					if (!el?.closest("[data-site-breadcrumb]")) covered.push(`${Math.round(x)},${Math.round(yy)}=${el ? el.tagName.toLowerCase() + (el.className && typeof el.className === "string" ? "." + el.className.split(" ")[0] : "") : "none"}`);
+				}
+				// The page background as the screen shows it: paint the band's computed colour on a canvas (sRGB, like the screenshot).
+				const c = document.createElement("canvas").getContext("2d");
+				c.fillStyle = sur.backgroundColor;
+				c.fillRect(0, 0, 1, 1);
+				const bg = [...c.getImageData(0, 0, 1, 1).data];
+				return { x: b.left, w: b.width, t: b.top, h: b.height, hdX: hd.left, hdW: hd.width, hdB: hd.bottom, covered, bg, bodyBg: getComputedStyle(document.body).backgroundColor, bandBg: sur.backgroundColor, empty: band.classList.contains("rd-crumb-band--empty") };
+			});
+			const at = `${tag} scrollY ${y}`;
+			if (!m) { failures.push(`${at}: band or navbar card not found`); break; }
+			if (Math.abs(m.x - m.hdX) > 0.5 || Math.abs(m.w - m.hdW) > 0.5) failures.push(`${at}: band ${m.x.toFixed(1)}+${m.w.toFixed(1)}px, navbar card ${m.hdX.toFixed(1)}+${m.hdW.toFixed(1)}px (same frame expected)`);
+			if (Math.abs(m.t - m.hdB) > 0.5) failures.push(`${at}: band top ${m.t.toFixed(1)}px, navbar card bottom ${m.hdB.toFixed(1)}px`);
+			if (Math.abs(m.h - (m.empty ? 16 : 40)) > 0.5) failures.push(`${at}: band ${m.h.toFixed(1)}px tall, expected ${m.empty ? 16 : 40}px`);
+			if (m.bandBg !== m.bodyBg) failures.push(`${at}: band background ${m.bandBg}, page background ${m.bodyBg}`);
+			if (m.covered.length) failures.push(`${at}: something covers the band at ${m.covered.slice(0, 3).join(" ")}`);
+			// Pixels: 3px strips at the band's top and bottom (the trail's 24px line sits in the middle 24px of 40).
+			const strip = m.empty ? m.h : 3;
+			for (const top of m.empty ? [m.t] : [m.t + 1, m.t + m.h - 1 - strip]) {
+				const png = await page.screenshot({ clip: { x: Math.max(0, m.x), y: top, width: Math.min(m.w, width - Math.max(0, m.x)), height: strip }, animations: "disabled", caret: "hide" });
+				const off = await page.evaluate(async ({ b64, bg }) => {
+					const img = new Image();
+					img.src = `data:image/png;base64,${b64}`;
+					await img.decode();
+					const c = document.createElement("canvas");
+					c.width = img.naturalWidth; c.height = img.naturalHeight;
+					const g = c.getContext("2d");
+					g.drawImage(img, 0, 0);
+					const d = g.getImageData(0, 0, c.width, c.height).data;
+					let bad = 0, first = null;
+					for (let i = 0; i < d.length; i += 4) {
+						if (Math.abs(d[i] - bg[0]) > 3 || Math.abs(d[i + 1] - bg[1]) > 3 || Math.abs(d[i + 2] - bg[2]) > 3) { bad++; if (!first) first = `x=${(i / 4) % c.width} rgb(${d[i]},${d[i + 1]},${d[i + 2]})`; }
+					}
+					return { bad, first, n: d.length / 4 };
+				}, { b64: png.toString("base64"), bg: m.bg });
+				if (off.bad) failures.push(`${at}: ${off.bad}/${off.n} band pixels at y=${Math.round(top)} are not the page background (first ${off.first}, expected rgb(${m.bg.slice(0, 3).join(",")}))`);
+			}
+		}
+		await ctx.close();
+	}
+}
+
+// Stuck rail under the section bar: below 1536px the tab panel's "On this page" rail sticks under the bar. It must sit flush
+// against the bar's bottom (navbar + band + bar, no gap), so nothing scrolls through between them. On every page with a
+// sticky rail, at 375, 768 and 1440, light and dark, at three scroll positions inside the visible panel: when the rail is
+// stuck its top equals the bar's bottom, the topmost element just under the bar is the rail, and the screenshot pixels of a
+// 2px strip at the rail's top are the page background.
+const railPages = bandPages.filter((rel) => readFileSync(path.join(PUBLIC, rel), "utf8").includes('class="rd-toc"') && /\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, rel), "utf8")));
+for (const rel of railPages) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	for (const theme of ["light", "dark"]) for (const width of BAND_WIDTHS) {
+		const tag = `${urlPath} ${theme} @${width} [rail under the bar]`;
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		await ctx.addInitScript((t) => { try { localStorage.setItem("theme", t); } catch {} }, theme);
+		const page = await ctx.newPage();
+		await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
+		// Scroll targets where the rail is stuck: inside its container, past its natural top, before its container ends.
+		const span = await page.evaluate(() => {
+			const rail = [...document.querySelectorAll(".rd-toc")].find((r) => r.getClientRects().length && getComputedStyle(r).position === "sticky");
+			if (!rail) return null;
+			const box = rail.parentElement.getBoundingClientRect();
+			const top = box.top + window.scrollY, bottom = box.bottom + window.scrollY, h = rail.getBoundingClientRect().height;
+			return { from: top + 200, to: bottom - h - window.innerHeight * 0.5 };
+		});
+		if (!span || span.to <= span.from) { await ctx.close(); continue; }
+		let stuck = 0;
+		for (const k of [0, 0.5, 1]) {
+			const y = Math.round(span.from + (span.to - span.from) * k);
+			await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), y);
+			await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+			const m = await page.evaluate(() => {
+				const bar = document.querySelector(".rd-expnav").getBoundingClientRect();
+				const railEl = [...document.querySelectorAll(".rd-toc")].find((r) => r.getClientRects().length && getComputedStyle(r).position === "sticky");
+				const rail = railEl.getBoundingClientRect();
+				const stuckTop = parseFloat(getComputedStyle(railEl).top);
+				const hits = [];
+				for (const kx of [0.02, 0.5, 0.98]) {
+					const x = rail.left + rail.width * kx, yy = bar.bottom + 1;
+					const el = document.elementFromPoint(x, yy);
+					if (!el?.closest(".rd-toc")) hits.push(`${Math.round(x)},${Math.round(yy)}=${el ? el.tagName.toLowerCase() + (typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : "") : "none"}`);
+				}
+				const c = document.createElement("canvas").getContext("2d");
+				c.fillStyle = getComputedStyle(document.body).backgroundColor;
+				c.fillRect(0, 0, 1, 1);
+				return { barBottom: bar.bottom, railTop: rail.top, railLeft: rail.left, railW: rail.width, stuck: Math.abs(rail.top - stuckTop) < 0.5, stuckTop, hits, bg: [...c.getImageData(0, 0, 1, 1).data] };
+			});
+			const at = `${tag} scrollY ${y}`;
+			if (!m.stuck) continue;
+			stuck++;
+			if (Math.abs(m.railTop - m.barBottom) > 0.5) failures.push(`${at}: stuck rail top ${m.railTop.toFixed(1)}px, section bar bottom ${m.barBottom.toFixed(1)}px (content shows through the ${(m.railTop - m.barBottom).toFixed(1)}px gap)`);
+			if (m.hits.length) failures.push(`${at}: under the section bar the topmost element is not the rail: ${m.hits.join(" ")}`);
+			const png = await page.screenshot({ clip: { x: Math.max(0, m.railLeft), y: m.barBottom, width: Math.min(m.railW, width - Math.max(0, m.railLeft)), height: 2 }, animations: "disabled", caret: "hide" });
+			const off = await page.evaluate(async ({ b64, bg }) => {
+				const img = new Image();
+				img.src = `data:image/png;base64,${b64}`;
+				await img.decode();
+				const c = document.createElement("canvas");
+				c.width = img.naturalWidth; c.height = img.naturalHeight;
+				const g = c.getContext("2d");
+				g.drawImage(img, 0, 0);
+				const d = g.getImageData(0, 0, c.width, c.height).data;
+				let bad = 0, first = null;
+				for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - bg[0]) > 3 || Math.abs(d[i + 1] - bg[1]) > 3 || Math.abs(d[i + 2] - bg[2]) > 3) { bad++; first ??= `x=${(i / 4) % c.width} rgb(${d[i]},${d[i + 1]},${d[i + 2]})`; }
+				return { bad, first, n: d.length / 4 };
+			}, { b64: png.toString("base64"), bg: m.bg });
+			if (off.bad) failures.push(`${at}: ${off.bad}/${off.n} pixels just under the section bar are not the page background (first ${off.first})`);
+		}
+		// Below 1536px the rail is sticky; a page whose panel is too short to stick it at all is not a pass by default.
+		if (!stuck) failures.push(`${tag}: rail never stuck at the sampled scroll positions (check the sample or the page)`);
 		await ctx.close();
 	}
 }
