@@ -202,6 +202,16 @@ for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
 	if (m.emptyLinks) failures.push(`${sitePath}: ${m.emptyLinks} empty link(s) (href="" or "#")`);
 	await ctx.close();
 }
+// Every main page must have exactly one <h1>: the shared layout supplies a screen-reader heading on
+// pages whose visible title is a styled div, and the section/404 pages render their own visible <h1>.
+for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments/", "/license/", "/posts/ai-boom-trajectories/"]) {
+	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
+	const page = await ctx.newPage();
+	await page.goto(base + sitePath, { waitUntil: "load" });
+	const h1 = await page.evaluate(() => document.querySelectorAll("h1").length);
+	if (h1 !== 1) failures.push(`${sitePath}: expected exactly one <h1>, found ${h1}`);
+	await ctx.close();
+}
 // Wide container (tabbed reports, class rd-container--wide = the navbar's width): from 1200px up, the content's
 // left and right edges must sit on the navbar card's edges, so the page reads as one column with the navbar.
 const WIDE_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
