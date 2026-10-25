@@ -1,0 +1,22 @@
+name: Check setup
+description: Install dependencies and (optionally) download the built dist artifact. The job must run actions/checkout first (a local action needs the repo checked out to be resolved).
+inputs:
+  need-dist:
+    description: Download the dist artifact (for checks that read the build output).
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+      shell: bash
+    - if: ${{ inputs.need-dist == 'true' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
