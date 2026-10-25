@@ -783,6 +783,10 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 
 .rd-fullscreen { position: relative; }
 
+/* The container is programmatically focused (tabindex=-1) for wheel-only-after-focus. A focus ring
+   around the whole viewport would be noise — the expansion is the feedback — so suppress it. */
+.rd-fullscreen:focus { outline: none; }
+
 /* Overlay fallback: covers the viewport (including the injected navbar, z-index 20) and scrolls.
    Safe-area insets keep content clear of the notch / home indicator. */
 .rd-fullscreen.is-expanded {
@@ -818,3 +822,11 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 [data-rd-fullscreen-toggle]:hover { background: var(--rd-btn-bg-hover); }
 [data-rd-fullscreen-toggle] .rd-icon { width: 1em; height: 1em; }
+
+/* Inside a fullscreen container the toggle floats top-right (the container is position:relative). */
+.rd-fullscreen [data-rd-fullscreen-toggle] {
+	position: absolute;
+	top: var(--rd-space-3);
+	right: var(--rd-space-3);
+	z-index: 1;
+}
