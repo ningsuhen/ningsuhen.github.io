@@ -15,6 +15,15 @@ let isSearching = false;
 let pagefindLoaded = false;
 let initialized = false;
 
+// The kind of a result, from its path: standalone reports/demos/ideas carry a section chip.
+const kindOf = (u: string): string | null => {
+	const p = new URL(u, location.origin).pathname;
+	if (p.startsWith("/research/")) return "Report";
+	if (p.startsWith("/playground/")) return "Live demo";
+	if (p.startsWith("/ideas/")) return "Idea";
+	return null;
+};
+
 const fakeResult: SearchResult[] = [
 	{
 		url: url("/"),
@@ -182,7 +191,10 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
         <a href={item.url}
            class="transition first-of-type:mt-2 lg:first-of-type:mt-0 group block
        rounded-xl text-lg px-3 py-2 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]">
-            <div class="transition text-90 inline-flex font-bold group-hover:text-[var(--btn-content)]">
+            <div class="transition text-90 inline-flex items-center gap-2 font-bold group-hover:text-[var(--btn-content)]">
+                {#if kindOf(item.url)}
+                    <span class="sf-kind">{kindOf(item.url)}</span>
+                {/if}
                 {item.meta.title}<Icon icon={chevronRight} class="transition text-[0.75rem] translate-x-1 my-auto text-[var(--primary)]"></Icon>
             </div>
             <div class="transition text-sm text-50">
@@ -199,5 +211,19 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
   .search-panel {
     max-height: calc(100vh - 100px);
     overflow-y: auto;
+  }
+  .sf-kind {
+    flex: none;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.125em 0.5em;
+    border-radius: 999px;
+    background: var(--btn-plain-bg-hover, rgba(0, 0, 0, 0.06));
+    color: var(--btn-content, rgba(0, 0, 0, 0.7));
+  }
+  :global(.dark) .sf-kind {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
   }
 </style>

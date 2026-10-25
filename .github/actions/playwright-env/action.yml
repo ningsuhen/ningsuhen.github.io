@@ -1,0 +1,43 @@
+name: Playwright env
+description: Cache and install the Playwright chromium browser into a workspace dir, then export CHROME_PATH for the checks.
+runs:
+  using: composite
+  steps:
+    - name: Mark setup start
+      run: echo "PW_SETUP_START=$(date +%s)" >> "$GITHUB_ENV"
+      shell: bash
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/pw-browsers
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+    - name: Install chromium
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
+      # No --with-deps: GitHub-hosted ubuntu runners already ship chromium's system libraries, so the
+      # apt install (the slow part, ~6 min on a cold runner) is skipped. The binary is cached above.
+      # If the binary is still missing (a runner image without the libs, e.g. self-hosted), fall back to
+      # --with-deps so the leg recovers instead of failing.
+      run: |
+        set -euo pipefail
+        pnpm exec playwright-core install chromium
+        bin="$(node -e "console.log(require('playwright-core').chromium.executablePath())")"
+        # Probe the binary (loads its shared libs), not just its existence: a missing lib leaves the file
+        # in place but unlaunchable. --version is cheap (no full browser start).
+        if [ ! -x "$bin" ] || ! "$bin" --version >/dev/null 2>&1; then
+          echo "chromium not launchable at $bin; retrying with --with-deps (runner may lack system libs)"
+          pnpm exec playwright-core install --with-deps chromium
+        fi
+      shell: bash
+    - name: Export CHROME_PATH
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/pw-browsers
+      run: echo "CHROME_PATH=$(node -e "console.log(require('playwright-core').chromium.executablePath())")" >> "$GITHUB_ENV"
+      shell: bash
+    - name: Setup timing
+      run: |
+        elapsed=$(( $(date +%s) - ${PW_SETUP_START:-$(date +%s)} ))
+        echo "### Playwright setup: ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+      shell: bash

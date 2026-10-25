@@ -1,0 +1,15 @@
+{
+	"runs": 3,
+	"cpuThrottle": 4,
+	"settleMs": 1500,
+	"pages": {
+		"home": "/",
+		"post": "/posts/ai-boom-trajectories/",
+		"report": "/research/ai-economy/",
+		"playground": "/playground/brev-tree-traversal/"
+	},
+	"budgets": {
+		"mobile": { "lcp": 2500, "cls": 0.1, "tbt": 300 },
+		"desktop": { "lcp": 2500, "cls": 0.1, "tbt": 300 }
+	}
+}
