@@ -79,6 +79,7 @@ const RULES = {
 	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
 	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
 	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
+	"stepper": "every .rd-stepper has a minus and a plus <button> and a value region",
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
@@ -340,6 +341,12 @@ const probeStructure = (canon) => {
 		// choice without a real input is not keyboard-operable and breaks screen readers.
 		choices: [...document.querySelectorAll(".rd-choice")].map((el) => ({
 			hasInput: !!el.querySelector("input[type=radio], input[type=checkbox]"),
+		})),
+		// Steppers: every .rd-stepper has a minus and a plus button (two keyboard-operable
+		// controls) and a value region. A stepper missing a button or its value is broken.
+		steppers: [...document.querySelectorAll(".rd-stepper")].map((el) => ({
+			buttons: el.querySelectorAll("button").length,
+			hasValue: !!el.querySelector(".rd-stepper__value"),
 		})),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
@@ -752,6 +759,8 @@ await Promise.all(pages.map(async (rel) => {
 				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
 				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
 				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
+				[s.steppers.some((s) => s.buttons < 2), "stepper", "a .rd-stepper has fewer than two <button> controls (minus and plus)"],
+				[s.steppers.some((s) => !s.hasValue), "stepper", "a .rd-stepper has no .rd-stepper__value region"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {

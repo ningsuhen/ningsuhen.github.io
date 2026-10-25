@@ -1,0 +1,18 @@
+/* rd-stepper: a value control — a minus button, a read-only value, and a plus button. The buttons
+   are the compact icon variant (.rd-btn--icon); the value is an aria-live region so a screen reader
+   announces each change. min-height floors at the tap target. Ships in rd.css only (the research.css
+   compatibility alias stays the frozen core). */
+
+.rd-stepper {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+}
+.rd-stepper__value {
+	min-width: 2.5ch;
+	text-align: center;
+	font: 500 var(--rd-fs-sm) var(--rd-font);
+	font-variant-numeric: tabular-nums;
+	color: var(--rd-text-strong);
+}
+.rd-stepper:has([disabled]) .rd-stepper__value { color: var(--rd-text-muted); }
