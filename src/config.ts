@@ -76,6 +76,11 @@ export const profileConfig: ProfileConfig = {
 			icon: "lucide:twitter",
 			url: "https://twitter.com/ningsuhen",
 		},
+		{
+			name: "Medium",
+			icon: "fa6-brands:medium",
+			url: "https://medium.com/@ningsuhen",
+		},
 	],
 };
 
