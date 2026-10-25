@@ -1,0 +1,1410 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-density="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wikipedia, but in the age of AI · created 2026-10-24 · updated 2026-10-25</title>
+<meta name="description" content="An idea, not a product: an encyclopedia where each claim keeps its own sources, people sign what they checked, and machine drafts stay labelled. Nothing is built or measured.">
+<!-- Documented exceptions: main-site parity gaps of the shared tabbed layout, not of this page. The same rules are baselined
+     for the other tabbed pages; each closes when the design system changes. -->
+<meta name="ds-allow" content="footer-box: the injected license card follows the tabbed layout (navbar card width, centred); the main post footer sits in the column beside its sidebar. Design-system decision.">
+<meta name="ds-allow" content="footer-type: the injected license card text style differs from the main site footer text on every standalone page. One footer style is a design-system change.">
+<meta name="ds-allow" content="footer-gap: the space above the injected license card differs from the main post footer spacing on every standalone page. Design-system decision.">
+<meta name="ds-allow" content="prose-type: compact density is intentional (design-system guide, Density): h2 19.2px against the main post 24px.">
+<meta name="ds-allow" content="rail-presence: the shared tabbed layout shows the contents list as a disclosure above the content below 1536px; the main post hides its TOC there. Design-system decision.">
+<meta name="ds-allow" content="rail-geometry: the shared wide rail (research.css) sits 3.5rem from the top; the main TOC sits one gap under the navbar card. Fix in research.css for all tabbed pages.">
+<meta name="ds-allow" content="rail-type: the shared rail uses the main TOC 14px entry text; the check reads the main TOC 12px label. Design-system decision.">
+<meta name="ds-allow" content="rail-indicator: the shared rail draws the main TOC dashed indicator as a separate element (.rd-toc__indicator); the check reads a border on the entry. Probe and design system disagree, not this page.">
+<link rel="stylesheet" href="/design-system/research.css">
+<style>
+/* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
+/* Stopgap until the shared token and grid pass (open PR #120) lands in research.css. Same values, this page only; delete
+   this block when it lands. Custom properties only, so no raw colour reaches a declaration. */
+:root { --rd-accent-ink: oklch(0.5 0.12 var(--hue)); --rd-good: oklch(0.48 0.12 160); --rd-warn: oklch(0.52 0.13 80); --rd-toc-text: rgba(0, 0, 0, 0.62); }
+:root[data-theme="dark"] { --rd-accent-ink: var(--rd-accent); }
+.rd-tabbed { padding-inline: var(--rd-space-4); }
+.rd-with-toc, .rd-tab__body { grid-template-columns: minmax(0, 1fr); }
+.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
+.rd-btn, .rd-chip:not([class*="rd-chip--"]), .rd-expnav a.is-active, .rd-tab__body a:not(.rd-btn) { color: var(--rd-accent-ink); }
+/* One block width for the whole tab body: the 872px post column. Text, figures, tables and folds share it. */
+.rd-tabbed .rd-tab__body { max-width: var(--rd-content-width); }
+.rd-tabbed .rd-tab__body :is(p, li) { max-width: none; }
+.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
+/* Diagrams render at 1:1 (680 units = 42.5rem). On a phone they scroll inside their figure, never the page. */
+.idea-fig > svg { width: 100%; height: auto; max-width: 42.5rem; margin-inline: auto; color: var(--rd-text-strong); }
+.idea-box { fill: var(--rd-card-bg); stroke: currentColor; stroke-width: 1.5; }
+.idea-box--key { stroke: var(--rd-accent); }
+.idea-box--dash { stroke-dasharray: 6 4; }
+.idea-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.idea-tag { fill: var(--rd-btn-bg); stroke: none; }
+.rd-figure.idea-fig svg text.idea-t { font-size: var(--rd-fs-sm); fill: currentColor; text-anchor: middle; }
+.rd-figure.idea-fig svg text.idea-t--b { font-weight: 700; }
+.rd-figure.idea-fig svg text.idea-t--s { font-size: var(--rd-fs-xs); fill: var(--rd-text-muted); }
+.rd-figure.idea-fig svg text.idea-t--l { text-anchor: start; }
+.rd-figure.idea-fig svg text.idea-t--accent { fill: var(--rd-accent-ink); font-weight: 700; }
+.idea-steps__ctrl { display: none; align-items: center; gap: var(--rd-space-3); flex-wrap: wrap; margin: var(--rd-gap-block) 0; }
+.idea-steps__count { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.idea-steps__ctrl .rd-btn:disabled { opacity: 0.45; cursor: default; }
+.idea-steps__list { list-style: none; padding: 0; margin: 0; }
+.idea-steps__list li { margin: var(--rd-space-2) 0; }
+.js .idea-steps__ctrl { display: flex; }
+.js .idea-steps__list li { display: none; }
+.js .idea-steps__list li.is-on { display: block; }
+.js .idea-steps > svg [data-s] { opacity: 0.25; transition: opacity 0.2s ease; }
+.js .idea-steps > svg [data-s].is-on, .js .idea-steps > svg [data-s].is-past { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .js .idea-steps > svg [data-s] { transition: none; } }
+.idea-claims { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); list-style: none; padding: 0; margin: var(--rd-gap-block) 0; }
+.idea-claim { padding: var(--rd-space-1) var(--rd-space-2); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); color: var(--rd-text-strong); }
+.idea-claim.is-lost { background: transparent; color: var(--rd-text-muted); text-decoration: line-through; box-shadow: inset 0 0 0 1px var(--rd-line); }
+.idea-btnrow { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; }
+.idea-btnrow .rd-btn[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--rd-accent); }
+.idea-chips { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; list-style: none; padding: 0; }
+.idea-ask { display: grid; gap: var(--rd-space-2); }
+.idea-ask form { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
+.idea-ask form > label { flex-basis: 100%; }
+.idea-ask form > .rd-btn { align-self: center; }
+.idea-ask input[type="text"] { box-sizing: border-box; flex: 1 1 14rem; min-width: 0; height: var(--rd-control-h); padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-card-bg); color: var(--rd-text-strong); font: inherit; }
+.idea-ask input[type="text"]:focus-visible, .idea-quiz input:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+.idea-log { display: grid; gap: var(--rd-space-3); max-height: 34rem; overflow-y: auto; padding: var(--rd-space-2) 0; scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.idea-log:empty { display: none; }
+.idea-msg { border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); background: var(--rd-card-bg); }
+.idea-msg--me { justify-self: end; max-width: 90%; background: var(--rd-btn-bg); }
+.idea-msg p { margin: 0 0 var(--rd-space-2); }
+.idea-msg p:last-child { margin-bottom: 0; }
+.idea-msg .idea-chips { margin: var(--rd-space-2) 0 0; }
+.idea-quiz fieldset { border: 0; padding: 0; margin: var(--rd-gap-block) 0 var(--rd-gap-section); display: grid; justify-items: start; gap: var(--rd-space-1); }
+.idea-quiz legend { font-weight: 700; color: var(--rd-text-strong); margin-bottom: var(--rd-space-2); }
+.idea-quiz label { display: inline-flex; align-items: center; gap: var(--rd-space-2); min-height: var(--rd-control-h); cursor: pointer; }
+.idea-quiz input { accent-color: var(--rd-accent); }
+.idea-quiz .rd-fold { justify-self: stretch; }
+.idea-verdict { display: inline-flex; align-items: center; gap: var(--rd-space-1); margin: 0; font-weight: 700; }
+.idea-verdict:empty { display: none; }
+.idea-verdict--ok { color: var(--rd-good); }
+.idea-verdict--no { color: var(--rd-bad); }
+.idea-gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: var(--rd-space-2); align-items: start; }
+.idea-gloss > .rd-fold { margin: 0; }
+.rd-prose .idea-30s li { margin: 0 0 var(--rd-space-1); }
+.rd-stamp { white-space: nowrap; font-size: var(--rd-fs-sm); color: var(--rd-text-muted); font-weight: 400; }
+</style>
+</head>
+<body class="rd-body">
+<!-- lucide-sprite:start -->
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-badge-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77a4 4 0 0 1 6.74 0a4 4 0 0 1 4.78 4.78a4 4 0 0 1 0 6.74a4 4 0 0 1-4.77 4.78a4 4 0 0 1-6.75 0a4 4 0 0 1-4.78-4.77a4 4 0 0 1 0-6.76"/><path d="m16 9l-5.5 5.5L8 12"/></g></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.929 4.929L19.07 19.071"/></g></symbol>
+<symbol id="i-book-open" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v16m8.001-2A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2a5 5 0 0 1 4-2z"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M8 2v3m8-3v3"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></g></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18l-6-6l6-6"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18l6-6l-6-6"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16 9l-5.5 5.5L8 12"/></g></symbol>
+<symbol id="i-circle-help" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"/></g></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g></symbol>
+<symbol id="i-copyright" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></g></symbol>
+<symbol id="i-database" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></g></symbol>
+<symbol id="i-file-diff" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2zm3-12h6m-3 3V7M9 17h6"/></symbol>
+<symbol id="i-file-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 9H8m8 4H8m8 4H8"/></g></symbol>
+<symbol id="i-fingerprint" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4M14 13.12c0 2.38 0 6.38-1 8.88m4.29-.98c.12-.6.43-2.3.5-3.02M2 12a10 10 0 0 1 18-6M2 16h.01m19.79 0c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2m2.31 12c.21-.66.45-1.32.57-2M9 6.8a6 6 0 0 1 9 5.2v2"/></g></symbol>
+<symbol id="i-git-branch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/></g></symbol>
+<symbol id="i-git-commit-horizontal" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h6m6 0h6"/></g></symbol>
+<symbol id="i-graduation-cap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0zM22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></g></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></g></symbol>
+<symbol id="i-lightbulb" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 14c.2-1 .7-1.7 1.5-2.5c1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5c.7.7 1.3 1.5 1.5 2.5m0 4h6m-5 4h4"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
+<symbol id="i-list-checks" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g></symbol>
+<symbol id="i-message-circle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092a10 10 0 1 0-4.777-4.719"/></symbol>
+<symbol id="i-network" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="6" height="6" x="16" y="16" rx="1"/><rect width="6" height="6" x="2" y="16" rx="1"/><rect width="6" height="6" x="9" y="2" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3m-7-4V8"/></g></symbol>
+<symbol id="i-refresh-cw" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9a9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5m5 4a9 9 0 0 1-9 9a9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></g></symbol>
+<symbol id="i-route" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3v18m7-13l3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2a17 17 0 0 0 8 2h1M5 8l3 8a5 5 0 0 1-6 0zV7m2 14h10"/></g></symbol>
+<symbol id="i-scissors" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12L12 12m8-8L8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8L20 20"/></g></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11zm7.318-19.539l-10.94 10.939"/></symbol>
+<symbol id="i-shield-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12l2 2l4-4"/></g></symbol>
+<symbol id="i-shuffle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m18 14l4 4l-4 4m0-20l4 4l-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22M2 6h1.972a4 4 0 0 1 3.6 2.2M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></g></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4m0 4h.01"/></symbol>
+<symbol id="i-user-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m16 11l2 2l4-4m-6 12v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></g></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3.128a4 4 0 0 1 0 7.744M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></g></symbol>
+</svg>
+<!-- lucide-sprite:end -->
+
+<nav class="rd-expnav" role="tablist" aria-label="Sections">
+<a role="tab" id="tab-summary" href="?tab=summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
+<a role="tab" id="tab-claims" href="?tab=claims" aria-controls="claims" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Claims</a>
+<a role="tab" id="tab-provenance" href="?tab=provenance" aria-controls="provenance" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-route"/></svg>Provenance</a>
+<a role="tab" id="tab-people" href="?tab=people" aria-controls="people" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-users"/></svg>People and AI</a>
+<a role="tab" id="tab-tech" href="?tab=tech" aria-controls="tech" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-fingerprint"/></svg>Tech</a>
+<a role="tab" id="tab-licensing" href="?tab=licensing" aria-controls="licensing" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-copyright"/></svg>Licensing</a>
+<a role="tab" id="tab-learn" href="?tab=learn" aria-controls="learn" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-graduation-cap"/></svg>Learn</a>
+<a role="tab" id="tab-ask" href="?tab=ask" aria-controls="ask" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Ask this idea</a>
+<a role="tab" id="tab-risks" href="?tab=risks" aria-controls="risks" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg>Risks and limits</a>
+</nav>
+
+<!-- Wide: the tab bar, the content and the "On this page" rail sit at the navbar card width, as on the other tabbed pages.
+     The tab body inside it is capped at the 872px post column. -->
+<main class="rd-tabbed rd-container--wide rd-prose">
+<header class="rd-hero">
+  <p class="rd-eyebrow">Idea</p>
+  <h1>Wikipedia, but in the age of AI <span class="rd-stamp">· created 2026-10-24 · updated 2026-10-25</span></h1>
+  <p class="rd-hero__lede">What an encyclopedia could look like when AI writes and reads a lot of the text. This is an idea. Nothing is built, and nothing is measured.</p>
+  <p class="rd-hero__meta">
+    <span class="rd-chip"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Idea, not a product</span>
+    <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Nothing is built, prototyped or measured</span>
+  </p>
+</header>
+
+<!-- ================= SUMMARY ================= -->
+<div class="rd-tabpanel rd-with-toc" id="summary" role="tabpanel" aria-labelledby="tab-summary">
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#in-30-seconds"><span class="rd-toc__badge">1</span><span class="rd-toc__text">In 30 seconds</span></a></li>
+    <li><a href="#the-problem"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The problem</span></a></li>
+    <li><a href="#one-picture"><span class="rd-toc__badge">3</span><span class="rd-toc__text">The idea in one picture</span></a></li>
+    <li><a href="#what-this-is-not"><span class="rd-toc__badge">4</span><span class="rd-toc__text">What this is not</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="in-30-seconds">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg></span><h2>In 30 seconds</h2></header>
+    <ul class="idea-30s">
+      <li>Wikipedia asks that every fact can be traced to a reliable, published source. In the article, that trace is a footnote.</li>
+      <li>AI now drafts, summarises and reads a lot of text. Some of the sources an editor finds may be generated too.</li>
+      <li>The idea: store each claim as its own record. Each record keeps its sources, the exact passage, the version that was checked, and who or what drafted it.</li>
+      <li>A named person signs what they checked. The AI can find, check and flag. It does not sign.</li>
+      <li>Machine drafts stay labelled, so a reader can tell them from checked text.</li>
+      <li>It is an idea. Nothing is built, and I have no numbers for any of it.</li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec" id="the-problem">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>The problem</h2></header>
+    <p>Wikipedia has a rule behind it that I like. The Verifiability policy says each fact or claim must be attributable to reliable, published sources.</p>
+    <p>In the article, that rule shows up as a footnote at the end of a sentence. A footnote can name a page or quote a line. As far as I can tell, it does not record in a checkable way which part of the sentence it backs, or which version of the source the editor read. A person has to open the source and compare.</p>
+    <p>That worked when three things held. I used to take them for granted:</p>
+    <ol>
+      <li>A cited source was written by a person.</li>
+      <li>A reader who doubted a claim would open the source.</li>
+      <li>The text was not a copy of other text.</li>
+    </ol>
+    <p>AI makes each one weaker. A source can be generated. A reader can get a paragraph from a chatbot and never see the article, let alone the footnote. Text gets rewritten so often that copies are hard to spot. I do not have a measure of how much of this is happening, so this page gives no number.</p>
+    <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Where English Wikipedia stands today</p>
+      <p>English Wikipedia has a content guideline on large language models. Its short version: do not use them to generate or rewrite article content. It allows two narrow uses. You can have a model suggest fixes to your own writing (spelling, grammar and similar), after you review them. And you can use one for translation, under a separate guidance page. The machine-drafted layer on this page goes further than that. So this is a what-if, not a proposal for how Wikipedia runs now.</p></div>
+  </section>
+
+  <section class="rd-tabsec" id="one-picture">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2>The idea in one picture</h2></header>
+    <p>One sentence, split into the claims inside it. Press Next to see what each claim keeps.</p>
+    <figure class="rd-figure idea-fig idea-steps" data-steps="4" aria-label="Step-through of one sentence split into claims">
+      <svg viewBox="0 0 680 304" role="img" aria-label="An article sentence splits into three claims. Claim a links to page 12 of source A, claim b links to table 2 of source B, claim c has no source yet. Claim a is signed by a reviewer, claim b is a labelled machine draft, claim c is flagged as unsourced.">
+        <defs><marker id="ah-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <g data-s="1"><rect class="idea-box" x="20" y="12" width="640" height="56" rx="10"/><text class="idea-t idea-t--b" x="340" y="34">Article sentence</text><text class="idea-t idea-t--s" x="340" y="54">The pump station opened in 1931 to serve the north. Its capacity doubled in 1958.</text></g>
+        <g data-s="2"><path class="idea-line" d="M115 68 V94" style="marker-end:url(#ah-1)"/><path class="idea-line" d="M340 68 V94" style="marker-end:url(#ah-1)"/><path class="idea-line" d="M565 68 V94" style="marker-end:url(#ah-1)"/>
+          <rect class="idea-box idea-box--key" x="20" y="96" width="190" height="54" rx="10"/><text class="idea-t idea-t--b" x="115" y="118">Claim a</text><text class="idea-t idea-t--s" x="115" y="138">opened in 1931</text>
+          <rect class="idea-box idea-box--key" x="245" y="96" width="190" height="54" rx="10"/><text class="idea-t idea-t--b" x="340" y="118">Claim b</text><text class="idea-t idea-t--s" x="340" y="138">built to serve the north</text>
+          <rect class="idea-box idea-box--key" x="470" y="96" width="190" height="54" rx="10"/><text class="idea-t idea-t--b" x="565" y="118">Claim c</text><text class="idea-t idea-t--s" x="565" y="138">capacity doubled in 1958</text></g>
+        <g data-s="3"><path class="idea-line" d="M115 150 V184" style="marker-end:url(#ah-1)"/><path class="idea-line" d="M340 150 V184" style="marker-end:url(#ah-1)"/>
+          <rect class="idea-box" x="20" y="186" width="190" height="54" rx="10"/><text class="idea-t idea-t--b" x="115" y="208">Source A, 2nd edition</text><text class="idea-t idea-t--s" x="115" y="228">page 12: supports</text>
+          <rect class="idea-box" x="245" y="186" width="190" height="54" rx="10"/><text class="idea-t idea-t--b" x="340" y="208">Source B, 2019 report</text><text class="idea-t idea-t--s" x="340" y="228">table 2: partly supports</text>
+          <rect class="idea-box idea-box--dash" x="470" y="186" width="190" height="54" rx="10"/><text class="idea-t idea-t--b" x="565" y="208">No source yet</text><text class="idea-t idea-t--s" x="565" y="228">kept, not hidden</text></g>
+        <g data-s="4"><rect class="idea-tag" x="20" y="256" width="190" height="34" rx="6"/><text class="idea-t" x="115" y="278">signed by a reviewer</text>
+          <rect class="idea-tag" x="245" y="256" width="190" height="34" rx="6"/><text class="idea-t" x="340" y="278">machine draft, labelled</text>
+          <rect class="idea-tag" x="470" y="256" width="190" height="34" rx="6"/><text class="idea-t" x="565" y="278">flagged as unsourced</text></g>
+      </svg>
+      <div class="idea-steps__ctrl">
+        <button type="button" class="rd-btn" data-prev aria-label="Previous step"><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
+        <span class="idea-steps__count" aria-live="polite">Step 1 of 4</span>
+        <button type="button" class="rd-btn" data-next aria-label="Next step">Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+      </div>
+      <ol class="idea-steps__list">
+        <li data-s="1">1. A sentence in an article. Today it would carry one or two footnotes at the end.</li>
+        <li data-s="2">2. The sentence holds three separate statements. Each one becomes a claim that can be checked on its own.</li>
+        <li data-s="3">3. Each claim links to the part of the source that backs it, in a pinned version. The link also says how strong the support is. Claim c has no source yet. It stays on the page, marked.</li>
+        <li data-s="4">4. Each claim shows its state. A person signed claim a after checking it. Claim b was drafted by a model and nobody has checked it yet. Claim c is flagged.</li>
+      </ol>
+      <figcaption>One sentence, three claims. The sources and the example are made up. The point is what each claim carries with it.</figcaption>
+    </figure>
+  </section>
+
+  <section class="rd-tabsec" id="what-this-is-not">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-ban"/></svg></span><h2>What this is not</h2></header>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>Not a product, a service or a plan with dates.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>Not software. The Tech tab explains the parts in general terms. None of them is built for this.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>Not a claim that AI makes an encyclopedia better. Several of the risks are arguments against the whole thing.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>Not legal advice. The Licensing tab quotes a licence. It does not tell you what you may do.</span></li>
+    </ul>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= CLAIMS ================= -->
+<div class="rd-tabpanel rd-with-toc" id="claims" role="tabpanel" aria-labelledby="tab-claims" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#claims-not-pages"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Claims, not pages</span></a></li>
+    <li><a href="#data-model"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The records</span></a></li>
+    <li><a href="#pipeline"><span class="rd-toc__badge">3</span><span class="rd-toc__text">From draft to reviewed</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="claims-not-pages">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2>Claims, not pages</h2></header>
+    <p>Think of an essay with references tucked into the paragraphs. Now think of the same facts on index cards, each card with its own source stapled to it. You can check the cards one at a time. You can swap one card without retyping the essay. You can mark one card as disputed and leave the rest alone.</p>
+    <p>That is the whole shift. The unit is the claim, not the page.</p>
+    <details class="rd-fold"><summary>Learn more: what counts as a claim</summary>
+      <p>A claim is one statement with a value, a time and a place. "The dam was finished in 1932" is one claim. Each claim has zero or more support links. A support link points to a source, names the exact part (a page, a table, a timestamp) and says how strong the support is: supports, partly supports, or contradicts. A claim with no support link is marked as unsourced. It is not hidden.</p>
+    </details>
+  </section>
+
+  <section class="rd-tabsec" id="data-model">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-database"/></svg></span><h2>The records</h2></header>
+    <p>I count seven kinds of record. None of them is ever edited in place. A change adds a new record and keeps the old one.</p>
+    <figure class="rd-figure idea-fig" tabindex="0" aria-label="Diagram of the records. On a narrow screen it scrolls sideways.">
+      <svg viewBox="0 0 680 322" role="img" aria-label="An entity has claims. Each claim has revisions, support links and disputes. Each support link points to one pinned version of a source.">
+        <defs><marker id="ah-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <rect class="idea-box" x="245" y="10" width="190" height="52" rx="10"/><text class="idea-t idea-t--b" x="340" y="32">Entity</text><text class="idea-t idea-t--s" x="340" y="51">a topic, no text of its own</text>
+        <path class="idea-line" d="M340 62 V90" style="marker-end:url(#ah-2)"/>
+        <rect class="idea-box idea-box--key" x="170" y="92" width="340" height="52" rx="10"/><text class="idea-t idea-t--b" x="340" y="114">Claim</text><text class="idea-t idea-t--s" x="340" y="133">one statement, with a time and a place</text>
+        <path class="idea-line" d="M230 144 L130 174" style="marker-end:url(#ah-2)"/><path class="idea-line" d="M340 144 V174" style="marker-end:url(#ah-2)"/><path class="idea-line" d="M450 144 L550 174" style="marker-end:url(#ah-2)"/>
+        <rect class="idea-box" x="20" y="176" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="115" y="199">Revision</text><text class="idea-t idea-t--s" x="115" y="220">version, parent, author</text>
+        <rect class="idea-box" x="245" y="176" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="340" y="199">Support link</text><text class="idea-t idea-t--s" x="340" y="220">where, and how strong</text>
+        <rect class="idea-box" x="470" y="176" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="565" y="199">Dispute</text><text class="idea-t idea-t--s" x="565" y="220">rival text and evidence</text>
+        <path class="idea-line" d="M340 236 V258" style="marker-end:url(#ah-2)"/>
+        <rect class="idea-box" x="245" y="260" width="190" height="52" rx="10"/><text class="idea-t idea-t--b" x="340" y="282">Source</text><text class="idea-t idea-t--s" x="340" y="301">one pinned version</text>
+      </svg>
+      <figcaption>How the records link. The seventh record, the contribution record, rides on each revision: it says who or what drafted it and who reviewed it.</figcaption>
+    </figure>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>The seven records</caption>
+      <thead><tr><th>Record</th><th>Holds</th><th>Why it is there</th></tr></thead>
+      <tbody>
+        <tr><td>Entity</td><td>The topic and its identifiers</td><td>Groups claims. Has no text of its own.</td></tr>
+        <tr><td>Claim</td><td>One statement, a value, a time and a place</td><td>The unit a reader checks</td></tr>
+        <tr><td>Revision</td><td>One saved version of a claim and its parent</td><td>History that cannot be rewritten quietly</td></tr>
+        <tr><td>Support link</td><td>Claim, source, where in the source, how strong</td><td>Shows which part of which source backs which statement</td></tr>
+        <tr><td>Source</td><td>A published work, pinned to one version</td><td>Without a version, a source can change under the reader</td></tr>
+        <tr><td>Dispute</td><td>The disputed claim, the rival text, the evidence</td><td>A disagreement becomes something you can read, instead of an edit war</td></tr>
+        <tr><td>Contribution record</td><td>Person or model, the tool, the reviewers</td><td>Lets a reader filter by who wrote and who checked</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="rd-tabsec" id="pipeline">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-branch"/></svg></span><h2>From draft to reviewed</h2></header>
+    <p>A change goes through four gates, plus a way back when someone disagrees. Press Next to follow one claim.</p>
+    <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of a change from draft to reviewed">
+      <svg viewBox="0 0 680 206" role="img" aria-label="Four gates in a row: draft by a person or a model, source check, a named person signs, reviewed layer. A dispute route goes from the reviewed layer back to a new draft.">
+        <defs><marker id="ah-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <g data-s="1"><rect class="idea-box" x="8" y="24" width="150" height="66" rx="10"/><text class="idea-t idea-t--b" x="83" y="50">1 Draft</text><text class="idea-t idea-t--s" x="83" y="70">by a person or a model</text></g>
+        <g data-s="2"><path class="idea-line" d="M158 57 H179" style="marker-end:url(#ah-3)"/><rect class="idea-box" x="181" y="24" width="150" height="66" rx="10"/><text class="idea-t idea-t--b" x="256" y="50">2 Source check</text><text class="idea-t idea-t--s" x="256" y="70">gaps are flagged</text></g>
+        <g data-s="3"><path class="idea-line" d="M331 57 H352" style="marker-end:url(#ah-3)"/><rect class="idea-box idea-box--key" x="354" y="24" width="150" height="66" rx="10"/><text class="idea-t idea-t--b" x="429" y="50">3 Sign</text><text class="idea-t idea-t--s" x="429" y="70">a named person</text></g>
+        <g data-s="4"><path class="idea-line" d="M504 57 H525" style="marker-end:url(#ah-3)"/><rect class="idea-box" x="527" y="24" width="145" height="66" rx="10"/><text class="idea-t idea-t--b" x="599" y="50">4 Reviewed</text><text class="idea-t idea-t--s" x="599" y="70">shown as checked</text></g>
+        <g data-s="5"><path class="idea-line" d="M599 90 V160 H507" style="marker-end:url(#ah-3)"/><rect class="idea-box idea-box--dash" x="181" y="132" width="324" height="56" rx="10"/><text class="idea-t idea-t--b" x="343" y="155">5 Dispute</text><text class="idea-t idea-t--s" x="343" y="175">adds a new revision, the old one stays</text><path class="idea-line" d="M181 160 H83 V94" style="marker-end:url(#ah-3)"/></g>
+      </svg>
+      <div class="idea-steps__ctrl">
+        <button type="button" class="rd-btn" data-prev aria-label="Previous step"><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
+        <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
+        <button type="button" class="rd-btn" data-next aria-label="Next step">Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+      </div>
+      <ol class="idea-steps__list">
+        <li data-s="1">1. A person or a model writes a draft. It is stored as a human draft or a machine draft. Either way it is never shown as reviewed.</li>
+        <li data-s="2">2. Every claim needs at least one support link. A claim without one is kept and marked unsourced. The check finds gaps. It does not decide what is true.</li>
+        <li data-s="3">3. A reviewer reads the claim and its support, then signs that revision. Signing is something a person does. A model can suggest who should review. It cannot sign.</li>
+        <li data-s="4">4. The signed revision moves into the reviewed layer. A reader can see which layer each sentence comes from.</li>
+        <li data-s="5">5. Anyone can open a dispute with rival text and evidence. A resolution adds a new revision, which goes back through the gates. Older revisions stay in the history.</li>
+      </ol>
+      <figcaption>Four gates and a way back. The gates are a proposal. I have not tested how slow they would make editing.</figcaption>
+    </figure>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= PROVENANCE ================= -->
+<div class="rd-tabpanel rd-with-toc" id="provenance" role="tabpanel" aria-labelledby="tab-provenance" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#source-to-answer"><span class="rd-toc__badge">1</span><span class="rd-toc__text">From source to answer</span></a></li>
+    <li><a href="#remove-a-source"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Remove a source</span></a></li>
+    <li><a href="#flooded-loop"><span class="rd-toc__badge">3</span><span class="rd-toc__text">The flooded-source loop</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="source-to-answer">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-route"/></svg></span><h2>From source to answer</h2></header>
+    <p>A shop receipt has a till number, and the till has a shift log. If something is wrong, you can walk back along that trail. I want an AI answer to work the same way: from the sentence back to the claim, and from the claim to the source. Provenance just means that trail.</p>
+    <figure class="rd-figure idea-fig idea-steps" data-steps="6" aria-label="Step-through of the trail from source to reader">
+      <svg viewBox="0 0 680 252" role="img" aria-label="Six hops: a pinned source, the passage that backs a claim, the claim, an article sentence built from claims, an AI answer that lists the claim ids it used, and the reader.">
+        <defs><marker id="ah-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <g data-s="1"><rect class="idea-box" x="8" y="20" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="108" y="45">1 Source</text><text class="idea-t idea-t--s" x="108" y="65">one pinned version</text></g>
+        <g data-s="2"><path class="idea-line" d="M208 51 H238" style="marker-end:url(#ah-4)"/><rect class="idea-box" x="240" y="20" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="340" y="45">2 Passage</text><text class="idea-t idea-t--s" x="340" y="65">the part that backs the claim</text></g>
+        <g data-s="3"><path class="idea-line" d="M440 51 H470" style="marker-end:url(#ah-4)"/><rect class="idea-box idea-box--key" x="472" y="20" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="572" y="45">3 Claim</text><text class="idea-t idea-t--s" x="572" y="65">with its support link</text></g>
+        <g data-s="4"><path class="idea-line" d="M572 82 V146" style="marker-end:url(#ah-4)"/><rect class="idea-box" x="472" y="148" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="572" y="173">4 Article sentence</text><text class="idea-t idea-t--s" x="572" y="193">built from one or more claims</text></g>
+        <g data-s="5"><path class="idea-line" d="M472 179 H442" style="marker-end:url(#ah-4)"/><rect class="idea-box" x="240" y="148" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="340" y="173">5 AI answer</text><text class="idea-t idea-t--s" x="340" y="193">lists the claim ids it used</text></g>
+        <g data-s="6"><path class="idea-line" d="M240 179 H210" style="marker-end:url(#ah-4)"/><rect class="idea-box" x="8" y="148" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="108" y="173">6 Reader</text><text class="idea-t idea-t--s" x="108" y="193">can walk back to the source</text></g>
+        <text class="idea-t idea-t--s" x="340" y="240">The trail breaks most easily at hop 2 and hop 5.</text>
+      </svg>
+      <div class="idea-steps__ctrl">
+        <button type="button" class="rd-btn" data-prev aria-label="Previous step"><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
+        <span class="idea-steps__count" aria-live="polite">Step 1 of 6</span>
+        <button type="button" class="rd-btn" data-next aria-label="Next step">Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+      </div>
+      <ol class="idea-steps__list">
+        <li data-s="1">1. The source, in the version the claim was checked against. If the source changes later, the old version is still the one on record.</li>
+        <li data-s="2">2. The passage that backs the claim, with its location. A common failure lives here: the page exists, but the passage does not say what the claim says.</li>
+        <li data-s="3">3. The claim, as a revision with its support link and who drafted it. A machine draft and a checked revision are different records.</li>
+        <li data-s="4">4. An article sentence built from one or more claims. If a sentence uses two claims, it links to both.</li>
+        <li data-s="5">5. An AI answer built from the article. It should carry the ids of the claims it used. An answer that only paraphrases, with no ids, cannot be traced.</li>
+        <li data-s="6">6. The reader. They can open a claim, see its source and see whether a person checked it. The claim is the thing to trust or doubt. The answer is only a view of it.</li>
+      </ol>
+      <figcaption>Six hops from source to reader. Hops 2 and 5 are where a link most often gets lost.</figcaption>
+    </figure>
+  </section>
+
+  <section class="rd-tabsec" id="remove-a-source">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-scissors"/></svg></span><h2>Remove a source</h2></header>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Illustration, not a measurement</p>
+      <p>One hand-written example with notes I wrote ahead of time. Nothing is computed. It shows the question the idea has to answer: which statement loses its support when one source goes away?</p></div>
+    <p>Three claims and three sources. Claim a rests on source A. Claim b rests on source B. Claim c rests on sources A and C.</p>
+    <ul class="idea-claims" id="idea-claims">
+      <li class="idea-claim" data-claim="a">a. The pump station opened in 1931.</li>
+      <li class="idea-claim" data-claim="b">b. It was built to serve the northern district.</li>
+      <li class="idea-claim" data-claim="c">c. Its capacity was doubled in 1958.</li>
+    </ul>
+    <div class="idea-btnrow" role="group" aria-label="Remove a source from the example">
+      <button type="button" class="rd-btn" data-remove="A" aria-pressed="false"><svg class="rd-icon" aria-hidden="true"><use href="#i-scissors"/></svg>Remove source A</button>
+      <button type="button" class="rd-btn" data-remove="B" aria-pressed="false"><svg class="rd-icon" aria-hidden="true"><use href="#i-scissors"/></svg>Remove source B</button>
+      <button type="button" class="rd-btn" data-remove="C" aria-pressed="false"><svg class="rd-icon" aria-hidden="true"><use href="#i-scissors"/></svg>Remove source C</button>
+      <button type="button" class="rd-btn" data-remove="" aria-pressed="true"><svg class="rd-icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg>Reset</button>
+    </div>
+    <p class="rd-source" id="idea-remove-note" aria-live="polite">All three sources are in place. Every claim has support.</p>
+  </section>
+
+  <section class="rd-tabsec" id="flooded-loop">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg></span><h2>The flooded-source loop</h2></header>
+    <p>Two problems feed each other. The first I call citation laundering: a claim gets a citation, but the chain behind it only repeats the claim and never reaches an original. The second is model collapse. A 2023 paper by Shumailov and colleagues found that training models on model-generated content causes defects that do not go away, and that the rare cases disappear first.</p>
+    <p>Wikipedia's own policy already guards one door. It says not to cite Wikipedia articles, or sites that mirror Wikipedia, as sources. Generated pages are a wider door. Press Next to walk round the loop.</p>
+    <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of the flooded-source loop">
+      <svg viewBox="0 0 680 280" role="img" aria-label="A loop of four steps: pages on the web, models train on them, answers and drafts get posted, and those get cited as sources by new pages. The idea cuts the loop where a source is cited: it must reach a checked original.">
+        <defs><marker id="ah-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <g data-s="1"><rect class="idea-box" x="40" y="20" width="230" height="62" rx="10"/><text class="idea-t idea-t--b" x="155" y="45">Pages on the web</text><text class="idea-t idea-t--s" x="155" y="65">written by people and by models</text></g>
+        <g data-s="2"><path class="idea-line" d="M270 51 H408" style="marker-end:url(#ah-5)"/><rect class="idea-box" x="410" y="20" width="230" height="62" rx="10"/><text class="idea-t idea-t--b" x="525" y="45">Models train</text><text class="idea-t idea-t--s" x="525" y="65">on those pages</text></g>
+        <g data-s="3"><path class="idea-line" d="M525 82 V186" style="marker-end:url(#ah-5)"/><rect class="idea-box idea-box--key" x="410" y="188" width="230" height="62" rx="10"/><text class="idea-t idea-t--b" x="525" y="213">Answers and drafts</text><text class="idea-t idea-t--s" x="525" y="233">posted back to the web</text></g>
+        <g data-s="4"><path class="idea-line" d="M410 219 H272" style="marker-end:url(#ah-5)"/><rect class="idea-box" x="40" y="188" width="230" height="62" rx="10"/><text class="idea-t idea-t--b" x="155" y="213">Cited as sources</text><text class="idea-t idea-t--s" x="155" y="233">by new pages and edits</text><path class="idea-line" d="M155 188 V84" style="marker-end:url(#ah-5)"/></g>
+        <g data-s="5"><path class="idea-line" d="M135 136 H175" style="stroke:var(--rd-accent);stroke-width:3"/><text class="idea-t idea-t--accent idea-t--l" x="186" y="132">The idea cuts here:</text><text class="idea-t idea-t--s idea-t--l" x="186" y="150">a cited source must reach a checked original</text></g>
+      </svg>
+      <div class="idea-steps__ctrl">
+        <button type="button" class="rd-btn" data-prev aria-label="Previous step"><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
+        <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
+        <button type="button" class="rd-btn" data-next aria-label="Next step">Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+      </div>
+      <ol class="idea-steps__list">
+        <li data-s="1">1. The web holds pages written by people and pages written by models. I do not know the mix, and I have not tried to measure it.</li>
+        <li data-s="2">2. Models are trained on pages like these.</li>
+        <li data-s="3">3. Those models write answers and drafts. Some of them get posted back to the web.</li>
+        <li data-s="4">4. New pages and edits cite those posts as sources. Each link looks like a source. Follow the chain far enough and it may end in nothing.</li>
+        <li data-s="5">5. Where the idea tries to cut it: a support link only counts if its chain reaches an original that a person checked. And the model that drafted a claim cannot be the one that signs it.</li>
+      </ol>
+      <figcaption>The loop. Nothing in it is measured here. The question is where it can be cut.</figcaption>
+    </figure>
+    <p>A claim-level record makes one thing checkable. You can follow a citation chain and see whether it ever reaches an original. It does not tell you whether the original is right. That is still a person's job.</p>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= PEOPLE AND AI ================= -->
+<div class="rd-tabpanel rd-with-toc" id="people" role="tabpanel" aria-labelledby="tab-people" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#two-layers"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Two layers</span></a></li>
+    <li><a href="#ai-assistant"><span class="rd-toc__badge">2</span><span class="rd-toc__text">What the AI may do</span></a></li>
+    <li><a href="#trust-signals"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Trust signals</span></a></li>
+    <li><a href="#upkeep"><span class="rd-toc__badge">4</span><span class="rd-toc__text">Upkeep and money</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="two-layers">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2>Two layers</h2></header>
+    <p>The text has two layers, and a reader can always tell which is which. The <strong>reviewed</strong> layer holds revisions a named person signed, claim by claim. The <strong>drafted</strong> layer holds machine drafts and anything nobody has checked yet. It is labelled, and it stays out of the reviewed layer until someone signs. Two more states can sit on top: <strong>disputed</strong> and <strong>unsourced</strong>.</p>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>What a reader sees in each state</caption>
+      <thead><tr><th>State</th><th>Who wrote it</th><th>What the reader sees</th><th>How it leaves the state</th></tr></thead>
+      <tbody>
+        <tr><td>Drafted</td><td>A model, or a person nobody has reviewed yet</td><td>A label, not the reviewed mark</td><td>A reviewer signs the revision</td></tr>
+        <tr><td>Reviewed</td><td>A person signs after checking the support</td><td>The reviewed mark and the reviewer's name</td><td>A dispute, or a newer revision</td></tr>
+        <tr><td>Disputed</td><td>Anyone who opens a dispute</td><td>Both texts side by side, with the evidence</td><td>A resolution revision, or the dispute closes as unresolved</td></tr>
+        <tr><td>Unsourced</td><td>Any revision with no support link</td><td>A visible flag on the claim</td><td>Someone adds a source and it gets checked</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="rd-tabsec" id="ai-assistant">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-user-check"/></svg></span><h2>What the AI may do</h2></header>
+    <p>I would use the AI for jobs a person can check in a minute. It finds, checks, flags and drafts. A named person signs. The AI does not.</p>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>Assistant jobs, as I would set them</caption>
+      <thead><tr><th>Job</th><th>Allowed?</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Find candidate sources for a claim</td><td>Yes, with review</td><td>A candidate is not a support link until a person links it</td></tr>
+        <tr><td>Check that a quote matches its source</td><td>Yes, with review</td><td>A mismatch gets flagged. A person decides.</td></tr>
+        <tr><td>Flag claims with no support link</td><td>Yes</td><td>A flag is cheap to dismiss and easy to audit</td></tr>
+        <tr><td>Draft a translation of a reviewed claim</td><td>Yes, labelled as a machine draft</td><td>The translation gets its own review</td></tr>
+        <tr><td>Sign a revision</td><td>No</td><td>Signing means a person takes responsibility</td></tr>
+        <tr><td>Add a source no person has opened</td><td>No</td><td>That is how invented and laundered citations get in</td></tr>
+      </tbody>
+    </table></div>
+    <p>For comparison, English Wikipedia's current guideline is stricter than this table. It allows copyedit suggestions on your own writing and translation, and nothing else.</p>
+  </section>
+
+  <section class="rd-tabsec" id="trust-signals">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg></span><h2>Trust signals</h2></header>
+    <p>A reader needs some sign of how carefully a revision was checked. I can think of four. Each has a weakness I cannot design away.</p>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-users"/></svg><span><strong>Reviewer record.</strong> How many revisions a reviewer signed, and how many were later disputed. Weakness: someone can build a record on easy claims.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-lock"/></svg><span><strong>Signed revisions.</strong> A key signs the exact bytes of a revision. Weakness: a signature says who signed. It does not say the claim is true, and keys get stolen.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-clock"/></svg><span><strong>Check date.</strong> When the support was last checked against the source. Weakness: a recent date does not mean a careful check.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-git-commit-horizontal"/></svg><span><strong>Full history.</strong> Every earlier revision is kept and readable. Weakness: history only helps if someone reads it.</span></li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec" id="upkeep">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg></span><h2>Upkeep and money</h2></header>
+    <h3>Stale claims</h3>
+    <p>Each claim carries an "as of" date and a check date. When a source changes or is withdrawn, every claim that rests on it is marked for review. Nothing updates silently.</p>
+    <h3>Other languages</h3>
+    <p>A claim is a statement, not a sentence in one language. The prose around it is written per language. A machine translation stays in the drafted layer until someone who reads that language checks it. Translations can drift, so a changed claim needs a check in every language.</p>
+    <h3>Bots and abuse</h3>
+    <p>Bulk edits are rate limited and held for review. New accounts start with limited reach. Identity checks would cut down fake reviewers, but they cost privacy and shut some people out. I have not picked one. The risk table on the last tab lists the attacks.</p>
+    <h3>Money</h3>
+    <p>Donations, grants and paid use of a model API all carry the same risk: whoever pays can push priorities. I have not picked a funding model. I only want it written down next to the licence, where people can see it.</p>
+    <h3>Staying shared</h3>
+    <p>A commons is something many people use and look after, which no single party can take private. The licence keeps reuse open. Public rules keep the process visible. Neither is enough alone. A licence does not stop one company from running the only reviewer pool.</p>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= TECH ================= -->
+<div class="rd-tabpanel rd-with-toc" id="tech" role="tabpanel" aria-labelledby="tab-tech" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#content-hash"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Content hashes</span></a></li>
+    <li><a href="#signatures"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Signed revisions</span></a></li>
+    <li><a href="#citation-graph"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Citation graph</span></a></li>
+    <li><a href="#attributed-answers"><span class="rd-toc__badge">4</span><span class="rd-toc__text">Answers with ids</span></a></li>
+    <li><a href="#claim-diffs"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Diffs and disputes</span></a></li>
+    <li><a href="#provenance-standards"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Provenance standards</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Explainer, not a design</p>
+    <p>Each part starts with an everyday picture. "Learn more" has the precise version and the limit. None of these parts is built or tested for this idea.</p></div>
+
+  <section class="rd-tabsec" id="content-hash">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-fingerprint"/></svg></span><h2>Content hashes</h2></header>
+    <p>A fingerprint identifies a person by its exact pattern. Change one ridge and it is a different fingerprint. A content hash does the same for a revision or a source file.</p>
+    <details class="rd-fold"><summary>Learn more</summary>
+      <p>A content hash is a cryptographic hash, such as SHA-256, computed over one agreed byte form of a record. The same bytes always give the same hash. A one-byte change gives a different one. If each revision names its parent by hash, the history becomes a chain. You cannot edit an old revision without changing every hash after it.</p>
+      <p><strong>Limit.</strong> A hash proves two copies are the same bytes. It does not prove the bytes are true. Agreeing on the exact bytes to hash is harder than it sounds.</p>
+    </details>
+    <figure class="rd-figure idea-fig" tabindex="0" aria-label="Diagram of a hash chain. On a narrow screen it scrolls sideways.">
+      <svg viewBox="0 0 680 128" role="img" aria-label="Three revisions in a row. Revision 2 names the hash of revision 1 as its parent, and revision 3, which is signed, names the hash of revision 2.">
+        <defs><marker id="ah-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <rect class="idea-box" x="8" y="16" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="108" y="41">Revision 1</text><text class="idea-t idea-t--s" x="108" y="61">hash H1, no parent</text>
+        <rect class="idea-box" x="240" y="16" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="340" y="41">Revision 2</text><text class="idea-t idea-t--s" x="340" y="61">hash H2, parent H1</text>
+        <rect class="idea-box idea-box--key" x="472" y="16" width="200" height="62" rx="10"/><text class="idea-t idea-t--b" x="572" y="41">Revision 3, signed</text><text class="idea-t idea-t--s" x="572" y="61">hash H3, parent H2</text>
+        <path class="idea-line" d="M240 47 H210" style="marker-end:url(#ah-6)"/><path class="idea-line" d="M472 47 H442" style="marker-end:url(#ah-6)"/>
+        <text class="idea-t idea-t--s" x="340" y="110">Each arrow points to the parent. Change revision 1 and H1 changes, which breaks the link from revision 2.</text>
+      </svg>
+      <figcaption>A hash chain. Editing the past shows, because every later parent link breaks.</figcaption>
+    </figure>
+  </section>
+
+  <section class="rd-tabsec" id="signatures">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-lock"/></svg></span><h2>Signed revisions</h2></header>
+    <p>A wax seal on a letter shows who sealed it, and that nobody opened it since. It says nothing about whether the news inside is true.</p>
+    <details class="rd-fold"><summary>Learn more</summary>
+      <p>A reviewer signs a revision's hash with a private key. Anyone with the matching public key can check the signature. A valid signature shows that the key holder signed exactly these bytes. Tying a key to a real person needs a separate system, and I leave that open.</p>
+      <p><strong>Limit.</strong> A valid signature does not show the claim is correct, that the reviewer read the source, or that the key was not stolen. In practice you also need a way to revoke and replace keys.</p>
+    </details>
+  </section>
+
+  <section class="rd-tabsec" id="citation-graph">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-network"/></svg></span><h2>Citation graph</h2></header>
+    <p>A road map. Each claim is a town and each support link is a road to a source. You can follow the roads to the original, and you can see when every road loops back into the same few towns.</p>
+    <details class="rd-fold"><summary>Learn more</summary>
+      <p>Claims and sources are nodes. Support links are directed edges. A source can cite other sources. Useful questions: which claims rest on this one source; what paths lead from a claim to an original; where the chain loops; which sources have a newer version than the pinned one. A loop is not always wrong. A loop with no original is a warning sign for citation laundering.</p>
+      <p><strong>Limit.</strong> A graph shows links. It does not check that a link supports its claim. That is a person's job.</p>
+    </details>
+  </section>
+
+  <section class="rd-tabsec" id="attributed-answers">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-search"/></svg></span><h2>Answers with ids</h2></header>
+    <p>A student who answers from a library book also writes down the page numbers. The answer is only as good as those page numbers.</p>
+    <details class="rd-fold"><summary>Learn more</summary>
+      <p>In retrieval, a system first finds stored passages (here, claims with their support) and hands them to a model with the question. The answer comes back with the claim ids it used, and the reader can open each one. The answer is a derived text, so it has to say what it draws on.</p>
+      <p><strong>Limit.</strong> A model can say more than it was given, and it can cite a claim that does not say what its sentence says. The check is a person comparing the two, or a second automatic check that has its own errors.</p>
+    </details>
+  </section>
+
+  <section class="rd-tabsec" id="claim-diffs">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-diff"/></svg></span><h2>Diffs and disputes</h2></header>
+    <p>A referee puts two versions side by side, marks the words that differ and attaches the evidence. The decision is written next to it.</p>
+    <details class="rd-fold"><summary>Learn more</summary>
+      <p>A claim-level diff compares two revisions of one claim: value, time, place and support links. A page-level diff hides which claim changed. A dispute record holds the two texts, the evidence, a status (open, resolved, withdrawn) and the resolving revision, if there is one. Disputes stay visible after they close.</p>
+      <p><strong>Limit.</strong> A diff shows what changed, not whether the change is right. Long disputes can still stall, so the process needs a way to end.</p>
+    </details>
+  </section>
+
+  <section class="rd-tabsec" id="provenance-standards">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-badge-check"/></svg></span><h2>Provenance standards</h2></header>
+    <p>A label on a jar says who filled it and when. Anyone can peel it off. A label that is there tells you something. A missing label tells you almost nothing.</p>
+    <details class="rd-fold"><summary>Learn more: C2PA and watermarks</summary>
+      <p>C2PA is an open specification for signed provenance data attached to media files. Version 2.2 (May 2025) defines a manifest as the set of provenance information about an asset, built from assertions. It defines a claim as a digitally signed, tamper-evident structure that references those assertions.</p>
+      <p><strong>Limits the spec states itself.</strong> An asset can get separated from its manifest when its metadata is removed or corrupted. The spec says it should not judge whether provenance data is good or bad, and its trust model rests on the identity of the signer.</p>
+      <p><strong>Watermarks.</strong> A watermark is a signal hidden in content. I have not checked how well any watermark survives editing or re-encoding, so I treat it as weak evidence.</p>
+      <p>For this idea, a provenance standard can say a file came from a signer. It cannot say the claim in the file is true, and it cannot follow text that was copied without its metadata.</p>
+    </details>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= LICENSING ================= -->
+<div class="rd-tabpanel rd-with-toc" id="licensing" role="tabpanel" aria-labelledby="tab-licensing" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#cc-by-sa"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What CC BY-SA asks</span></a></li>
+    <li><a href="#attribution-line"><span class="rd-toc__badge">2</span><span class="rd-toc__text">An attribution line</span></a></li>
+    <li><a href="#licence-questions"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Questions I cannot answer</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Not legal advice</p>
+    <p>This tab paraphrases the licence and names its sections. It does not say whether any given reuse is allowed. Read the licence itself.</p></div>
+
+  <section class="rd-tabsec" id="cc-by-sa">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-copyright"/></svg></span><h2>What CC BY-SA asks</h2></header>
+    <p>Wikipedia text is under Creative Commons Attribution-ShareAlike 4.0. Pages that are not only CC BY-SA text are also under the GFDL. Two parts of the CC licence matter here.</p>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-link"/></svg><span><strong>Attribution, section 3(a)(1).</strong> If you share the material, keep these when the licensor supplied them: who created it, a copyright notice, a notice that points to the licence, a notice that points to the disclaimer of warranties, and a link to the material where that is reasonably practicable. Say if you changed it. Say it is under this licence, with the licence text or a link.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-shuffle"/></svg><span><strong>ShareAlike, section 3(b).</strong> If you share adapted material, the licence you apply must be a Creative Commons licence with the same elements, this version or later, or a BY-SA compatible licence. Include its text or a link. Do not add terms that restrict what that licence allows.</span></li>
+    </ul>
+    <p>Wikipedia's reuse page says it in its own words. Credit the authors with a link or URL to the page, or a link to a stable free copy, or a list of all authors. Keep a notice that the text is under CC BY-SA, with a link or a copy. Say what you changed.</p>
+  </section>
+
+  <section class="rd-tabsec" id="attribution-line">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg></span><h2>An attribution line</h2></header>
+    <p>A made-up example, about a made-up article, to show the parts. It is not a real article.</p>
+    <div class="rd-card">
+      <p class="rd-eyebrow">Example reuse, written ahead of time</p>
+      <p>"The pump station opened in 1931."</p>
+      <p class="rd-source">Adapted from "Example Pump Station" (a made-up article) by its contributors, with a link to the page. Licensed under CC BY-SA 4.0, with a link to the licence. Changed: the sentence was shortened.</p>
+    </div>
+    <p>The parts: who made it (by a link to the page, or the author list), the licence name with a link, and a note of what changed. In the idea, every claim export would carry a line like this.</p>
+  </section>
+
+  <section class="rd-tabsec" id="licence-questions">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg></span><h2>Questions I cannot answer</h2></header>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>Is a model trained on CC BY-SA text making adapted material when it writes new text? The licence defines adapted material as derived from or based on the original, changed in a way that needs permission. Whether training fits that, I do not know. The sources I read do not settle it.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>Does an AI answer that lists claim ids count as sharing those claims? If so, what must it credit? I propose the ids as the credit. That is a design choice, not a legal finding.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>A link for every claim is more than the licence asks for. Would it make reuse easier, or just noisier? I have not tried it.</span></li>
+    </ul>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= LEARN ================= -->
+<div class="rd-tabpanel rd-with-toc" id="learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#glossary"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Glossary</span></a></li>
+    <li><a href="#analogies"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Pictures to keep</span></a></li>
+    <li><a href="#quiz"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Check yourself</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="glossary">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Glossary</h2></header>
+    <p>Open a term to read its meaning. Nothing is stored or sent.</p>
+    <div class="idea-gloss">
+      <details class="rd-fold"><summary>Claim</summary><p>One statement with a value, a time and a place. The unit a reader checks.</p></details>
+      <details class="rd-fold"><summary>Support link</summary><p>A link from a claim to a source. It names the exact part of the source and says how strong the support is.</p></details>
+      <details class="rd-fold"><summary>Source</summary><p>A published work the claim can be checked against, pinned to one version.</p></details>
+      <details class="rd-fold"><summary>Revision</summary><p>One saved version of a claim. Earlier revisions stay.</p></details>
+      <details class="rd-fold"><summary>Provenance</summary><p>The trail of where a piece of text came from: which sources, which steps, and who or what drafted and checked it.</p></details>
+      <details class="rd-fold"><summary>Reviewed layer</summary><p>Revisions a named person signed after checking the support.</p></details>
+      <details class="rd-fold"><summary>Drafted layer</summary><p>Machine drafts and anything nobody has checked yet. Always labelled.</p></details>
+      <details class="rd-fold"><summary>Dispute</summary><p>A recorded disagreement about a claim, with the rival text and the evidence. It stays visible after it closes.</p></details>
+      <details class="rd-fold"><summary>Content hash</summary><p>A fingerprint computed from exact bytes. A one-byte change gives a different fingerprint.</p></details>
+      <details class="rd-fold"><summary>Digital signature</summary><p>A value made with a private key over exact bytes. It shows who signed those bytes, not that they are true.</p></details>
+      <details class="rd-fold"><summary>Citation laundering</summary><p>A claim has a citation, but the chain behind it only repeats the claim and never reaches an original.</p></details>
+      <details class="rd-fold"><summary>Model collapse</summary><p>When models are trained on model output, they get worse in ways that do not go away, and rare cases go first. From a 2023 paper by Shumailov and colleagues.</p></details>
+      <details class="rd-fold"><summary>Retrieval</summary><p>Finding stored passages and giving them to a model with the question, so the answer can point back to them.</p></details>
+      <details class="rd-fold"><summary>Attribution</summary><p>The credit a licence asks for: who made it, the notices, a link, and a note of changes.</p></details>
+      <details class="rd-fold"><summary>ShareAlike</summary><p>The CC BY-SA rule that adapted material is shared under the same or a compatible licence.</p></details>
+      <details class="rd-fold"><summary>C2PA</summary><p>An open specification for signed provenance data attached to media files.</p></details>
+      <details class="rd-fold"><summary>Sybil reviewer</summary><p>One person running many reviewer accounts, so they look like many people agreeing.</p></details>
+      <details class="rd-fold"><summary>Commons</summary><p>Something many people use and look after, which no single party can take private.</p></details>
+    </div>
+  </section>
+
+  <section class="rd-tabsec" id="analogies">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg></span><h2>Pictures to keep</h2></header>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg><span>Claims are index cards, not a typed essay. Each card can be checked on its own.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-route"/></svg><span>Provenance is a receipt trail. You can walk back from the answer to the source.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-fingerprint"/></svg><span>A content hash is a fingerprint. Change one word and the fingerprint changes.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-lock"/></svg><span>A signature is a wax seal. It shows who sealed the letter, not that the news is true.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-refresh-cw"/></svg><span>Model collapse is a photocopy of a photocopy. The fine lines go first.</span></li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec" id="quiz">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Check yourself</h2></header>
+    <p>Four questions. Pick an answer and the explanation opens. Nothing is stored.</p>
+    <div class="idea-quiz">
+      <fieldset data-q="1">
+        <legend>1. Why keep sources per claim instead of per page?</legend>
+        <label><input type="radio" name="q1" value="a"> So a reader can check one statement against the part of the source that backs it</label>
+        <label><input type="radio" name="q1" value="b"> So the page gets longer</label>
+        <label><input type="radio" name="q1" value="c"> So the licence changes by itself</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The first. A support link per claim shows which part of which source backs which statement. A list of footnotes at page level does not.</p></details>
+      </fieldset>
+      <fieldset data-q="2">
+        <legend>2. A reviewer's signature checks out. What does that prove?</legend>
+        <label><input type="radio" name="q2" value="a"> The statement is true</label>
+        <label><input type="radio" name="q2" value="b"> The key holder signed exactly these bytes</label>
+        <label><input type="radio" name="q2" value="c"> A person typed the text</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The second. A signature covers the bytes. It says nothing about truth, or about who typed the text.</p></details>
+      </fieldset>
+      <fieldset data-q="3">
+        <legend>3. A generated page cites a second generated page, which cites nothing. What is this?</legend>
+        <label><input type="radio" name="q3" value="a"> ShareAlike</label>
+        <label><input type="radio" name="q3" value="b"> Citation laundering</label>
+        <label><input type="radio" name="q3" value="c"> A content hash</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The second. Each link looks like a source, but the chain never reaches an original.</p></details>
+      </fieldset>
+      <fieldset data-q="4">
+        <legend>4. Which of these is on the CC BY-SA 4.0 list of things to keep when you share?</legend>
+        <label><input type="radio" name="q4" value="a"> A payment to the licensor</label>
+        <label><input type="radio" name="q4" value="b"> The reader's email address</label>
+        <label><input type="radio" name="q4" value="c"> A copyright notice</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The third. Section 3(a)(1) lists a copyright notice among the items to keep, when the licensor supplied one. Payment and reader details are not in it.</p></details>
+      </fieldset>
+    </div>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= ASK ================= -->
+<div class="rd-tabpanel rd-with-toc" id="ask" role="tabpanel" aria-labelledby="tab-ask" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#ask-this-idea"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Ask this idea</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="ask-this-idea">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg></span><h2>Ask this idea</h2></header>
+    <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>How answers work</p>
+      <p>Answers come from short notes written from this page. There is no AI model. Your question is matched against the notes by keyword (a ranking called BM25), right here in the page. If nothing matches well, it says it does not know. Every answer links to the section it came from. Nothing you type is stored or sent, and the conversation is gone when you leave the page.</p></div>
+    <ul class="idea-chips" aria-label="Suggested questions">
+      <li><button type="button" class="rd-btn" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is a support link?">What is a support link?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Can AI sign a revision?">Can AI sign a revision?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is citation laundering?">What is citation laundering?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Is anything built?">Is anything built?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is not decided?">What is not decided?</button></li>
+    </ul>
+    <div class="idea-ask">
+      <!-- With scripts on, submit is handled in the page. Without them, the GET keeps the reader on this tab. -->
+      <form id="idea-ask-form" role="search" method="get" action="#ask-this-idea">
+        <label for="idea-ask-input" class="rd-eyebrow">Your question</label>
+        <input type="hidden" name="tab" value="ask">
+        <input id="idea-ask-input" type="text" name="q" autocomplete="off" placeholder="Ask about the idea" maxlength="300">
+        <button type="submit" class="rd-btn"><svg class="rd-icon" aria-hidden="true"><use href="#i-send"/></svg>Ask</button>
+      </form>
+      <div class="idea-log" id="idea-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+    </div>
+    <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Typed questions only. There is no microphone and no spoken reply.</p>
+  </section>
+
+  </div>
+</div>
+
+<!-- ================= RISKS AND LIMITS ================= -->
+<div class="rd-tabpanel rd-with-toc" id="risks" role="tabpanel" aria-labelledby="tab-risks" hidden>
+  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+    <li><a href="#risk-table"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Risks</span></a></li>
+    <li><a href="#trade-offs"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Trade-offs</span></a></li>
+    <li><a href="#open-problems"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Open problems</span></a></li>
+    <li><a href="#not-decided"><span class="rd-toc__badge">4</span><span class="rd-toc__text">Not decided</span></a></li>
+    <li><a href="#caveats"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Caveats</span></a></li>
+    <li><a href="#sources"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Sources</span></a></li>
+  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+  <div class="rd-tab__body">
+
+  <section class="rd-tabsec" id="risk-table">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>Risks</h2></header>
+    <p>Each row is a risk the idea has to answer, grouped by where it comes from. "Early sign" is what I would watch for. "Possible answer" is a proposal, not a tested fix.</p>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>Risks, grouped (idea level, nothing measured)</caption>
+      <thead><tr><th>Risk</th><th>How it shows up</th><th>Early sign</th><th>Possible answer</th></tr></thead>
+      <tbody>
+        <tr><th colspan="4" scope="colgroup">Sources</th></tr>
+        <tr><td>Citation laundering</td><td>Claims cite pages that only repeat them</td><td>Citation loops with no original</td><td>Check for a path to an original. Flag loops.</td></tr>
+        <tr><td>Flooded sources</td><td>Generated pages fill the pool of sources</td><td>More sources with no clear human author</td><td>Pin versions. Prefer the original publisher.</td></tr>
+        <tr><td>Model collapse</td><td>Later models lose rare facts and minority views</td><td>Answers on rare topics get samey</td><td>Keep checked text apart from drafts</td></tr>
+        <tr><td>Stale claims</td><td>The source changed and the claim did not</td><td>Old check dates on busy claims</td><td>A source change triggers a review</td></tr>
+        <tr><th colspan="4" scope="colgroup">Review</th></tr>
+        <tr><td>Rubber-stamp review</td><td>Signatures without reading the support</td><td>Very fast sign-offs</td><td>Spot audits. Visible reviewer record.</td></tr>
+        <tr><td>Sybil reviewers</td><td>One person runs many reviewer accounts</td><td>Reviewers who only sign each other's work</td><td>Cap each account's weight. Some cost to join.</td></tr>
+        <tr><td>Bulk bot edits</td><td>Thousands of small edits in a short time</td><td>Edit rate per account</td><td>Rate limits. Bulk edits held for review.</td></tr>
+        <tr><td>Translation drift</td><td>A translation says what the original does not</td><td>Languages with many unchecked drafts</td><td>A review layer per language</td></tr>
+        <tr><th colspan="4" scope="colgroup">Readers and reuse</th></tr>
+        <tr><td>Reader trusts the answer</td><td>An AI answer is read as the source</td><td>Answers with no claim ids</td><td>Ids on every answer. Visible layer labels.</td></tr>
+        <tr><td>Licence stripping</td><td>Reuse with no credit or notice</td><td>Copies with the notice removed</td><td>An attribution line on every claim export</td></tr>
+        <tr><td>Metadata loss</td><td>A signed file loses its manifest when copied</td><td>Signed files found without a manifest</td><td>Keep the claim id in the text, not only in metadata</td></tr>
+        <tr><th colspan="4" scope="colgroup">People and money</th></tr>
+        <tr><td>Funding capture</td><td>A funder shapes which claims get reviewed</td><td>Review queues follow one funder's topics</td><td>A written funding policy next to the licence</td></tr>
+        <tr><td>Reviewer privacy</td><td>Identity checks expose reviewers</td><td>Reviewers leave after an identity step</td><td>Keep identity proof minimal. No public mapping.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Two look hardest to me: rubber-stamp review, and readers trusting the answer. Both are about people, and no record format fixes them.</p>
+  </section>
+
+  <section class="rd-tabsec" id="trade-offs">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg></span><h2>Trade-offs</h2></header>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>Choices the idea makes, and what each one costs</caption>
+      <thead><tr><th>Choice</th><th>What you get</th><th>What it costs</th></tr></thead>
+      <tbody>
+        <tr><td>Claim-level records</td><td>Each statement can be checked alone</td><td>More work per edit. Harder for casual editors.</td></tr>
+        <tr><td>Machine drafts allowed</td><td>Faster coverage, more languages</td><td>More to review. Drafts can look official.</td></tr>
+        <tr><td>Signed revisions</td><td>Clear responsibility for each revision</td><td>A hurdle for new editors. Key management.</td></tr>
+        <tr><td>Open access and an open licence</td><td>Reuse, and a real commons</td><td>More room for abuse. Copies without credit.</td></tr>
+        <tr><td>Full public history</td><td>Disputes and mistakes stay visible</td><td>Harassers can mine it. Some edits are sensitive.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="rd-tabsec" id="open-problems">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg></span><h2>Open problems</h2></header>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>How to measure whether a claim is supported. A support link is a human judgement, and I have not measured how often two reviewers agree.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>How to tell a generated source from a human one at scale. I do not know a reliable way.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>How to keep reviewing fair without public identities that put people at risk.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>How many languages a small review pool can cover, and what happens to the rest.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>How to let readers ask questions without the answer replacing the claims.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-help"/></svg><span>Whether claim-level records are worth the cost for topics that change slowly.</span></li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec" id="not-decided">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-ban"/></svg></span><h2>Not decided</h2></header>
+    <p>I left these open on purpose. Any of them could change the design.</p>
+    <ul>
+      <li>Who runs it, and under what rules.</li>
+      <li>How it is paid for.</li>
+      <li>Whether machine drafts are allowed at all, or only for translation.</li>
+      <li>Which licence new text would use, and whether it matches Wikipedia's.</li>
+      <li>Whether any code gets written. This page is the whole output so far.</li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec" id="caveats">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>Caveats</h2></header>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Read this first</p>
+      <p>This is an idea, not a product. Nothing here is built, prototyped, tested or measured. The Tech tab describes what those techniques do in general, not a working system.</p></div>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>The examples (the pump station, the sources) are made up.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>The Ask tab answers from notes written from this page. It is not a model, and it can miss things.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span>Wikipedia's rules change. I read the pages below on the date given. They may say something else later.</span></li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec" id="sources">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Sources</h2></header>
+    <p>Only sources I opened and read are listed.</p>
+    <ol class="rd-refs">
+      <li id="ref-verifiability">Wikipedia. <a class="rd-ref" href="https://en.wikipedia.org/wiki/Wikipedia:Verifiability"><em>Wikipedia:Verifiability</em></a>. English Wikipedia policy. Used: the nutshell, inline citations, and "Wikipedia and sources that mirror or use it".</li>
+      <li id="ref-llm">Wikipedia. <a class="rd-ref" href="https://en.wikipedia.org/wiki/Wikipedia:Writing_articles_with_large_language_models"><em>Wikipedia:Writing articles with large language models</em></a>. English Wikipedia content guideline, last edited 2026-10-17.</li>
+      <li id="ref-reuse">Wikipedia. <a class="rd-ref" href="https://en.wikipedia.org/wiki/Wikipedia:Reusing_Wikipedia_content"><em>Wikipedia:Reusing Wikipedia content</em></a>. Credit, licence notice, changes, and the CC BY-SA 4.0 and GFDL terms.</li>
+      <li id="ref-cc">Creative Commons. <a class="rd-ref" href="https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"><em>Attribution-ShareAlike 4.0 International, legal code</em></a>. Sections 1(a), 3(a)(1) and 3(b).</li>
+      <li id="ref-collapse">Shumailov, I., Shumaylov, Z., Zhao, Y., Gal, Y., Papernot, N., Anderson, R. <a class="rd-ref" href="https://arxiv.org/abs/2305.17493"><em>The Curse of Recursion: Training on Generated Data Makes Models Forget</em></a>. arXiv:2305.17493, first version 27 May 2023, version 3 14 April 2024. The arXiv page lists no journal.</li>
+      <li id="ref-c2pa">Coalition for Content Provenance and Authenticity. <a class="rd-ref" href="https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html"><em>C2PA Technical Specification 2.2</em></a>, May 2025. Sections 1.2, 1.3.1, 2.3.2, 2.3.4 and 2.4.2. A newer version exists. I read 2.2 in part.</li>
+    </ol>
+    <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Sources read on 2026-10-25. No data, code or measurements are referenced, because none exist.</p>
+  </section>
+
+  </div>
+</div>
+</main>
+
+<script id="idea-kb" type="application/json">[
+{"q":"What is the idea in one sentence?","a":"Store each claim of an encyclopedia as its own record, with its sources, the exact passage, the version checked and who or what drafted it, and keep machine drafts labelled apart from text a person checked.","k":"idea summary one sentence what is it","s":"in-30-seconds","t":"In 30 seconds"},
+{"q":"Is anything built?","a":"No. It is an idea. There is no code, no data, no prototype, no test and no measurement.","k":"built product prototype status code software","s":"caveats","t":"Caveats"},
+{"q":"Is this a product or a plan?","a":"No. It is not a product, a service or a plan with dates.","k":"product company service plan dates","s":"what-this-is-not","t":"What this is not"},
+{"q":"What problem does it address?","a":"Wikipedia asks that facts can be traced to reliable published sources, and the trace is a footnote. A footnote does not record in a checkable way which part of a sentence it backs or which version of the source was read. AI drafting and reading make that gap harder to live with.","k":"problem footnote citation wikipedia gap","s":"the-problem","t":"The problem"},
+{"q":"Which assumptions does AI weaken?","a":"Three: that a cited source was written by a person, that a doubtful reader opens the source, and that the text is not a copy of other text.","k":"assumptions weaker taken for granted three","s":"the-problem","t":"The problem"},
+{"q":"How much text is AI-written?","a":"The page does not know. There is no measure here of how much text or how many sources are generated, so it gives no number.","k":"how much share percent number measure amount","s":"the-problem","t":"The problem"},
+{"q":"Does Wikipedia allow AI-written articles?","a":"English Wikipedia's content guideline on large language models says not to use them to generate or rewrite article content. It allows suggested fixes to your own writing after review, and translation under a separate guidance page. The drafted layer in this idea goes further, so the idea is a what-if.","k":"wikipedia allow llm guideline policy rules ai written generate rewrite","s":"the-problem","t":"The problem"},
+{"q":"What does the one-picture diagram show?","a":"One sentence split into three claims. Each claim links to the part of a pinned source that backs it, or is flagged when it has none, and each shows its state: signed, machine draft or unsourced.","k":"diagram picture sentence claims step","s":"one-picture","t":"The idea in one picture"},
+{"q":"Why claims instead of pages?","a":"Like index cards instead of an essay. Each claim can be checked alone, swapped without retyping the page, and marked as disputed without marking the rest.","k":"claims pages index cards essay unit","s":"claims-not-pages","t":"Claims, not pages"},
+{"q":"What is a claim?","a":"One statement with a value, a time and a place. It is the unit a reader checks.","k":"claim definition statement value time place","s":"claims-not-pages","t":"Claims, not pages"},
+{"q":"What is a support link?","a":"A link from a claim to a source. It names the exact part of the source, such as a page, a table or a timestamp, and says whether it supports, partly supports or contradicts the claim.","k":"support link locator strength supports partly contradicts","s":"claims-not-pages","t":"Claims, not pages"},
+{"q":"What records are there?","a":"Seven: entity, claim, revision, support link, source, dispute and contribution record. A change adds a new record and keeps the old one.","k":"records data model entity revision source dispute contribution seven","s":"data-model","t":"The records"},
+{"q":"Why pin a source to a version?","a":"Without a version, a source can change under the reader. Pinning means the claim is checked against exactly the text the reviewer read.","k":"pin pinned version source change","s":"data-model","t":"The records"},
+{"q":"What is a dispute?","a":"A recorded disagreement about one claim, with the rival text and the evidence. It stays visible after it closes, and a resolution adds a new revision.","k":"dispute disagreement evidence rival edit war","s":"data-model","t":"The records"},
+{"q":"What is a contribution record?","a":"A field on each revision that says whether a person or a model drafted it, which tool, and who reviewed it. It lets a reader filter by who wrote and who checked.","k":"contribution record who drafted model person tool reviewers","s":"data-model","t":"The records"},
+{"q":"What are the gates for a change?","a":"Draft, source check, a named person signs, and the reviewed layer. A dispute route goes back to a new revision.","k":"gates pipeline draft review sign publish steps","s":"pipeline","t":"From draft to reviewed"},
+{"q":"What happens to a claim with no source?","a":"It is kept, marked unsourced, and shown that way to the reader. The check finds gaps. It does not decide what is true.","k":"no source unsourced flag missing","s":"pipeline","t":"From draft to reviewed"},
+{"q":"What is provenance?","a":"The trail of where text came from. Here it has six hops: source, passage, claim, article sentence, AI answer and reader.","k":"provenance trail chain hops receipt","s":"source-to-answer","t":"From source to answer"},
+{"q":"Why should an AI answer list claim ids?","a":"An answer that only paraphrases cannot be traced. With claim ids, a reader can open each claim, see its source and see whether a person checked it.","k":"ai answer claim ids trace chatbot paraphrase","s":"source-to-answer","t":"From source to answer"},
+{"q":"Where does the trail break most often?","a":"At the passage, where the page exists but does not say what the claim says, and at the AI answer, when it carries no claim ids.","k":"break weak point passage answer fail","s":"source-to-answer","t":"From source to answer"},
+{"q":"What does the remove-a-source example show?","a":"A hand-written example with pre-written notes, not a measurement. Removing source A leaves claim a unsupported, removing B leaves claim b unsupported, and removing C changes nothing because claim c also rests on A.","k":"remove source example illustration scissors","s":"remove-a-source","t":"Remove a source"},
+{"q":"What is the flooded-source loop?","a":"Pages feed models, models write answers and drafts, those get posted and cited as sources, and the citations feed the next round. Nothing in the loop is measured on this page.","k":"flooded loop sources feedback generated web","s":"flooded-loop","t":"The flooded-source loop"},
+{"q":"What is citation laundering?","a":"A claim has a citation, but the chain behind it only repeats the claim and never reaches an original. Each link looks like a source.","k":"citation laundering chain original circular","s":"flooded-loop","t":"The flooded-source loop"},
+{"q":"What is model collapse?","a":"A 2023 paper by Shumailov and colleagues found that training models on model-generated content causes defects that do not go away, and the rare cases disappear first. The page has not tested this on anything.","k":"model collapse shumailov recursion training generated rare","s":"flooded-loop","t":"The flooded-source loop"},
+{"q":"Where does the idea cut the loop?","a":"A support link only counts if its chain reaches an original a person checked, and the model that drafted a claim cannot sign it.","k":"cut loop stop fix original","s":"flooded-loop","t":"The flooded-source loop"},
+{"q":"Can Wikipedia be cited as a source on Wikipedia?","a":"No. The Verifiability policy says not to use Wikipedia articles, or sites that mirror Wikipedia, as sources.","k":"cite wikipedia mirror source itself","s":"flooded-loop","t":"The flooded-source loop"},
+{"q":"What are the layers?","a":"Reviewed text is signed claim by claim by a named person. Drafted text is machine-written or unchecked and always labelled. Disputed and unsourced can sit on top of either.","k":"layers reviewed drafted disputed unsourced states","s":"two-layers","t":"Two layers"},
+{"q":"Can AI sign a revision?","a":"No. Signing means a person takes responsibility. The AI can find candidate sources, check quotes, flag gaps and draft labelled translations.","k":"ai sign revision signature author responsibility","s":"ai-assistant","t":"What the AI may do"},
+{"q":"What may the AI do?","a":"Find candidate sources, check that quotes match, flag claims with no support link and draft labelled translations, all with review. It may not sign, and it may not add a source no person has opened.","k":"ai assistant jobs allowed may do","s":"ai-assistant","t":"What the AI may do"},
+{"q":"Can AI add a source?","a":"Not one that no person has opened. That is how invented and laundered citations get in.","k":"ai add source invented hallucinated citation","s":"ai-assistant","t":"What the AI may do"},
+{"q":"What are the trust signals?","a":"Four: a reviewer record, signed revisions, a check date and the full history. Each has a weakness, listed on the People and AI tab.","k":"trust signals reviewer record check date history","s":"trust-signals","t":"Trust signals"},
+{"q":"How are stale claims handled?","a":"Each claim has an as-of date and a check date. When a source changes or is withdrawn, the claims that rest on it are marked for review.","k":"stale freshness outdated source changed","s":"upkeep","t":"Upkeep and money"},
+{"q":"How are other languages handled?","a":"A claim is a statement, not a sentence in one language. A machine translation stays in the drafted layer until someone who reads that language checks it.","k":"languages translation drift multilingual","s":"upkeep","t":"Upkeep and money"},
+{"q":"How would bots be kept out?","a":"Bulk edits are rate limited and held, and new accounts start with limited reach. Identity checks are open, because they cost privacy.","k":"bots abuse spam rate limit identity","s":"upkeep","t":"Upkeep and money"},
+{"q":"How is it funded?","a":"Not decided. Donations, grants and paid model use all let the payer push priorities. The idea only asks that the funding policy is written down next to the licence.","k":"funding money paid donations grants","s":"upkeep","t":"Upkeep and money"},
+{"q":"What is a content hash?","a":"A fingerprint computed from exact bytes, such as SHA-256. The same bytes give the same hash, and a one-byte change gives a different one. It proves sameness, not truth.","k":"content hash fingerprint sha bytes","s":"content-hash","t":"Content hashes"},
+{"q":"What does a valid signature prove?","a":"That the key holder signed exactly these bytes. It does not prove the claim is correct, that the reviewer read the source, or that the key was not stolen.","k":"signature valid prove key","s":"signatures","t":"Signed revisions"},
+{"q":"What is the citation graph?","a":"Claims and sources as nodes, support links as edges. It can show which claims rest on one source, paths to an original and loops in the chain.","k":"citation graph nodes edges loops paths","s":"citation-graph","t":"Citation graph"},
+{"q":"How does an answer with attribution work?","a":"Retrieval finds claims with their support, gives them to a model with the question, and the answer comes back with the claim ids it used. A model can still say more than it was given.","k":"retrieval answer attribution ids","s":"attributed-answers","t":"Answers with ids"},
+{"q":"Why diff at the claim level?","a":"A page-level diff hides which claim changed. A claim diff compares value, time, place and support links, so a dispute can point at the exact change.","k":"diff claim level compare change","s":"claim-diffs","t":"Diffs and disputes"},
+{"q":"What is C2PA?","a":"An open specification for signed provenance data on media files. Version 2.2 says an asset can get separated from its manifest when metadata is removed, and that its trust model rests on the signer's identity.","k":"c2pa provenance standard manifest metadata","s":"provenance-standards","t":"Provenance standards"},
+{"q":"Can a watermark prove text is human-written?","a":"No. The page treats watermarks as weak evidence, because I have not checked how well any watermark survives editing.","k":"watermark detect human machine made","s":"provenance-standards","t":"Provenance standards"},
+{"q":"What licence is Wikipedia text under?","a":"Creative Commons Attribution-ShareAlike 4.0. Pages that are not only CC BY-SA text are also under the GFDL.","k":"licence license cc by-sa 4.0 gfdl wikipedia text","s":"cc-by-sa","t":"What CC BY-SA asks"},
+{"q":"What does CC BY-SA ask for?","a":"Attribution: keep the creator credit, copyright notice, licence notice, disclaimer notice and a link where practicable, say if you changed it, and name the licence. ShareAlike: adapted material goes under the same or a compatible licence.","k":"cc by-sa attribution sharealike requirements","s":"cc-by-sa","t":"What CC BY-SA asks"},
+{"q":"How do you credit Wikipedia text?","a":"Link to the page or give its URL, or link to a stable free copy, or list the authors. Keep the licence notice with a link or a copy, and say what you changed.","k":"credit attribute reuse wikipedia authors link","s":"cc-by-sa","t":"What CC BY-SA asks"},
+{"q":"Is the attribution example a real article?","a":"No. The article name is made up. It only shows the parts an attribution line needs.","k":"example attribution line made up real","s":"attribution-line","t":"An attribution line"},
+{"q":"Is model output trained on Wikipedia adapted material?","a":"I do not know. The sources I read do not settle it, and this page is not legal advice.","k":"training model output adapted material legal copyright","s":"licence-questions","t":"Questions I cannot answer"},
+{"q":"Is a list of claim ids enough attribution?","a":"The idea proposes the ids as the credit, but that is a design choice, not a legal finding.","k":"claim ids enough attribution credit legal","s":"licence-questions","t":"Questions I cannot answer"},
+{"q":"What are the main risks?","a":"Grouped: sources (citation laundering, flooded sources, model collapse, stale claims), review (rubber-stamp review, sybil reviewers, bot edits, translation drift), readers and reuse (trusting the answer, licence stripping, metadata loss), and people and money (funding capture, reviewer privacy).","k":"risks threats table main worst","s":"risk-table","t":"Risks"},
+{"q":"Which risks look hardest?","a":"Rubber-stamp review and readers trusting the AI answer. Both are about people, and no record format fixes them.","k":"worry most worst biggest concern hardest","s":"risk-table","t":"Risks"},
+{"q":"What is a sybil reviewer?","a":"One person running many reviewer accounts so they look like many people agreeing.","k":"sybil fake accounts reviewers sock puppet","s":"risk-table","t":"Risks"},
+{"q":"What are the trade-offs?","a":"Claim-level records cost more work per edit. Machine drafts give coverage but add review load. Signing gives responsibility but is a hurdle for new editors. An open licence invites copies without credit. Full history can be mined by harassers.","k":"trade-offs cost gain choice","s":"trade-offs","t":"Trade-offs"},
+{"q":"What is still open?","a":"Measuring whether a claim is supported, telling generated sources from human ones at scale, fair review without public identities, covering many languages, letting readers ask without answers replacing claims, and whether claim records are worth it for slow topics.","k":"open problems unsolved unknown","s":"open-problems","t":"Open problems"},
+{"q":"What is not decided?","a":"Who runs it, how it is paid for, whether machine drafts are allowed at all, which licence new text uses, and whether any code gets written.","k":"not decided open choices undecided","s":"not-decided","t":"Not decided"},
+{"q":"Where are the definitions?","a":"In the Learn tab, under Glossary. Each term opens on its own.","k":"glossary definitions terms words","s":"glossary","t":"Glossary"},
+{"q":"Is there a quiz?","a":"Yes. Four questions in the Learn tab. Pick an answer and the explanation opens.","k":"quiz test check yourself questions","s":"quiz","t":"Check yourself"},
+{"q":"Does this chat use an AI model?","a":"No. It matches your question against short notes written from this page, by keyword, inside the page. If nothing matches well, it says it does not know.","k":"chat model ai bm25 how answers work","s":"ask-this-idea","t":"Ask this idea"},
+{"q":"Is my question stored?","a":"No. Nothing you type is stored or sent, and the conversation is gone when you leave the page.","k":"stored privacy data tracking saved","s":"ask-this-idea","t":"Ask this idea"},
+{"q":"Can I talk to it with a microphone?","a":"No. Typed questions only. There is no microphone and no spoken reply.","k":"microphone voice speech audio speak","s":"ask-this-idea","t":"Ask this idea"},
+{"q":"Where do the sources come from?","a":"Only sources I opened and read are listed: Wikipedia's Verifiability policy, its large language model guideline, its reuse page, the CC BY-SA 4.0 legal code, the Shumailov paper and the C2PA 2.2 specification. Read on 2026-10-25.","k":"sources references citations read checked","s":"sources","t":"Sources"}
+]</script>
+
+<script>
+// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
+// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
+// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
+// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
+(function () {
+  if (window.__rdToc) return;
+  window.__rdToc = true;
+  var wide = window.matchMedia('(min-width: 1536px)');
+  function Rail(nav) {
+    var self = this;
+    this.nav = nav;
+    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+    this.indicator = nav.querySelector('.rd-toc__indicator');
+    this.sections = [];
+    this.index = new Map();
+    this.active = [];
+    this.anchorNavTarget = null;
+    this.links.forEach(function (a, i) {
+      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      self.sections.push(sec);
+      self.active.push(false);
+      if (sec) self.index.set(sec, i);
+    });
+    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
+    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
+    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
+    nav.classList.add('is-live');
+    this.fallback();
+    this.update();
+  }
+  Rail.prototype.onIntersect = function (entries) {
+    var self = this;
+    entries.forEach(function (e) {
+      var i = self.index.get(e.target);
+      if (i !== undefined) self.active[i] = e.isIntersecting;
+      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
+    });
+    if (this.active.indexOf(true) < 0) this.fallback();
+    this.update();
+  };
+  Rail.prototype.fallback = function () {
+    var vh = window.innerHeight;
+    for (var i = 0; i < this.sections.length; i++) {
+      var s = this.sections[i];
+      if (!s) continue;
+      var r = s.getBoundingClientRect();
+      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
+      else if (r.top > vh) break;
+    }
+  };
+  Rail.prototype.update = function () {
+    var self = this;
+    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
+  };
+  Rail.prototype.toggle = function () {
+    var links = this.links, a = this.active;
+    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
+    var i = links.length - 1, min = links.length - 1, max = -1;
+    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
+    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
+    while (i >= 0) { links[i].classList.remove('visible'); i--; }
+    if (!this.indicator) return;
+    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
+    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
+    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
+    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
+    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
+  };
+  Rail.prototype.scroll = function () {
+    if (this.anchorNavTarget || !wide.matches) return;
+    var vis = this.nav.querySelectorAll('a.visible');
+    if (!vis.length) return;
+    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
+    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
+    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
+  };
+  Rail.prototype.onClick = function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+  };
+  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
+  function openForWide() {
+    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
+  }
+  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
+  wide.addEventListener('change', refresh);
+  window.addEventListener('resize', refresh, { passive: true });
+  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
+  var mo = new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
+    });
+  });
+  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+  openForWide();
+})();
+</script>
+
+<script>
+// Tabs and history (design-system "Tabbed pages"; the same model as the report pages). A tab is a real ?tab= link: the
+// browser navigates and keeps its own history, one entry per click, no script. A section jump inside the current tab (an
+// "On this page" link) pushes one entry with the hash and the scroll; a section in another tab is a real navigation to
+// ?tab=<tab>#<section>. Back, Forward, reload and bfcache restore re-sync the tab, section and scroll; they never add an
+// entry. replaceState only saves the scroll into the current entry and maps a legacy hash-only URL to ?tab= on load.
+// Every scroll also goes to sessionStorage under the entry's key, because a write made in pagehide never reaches the entry
+// a reload restores from. <html data-history-ready> marks the first restore as done. Widgets never touch history.
+(function () {
+  if (window.__ideaTabs) return;
+  window.__ideaTabs = true;
+  var bar = document.querySelector('.rd-expnav[role="tablist"]');
+  if (!bar) return;
+  document.documentElement.classList.add('js');
+  var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
+  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var navH = function () { return bar.getBoundingClientRect().bottom; };
+  var saveTimer = 0;
+  var seq = Date.now();
+  var yByKey = {};
+  history.scrollRestoration = 'manual';
+
+  function tabOf(id) {
+    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('aria-controls') === id) return i;
+    return -1;
+  }
+  function panelOf(el) {
+    for (var i = 0; i < panels.length; i++) if (panels[i] && panels[i].contains(el)) return i;
+    return -1;
+  }
+  // What a hash names: a tab (a legacy #tab-id, el null), an element (its tab is the panel that holds it), or nothing.
+  function locate(id) {
+    if (!id) return null;
+    var t = tabOf(id);
+    if (t >= 0) return { tab: t, el: null };
+    var el = document.getElementById(id);
+    return el ? { tab: panelOf(el), el: el } : null;
+  }
+  function currentTab() {
+    var i = panels.findIndex(function (p) { return p && !p.hidden; });
+    return i < 0 ? 0 : i;
+  }
+  function viewFromUrl() {
+    var loc = locate(decodeURIComponent(location.hash.slice(1)));
+    var t = tabOf(new URLSearchParams(location.search).get('tab') || '');
+    if (t < 0) t = loc && loc.tab >= 0 ? loc.tab : 0;
+    return { tab: t, el: loc && loc.el ? loc.el : null };
+  }
+  function urlFor(tab, id) { return location.pathname + '?tab=' + panels[tab].id + (id ? '#' + id : ''); }
+  function barEdges() {
+    bar.classList.toggle('is-fade-start', bar.scrollLeft > 2);
+    bar.classList.toggle('is-fade-end', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 2);
+  }
+  function revealTab(t) {
+    var pad = 40, l = t.offsetLeft, r = l + t.offsetWidth;
+    if (l < bar.scrollLeft + pad) bar.scrollLeft = l - pad;
+    else if (r > bar.scrollLeft + bar.clientWidth - pad) bar.scrollLeft = r - bar.clientWidth + pad;
+  }
+  bar.addEventListener('scroll', barEdges, { passive: true });
+  window.addEventListener('resize', barEdges);
+  function show(i) {
+    tabs.forEach(function (t, j) {
+      var on = j === i;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.setAttribute('tabindex', on ? '0' : '-1');
+      t.classList.toggle('is-active', on);
+      panels[j].hidden = !on;
+    });
+    revealTab(tabs[i]);
+    barEdges();
+  }
+  function focusTarget(el) {
+    var t = /^H[1-6]$/.test(el.tagName) ? el : el.querySelector('h1,h2,h3,h4,h5,h6') || el;
+    t.setAttribute('tabindex', '-1');
+    t.focus({ preventScroll: true });
+  }
+  function keyOf() {
+    var k = history.state && history.state.k;
+    return k ? String(k) : 'url:' + location.pathname + location.search + location.hash;
+  }
+  function remember(k, y) {
+    yByKey[k] = y;
+    try { sessionStorage.setItem('rd-y:' + k, String(y)); } catch (e) {}
+  }
+  function saveScroll() {
+    clearTimeout(saveTimer);
+    var y = Math.round(window.scrollY);
+    remember(keyOf(), y);
+    history.replaceState(Object.assign({}, history.state, { y: y }), '');
+  }
+  // Only for an entry this page wrote (state is set): a fresh visit to the same URL starts at the top.
+  function recalled(k) {
+    if (!history.state) return undefined;
+    var v = null;
+    try { v = sessionStorage.getItem('rd-y:' + k); } catch (e) {}
+    return v === null ? undefined : Number(v);
+  }
+  function showLoc(loc, o) {
+    if (loc.tab >= 0) show(loc.tab);
+    if (loc.el && o.focus) focusTarget(loc.el);
+    var behavior = o.smooth && !reduce.matches ? 'smooth' : 'instant';
+    if (typeof o.y === 'number') return window.scrollTo({ top: o.y, behavior: behavior });
+    if (loc.el) return loc.el.scrollIntoView({ block: 'start', behavior: behavior });
+    if (o.tabStart) {
+      var top = panels[loc.tab].getBoundingClientRect().top;
+      if (top < navH()) window.scrollTo({ top: window.scrollY + top - navH() - 8, behavior: behavior });
+    }
+  }
+  // Back, Forward, popstate, hashchange, bfcache restore: re-sync from the URL and the entry. Writes no entry.
+  function resync() {
+    var v = viewFromUrl();
+    var st = history.state || {};
+    var key = keyOf();
+    var saved = yByKey[key] !== undefined ? yByKey[key] : recalled(key);
+    var y = typeof saved === 'number' ? saved : typeof st.y === 'number' ? st.y : null;
+    showLoc({ tab: v.tab, el: v.el }, { y: y, focus: !!v.el, smooth: false, tabStart: true });
+    saveScroll();
+  }
+  // In-page links: a section in the current tab is one pushState entry; a section in another tab is a real navigation.
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null;
+    if (!a || a.target || a.getAttribute('href') === '#') return;
+    var id = decodeURIComponent(a.getAttribute('href').slice(1));
+    var loc = locate(id);
+    if (!loc) return;
+    e.preventDefault();
+    var secId = loc.el ? id : '';
+    if (loc.tab !== currentTab()) { location.assign(urlFor(loc.tab, secId)); return; }
+    var base = location.pathname + location.search + location.hash;
+    var next = location.pathname + location.search + (secId ? '#' + secId : '');
+    if (next !== base) {
+      saveScroll();
+      seq += 1;
+      var y0 = Math.round(window.scrollY);
+      remember(String(seq), y0);
+      history.pushState({ k: seq, y: y0 }, '', next);
+    }
+    showLoc({ tab: loc.tab, el: loc.el }, { smooth: true, focus: !!loc.el, tabStart: false });
+  });
+  // A tab is a real link. Following the tab that is already shown adds no entry.
+  bar.addEventListener('click', function (e) {
+    var t = e.target instanceof Element ? e.target.closest('[role="tab"]') : null;
+    if (t && t.getAttribute('aria-selected') === 'true' && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) e.preventDefault();
+  });
+  // Keyboard on the tab list: arrows, Home and End move focus; Space follows the focused tab.
+  bar.addEventListener('keydown', function (e) {
+    var i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    var n = null;
+    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === 'Home') n = 0;
+    else if (e.key === 'End') n = tabs.length - 1;
+    else if (e.key === ' ') { e.preventDefault(); tabs[i].click(); return; }
+    if (n === null) return;
+    e.preventDefault();
+    tabs[n].focus();
+  });
+  window.addEventListener('popstate', resync);
+  window.addEventListener('hashchange', resync);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) resync(); });
+  window.addEventListener('pagehide', saveScroll);
+  window.addEventListener('scroll', function () {
+    remember(keyOf(), Math.round(window.scrollY));
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveScroll, 150);
+  }, { passive: true });
+
+  // First paint. A legacy URL (hash only, or a tab id in the hash) is mapped to ?tab= with replaceState: no entry.
+  var v0 = viewFromUrl();
+  var restoreY = recalled(keyOf()) !== undefined ? recalled(keyOf()) : typeof (history.state || {}).y === 'number' ? history.state.y : null;
+  var touched = false;
+  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
+    window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
+  });
+  if (!new URLSearchParams(location.search).has('tab') || tabOf(decodeURIComponent(location.hash.slice(1))) >= 0) {
+    history.replaceState(history.state, '', urlFor(v0.tab, v0.el ? v0.el.id : ''));
+  }
+  resync();
+  function restoreFirst() {
+    if (touched) return;
+    if (v0.el) focusTarget(v0.el);
+    if (restoreY !== null) window.scrollTo({ top: restoreY, behavior: 'instant' });
+    else if (v0.el) v0.el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
+  // Late fonts can move the page after load: put the saved position back once more (unless the reader has moved).
+  window.addEventListener('load', function () {
+    restoreFirst();
+    var mark = function () { document.documentElement.setAttribute('data-history-ready', ''); };
+    var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    fonts.then(function () {
+      if (!touched && restoreY !== null && Math.abs(window.scrollY - restoreY) > 2) window.scrollTo({ top: restoreY, behavior: 'instant' });
+      mark();
+    }, mark);
+  }, { once: true });
+})();
+
+// Step-through figures: Previous and Next move the highlight and the caption. Steps before the current one stay lit.
+// No history entries. On a phone the figure scrolls so the lit step is in view.
+(function () {
+  document.querySelectorAll('.idea-steps').forEach(function (fig) {
+    var total = parseInt(fig.getAttribute('data-steps'), 10) || 1;
+    var cur = 1;
+    var count = fig.querySelector('.idea-steps__count');
+    var prev = fig.querySelector('[data-prev]');
+    var next = fig.querySelector('[data-next]');
+    function render(moved) {
+      fig.querySelectorAll('svg [data-s]').forEach(function (el) {
+        var n = parseInt(el.getAttribute('data-s'), 10);
+        el.classList.toggle('is-on', n === cur);
+        el.classList.toggle('is-past', n < cur);
+      });
+      fig.querySelectorAll('.idea-steps__list li').forEach(function (li) {
+        li.classList.toggle('is-on', li.getAttribute('data-s') === String(cur));
+      });
+      count.textContent = 'Step ' + cur + ' of ' + total;
+      prev.disabled = cur <= 1;
+      next.disabled = cur >= total;
+      if (cur >= total && document.activeElement === next) prev.focus();
+      if (cur <= 1 && document.activeElement === prev) next.focus();
+      if (!moved) return;
+      var lit = fig.querySelector('svg [data-s].is-on');
+      if (lit && fig.scrollWidth > fig.clientWidth + 1) {
+        var fr = fig.getBoundingClientRect(), lr = lit.getBoundingClientRect();
+        if (lr.left < fr.left || lr.right > fr.right) fig.scrollTo({ left: fig.scrollLeft + (lr.left - fr.left) - 16, behavior: reduceMotion() ? 'auto' : 'smooth' });
+      }
+    }
+    function reduceMotion() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    prev.addEventListener('click', function () { if (cur > 1) { cur -= 1; render(true); } });
+    next.addEventListener('click', function () { if (cur < total) { cur += 1; render(true); } });
+    render(false);
+  });
+})();
+
+// Remove a source: pre-written notes only, nothing is computed.
+(function () {
+  var list = document.getElementById('idea-claims');
+  var note = document.getElementById('idea-remove-note');
+  if (!list || !note) return;
+  var NOTES = {
+    '': 'All three sources are in place. Every claim has support.',
+    A: 'Source A is gone. Claim a has lost its only support, so it is now unsourced. Claim c still rests on source C. Claim b is untouched.',
+    B: 'Source B is gone. Claim b has lost its only support, so it is now unsourced. Claims a and c keep theirs.',
+    C: 'Source C is gone. Claim c still rests on source A, so nothing loses support.'
+  };
+  var LOST = { '': [], A: ['a'], B: ['b'], C: [] };
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-remove]'));
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-remove');
+      list.querySelectorAll('[data-claim]').forEach(function (c) { c.classList.toggle('is-lost', LOST[k].indexOf(c.getAttribute('data-claim')) >= 0); });
+      buttons.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      note.textContent = NOTES[k];
+    });
+  });
+})();
+
+// Quiz: a pick shows right or not quite, with an icon, and opens the explanation. Nothing is stored.
+(function () {
+  var answers = { q1: 'a', q2: 'b', q3: 'b', q4: 'c' };
+  function icon(name) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'rd-icon');
+    svg.setAttribute('aria-hidden', 'true');
+    var use = document.createElementNS(ns, 'use');
+    use.setAttribute('href', '#i-' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  document.querySelectorAll('.idea-quiz fieldset').forEach(function (fs) {
+    var key = 'q' + fs.getAttribute('data-q');
+    var verdict = fs.querySelector('.idea-verdict');
+    fs.querySelectorAll('input[type="radio"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var ok = r.value === answers[key];
+        verdict.textContent = '';
+        verdict.appendChild(icon(ok ? 'circle-check' : 'circle-x'));
+        verdict.appendChild(document.createTextNode(ok ? 'Right.' : 'Not quite. The answer is open below.'));
+        verdict.className = 'idea-verdict ' + (ok ? 'idea-verdict--ok' : 'idea-verdict--no');
+        var det = fs.querySelector('details');
+        if (det) det.open = true;
+      });
+    });
+  });
+})();
+
+// Ask this idea: local retrieval over the notes in #idea-kb (above this script). BM25 over each note's question,
+// keywords and answer; the top note answers, with a link to its section; below the threshold it says it does not know.
+(function () {
+  var kbEl = document.getElementById('idea-kb');
+  var form = document.getElementById('idea-ask-form');
+  var input = document.getElementById('idea-ask-input');
+  var log = document.getElementById('idea-log');
+  if (!kbEl || !form || !input || !log) return;
+  var KB = JSON.parse(kbEl.textContent || '[]');
+  var STOP = { a: 1, an: 1, the: 1, is: 1, are: 1, of: 1, to: 1, in: 1, on: 1, and: 1, or: 1, it: 1, this: 1, that: 1, do: 1, does: 1, for: 1, be: 1, with: 1, my: 1, i: 1, what: 1, how: 1, can: 1, if: 1, so: 1, at: 1, by: 1, as: 1, from: 1, about: 1, me: 1, you: 1, your: 1, we: 1, they: 1, their: 1, there: 1, which: 1, who: 1, why: 1, its: 1, was: 1, were: 1, will: 1, has: 1, have: 1, any: 1, one: 1, page: 1, idea: 1 };
+  function tok(s) {
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(function (w) { return w.length > 1 && !STOP[w]; }).map(function (w) {
+      return w.length > 4 && /s$/.test(w) && !/ss$/.test(w) ? w.slice(0, -1) : w; // plural to singular, roughly
+    });
+  }
+  var docs = KB.map(function (e) { return tok(e.q + ' ' + e.q + ' ' + (e.k || '') + ' ' + e.a); });
+  var N = docs.length;
+  var avg = docs.reduce(function (s, d) { return s + d.length; }, 0) / Math.max(N, 1);
+  var df = {};
+  docs.forEach(function (d) {
+    var seen = {};
+    d.forEach(function (w) { if (!seen[w]) { seen[w] = 1; df[w] = (df[w] || 0) + 1; } });
+  });
+  function score(q, d) {
+    var tf = {};
+    d.forEach(function (w) { tf[w] = (tf[w] || 0) + 1; });
+    var s = 0;
+    q.forEach(function (w) {
+      var f = tf[w] || 0;
+      if (!f) return;
+      var idf = Math.log(1 + (N - (df[w] || 0) + 0.5) / ((df[w] || 0) + 0.5));
+      s += idf * (f * 2.2) / (f + 1.2 * (0.25 + 0.75 * d.length / avg));
+    });
+    return s;
+  }
+  function rank(q) {
+    return KB.map(function (e, i) { return { e: e, s: score(q, docs[i]) }; }).sort(function (a, b) { return b.s - a.s; });
+  }
+  var TAB = {};
+  document.querySelectorAll('.rd-expnav [role="tab"]').forEach(function (t) { TAB[t.getAttribute('aria-controls')] = t.textContent.trim(); });
+  function tabOfSection(id) {
+    var el = document.getElementById(id);
+    var p = el ? el.closest('.rd-tabpanel') : null;
+    return p ? p.id : '';
+  }
+  function bubble(cls) {
+    var div = document.createElement('div');
+    div.className = 'idea-msg' + (cls ? ' ' + cls : '');
+    log.appendChild(div);
+    return div;
+  }
+  function para(div, text) {
+    var p = document.createElement('p');
+    p.textContent = text;
+    div.appendChild(p);
+    return p;
+  }
+  function suggest(div, items) {
+    if (!items.length) return;
+    var ul = document.createElement('ul');
+    ul.className = 'idea-chips';
+    ul.setAttribute('aria-label', 'Related questions');
+    items.forEach(function (x) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'rd-btn';
+      b.textContent = x.e.q;
+      b.addEventListener('click', function () { ask(x.e.q); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    div.appendChild(ul);
+  }
+  function ask(text) {
+    var q = tok(text);
+    para(bubble('idea-msg--me'), text);
+    var r = rank(q);
+    var top = r[0];
+    var threshold = 2.2;
+    var div = bubble('');
+    if (!q.length || !top || top.s < threshold) {
+      para(div, 'I do not know. The notes on this page do not cover that.');
+      suggest(div, r.slice(0, 3).filter(function (x) { return x.s > 0; }));
+    } else {
+      para(div, top.e.a);
+      var tab = tabOfSection(top.e.s);
+      var p = document.createElement('p');
+      p.className = 'rd-source';
+      p.appendChild(document.createTextNode('From: '));
+      var a = document.createElement('a');
+      a.href = '?tab=' + tab + '#' + top.e.s; // a real navigation to that tab and section
+      a.textContent = top.e.t + ' (' + (TAB[tab] || tab) + ' tab)';
+      p.appendChild(a);
+      div.appendChild(p);
+      suggest(div, r.slice(1, 4).filter(function (x) { return x.s >= threshold; }));
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = input.value.trim();
+    input.value = '';
+    if (v) ask(v);
+  });
+  document.querySelectorAll('[data-ask]').forEach(function (b) {
+    b.addEventListener('click', function () { ask(b.getAttribute('data-ask')); });
+  });
+})();
+</script>
+</body>
+</html>
