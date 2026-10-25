@@ -96,10 +96,14 @@ const diff = (a, b, ignore = []) =>
 
 // Clicks the navbar link (the mobile menu is opened first). Content links are the fallback, for cards on a list page.
 async function clickLink(page, href) {
-	const sel = (sfx) => `#navbar a[href="${href}"]${sfx}, [data-site-navbar] nav a[href="${href}"]${sfx}`;
+	// Site navbar: the bar's links and its mobile menu panel. Standalone reports: the injected bar's links and its menu panel.
+	const sel = (sfx) => `#navbar a[href="${href}"]${sfx}, [data-site-navbar] nav a[href="${href}"]${sfx}, [data-site-navbar] .menu-panel a[href="${href}"]${sfx}`;
 	// A closed menu panel only fades out, so it still matches :visible: open it by its state.
 	if ((await page.locator("#nav-menu-panel.float-panel-closed").count()) && (await page.locator("#nav-menu-switch").isVisible())) {
 		await page.click("#nav-menu-switch");
+		await page.waitForTimeout(400);
+	} else if ((await page.locator("[data-site-navbar] .menu-panel.closed").count()) && (await page.locator("[data-site-navbar] button.menu").isVisible())) {
+		await page.click("[data-site-navbar] button.menu");
 		await page.waitForTimeout(400);
 	}
 	let target = page.locator(sel(":visible")).first();
