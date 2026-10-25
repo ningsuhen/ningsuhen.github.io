@@ -6,14 +6,14 @@ import type { Entry } from "../types/entry";
 
 interface Props {
 	items: Entry[];
-	/** "report": static analysis you read (/research/). "experiment": live thing you play with (/experiments/). "idea": a short write-up (/ideas/). */
-	kind: "report" | "experiment" | "idea";
+	/** "report": static analysis you read (/research/). "playground": live demo you play with (/playground/). "idea": a short write-up (/ideas/). */
+	kind: "report" | "playground" | "idea";
 }
 
-// Shared by /research/, /experiments/ and /ideas/. Drafts are hidden; "Coming soon" shows as a dimmed card with no links.
+// Shared by /research/, /playground/ and /ideas/. Drafts are hidden; "Coming soon" shows as a dimmed card with no links.
 const { items, kind } = Astro.props;
-const kindChip = { report: "Report", experiment: "Live experiment", idea: "Idea" }[kind];
-const kindIcon = { report: "lucide:microscope", experiment: "lucide:flask-conical", idea: "lucide:lightbulb" }[kind];
+const kindChip = { report: "Report", playground: "Live demo", idea: "Idea" }[kind];
+const kindIcon = { report: "lucide:microscope", playground: "lucide:flask-conical", idea: "lucide:lightbulb" }[kind];
 // A card whose href is a post (an idea without a page) says "Read the idea"; everything else says "Open".
 const openLabel = (href: string) => (href.startsWith("/posts/") ? "Read the idea" : "Open");
 const sorted = items

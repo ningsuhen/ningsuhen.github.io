@@ -29,16 +29,16 @@ const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 
 const { remarkPluginFrontmatter } = await render(entry);
-const licensed = ["Research", "Experiment", "Idea"].some((t) => entry.data.tags.includes(t));
+const licensed = ["Research", "Playground", "Idea"].some((t) => entry.data.tags.includes(t));
 
 // Card thumbnail as an absolute URL: the og:image, twitter:image and JSON-LD image all point at it.
 const thumbnailUrl = postThumbnailUrl(entry, Astro.site!.href);
 
-// Breadcrumb section: the post's category (else its tag) picks Research, Experiments or Ideas. Other posts sit under Archive,
+// Breadcrumb section: the post's category (else its tag) picks Research, Playground or Ideas. Other posts sit under Archive,
 // the site's list of every post (there is no category page).
 const SECTIONS = [
 	{ key: "Research", name: "Research", url: "/research/" },
-	{ key: "Experiment", name: "Experiments", url: "/experiments/" },
+	{ key: "Playground", name: "Playground", url: "/playground/" },
 	{ key: "Idea", name: "Ideas", url: "/ideas/" },
 ];
 const category = entry.data.category?.trim() ?? "";

@@ -1,7 +1,7 @@
-// The standalone HTML pages shipped from public/ (reports, live experiments, ideas, design-system pages) — the single
+// The standalone HTML pages shipped from public/ (reports, playground demos, ideas, design-system pages) — the single
 // source of truth for "which pages exist." Consumers tailor the set:
 //   - sections: which top-level folders to walk. Default (null) = every .html under public/. Pass SECTIONS for
-//     reports/experiments/ideas only, or ["design-system"] for the design-system pages.
+//     reports/playground/ideas only, or ["design-system"] for the design-system pages.
 //   - depth: when set, only pages at exactly that many path segments (e.g. 3 = "research/<slug>/index.html").
 //   - exclude: filenames to skip (e.g. "template.html").
 //   - drafts: include Draft pages (default false — they are not shipped, so most consumers leave them out).
@@ -10,7 +10,7 @@ import { readdirSync } from "node:fs";
 import path from "node:path";
 import { draftHrefs, isDraftPage } from "./draft-pages.mjs";
 
-export const SECTIONS = ["research", "experiments", "ideas"];
+export const SECTIONS = ["research", "playground", "ideas"];
 
 export function standalonePages({ sections = null, depth = null, exclude = [], drafts = false } = {}) {
 	const root = path.resolve("public");

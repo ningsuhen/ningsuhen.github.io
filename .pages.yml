@@ -38,14 +38,14 @@ content:
       - { name: category, label: Category, type: string }
       - { name: draft, label: Draft, type: boolean, default: false }
       - { name: body, label: Body, type: rich-text }
-  - name: experiments
-    label: Experiments
+  - name: playground
+    label: Playground
     type: file
-    path: src/data/experiments.json
+    path: src/data/playground.json
     format: json
     fields:
       - name: items
-        label: Live experiments
+        label: Live demos
         type: object
         list: true
         fields:
