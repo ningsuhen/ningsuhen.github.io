@@ -1,0 +1,171 @@
+---
+// Experience timeline for the About page. Content is the owner's own list, in order.
+// No dates or years: the order is the story. Phase labels group the entries.
+interface Step {
+	title: string;
+	detail?: string;
+}
+
+interface Entry {
+	title: string;
+	detail?: string;
+	steps?: Step[];
+}
+
+interface Phase {
+	label: string;
+	entries: Entry[];
+}
+
+const phases: Phase[] = [
+	{
+		label: "Build",
+		entries: [{ title: "WordPress entrepreneurship", detail: "In college, NIT Bhopal" }],
+	},
+	{
+		label: "Industry",
+		entries: [
+			{ title: "QA automation", detail: "Amdocs, Pune. Telecom, Java." },
+			{ title: "Software Engineer", detail: "Adobe. Enterprise YouTube with CQ5 and Java." },
+		],
+	},
+	{
+		label: "Startups",
+		entries: [{ title: "Startups and entrepreneurship", detail: "Node.js" }],
+	},
+	{
+		label: "Google",
+		entries: [
+			{ title: "Google India", detail: "GPay Offers" },
+			{
+				title: "Google US",
+				steps: [
+					{ title: "Cloud Run" },
+					{ title: "Android Auto Assistant" },
+					{ title: "YouTube Commerce" },
+				],
+			},
+		],
+	},
+	{
+		label: "AI",
+		entries: [{ title: "AI / ML", detail: "Lyra Health" }],
+	},
+];
+---
+<section class="xp" aria-labelledby="xp-heading">
+	<h2 id="xp-heading" class="xp-heading">Experience</h2>
+	{phases.map((phase, pi) => (
+		<section class="xp-phase" aria-labelledby={`xp-phase-${pi}`}>
+			<h3 id={`xp-phase-${pi}`} class="xp-label">{phase.label}</h3>
+			<ol class="xp-list" role="list" start={phases.slice(0, pi).reduce((n, ph) => n + ph.entries.length, 1)}>
+				{phase.entries.map((entry) => (
+					<li class="xp-item">
+						<h4 class="xp-title">{entry.title}</h4>
+						{entry.detail && <p class="xp-detail">{entry.detail}</p>}
+						{entry.steps && (
+							<ol class="xp-steps" role="list">
+								{entry.steps.map((step) => (
+									<li class="xp-step">
+										<span class="xp-step-title">{step.title}</span>
+									</li>
+								))}
+							</ol>
+						)}
+					</li>
+				))}
+			</ol>
+		</section>
+	))}
+</section>
+
+<style>
+	.xp {
+		margin-top: 2.5rem;
+	}
+	.xp-heading {
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin-bottom: 1rem;
+	}
+	.xp-phase {
+		margin-top: 1.75rem;
+	}
+	.xp-label {
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--primary);
+		margin-bottom: 0.75rem;
+	}
+	.xp-list {
+		position: relative;
+		list-style: none;
+		margin: 0;
+		padding: 0 0 0 1.25rem;
+		border-left: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+	}
+	.xp-item {
+		position: relative;
+		padding-bottom: 1.25rem;
+	}
+	.xp-item:last-child {
+		padding-bottom: 0;
+	}
+	.xp-item::before {
+		content: "";
+		position: absolute;
+		left: calc(-1.25rem - 6px);
+		top: 0.4rem;
+		width: 10px;
+		height: 10px;
+		border-radius: 999px;
+		background: var(--primary);
+		box-shadow: 0 0 0 3px var(--page-bg);
+	}
+	.xp-title {
+		font-size: 1rem;
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+	.xp-detail {
+		margin-top: 0.125rem;
+		font-size: 0.9rem;
+		opacity: 0.75;
+	}
+	.xp-steps {
+		list-style: none;
+		margin: 0.5rem 0 0;
+		padding: 0 0 0 1rem;
+		border-left: 1px dashed color-mix(in srgb, currentColor 30%, transparent);
+	}
+	.xp-step {
+		position: relative;
+		font-size: 0.9rem;
+		padding: 0.2rem 0;
+	}
+	.xp-step::before {
+		content: "";
+		position: absolute;
+		left: calc(-1rem - 4px);
+		top: 0.6rem;
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: currentColor;
+		opacity: 0.5;
+	}
+	@media (min-width: 768px) {
+		.xp-phase {
+			display: grid;
+			grid-template-columns: 11rem 1fr;
+			column-gap: 1.5rem;
+			align-items: start;
+		}
+		.xp-label {
+			margin-bottom: 0;
+			padding-top: 0.15rem;
+		}
+	}
+</style>

@@ -1,0 +1,45 @@
+---
+// Range of work, shown next to the experience timeline. Labels only, from the owner.
+const areas = ["QA", "release engineering", "frontend", "backend", "AI"];
+---
+<section class="kr" aria-labelledby="kr-heading">
+	<h2 id="kr-heading" class="kr-heading">Range</h2>
+	<p class="kr-text">My work runs from QA to release engineering, frontend, backend and AI.</p>
+	<ol class="kr-list" role="list">
+		{areas.map((area) => (
+			<li class="kr-area">{area}</li>
+		))}
+	</ol>
+</section>
+
+<style>
+	.kr {
+		margin-top: 2.5rem;
+	}
+	.kr-heading {
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin-bottom: 0.5rem;
+	}
+	.kr-text {
+		opacity: 0.85;
+		margin-bottom: 1rem;
+	}
+	.kr-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.kr-area {
+		padding: 0.35rem 0.85rem;
+		border-radius: 999px;
+		font-size: 0.9rem;
+		font-weight: 600;
+		background: var(--btn-regular-bg);
+		color: var(--btn-content);
+		overflow-wrap: anywhere;
+	}
+</style>
