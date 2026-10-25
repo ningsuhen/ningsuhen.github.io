@@ -14,6 +14,12 @@
 		},
 		{
 			"page": "/research/ai-economy/",
+			"rule": "axe",
+			"owner": "EcoSimulation",
+			"reason": "color-contrast (serious) on chart labels and muted text in the page palette. Fix the palette tokens so text meets 4.5:1."
+		},
+		{
+			"page": "/research/ai-economy/",
 			"rule": "body-class",
 			"owner": "EcoSimulation",
 			"reason": "Own page shell: body has no rd-body class and the page does not use the design-system layout."
@@ -62,6 +68,12 @@
 		},
 		{
 			"page": "/research/ai-economy/",
+			"rule": "fonts",
+			"owner": "EcoSimulation",
+			"reason": "Embeds its own Roboto @font-face (base64, three weights) instead of the design-system font stack. Drop the embedded fonts on re-export."
+		},
+		{
+			"page": "/research/ai-economy/",
 			"rule": "footer-box",
 			"owner": "EcoSimulation",
 			"reason": "No license card on the design-system footer: the page's own footer/column is aligned differently."
@@ -80,27 +92,9 @@
 		},
 		{
 			"page": "/research/ai-economy/",
-			"rule": "icon-glyph",
-			"owner": "EcoSimulation",
-			"reason": "Arrow glyphs (→ ←) are used as tab and control labels. Use the sprite icons (i-arrow-right, i-arrow-up) instead."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "overflow",
-			"owner": "EcoSimulation",
-			"reason": "Page is 5px wider than the 375px viewport once the classic scrollbar takes its width. Fix the element that overflows (EcoSimulation layout)."
-		},
-		{
-			"page": "/research/ai-economy/",
 			"rule": "rail-presence",
 			"owner": "EcoSimulation",
 			"reason": "The page has an On this page rail at 1920px and the main post does not (or the reverse). Align the breakpoint."
-		},
-		{
-			"page": "/research/ai-economy/",
-			"rule": "surface",
-			"owner": "EcoSimulation",
-			"reason": "Page background (own palette, e.g. rgb(244,246,247)) differs from the site background tokens."
 		},
 		{
 			"page": "/research/ai-economy/",
@@ -122,21 +116,9 @@
 		},
 		{
 			"page": "/research/ai-economy/",
-			"rule": "theme-owned",
-			"owner": "EcoSimulation",
-			"reason": "Page reads prefers-color-scheme in its own CSS or script. Theme must come from html[data-theme] only."
-		},
-		{
-			"page": "/research/ai-economy/",
 			"rule": "typography-scale",
 			"owner": "EcoSimulation",
 			"reason": "Headings and body use the page's own type scale, not the compact template scale in the design-system guide."
-		},
-		{
-			"page": "/experiments/brev-tree-traversal/",
-			"rule": "content-align",
-			"owner": "site",
-			"reason": "Design-system container (rd-container) is centred in the page; the main post column is offset by the 17.5rem sidebar grid."
 		},
 		{
 			"page": "/experiments/brev-tree-traversal/",

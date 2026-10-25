@@ -154,9 +154,12 @@ for (const rel of pages) {
 	src.split("\n").forEach((line, i) => {
 		if (/\bmac-mini|\/Users\/|\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(line) && !ok.has("forbidden-strings")) add(page, "forbidden-strings", `line ${i + 1}: ${line.trim().slice(0, 90)}`);
 	});
-	const wide = src.indexOf("rd-container--wide");
-	if (wide !== -1 && !ok.has("container-comment") && !/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//.test(src.slice(Math.max(0, wide - 400), wide))) {
-		add(page, "container-comment", "rd-container--wide used with no comment within 400 chars before it (say why it needs the navbar width)");
+	// Every class attribute that uses rd-container--wide needs a comment just before it, saying why.
+	for (const m of src.matchAll(/class=["'][^"']*\brd-container--wide\b/g)) {
+		const before = src.slice(Math.max(0, m.index - 400), m.index);
+		if (!ok.has("container-comment") && !/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//.test(before)) {
+			add(page, "container-comment", "rd-container--wide used with no comment within 400 chars before it (say why it needs the navbar width)");
+		}
 	}
 	if (!/<meta[^>]+name=["']ds-contract["']/i.test(src)) warnings.push(`${page}: no <meta name="ds-contract"> version marker (optional for now)`);
 	const cssBytes = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].reduce((n, m) => n + m[1].length, 0);
