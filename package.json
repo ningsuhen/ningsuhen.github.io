@@ -21,6 +21,8 @@
     "check:standalone": "node scripts/check-standalone-pages.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
+    "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
+    "check:listen": "node scripts/check-listen.mjs",
     "new-experiment": "node scripts/new-experiment.mjs",
     "new-research": "node scripts/new-experiment.mjs --research",
     "sync": "sh scripts/sync-dev-next.sh",

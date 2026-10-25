@@ -14,6 +14,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - Standalone pages: reports at `public/research/<slug>/index.html`, live experiments at `public/experiments/<slug>/index.html`. Shipped as-is, not Fuwari pages. Never create `public/research/index.html` or `public/experiments/index.html`: the Astro pages own those URLs.
 - Old report URLs redirect (`redirects` in `astro.config.mjs`): add one there when moving a page.
 - `public/design-system/`: design system and `template.html` (scaffold source). Do not edit casually.
+- Listen player (every post, opt-out `noListen: true`): `src/components/ListenPlayer.astro` + `src/scripts/tts/` (engine contract `engine.ts`, normaliser `normalize.ts`, article extraction `extract.ts`, Web Speech engine, Kokoro stub, `listen-player.ts`). Neural engine loads from `/tts/kokoro.js` when `window.__KOKORO_READY` is true.
 - `src/integrations/standalone-header.ts`: injects the navbar and license footer into every `public/**/*.html` at build and in dev.
 - `src/config.ts`: `navBarConfig` (the standalone navbar derives from it).
 - `scripts/`: `new-experiment.mjs` (scaffold; `--research` for Research), `check-standalone-pages.mjs`, `sync-dev-next.sh`, `merge-pr.sh`, `test-pre-push.sh`, `dev-server.sh`, `install-hooks.sh`.
@@ -25,6 +26,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - Agents must NEVER start a server on port 4321 (`pnpm dev`, `pnpm preview`, `astro dev --port 4321`): the LaunchAgent owns it. Use `pnpm dev:agent`.
 - `pnpm build`: Astro build + Pagefind.
 - `pnpm check:standalone`: real-browser check of standalone pages and Back navigation. Needs a build and `CHROME_PATH` (or `pnpm exec playwright-core install chromium`).
+- `pnpm check:listen`: real-browser check of the Listen player on a built post (speech is stubbed). `pnpm test:tts`: unit tests for the speech normaliser and chunker.
 - `pnpm astro check`: type check.
 - `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. Then set the entry's status to `Live` (or `Coming soon`).
 - `pnpm sync`: local-only dev/next sync (see below). `pnpm merge-pr <n>`: squash-merge a PR, then sync.
