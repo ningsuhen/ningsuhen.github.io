@@ -10,6 +10,8 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { checkFresh } from "./build-design-system.mjs";
+import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -28,6 +30,8 @@ const RULES = {
 	"head-order": "charset then viewport are the first two head elements",
 	"title-stamp": "title and visible h1 end with · created YYYY-MM-DD · updated YYYY-MM-DD",
 	"css-canonical": "research.css is linked, or inlined verbatim (whitespace-insensitive)",
+	"bundle-fresh": "the shipped design-system bundle (rd.css, research.css alias, manifest.json) equals a fresh build of src/design-system/",
+	"bundle-linked": "the page links the design-system bundle instead of inlining a frozen copy",
 	"body-class": '<body class="rd-body">',
 	"container-class": "main content uses rd-container, rd-container--wide or rd-tabbed",
 	"container-width": "rd-container is 872px (54.5rem); wide/tabbed content is the navbar card width",
@@ -79,7 +83,8 @@ function htmlPages(dir = "") {
 		return e.name.endsWith(".html") ? [rel] : [];
 	});
 }
-const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3);
+const drafts = draftHrefs();
+const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -135,6 +140,10 @@ const add = (page, rule, msg) => {
 	if (!found.has(k)) found.set(k, []);
 	found.get(k).push(msg);
 };
+
+// bundle-fresh (repo-level): the committed generated files must equal a fresh build of the sources.
+// A stale bundle means someone edited src/design-system/ without running `pnpm build:design-system`.
+for (const problem of checkFresh()) failures.push(`bundle-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
@@ -165,6 +174,11 @@ for (const rel of pages) {
 	if (!/<meta[^>]+name=["']ds-contract["']/i.test(src)) warnings.push(`${page}: no <meta name="ds-contract"> version marker (optional for now)`);
 	const cssBytes = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].reduce((n, m) => n + m[1].length, 0);
 	if (cssBytes > CSS_BUDGET) warnings.push(`${page}: inline <style> is ${Math.round(cssBytes / 1000)} KB (budget ${CSS_BUDGET / 1000} KB)`);
+	// bundle-linked (warning): a page that inlines the design system carries a frozen copy that goes
+	// stale when the bundle changes. Link the bundle (/design-system/rd.css) instead of inlining it.
+	// Signal: the token *definitions* (not just var() usage) appear in an inline <style>.
+	const inlinesBundle = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].some((m) => /--rd-page-bg\s*:/.test(m[1]));
+	if (inlinesBundle) warnings.push(`${page}: [bundle-linked] inlines the design system; link /design-system/rd.css instead so it stays current`);
 }
 
 // ---- Browser helpers ----------------------------------------------------------------------------------------------------
@@ -272,7 +286,7 @@ const probeStructure = (canon) => {
 		headOrder: kids[0]?.matches("meta[charset]") && kids[1]?.matches('meta[name="viewport"]') ? "ok" : kids.slice(0, 2).map((k) => k.outerHTML.slice(0, 40)).join(" | "),
 		titleOk: stamp.test(document.title) ? "ok" : document.title,
 		h1Ok: h1 && stamp.test(h1.textContent.trim()) ? "ok" : (h1?.textContent || "no visible h1").trim(),
-		cssInline: flat.includes(canon) || links.some((h) => /(^|\/)design-system\/research\.css$/.test(h)),
+		cssInline: flat.includes(canon) || links.some((h) => /(^|\/)design-system\/(research|rd)\.css(\?|$)/.test(h)),
 		bodyRd: document.body.classList.contains("rd-body"),
 		mainClass: !!main && ["rd-container", "rd-container--wide", "rd-tabbed"].some((c) => main.classList.contains(c)),
 		mainWide: !!main && main.classList.contains("rd-container") && !main.classList.contains("rd-container--wide"),

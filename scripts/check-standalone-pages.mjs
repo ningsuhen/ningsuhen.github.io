@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -58,7 +59,8 @@ const base = `http://127.0.0.1:${server.address().port}`;
 // Headless Chrome hides scrollbars by default, which would hide a 15px page scrollbar from this check.
 const browser = await chromium.launch({ executablePath: findChrome(), ignoreDefaultArgs: ["--hide-scrollbars"] });
 const failures = [];
-const pages = htmlPages();
+const drafts = draftHrefs();
+const pages = htmlPages().filter((rel) => !isDraftPage(rel, drafts));
 for (const rel of pages) {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
 	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
@@ -157,16 +159,9 @@ for (const [section, listPath] of [
 	["ideas", "/ideas/"],
 ]) {
 	if (pages.includes(path.join(section, "index.html"))) failures.push(`public/${section}/index.html exists: the Astro page owns /${section}/`);
-	// Draft entries are hidden on purpose (work in progress), so they are exempt.
-	const drafts = new Set(
-		JSON.parse(readFileSync(path.join("src/data", `${section}.json`), "utf8"))
-			.items.filter((i) => i.status.toLowerCase() === "draft")
-			.map((i) => i.href),
-	);
 	const expected = pages
 		.filter((rel) => rel.startsWith(`${section}${path.sep}`) && rel.split(path.sep).length === 3)
-		.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`)
-		.filter((u) => !drafts.has(u));
+		.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`);
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	const resp = await page.goto(base + listPath, { waitUntil: "load" });
@@ -720,7 +715,7 @@ for (const rel of pages) {
 	const onSection = !!section && segs.length === 1;
 	// Pages on the design system (linked research.css, or an inlined copy with the band rules) get the band; a fragment
 	// export without <body> gets it before its <main>. Other pages keep their own shell.
-	const onDs = /design-system\/research\.css/.test(src) || src.includes(".rd-crumb-band {");
+	const onDs = /design-system\/(?:research|rd)\.css/.test(src) || src.includes(".rd-crumb-band {");
 	const optedOut = /<meta[^>]+name=["']rd-breadcrumb["'][^>]+content=["']off["']/i.test(src);
 	const titleRaw = src.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
 	const pageTitle = decodeEntities(titleRaw.replace(/\s*·\s*created\s+\d{4}-\d{2}-\d{2}\s*·\s*updated\s+\d{4}-\d{2}-\d{2}\s*$/, "").trim());
@@ -802,7 +797,7 @@ for (const rel of pages) {
 const BAND_WIDTHS = [375, 768, 1440];
 const bandPages = pages.filter((rel) => {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
-	return /design-system\/research\.css/.test(src) || src.includes(".rd-crumb-band {");
+	return /design-system\/(?:research|rd)\.css/.test(src) || src.includes(".rd-crumb-band {");
 });
 for (const rel of bandPages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
@@ -868,6 +863,79 @@ for (const rel of bandPages) {
 				if (off.bad) failures.push(`${at}: ${off.bad}/${off.n} band pixels at y=${Math.round(top)} are not the page background (first ${off.first}, expected rgb(${m.bg.slice(0, 3).join(",")}))`);
 			}
 		}
+		await ctx.close();
+	}
+}
+
+// Stuck rail under the section bar: below 1536px the tab panel's "On this page" rail sticks under the bar. It must sit flush
+// against the bar's bottom (navbar + band + bar, no gap), so nothing scrolls through between them. On every page with a
+// sticky rail, at 375, 768 and 1440, light and dark, at three scroll positions inside the visible panel: when the rail is
+// stuck its top equals the bar's bottom, the topmost element just under the bar is the rail, and the screenshot pixels of a
+// 2px strip at the rail's top are the page background.
+const railPages = bandPages.filter((rel) => readFileSync(path.join(PUBLIC, rel), "utf8").includes('class="rd-toc"') && /\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, rel), "utf8")));
+for (const rel of railPages) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	for (const theme of ["light", "dark"]) for (const width of BAND_WIDTHS) {
+		const tag = `${urlPath} ${theme} @${width} [rail under the bar]`;
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		await ctx.addInitScript((t) => { try { localStorage.setItem("theme", t); } catch {} }, theme);
+		const page = await ctx.newPage();
+		await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.evaluate((t) => document.documentElement.setAttribute("data-theme", t), theme);
+		// Scroll targets where the rail is stuck: inside its container, past its natural top, before its container ends.
+		const span = await page.evaluate(() => {
+			const rail = [...document.querySelectorAll(".rd-toc")].find((r) => r.getClientRects().length && getComputedStyle(r).position === "sticky");
+			if (!rail) return null;
+			const box = rail.parentElement.getBoundingClientRect();
+			const top = box.top + window.scrollY, bottom = box.bottom + window.scrollY, h = rail.getBoundingClientRect().height;
+			return { from: top + 200, to: bottom - h - window.innerHeight * 0.5 };
+		});
+		if (!span || span.to <= span.from) { await ctx.close(); continue; }
+		let stuck = 0;
+		for (const k of [0, 0.5, 1]) {
+			const y = Math.round(span.from + (span.to - span.from) * k);
+			await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), y);
+			await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+			const m = await page.evaluate(() => {
+				const bar = document.querySelector(".rd-expnav").getBoundingClientRect();
+				const railEl = [...document.querySelectorAll(".rd-toc")].find((r) => r.getClientRects().length && getComputedStyle(r).position === "sticky");
+				const rail = railEl.getBoundingClientRect();
+				const stuckTop = parseFloat(getComputedStyle(railEl).top);
+				const hits = [];
+				for (const kx of [0.02, 0.5, 0.98]) {
+					const x = rail.left + rail.width * kx, yy = bar.bottom + 1;
+					const el = document.elementFromPoint(x, yy);
+					if (!el?.closest(".rd-toc")) hits.push(`${Math.round(x)},${Math.round(yy)}=${el ? el.tagName.toLowerCase() + (typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : "") : "none"}`);
+				}
+				const c = document.createElement("canvas").getContext("2d");
+				c.fillStyle = getComputedStyle(document.body).backgroundColor;
+				c.fillRect(0, 0, 1, 1);
+				return { barBottom: bar.bottom, railTop: rail.top, railLeft: rail.left, railW: rail.width, stuck: Math.abs(rail.top - stuckTop) < 0.5, stuckTop, hits, bg: [...c.getImageData(0, 0, 1, 1).data] };
+			});
+			const at = `${tag} scrollY ${y}`;
+			if (!m.stuck) continue;
+			stuck++;
+			if (Math.abs(m.railTop - m.barBottom) > 0.5) failures.push(`${at}: stuck rail top ${m.railTop.toFixed(1)}px, section bar bottom ${m.barBottom.toFixed(1)}px (content shows through the ${(m.railTop - m.barBottom).toFixed(1)}px gap)`);
+			if (m.hits.length) failures.push(`${at}: under the section bar the topmost element is not the rail: ${m.hits.join(" ")}`);
+			const png = await page.screenshot({ clip: { x: Math.max(0, m.railLeft), y: m.barBottom, width: Math.min(m.railW, width - Math.max(0, m.railLeft)), height: 2 }, animations: "disabled", caret: "hide" });
+			const off = await page.evaluate(async ({ b64, bg }) => {
+				const img = new Image();
+				img.src = `data:image/png;base64,${b64}`;
+				await img.decode();
+				const c = document.createElement("canvas");
+				c.width = img.naturalWidth; c.height = img.naturalHeight;
+				const g = c.getContext("2d");
+				g.drawImage(img, 0, 0);
+				const d = g.getImageData(0, 0, c.width, c.height).data;
+				let bad = 0, first = null;
+				for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - bg[0]) > 3 || Math.abs(d[i + 1] - bg[1]) > 3 || Math.abs(d[i + 2] - bg[2]) > 3) { bad++; first ??= `x=${(i / 4) % c.width} rgb(${d[i]},${d[i + 1]},${d[i + 2]})`; }
+				return { bad, first, n: d.length / 4 };
+			}, { b64: png.toString("base64"), bg: m.bg });
+			if (off.bad) failures.push(`${at}: ${off.bad}/${off.n} pixels just under the section bar are not the page background (first ${off.first})`);
+		}
+		// Below 1536px the rail is sticky; a page whose panel is too short to stick it at all is not a pass by default.
+		if (!stuck) failures.push(`${tag}: rail never stuck at the sampled scroll positions (check the sample or the page)`);
 		await ctx.close();
 	}
 }

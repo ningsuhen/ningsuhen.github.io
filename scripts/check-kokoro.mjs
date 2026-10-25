@@ -61,14 +61,16 @@ await new Promise((r) => server.listen(0, "127.0.0.1", r));
 const base = `http://127.0.0.1:${server.address().port}`;
 
 const executablePath = findChrome();
+// Real scrollbars, as in check-listen: Playwright's default --hide-scrollbars hides layout paths visitors take.
 const browser = await chromium.launch({
 	executablePath,
+	ignoreDefaultArgs: ["--hide-scrollbars"],
 	args: ["--enable-unsafe-webgpu", "--enable-features=Vulkan", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"],
 });
 const failures = [];
 const hosts = new Map();
 try {
-	const page = await browser.newPage();
+	const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 	await page.addInitScript(() => {
 		window.__beacons = [];
 		const send = navigator.sendBeacon?.bind(navigator);

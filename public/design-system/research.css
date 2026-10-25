@@ -16,6 +16,7 @@
 	--rd-navbar-width: 73rem;
 	--rd-navbar-gap: 1rem; /* height of the empty breadcrumb band (pages with no trail): the main site's 16px rhythm under the navbar card */
 	--rd-crumb-h: 2.5rem; /* the breadcrumb band under the navbar card: opaque, holds the trail (standalone-header.ts) */
+	--rd-expnav-line: 1px; /* the section bar's bottom rule: part of its height, so sticky offsets under the bar add it */
 	--rd-crumb-fs: 0.8125rem; /* breadcrumb text: 13px at every density, the same size as the main site's trail */
 	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
 	--rd-content-width: 54.5rem;
@@ -565,7 +566,7 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
 	min-height: var(--rd-expnav-h);
 	background: var(--rd-page-bg);
-	border-bottom: 1px solid var(--rd-line);
+	border-bottom: var(--rd-expnav-line) solid var(--rd-line);
 }
 .rd-expnav::-webkit-scrollbar { display: none; }
 .rd-expnav a {
@@ -627,9 +628,10 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 .rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
 .rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
-/* Below 1536px the rail is the disclosure above the content. It sticks under the section bar (like the main TOC), so it stays
+/* Below 1536px the rail is the disclosure above the content. It sticks flush under the section bar (navbar + band + bar,
+   no gap, so nothing scrolls through between them), so it stays
    in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
-.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-3)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-space-4)); overflow-y: auto; background: var(--rd-page-bg); }
+.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-expnav-line)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-expnav-line)); overflow-y: auto; background: var(--rd-page-bg); }
 .rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
 .rd-toc summary .rd-icon { color: var(--rd-accent); }

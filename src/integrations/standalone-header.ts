@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import type { AstroIntegration } from "astro";
 import { commentConfig, navBarConfig, siteConfig } from "../config";
 import { LinkPreset } from "../types/config";
 import { themeRuntimeScript } from "../utils/theme-runtime";
+import { draftHrefs, isDraftPage } from "../../scripts/lib/draft-pages.mjs";
 
 // Same Roboto Bold the main site ships, inlined so link widths (and so positions) match exactly.
 const ROBOTO_700 = readFileSync(path.resolve("node_modules/@fontsource/roboto/files/roboto-latin-700-normal.woff2")).toString("base64");
@@ -82,7 +83,15 @@ export default function standaloneHeader(): AstroIntegration {
 				const outDir = fileURLToPath(dir);
 				const script = buildScript(navItems(base), siteConfig.title, siteConfig.themeColor.hue);
 				const licenseScript = buildLicenseScript(base, siteConfig.themeColor.hue);
+				// Draft pages (src/data Draft entries) are not shipped. Astro already copied public/ into dist/, so their
+				// folders (page and data) are removed here, before pagefind indexes the output.
+				const drafts = draftHrefs();
+				for (const href of drafts) {
+					if (!/^\/(research|experiments|ideas)\/[^/]+\/$/.test(href)) throw new Error(`Draft href is not a standalone page folder: ${href}`);
+					await rm(path.join(outDir, href), { recursive: true, force: true });
+				}
 				for (const rel of await htmlFiles(publicDir)) {
+					if (isDraftPage(rel, drafts)) continue;
 					const target = path.join(outDir, rel);
 					const html = await readFile(target, "utf8");
 					const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
@@ -99,7 +108,7 @@ function transform(html: string, script: string, extra: string, footer: string, 
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	const withCrumbs = addBreadcrumb(body, urlPath, base, site);
-	return withThemeScript(ensureHead(withCrumbs, new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+	return withThemeScript(ensureHead(versionedCssLinks(withCrumbs), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
 }
 
 // Breadcrumb band (.rd-crumb-band) and trail (.rd-breadcrumb) in research.css. Every page on the design system gets the
@@ -113,7 +122,7 @@ const SECTIONS: Record<string, string> = { research: "Research", experiments: "E
 const DATE_SUFFIX = /\s*·\s*created\s+\d{4}-\d{2}-\d{2}\s*·\s*updated\s+\d{4}-\d{2}-\d{2}\s*$/;
 
 function addBreadcrumb(html: string, urlPath: string, base: string, site: string): string {
-	if (html.includes(CRUMB_MARKER) || !(/design-system\/research\.css/.test(html) || html.includes(".rd-crumb-band {"))) return html;
+	if (html.includes(CRUMB_MARKER) || !(/design-system\/(?:research|rd)\.css/.test(html) || html.includes(".rd-crumb-band {"))) return html;
 	// Find the real tags: style, script and comment text can mention "<body" or "<main" (inlined CSS comments do).
 	const masked = html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<!--[\s\S]*?-->/gi, (m) => " ".repeat(m.length));
 	const main = masked.match(/<main\b[^>]*>/i);
@@ -158,6 +167,19 @@ function pageTitle(html: string): string {
 	const text = raw.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 	const decoded = text.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 	return decoded.replace(DATE_SUFFIX, "").trim();
+
+// Cache-bust the design-system bundle: append ?v=<hash> to its <link> so a new bundle is fetched, not
+// the cached copy. The hash comes from the committed manifest.json (the shipped bundle's content hash).
+// Pages that still inline the CSS (no <link>) are untouched — the bundle-linked check nudges them to link.
+function versionedCssLinks(html: string): string {
+	let v = "";
+	try {
+		v = (JSON.parse(readFileSync(path.resolve("public/design-system/manifest.json"), "utf8")) as { hash?: string }).hash ?? "";
+	} catch {
+		return html; // no manifest yet (pre-build): leave the links as-is
+	}
+	if (!v) return html;
+	return html.replace(/(<link\b[^>]*\bhref=["'])(\/design-system\/(?:research|rd)\.css)(["'])/gi, (m, pre, href, quote) => `${pre}${href}?v=${v}${quote}`);
 }
 
 // The theme script goes at the end of <head>, or right after <html> when the export has no </head>.
