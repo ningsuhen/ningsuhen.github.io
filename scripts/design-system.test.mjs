@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { currentSectionIndex } from "../src/design-system/js/expnav.js";
 import { activeRun } from "../src/design-system/js/rail.js";
 import { fullscreenMethod } from "../src/design-system/js/fullscreen.js";
+import { resolveTab } from "../src/design-system/js/tabs.js";
 
 test("expnav: first section is current at the top", () => {
 	// nav bottom at 100, sections at 200/400/600 → none under the bar yet, so the first is current.
@@ -42,4 +43,19 @@ test("fullscreen: detects the Fullscreen API method", () => {
 	assert.equal(fullscreenMethod({}), null);
 	// Modern browsers expose both; the unprefixed one wins.
 	assert.equal(fullscreenMethod({ requestFullscreen() {}, webkitRequestFullscreen() {} }), "requestFullscreen");
+});
+
+test("tabs: resolveTab — ?tab= wins, then a legacy #tab-id, else -1", () => {
+	const ids = ["summary", "architecture", "sync"];
+	// ?tab= that names a tab wins.
+	assert.equal(resolveTab(ids, "sync", ""), 2);
+	// ?tab= that names a tab beats a hash that names another tab.
+	assert.equal(resolveTab(ids, "sync", "summary"), 2);
+	// No ?tab=, but a hash that names a tab (legacy #architecture) maps to it.
+	assert.equal(resolveTab(ids, null, "architecture"), 1);
+	// A hash that names a section (not a tab) is not a tab: -1 (the caller resolves it against panels).
+	assert.equal(resolveTab(ids, null, "in-30-seconds"), -1);
+	// Nothing names a tab: -1.
+	assert.equal(resolveTab(ids, null, ""), -1);
+	assert.equal(resolveTab(ids, "nope", ""), -1);
 });

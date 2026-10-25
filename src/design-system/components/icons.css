@@ -19,3 +19,90 @@
 .rd-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, 100%), 1fr)); gap: var(--rd-space-2); list-style: none; padding: 0; margin: var(--rd-gap-block) 0; }
 .rd-icon-grid li { display: flex; align-items: center; gap: var(--rd-space-2); padding: var(--rd-space-2) var(--rd-space-3); background: var(--rd-card-bg); border-radius: var(--rd-radius-sm); font-size: var(--rd-fs-sm); color: var(--rd-text-muted); overflow-wrap: anywhere; }
 .rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
+
+/* ======================================================================
+   Breadcrumb band (rd-crumb-band) and trail (rd-breadcrumb). standalone-header.ts injects the band at the top of
+   <body>. It is sticky directly under the navbar card (top: --rd-navbar-h) and --rd-crumb-h tall. Its opaque surface
+   (::before, --rd-page-bg) has the navbar card's frame: full width below 768px, the card's width and left edge from
+   768px up. Content scrolls under it and is hidden; the section bar sticks under it. A page with no trail (opted out,
+   or no title) keeps an empty band one gap tall (--rd-navbar-gap), so the gap under the navbar is never transparent.
+   The band box itself spans the body's content box, so the trail inside uses the same column rules as the page's own
+   container (default, --wide, --tabbed, or --page for a page-owned column) and lines up with its text.
+   Frames are centred and standalone pages have no layout scrollbar, so 100vw is the html width.
+   One line: a long title ends in an ellipsis. The separator is a CSS mask of Lucide chevron-right (no glyph).
+   Pages never write the band by hand.
+   ====================================================================== */
+.rd-crumb-band {
+	--rd-crumb-band-w: 100vw;
+	position: sticky;
+	top: var(--rd-navbar-h);
+	z-index: 999; /* above any page content (it must hide what scrolls under it), below the navbar (1000) */
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	height: var(--rd-crumb-h);
+	margin: 0;
+}
+@media (min-width: 768px) { .rd-crumb-band { --rd-crumb-band-w: min(100vw - 2rem, var(--rd-navbar-width)); } } /* the navbar card: calc(min(100%, 75em) - 2em) */
+.rd-crumb-band::before {
+	content: "";
+	position: absolute;
+	z-index: -1;
+	top: 0;
+	bottom: 0;
+	left: calc(50% - var(--rd-crumb-band-w) / 2);
+	width: var(--rd-crumb-band-w);
+	background: var(--rd-page-bg);
+}
+html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
+.rd-crumb-band .rd-breadcrumb {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	max-width: var(--rd-content-width); /* rd-container */
+	height: 100%;
+	margin: 0 auto;
+	padding: 0 var(--rd-space-4);
+	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
+	color: var(--rd-text-muted);
+}
+.rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: var(--rd-navbar-width); }
+@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-inline: 0; } } /* = .rd-tabbed: the trail starts on the content (navbar card) edge */
+.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); }
+.rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
+.rd-breadcrumb li:last-child { flex: 0 1 auto; }
+.rd-breadcrumb li + li::before {
+	content: "";
+	flex: none;
+	width: 1rem;
+	height: 1rem;
+	margin: 0 0.25rem;
+	background: var(--rd-text-faint);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rd-breadcrumb a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.5rem; /* 24px tap target at every width */
+	border-radius: var(--rd-radius-sm);
+	color: inherit;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color 0.15s ease-out;
+}
+.rd-breadcrumb a:hover { color: var(--rd-accent); }
+.rd-breadcrumb a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+.rd-breadcrumb [aria-current="page"] {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.5rem;
+	color: var(--rd-text);
+}
+@media print { .rd-crumb-band { display: none; } }

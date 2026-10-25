@@ -62,6 +62,9 @@ const FINGERPRINT = () => {
 		path: location.pathname,
 		title: document.title,
 		h1: q("h1")?.textContent.trim() ?? null,
+		// Breadcrumb trail(s) and their JSON-LD: after a Swup navigation they must be the new page's, exactly as on a fresh load.
+		crumbs: [...document.querySelectorAll('nav[aria-label="Breadcrumb"]')].map((n) => n.innerText.replace(/\s+/g, " ").trim()).join(" | "),
+		crumbLd: [...document.querySelectorAll('script[type="application/ld+json"]')].filter((s) => s.textContent.includes('"BreadcrumbList"')).map((s) => JSON.parse(s.textContent).itemListElement.map((i) => i.item).join(" ")).join(" | "),
 		navHosts: document.querySelectorAll("div[data-site-navbar]").length,
 		navWrapper: document.querySelectorAll("#navbar-wrapper").length,
 		licHosts: document.querySelectorAll("div[data-site-license]").length,

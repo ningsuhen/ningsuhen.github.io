@@ -49,6 +49,7 @@ const RULES = {
 	overflow: "no horizontal page overflow at 1440 and 375",
 	"tap-target": "interactive controls are at least 24px at 375",
 	"injected-once": "the site navbar and the license card are each present exactly once",
+	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
 	axe: "no axe WCAG 2.0/2.1 A and AA violations at 375 and 1440, light and dark, on every standalone page (research, experiments, ideas and the design-system pages)",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
@@ -57,6 +58,7 @@ const RULES = {
 	"tab-deeplink": "each tab sets its address (?tab= or a hash) that opens that tab on load",
 	"tab-history": "each tab change adds exactly one history entry; Back restores the previous tab",
 	"tab-rail": "every tab panel has the shared rd-toc",
+	"tab-width": "in every tab from 768px up, the panel, its tab body and their sections span the navbar card's edges; a nested section spans its parent",
 	"typography-scale": "h1/h2/h3/p/td font size, line height and weight match the template (compact)",
 	"nav-card": "navbar card position and size equal the main site's",
 	"nav-links": "navbar link positions equal the main site's",
@@ -311,6 +313,8 @@ const probeStructure = (canon) => {
 		lightFooters: document.querySelectorAll("footer").length,
 		navCount: document.querySelectorAll("div[data-site-navbar]").length,
 		licCount: document.querySelectorAll("div[data-site-license]").length,
+		crumbBands: document.querySelectorAll("[data-site-breadcrumb]").length,
+		strayCrumbs: [...document.querySelectorAll('.rd-breadcrumb, nav[aria-label="Breadcrumb"]')].filter((n) => !n.closest("[data-site-breadcrumb]")).length,
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -567,6 +571,60 @@ function compareAt(page, w, t, c, r) {
 	if (c.railPresent && r.railPresent && c.hl === null) bad("rail-highlight", "no heading of the contents rail is ever in view, so the highlight could not be checked");
 }
 
+// Tab content edges (tab-width): every tab panel's blocks against the navbar card. Top level (the panel, .rd-tab__body
+// and their direct section children) must sit on the card's edges; a section nested in a stacking parent must span the
+// parent's content box (catches a max-width cap like 72ch on a card). Below 768px the card is full-bleed and the content
+// keeps a gutter, so only 768px and up are measured.
+const TAB_WIDTHS = [1440, 1280, 1024, 768];
+const probeTabEdges = () => {
+	const nav = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
+	const panel = [...document.querySelectorAll(".rd-tabpanel")].find((p) => p.getBoundingClientRect().width > 0);
+	if (!nav || !panel) return { issues: [nav ? "no visible .rd-tabpanel" : "navbar card not found"] };
+	const SEC = "section, .section, .rd-tabsec, .rd-tab__body";
+	const shown = (el) => {
+		const s = getComputedStyle(el);
+		return el.getBoundingClientRect().width > 0 && s.position !== "fixed" && s.position !== "absolute";
+	};
+	const stacking = (el) => {
+		const s = getComputedStyle(el);
+		return s.display === "block" || (s.display.includes("grid") && s.gridTemplateColumns.trim().split(/\s+/).length === 1) || (s.display.includes("flex") && s.flexDirection.startsWith("column"));
+	};
+	const name = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/).join(".")}` : ""}`;
+	const r1 = (v) => Math.round(v * 10) / 10;
+	const issues = [];
+	const top = [panel, ...[...panel.children].filter((k) => k.matches(SEC))];
+	for (const b of panel.querySelectorAll(":scope > .rd-tab__body")) top.push(...[...b.children].filter((k) => k.matches(SEC)));
+	for (const el of top.filter(shown)) {
+		const b = el.getBoundingClientRect();
+		if (Math.abs(b.left - nav.left) > 1 || Math.abs(b.right - nav.right) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, navbar card ${r1(nav.left)}..${r1(nav.right)}`);
+	}
+	for (const el of [...panel.querySelectorAll(SEC)].filter((e) => !top.includes(e) && !e.closest(".rd-toc") && shown(e))) {
+		const par = el.parentElement;
+		if (!stacking(par)) continue;
+		const ps = getComputedStyle(par), pb = par.getBoundingClientRect(), b = el.getBoundingClientRect();
+		const l = pb.left + parseFloat(ps.borderLeftWidth) + parseFloat(ps.paddingLeft);
+		const r = pb.right - parseFloat(ps.borderRightWidth) - parseFloat(ps.paddingRight);
+		if (Math.abs(b.left - l) > 1 || Math.abs(b.right - r) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, its parent ${name(par)} ${r1(l)}..${r1(r)}`);
+	}
+	return { issues };
+};
+async function tabWidthChecks(page, ok) {
+	if (ok.has("tab-width")) return;
+	for (const [w, t] of [...TAB_WIDTHS.map((x) => [x, "light"]), [1440, "dark"]]) {
+		const { ctx } = await newCtx({ width: w, height: DESKTOP_H }, t);
+		const p = await open(ctx, page);
+		const tabs = p.locator("[role=tablist] [role=tab]");
+		const names = await tabs.allTextContents();
+		for (let i = 0; i < names.length; i++) {
+			await tabs.nth(i).click();
+			await p.waitForLoadState("load");
+			await p.waitForTimeout(100);
+			for (const m of (await p.evaluate(probeTabEdges)).issues) add(page, "tab-width", `@${w} ${t} [${names[i].trim()}]: ${m}`);
+		}
+		await ctx.close();
+	}
+}
+
 // ---- Per page -------------------------------------------------------------------------------------------------------------
 async function tabChecks(page, ok) {
 	const { ctx, external } = await newCtx({ width: 1440, height: DESKTOP_H }, "light");
@@ -661,6 +719,8 @@ await Promise.all(pages.map(async (rel) => {
 				[errors.length > 0, "console-errors", errors.slice(0, 2).join(" | ")],
 				[s.navCount !== 1, "injected-once", `site navbar present ${s.navCount} time(s)`],
 				[s.licCount !== 1, "injected-once", `license card present ${s.licCount} time(s)`],
+				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
+				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
@@ -685,6 +745,7 @@ await Promise.all(pages.map(async (rel) => {
 		await ctx.close();
 	}
 	await tabChecks(page, ok);
+	await tabWidthChecks(page, ok);
 }));
 
 // ---- Accessibility: axe on every standalone page at 375 and 1440, light and dark ------------------------------------

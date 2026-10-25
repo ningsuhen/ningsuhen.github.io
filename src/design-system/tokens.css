@@ -14,7 +14,10 @@
 	--hue: 250;
 	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
 	--rd-navbar-width: 73rem;
-	--rd-navbar-gap: 1rem; /* space between the injected navbar card and the section bar under it (the main site's 16px rhythm) */
+	--rd-navbar-gap: 1rem; /* height of the empty breadcrumb band (pages with no trail): the main site's 16px rhythm under the navbar card */
+	--rd-crumb-h: 2.5rem; /* the breadcrumb band under the navbar card: opaque, holds the trail (standalone-header.ts) */
+	--rd-expnav-line: 1px; /* the section bar's bottom rule: part of its height, so sticky offsets under the bar add it */
+	--rd-crumb-fs: 0.8125rem; /* breadcrumb text: 13px at every density, the same size as the main site's trail */
 	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;

@@ -29,6 +29,12 @@ Source: https://github.com/saicaca/fuwari. Licensed under the MIT License, repro
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
+## ONNX Runtime Web (neural voice)
+
+- Version 1.27.0, Copyright Microsoft Corporation, MIT License. Upstream: https://github.com/microsoft/onnxruntime
+- JavaScript loader committed in `public/tts/vendor/ort/` (LICENSE-onnxruntime.txt there).
+- WebAssembly binary fetched at runtime from https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0 (pinned commit c25145ab811e50c175798b09cd6da3fc272d9411), with the NOTICE and MIT LICENSE of that repository: https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0/tree/c25145ab811e50c175798b09cd6da3fc272d9411
+
 ## Dependencies
 
 npm packages installed through `pnpm install` (Astro, Tailwind CSS, Svelte, Expressive Code, and others)

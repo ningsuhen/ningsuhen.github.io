@@ -1,0 +1,126 @@
+/* Research design system: Mermaid themeCSS. Every colour is var(--rd-*, light fallback).
+   Inlined SVGs take the page tokens and flip with <html data-theme>; standalone renders fall back to light.
+   Mermaid scopes themeCSS under the SVG's own id (set per file by scripts/render-mermaid.mjs), so several
+   inlined diagrams on one page never collide; these rules come after Mermaid's base rules and win. */
+
+/* Tokens (set on every descendant, since Mermaid scopes themeCSS under the SVG id and the root itself is not matched).
+   Role tokens: tint = category colour mixed into the card ground, ink = category colour for strokes. */
+* {
+  --m-ground: var(--rd-card-bg, #fff);
+  --m-text: var(--rd-text-strong, #1f2430);
+  --m-muted: var(--rd-text-muted, rgba(0, 0, 0, 0.6));
+  --m-line: var(--rd-text-muted, rgba(0, 0, 0, 0.6));
+  --m-neutral: var(--rd-accent, #4a7a9c);
+  font-family: var(--rd-font, Roboto, ui-sans-serif, system-ui, sans-serif);
+  font-size: 14px;
+}
+
+/* Text */
+text, .nodeLabel, .label text, .messageText, .noteText,
+.loopText, .loopText tspan, .labelText, .cluster-label text {
+  fill: var(--m-text);
+  stroke: none;
+  font-family: inherit;
+}
+
+/* Default (unclassed) node */
+.node rect, .node polygon, .node circle, .node ellipse, .node path,
+.node .label-container {
+  fill: var(--m-ground);
+  stroke: var(--m-neutral);
+  stroke-width: 1.5px;
+}
+
+/* Role classes */
+.node.actor    { --m-ink: var(--rd-cat-1, #e69f00); }
+.node.compute  { --m-ink: var(--rd-cat-2, #0072b2); }
+.node.memory   { --m-ink: var(--rd-cat-3, #cc79a7); }
+.node.control  { --m-ink: var(--rd-cat-4, #009e73); }
+.node.data     { --m-ink: var(--rd-cat-5, #56b4e9); }
+.node.external { --m-ink: var(--rd-cat-6, #d55e00); }
+.node.good     { --m-ink: var(--rd-good, #1b7a4b); }
+.node.warn     { --m-ink: var(--rd-warn, #9a6b00); }
+.node.bad      { --m-ink: var(--rd-bad, #c2412d); }
+.node.actor rect, .node.actor polygon, .node.actor circle, .node.actor ellipse, .node.actor path,
+.node.compute rect, .node.compute polygon, .node.compute circle, .node.compute ellipse, .node.compute path,
+.node.memory rect, .node.memory polygon, .node.memory circle, .node.memory ellipse, .node.memory path,
+.node.control rect, .node.control polygon, .node.control circle, .node.control ellipse, .node.control path,
+.node.data rect, .node.data polygon, .node.data circle, .node.data ellipse, .node.data path,
+.node.external rect, .node.external polygon, .node.external circle, .node.external ellipse, .node.external path {
+  fill: color-mix(in srgb, var(--m-ink) 20%, var(--m-ground));
+  stroke: var(--m-ink);
+  stroke-width: 2px;
+}
+/* Roles are tinted (20% category colour on the card ground, text-strong). Status is the opposite on purpose:
+   a solid semantic fill with the card ground as text colour, so it never reads as a role. The status tokens are
+   dark in light mode and light in dark mode, so the ground-coloured text keeps its contrast in both. */
+.node.good rect, .node.good polygon, .node.good circle, .node.good ellipse, .node.good path,
+.node.warn rect, .node.warn polygon, .node.warn circle, .node.warn ellipse, .node.warn path,
+.node.bad rect, .node.bad polygon, .node.bad circle, .node.bad ellipse, .node.bad path {
+  fill: var(--m-ink);
+  stroke: var(--m-ink);
+  stroke-width: 2px;
+}
+.node.good text, .node.warn text, .node.bad text { fill: var(--m-ground); font-weight: 700; }
+
+/* Edges and arrowheads */
+.edgePath .path, .flowchart-link, .edge-thickness-normal, .edge-pattern-solid,
+.messageLine0, .messageLine1 {
+  stroke: var(--m-line);
+  stroke-width: 1.6px;
+  fill: none;
+}
+.edge-pattern-dashed, .messageLine1 { stroke-dasharray: 5 4; }
+marker, marker path, .arrowheadPath, .marker, #arrowhead path {
+  fill: var(--m-line);
+  stroke: var(--m-line);
+}
+marker circle { fill: var(--m-ground); }
+
+/* Edge labels */
+.edgeLabel, .edgeLabel rect, .labelBkg {
+  background-color: var(--m-ground);
+  fill: var(--m-ground);
+  opacity: 1;
+  stroke: none;
+}
+.edgeLabel text, .edgeLabel .label text { fill: var(--m-muted); font-size: 14px; }
+
+/* Clusters and subgraphs */
+.cluster rect, .cluster polygon {
+  fill: var(--rd-btn-bg, #eef2f6);
+  fill-opacity: 0.55;
+  stroke: var(--rd-line, rgba(0, 0, 0, 0.1));
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 3;
+}
+.cluster-label text, .cluster text { fill: var(--m-muted); font-weight: 500; }
+
+/* Sequence diagrams */
+rect.actor, .actor-box {
+  fill: var(--m-ground);
+  stroke: var(--m-neutral);
+  stroke-width: 1.5px;
+}
+text.actor, text.actor tspan { fill: var(--m-text); font-weight: 500; }
+.actor-line { stroke: var(--rd-line, rgba(0, 0, 0, 0.25)); stroke-width: 1.2px; }
+.note, rect.note {
+  fill: color-mix(in srgb, var(--rd-cat-1, #e69f00) 18%, var(--m-ground));
+  stroke: var(--rd-cat-1, #e69f00);
+  stroke-width: 1.5px;
+}
+.noteText, .noteText tspan { fill: var(--m-text); }
+.activation0, .activation1, .activation2 {
+  fill: color-mix(in srgb, var(--m-neutral) 25%, var(--m-ground));
+  stroke: var(--m-neutral);
+}
+.labelBox, .loopLine {
+  fill: var(--rd-btn-bg, #eef2f6);
+  stroke: var(--rd-text-faint, rgba(0, 0, 0, 0.4));
+}
+.labelText, .labelText tspan { fill: var(--m-text); }
+.sequenceNumber { fill: var(--m-ground); }
+#sequencenumber { fill: var(--m-line); }
+
+/* Invisible links (A ~~~ B) only steer layout */
+.edge-thickness-invisible { stroke-width: 0 !important; stroke: none; }
