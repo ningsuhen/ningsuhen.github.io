@@ -277,8 +277,10 @@ svg{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-wi
 `;
 
 // Page-level rules the header needs: the main site hides its page scrollbar (OverlayScrollbars), so standalone pages
-// hide theirs too; a visible 15px bar would take layout width and shift the centred navbar.
-const HEAD_CSS = FONT_FACE + "html{scrollbar-width:none}html::-webkit-scrollbar{display:none}";
+// hide theirs too; a visible 15px bar would take layout width and shift the centred navbar. overflow-y:scroll makes
+// <html> the scroll container so scrollbar-width:none applies to it — with the default overflow:visible the *viewport*
+// is the scroll container and its classic bar still reserves a gutter, shifting the centred card 7.5px off main's.
+const HEAD_CSS = FONT_FACE + "html{overflow-y:scroll;scrollbar-width:none}html::-webkit-scrollbar{display:none}";
 
 // Lucide (ISC) icon bodies, copied from @iconify-json/lucide. Inline so standalone pages make no icon requests;
 // stroke/fill come from the `svg` rule above.
