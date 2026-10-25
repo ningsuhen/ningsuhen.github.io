@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Decentralized email and office tools, instead of Google Workspace · created 2026-10-25 · updated 2026-10-25</title>
+<title>Decentralized email and office tools, instead of Google Workspace · created 2026-10-24 · updated 2026-10-25</title>
 <meta name="description" content="An idea, not a product: email and office tools where your data lives on your own machines, clouds only hold ciphertext, and collaboration still works.">
 <link rel="stylesheet" href="/design-system/research.css">
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
 .idea-fig > svg { width: 100%; height: auto; max-width: 42.5rem; margin-inline: auto; color: var(--rd-text-strong); }
-.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; } /* wide diagrams scroll inside their figure, never the page */
+.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
+.rd-tabbed .rd-tab__body { max-width: var(--rd-measure); } /* wide diagrams scroll inside their figure, never the page */
 .idea-box { fill: var(--rd-card-bg); stroke: currentColor; stroke-width: 1.5; }
 .idea-box--key { stroke: var(--rd-accent); }
 .idea-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
@@ -55,10 +56,12 @@
 .idea-verdict { min-height: 0; font-weight: 700; }
 .idea-verdict--ok { color: var(--rd-good); }
 .idea-verdict--no { color: var(--rd-bad); }
-.idea-30s { display: grid; gap: var(--rd-space-2); }
+.idea-30s { display: block; }
 .rd-stamp { white-space: nowrap; font-size: var(--rd-fs-sm); color: var(--rd-text-muted); font-weight: 400; }
-.idea-30s li { margin: 0; }
+.idea-30s li { margin: 0 0 var(--rd-space-1); }
 .idea-table td [data-p] { display: block; }
+.idea-gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--rd-space-2); }
+.idea-gloss > .rd-fold { margin: 0; }
 .idea-table td [data-p] + [data-p] { margin-top: var(--rd-space-1); }
 .js .idea-table td [data-p]:not(.is-on) { display: none; }
 </style>
@@ -107,7 +110,7 @@
 <main class="rd-tabbed rd-container--wide rd-prose">
 <header class="rd-hero">
   <p class="rd-eyebrow">Idea</p>
-  <h1>Decentralized email and office tools, instead of Google Workspace <span class="rd-stamp">· created 2026-10-25 · updated 2026-10-25</span></h1>
+  <h1>Decentralized email and office tools, instead of Google Workspace <span class="rd-stamp">· created 2026-10-24 · updated 2026-10-25</span></h1>
   <p class="rd-hero__lede">Keep the documents, mail and calendar on your own machines. Let the cloud store only ciphertext. Keep collaboration working anyway.</p>
   <p class="rd-hero__meta">
     <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Idea, not a product</span>
@@ -149,7 +152,7 @@
         <defs><marker id="ah-d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="95" y="80">Laptop A</text><text class="idea-t idea-t--s" x="95" y="100">local store and editor</text></g>
         <g data-s="2"><rect class="idea-tag" x="28" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="95" y="143">seals with document key</text></g>
-        <g data-s="3"><path class="idea-line" d="M180 120 H255" style="marker-end:url(#ah-d1)"/><text class="idea-t idea-t--s" x="217" y="104">signed</text><text class="idea-t idea-t--s" x="217" y="116">ops</text></g>
+        <g data-s="3"><path class="idea-line" d="M180 120 H255" style="marker-end:url(#ah-d1)"/><text class="idea-t idea-t--s" x="217" y="92">signed</text><text class="idea-t idea-t--s" x="217" y="104">ops</text></g>
         <g data-s="4"><rect class="idea-box" x="255" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="340" y="80">Sync relay</text><text class="idea-t idea-t--s" x="340" y="100">routes sealed ops</text><rect class="idea-tag" x="273" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="340" y="143">cannot open them</text></g>
         <g data-s="5"><path class="idea-line" d="M425 120 H500" style="marker-end:url(#ah-d1)"/><rect class="idea-box" x="500" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="585" y="80">Laptop B</text><text class="idea-t idea-t--s" x="585" y="100">opens and merges</text><rect class="idea-tag" x="518" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="585" y="143">holds the same key</text></g>
         <rect class="idea-box" x="255" y="220" width="170" height="70" rx="10"/><text class="idea-t idea-t--b" x="340" y="250">Encrypted backup</text><text class="idea-t idea-t--s" x="340" y="270">blobs, no keys</text>
@@ -211,7 +214,7 @@
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-key-round"/></svg></span><h2>Keys and sharing</h2></header>
     <p>The key structure has three layers. A person's identity keys open the copies of the document key that were addressed to them. The document key opens the content. When the group changes, the document key is replaced and wrapped again for the members who remain.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of sharing a document key">
-      <svg viewBox="0 0 680 340" role="img" aria-label="Three member key pairs at the top. A document key in the middle sends one wrapped copy up to each member. The document content below is encrypted under the document key. Removing a member creates a new key for the rest.">
+      <svg viewBox="0 0 680 346" role="img" aria-label="Three member key pairs at the top. A document key in the middle sends one wrapped copy up to each member. The document content below is encrypted under the document key. Removing a member creates a new key for the rest.">
         <defs><marker id="ah-d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="105" y="56">Alice</text><text class="idea-t idea-t--s" x="105" y="76">key pair on her device</text><path class="idea-line" d="M105 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="112" y="124">wrapped copy</text></g>
         <g data-s="3"><rect class="idea-box idea-box--key" x="245" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="340" y="56">Bob</text><text class="idea-t idea-t--s" x="340" y="76">key pair on his device</text><path class="idea-line" d="M340 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="124">wrapped copy</text></g>
@@ -220,7 +223,7 @@
         <g data-s="5"><text class="idea-t idea-t--s idea-t--l idea-t--accent" x="420" y="240">new epoch after a removal</text></g>
         <g data-s="1"><path class="idea-line" d="M340 200 V268" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="238">encrypts</text></g>
         <g data-s="5"><rect class="idea-box" x="110" y="270" width="460" height="50" rx="10"/><text class="idea-t idea-t--b" x="340" y="292">Document content</text><text class="idea-t idea-t--s" x="340" y="310">sealed under the current document key</text></g>
-        <text class="idea-t idea-t--s" x="340" y="336">Shown with three members. The same wrapping applies to any number.</text>
+        <text class="idea-t idea-t--s" x="340" y="342">Shown with three members. The same wrapping applies to any number.</text>
       </svg>
       <div class="idea-steps__ctrl">
         <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
@@ -255,14 +258,14 @@
     <p>Two people edit the same document while they are apart. Neither copy is the master. Each device keeps its own state. Changes are recorded as operations, and the merge rule is built so that the result does not depend on the order the operations arrive in.</p>
     <p>This is the job of a conflict-free replicated data type, or CRDT. For a list of lines, a common approach gives every inserted line a unique id and records which line it was inserted after. Deletes leave a marker instead of removing the line. With those rules, two replicas that have seen the same set of operations show the same list.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of offline edits merging">
-      <svg viewBox="0 0 680 290" role="img" aria-label="Replica A adds a line while offline and replica B changes line 1 while offline. Each sends sealed operations. Both end with the same merged list containing both edits.">
+      <svg viewBox="0 0 680 300" role="img" aria-label="Replica A adds a line while offline and replica B changes line 1 while offline. Each sends sealed operations. Both end with the same merged list containing both edits.">
         <defs><marker id="ah-d3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="30" width="200" height="120" rx="10"/><text class="idea-t idea-t--b" x="110" y="52">Replica A (offline)</text><text class="idea-t idea-t--s" x="110" y="70">added line 3</text><text class="idea-t idea-t--l" x="26" y="98">1  Draft</text><text class="idea-t idea-t--l" x="26" y="116">2  Budget</text><text class="idea-t idea-t--l idea-t--accent" x="26" y="134">3  Ana's note</text></g>
         <g data-s="2"><rect class="idea-box" x="470" y="30" width="200" height="120" rx="10"/><text class="idea-t idea-t--b" x="570" y="52">Replica B (offline)</text><text class="idea-t idea-t--s" x="570" y="70">edited line 1</text><text class="idea-t idea-t--l" x="486" y="98">1  Draft v2</text><text class="idea-t idea-t--l" x="486" y="116">2  Budget</text></g>
         <g data-s="3"><path class="idea-line" d="M110 150 V182 H230 V206" style="marker-end:url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="116" y="174">sealed ops from A</text></g>
         <g data-s="4"><path class="idea-line" d="M570 150 V182 H450 V206" style="marker-end:url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="456" y="174">sealed ops from B</text></g>
-        <g data-s="5"><rect class="idea-box idea-box--key" x="170" y="210" width="340" height="66" rx="10"/><text class="idea-t idea-t--b" x="340" y="234">Merged on both replicas</text><text class="idea-t idea-t--s" x="340" y="256">1 Draft v2   2 Budget   3 Ana's note</text></g>
-        <text class="idea-t idea-t--s" x="340" y="288">Neither edit was lost, and no one had to pick a winner by hand.</text>
+        <g data-s="5"><rect class="idea-box idea-box--key" x="170" y="210" width="340" height="66" rx="10"/><text class="idea-t idea-t--b" x="340" y="234">Merged on both replicas</text><text class="idea-t idea-t--s" x="340" y="256">1 Draft v2&#160;&#160;&#160;2 Budget&#160;&#160;&#160;3 Ana's note</text></g>
+        <text class="idea-t idea-t--s" x="340" y="294">Neither edit was lost, and no one had to pick a winner by hand.</text>
       </svg>
       <div class="idea-steps__ctrl">
         <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
@@ -417,6 +420,7 @@
   <section class="rd-tabsec" id="glossary">
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Glossary</h2></header>
     <p>Tap a term to open its definition. Nothing is stored, and nothing is sent anywhere.</p>
+    <div class="idea-gloss">
     <details class="rd-fold"><summary>Ciphertext</summary><p>Data after encryption. Without the key it looks like random bytes. Ciphertext can still reveal its length.</p></details>
     <details class="rd-fold"><summary>End-to-end encryption</summary><p>Only the two ends hold keys, so a server in between passes data it cannot read. The design works only if keys never reach the server.</p></details>
     <details class="rd-fold"><summary>Symmetric key</summary><p>One secret key that both encrypts and decrypts. AES-256 is the common choice. Two parties must already share the key.</p></details>
@@ -432,6 +436,7 @@
     <details class="rd-fold"><summary>Relay</summary><p>A server that stores and forwards messages between devices. In this design it handles ciphertext only.</p></details>
     <details class="rd-fold"><summary>Bridge</summary><p>A gateway between this design and classic email. At the bridge, a message is in plain text or re-sealed, so the bridge is a trusted hop.</p></details>
     <details class="rd-fold"><summary>Recovery key</summary><p>A secret the person keeps, used to open a backup. If it is lost and no device holds the keys, the backup cannot be opened.</p></details>
+      </div>
   </section>
 
   <section class="rd-tabsec" id="concepts">
@@ -953,6 +958,11 @@
       prev.disabled = cur <= 1;
       next.disabled = cur >= total;
       if (cur >= total && document.activeElement === next) prev.focus(); // bug 29: no focus on a disabled button
+      var lit = fig.querySelector('svg [data-s].is-on');
+      if (lit && fig.scrollWidth > fig.clientWidth + 1) {
+        var fr = fig.getBoundingClientRect(), lr = lit.getBoundingClientRect();
+        if (lr.left < fr.left || lr.right > fr.right) fig.scrollTo({ left: fig.scrollLeft + (lr.left - fr.left) - 16, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      }
     }
     prev.addEventListener('click', function () { if (cur > 1) { cur -= 1; render(); } });
     next.addEventListener('click', function () { if (cur < total) { cur += 1; render(); } });

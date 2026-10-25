@@ -1,6 +1,6 @@
 ---
 title: Office tools where the cloud cannot read your files
-published: 2026-10-25
+published: 2026-10-24
 description: "An idea, not a product: mail, documents and files kept on your own machines, with the cloud holding only encrypted copies. Here is the design and where it gets hard."
 tags: [Idea, Privacy, Collaboration, E2EE]
 category: Idea
