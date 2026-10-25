@@ -9,7 +9,8 @@
      The site build injects, on every page under public/, with no markup needed here:
        - the site navbar + light/dark toggle (mounted on <html> before <body>, so nothing here can offset it)
        - the "All rights reserved, no reuse without permission" footer
-     Do not add your own navbar, theme toggle or license footer. `pnpm check:standalone` fails the PR if either is missing,
+       - a Comments section (giscus, click to load) above the footer, on pages under research/, experiments/ and ideas/ (opt out: <meta name="rd-comments" content="off">)
+     Do not add your own navbar, theme toggle, comments or license footer. `pnpm check:standalone` fails the PR if either is missing,
      misplaced, or the page overflows horizontally at 1440px or 375px.
      Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Use only --rd-* colors.
      Width: .rd-container is the site's post column (54.5rem). Use .rd-container--wide (73rem = 1168px, the navbar's width) only if the content needs it.
