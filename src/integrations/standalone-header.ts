@@ -151,7 +151,7 @@ header{box-sizing:border-box;display:flex;align-items:center;gap:12px;height:72p
 a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer}
 .brand{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px;border-radius:8px;color:var(--prime);white-space:nowrap}
 .brand svg{width:28px;height:28px;fill:currentColor;stroke:none}
-nav{display:flex;align-items:center;gap:0;min-width:0;flex:0 1 auto;justify-content:flex-start;margin-left:34px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+nav{display:flex;align-items:center;gap:0;min-width:0;flex:0 1 auto;justify-content:flex-start;margin-left:88.8px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
 .brand{flex:none}
 .end{display:flex;flex:none;margin-left:auto;align-items:center}
@@ -184,7 +184,7 @@ button{width:44px;flex:none;justify-content:center;padding:0}
 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ni{display:none}
 :host(:not([data-theme=dark])) .moon,:host([data-theme=dark]) .sun{display:none}
-@media(max-width:560px){nav{margin-left:0}header{gap:6px;padding:0 8px;height:63px}nav a,.brand{padding:0 10px}}
+@media(max-width:560px){nav{margin-left:0}header{gap:6px;padding:0 8px;height:63px}nav a,.brand{padding:0 10px}.brand{margin-left:6px}}
 `;
 
 // Lucide (ISC) icon bodies, copied from @iconify-json/lucide. Inline so standalone pages make no icon requests;
@@ -195,7 +195,6 @@ const LUCIDE = {
 	user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
 	"flask-conical": '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/>',
 	microscope: '<path d="M6 18h8M3 22h18m-7 0a7 7 0 1 0 0-14h-1m-4 6h2m-2-2a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Zm3-6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>',
-	github: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5c.08-1.25-.27-2.48-1-3.5c.28-1.15.28-2.35 0-3.5c0 0-1 0-3 1.5c-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5c-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
 	sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
 	moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
 } as const;
@@ -207,7 +206,6 @@ const NAV_ICONS: Record<string, keyof typeof LUCIDE> = {
 	About: "user",
 	Experiments: "flask-conical",
 	Research: "microscope",
-	GitHub: "github",
 };
 
 const svgIcon = (name: keyof typeof LUCIDE, cls: string) =>
