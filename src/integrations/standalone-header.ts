@@ -101,6 +101,13 @@ function withThemeScript(html: string): string {
 	if (html.includes(THEME_MARKER)) return html;
 	const headEnd = html.search(/<\/head>/i);
 	if (headEnd !== -1) return html.slice(0, headEnd) + HEAD_THEME + html.slice(headEnd);
+	// No </head>: land after the page's charset/viewport metas, so they stay the first head elements.
+	const metas = [...html.slice(0, 4096).matchAll(/<meta[^>]+(?:charset=|name=["']viewport["'])[^>]*>/gi)];
+	if (metas.length) {
+		const last = metas[metas.length - 1];
+		const at = (last.index ?? 0) + last[0].length;
+		return html.slice(0, at) + HEAD_THEME + html.slice(at);
+	}
 	return html.replace(/<html(?=[\s>])[^>]*>/i, (tag) => tag + HEAD_THEME);
 }
 
@@ -110,14 +117,24 @@ function withThemeScript(html: string): string {
 function ensureHead(html: string, canonical: string): string {
 	const head = html.slice(0, 4096);
 	const doctype = html.match(/^\s*<!doctype[^>]*>/i)?.[0];
-	const missing: string[] = [];
-	if (!/<meta[^>]+charset=/i.test(head)) missing.push('<meta charset="utf-8">');
-	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) missing.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
-	if (!/<link[^>]+rel=["']icon["']/i.test(html)) missing.push(FAVICONS);
-	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) missing.push(`<link rel="canonical" href="${esc(canonical)}">`);
-	const rest = withHtmlLang(doctype ? html.slice(doctype.length) : html);
-	if (doctype) return doctype + missing.join("") + rest;
-	return "<!doctype html>" + missing.join("") + rest;
+	// charset and viewport must stay the first two head elements, so they go in front; icon and canonical go
+	// before </head>, after whatever the page already declares (a page's own charset is never pushed back).
+	const early: string[] = [];
+	const late: string[] = [];
+	if (!/<meta[^>]+charset=/i.test(head)) early.push('<meta charset="utf-8">');
+	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) early.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
+	if (!/<link[^>]+rel=["']icon["']/i.test(html)) late.push(FAVICONS);
+	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) late.push(`<link rel="canonical" href="${esc(canonical)}">`);
+	let rest = withHtmlLang(doctype ? html.slice(doctype.length) : html);
+	const headEnd = rest.search(/<\/head>/i);
+	if (headEnd !== -1) rest = rest.slice(0, headEnd) + late.join("") + rest.slice(headEnd);
+	else {
+		// No </head> (some exports have no head element): land after the page's own viewport or charset meta.
+		const meta = rest.match(/<meta[^>]+name=["']viewport["'][^>]*>/i) ?? rest.match(/<meta[^>]+charset=[^>]*>/i);
+		if (meta?.index !== undefined) rest = rest.slice(0, meta.index + meta[0].length) + late.join("") + rest.slice(meta.index + meta[0].length);
+		else early.push(...late);
+	}
+	return (doctype ?? "<!doctype html>") + early.join("") + rest;
 }
 
 // Some exports have no <html> start tag at all, and CSS/JS comments can mention <html lang>. Match real tags only.
