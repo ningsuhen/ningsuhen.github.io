@@ -18,14 +18,10 @@
 <link rel="stylesheet" href="/design-system/research.css">
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
-/* Stopgap until the shared token and grid pass (open PR #120) lands in research.css. Same values, this page only; delete
-   this block when it lands. Custom properties only, so no raw colour reaches a declaration. */
-:root { --rd-accent-ink: oklch(0.5 0.12 var(--hue)); --rd-good: oklch(0.48 0.12 160); --rd-warn: oklch(0.52 0.13 80); --rd-toc-text: rgba(0, 0, 0, 0.62); }
-:root[data-theme="dark"] { --rd-accent-ink: var(--rd-accent); }
-.rd-tabbed { padding-inline: var(--rd-space-4); }
-.rd-with-toc, .rd-tab__body { grid-template-columns: minmax(0, 1fr); }
-.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
-.rd-btn, .rd-chip:not([class*="rd-chip--"]), .rd-expnav a.is-active, .rd-tab__body a:not(.rd-btn) { color: var(--rd-accent-ink); }
+/* Contrast on this page's own grounds, until the shared pass on rail text and links lands: rail entries at 4.5:1+ in
+   light (the shared value is 3.8:1), and links in the tab body in the ink accent (the shared link colour is 4.18:1). */
+:root:not([data-theme="dark"]) { --rd-toc-text: rgba(0, 0, 0, 0.62); }
+.rd-tab__body a:not(.rd-btn) { color: var(--rd-accent-ink); }
 /* One block width for the whole tab body: the 872px post column. Text, figures, tables and folds share it. */
 .rd-tabbed .rd-tab__body { max-width: var(--rd-content-width); }
 .rd-tabbed .rd-tab__body :is(p, li) { max-width: none; }
