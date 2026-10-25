@@ -1,3 +1,16 @@
 {
-  "items": []
+  "items": [
+    {
+      "title": "Office tools where the cloud cannot read your files",
+      "summary": "An idea, not a product: mail, documents and files kept on your own machines, with the cloud holding only encrypted copies. Here is the design and where it gets hard.",
+      "href": "/ideas/decentralized-office/",
+      "post": "/posts/decentralized-office/",
+      "started": "2026-10-25",
+      "updated": "2026-10-25",
+      "status": "Live",
+      "tags": [
+        "Idea"
+      ]
+    }
+  ]
 }
