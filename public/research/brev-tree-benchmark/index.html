@@ -2,10 +2,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Brev Tree Benchmark · created 2026-10-16 · updated 2026-10-24</title>
 <style>
-/* research design system (ningsuhen.github.io/design-system), inlined verbatim */
 /*
  * Research design system: matches the ningsuhen.github.io theme (Fuwari-derived tokens).
  * Light by default; dark via <html data-theme="dark"> or <html class="dark">.
+ * Density: compact by default (technical papers, experiments, dashboards). Switch with
+ *   <html data-density="comfortable">  (essays, long-form reading, main-site feel)  or  data-density="dense"
+ * on <html>, or on any wrapper to change one block. Components read ONLY the density tokens for size and
+ * spacing (--rd-fs-*, --rd-lh, --rd-space-*, --rd-pad-*, --rd-gap-*, --rd-control-h, --rd-expnav-h, --rd-measure).
  * The site navbar (injected at build time) sets data-theme from localStorage "theme".
  * Source of truth: public/design-system/research.css. Inline it into self-contained reports.
  * Prefix: rd-  (never restyle bare elements outside .rd-prose, so it can't clash with a report's own CSS).
@@ -17,6 +20,7 @@
 	--rd-page-width: 75rem;
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
+	--rd-radius-md: 0.75rem;
 	--rd-radius-sm: 0.5rem;
 
 	/* Surface */
@@ -32,7 +36,7 @@
 	/* Text */
 	--rd-text: rgba(0, 0, 0, 0.75);
 	--rd-text-strong: oklch(0.25 0.02 var(--hue));
-	--rd-text-muted: rgba(0, 0, 0, 0.5);
+	--rd-text-muted: rgba(0, 0, 0, 0.6);
 	--rd-text-faint: rgba(0, 0, 0, 0.3);
 
 	/* Lines */
@@ -67,6 +71,96 @@
 	--rd-font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* ---- Density tokens. Compact is the default (the first block; no attribute needed). ---- */
+:root,
+[data-density="compact"] {
+	/* Type: sizes and line height. Nothing below 11px. */
+	--rd-fs-base: 0.875rem; /* 14px */
+	--rd-fs-sm: 0.8125rem; /* 13px */
+	--rd-fs-xs: 0.75rem; /* 12px */
+	--rd-fs-table: 0.8rem; /* 12.8px */
+	--rd-fs-lede: 0.95rem;
+	--rd-fs-h1: 1.6rem;
+	--rd-fs-h2: 1.2rem;
+	--rd-fs-h3: 1rem;
+	--rd-fs-stat: 1.6rem;
+	--rd-lh: 1.5;
+	/* Spacing: a 4px-based scale (space-1 = 4px). Semantic tokens below pick from it. */
+	--rd-space-1: 0.25rem;
+	--rd-space-2: 0.5rem;
+	--rd-space-3: 0.75rem;
+	--rd-space-4: 1rem;
+	--rd-space-5: 1.25rem;
+	--rd-space-6: 1.5rem;
+	--rd-pad-card: var(--rd-space-4);
+	--rd-pad-callout: 0.625rem 0.875rem;
+	--rd-pad-cell-y: 0.375rem; /* 6px */
+	--rd-pad-cell-x: 0.625rem; /* 10px */
+	--rd-pad-chip: 0.125rem 0.5rem;
+	--rd-gap-section: 2rem;
+	--rd-gap-block: var(--rd-space-3);
+	--rd-gap-para: var(--rd-space-2);
+	/* Controls: tap targets stay >= 24px (WCAG 2.2 target size). */
+	--rd-control-h: 1.75rem; /* 28px */
+	--rd-expnav-h: 2.5rem; /* 40px */
+	/* Prose line length, inside the 54.5rem column. */
+	--rd-measure: 75ch;
+}
+
+[data-density="comfortable"] {
+	--rd-fs-base: 1rem;
+	--rd-fs-sm: 0.875rem;
+	--rd-fs-xs: 0.8125rem;
+	--rd-fs-table: 0.9rem;
+	--rd-fs-lede: 1.125rem;
+	--rd-fs-h1: 2.25rem;
+	--rd-fs-h2: 1.5rem;
+	--rd-fs-h3: 1.2rem;
+	--rd-fs-stat: 2rem;
+	--rd-lh: 1.7; /* the main site's reading line height */
+	--rd-space-1: 0.5rem;
+	--rd-space-2: 0.75rem;
+	--rd-space-3: 1rem;
+	--rd-space-4: 1.25rem;
+	--rd-space-5: 1.5rem;
+	--rd-space-6: 2rem;
+	--rd-pad-card: 1.5rem;
+	--rd-pad-callout: 1rem 1.25rem;
+	--rd-pad-cell-y: 0.625rem;
+	--rd-pad-cell-x: 0.75rem;
+	--rd-pad-chip: 0.25rem 0.75rem;
+	--rd-gap-section: 3rem;
+	--rd-gap-block: 1.25rem;
+	--rd-gap-para: 0.875rem;
+	--rd-control-h: 2.5rem; /* 40px */
+	--rd-expnav-h: 3rem; /* 48px */
+	--rd-measure: 70ch;
+}
+
+[data-density="dense"] {
+	--rd-fs-base: 0.8125rem; /* 13px */
+	--rd-fs-sm: 0.75rem; /* 12px */
+	--rd-fs-xs: 0.6875rem; /* 11px, the floor */
+	--rd-fs-table: 0.75rem; /* 12px */
+	--rd-fs-lede: 0.875rem;
+	--rd-fs-h1: 1.4rem;
+	--rd-fs-h2: 1.05rem;
+	--rd-fs-h3: 0.9rem;
+	--rd-fs-stat: 1.35rem;
+	--rd-lh: 1.4;
+	--rd-pad-card: 0.75rem;
+	--rd-pad-callout: 0.5rem 0.75rem;
+	--rd-pad-cell-y: 0.25rem;
+	--rd-pad-cell-x: 0.5rem;
+	--rd-pad-chip: 0.0625rem 0.375rem;
+	--rd-gap-section: 1.25rem;
+	--rd-gap-block: 0.5rem;
+	--rd-gap-para: 0.375rem;
+	--rd-control-h: 1.5rem; /* 24px, the minimum */
+	--rd-expnav-h: 2.25rem; /* 36px */
+	--rd-measure: none;
+}
+
 :root[data-theme="dark"],
 :root.dark {
 	--rd-page-bg: oklch(0.16 0.014 var(--hue));
@@ -78,7 +172,7 @@
 	--rd-plain-hover: oklch(0.3 0.035 var(--hue));
 	--rd-text: rgba(255, 255, 255, 0.75);
 	--rd-text-strong: rgba(255, 255, 255, 0.92);
-	--rd-text-muted: rgba(255, 255, 255, 0.5);
+	--rd-text-muted: rgba(255, 255, 255, 0.6);
 	--rd-text-faint: rgba(255, 255, 255, 0.3);
 	--rd-line: rgba(255, 255, 255, 0.1);
 	--rd-line-soft: rgba(255, 255, 255, 0.08);
@@ -98,11 +192,8 @@
 	margin: 0;
 	background: var(--rd-page-bg);
 	color: var(--rd-text);
-	font: 400 16px/1.7 var(--rd-font);
+	font: 400 var(--rd-fs-base) / var(--rd-lh) var(--rd-font);
 	-webkit-font-smoothing: antialiased;
-}
-@media (max-width: 768px) {
-	.rd-body { font-size: 14px; }
 }
 
 /* Width contract: default = the main site's content column. Use --wide only when the content
@@ -112,7 +203,7 @@
 	width: 100%;
 	max-width: var(--rd-content-width);
 	margin: 0 auto;
-	padding: 1.5rem 1rem 4rem;
+	padding: var(--rd-gap-block) var(--rd-space-4) var(--rd-gap-section);
 }
 .rd-container--wide { max-width: var(--rd-page-width); }
 
@@ -120,8 +211,8 @@
 .rd-card {
 	background: var(--rd-card-bg);
 	border-radius: var(--rd-radius);
-	padding: 1.5rem;
-	margin: 1rem 0;
+	padding: var(--rd-pad-card);
+	margin: var(--rd-gap-block) 0;
 }
 .rd-card > :first-child { margin-top: 0; }
 .rd-card > :last-child { margin-bottom: 0; }
@@ -133,10 +224,10 @@
 	font-weight: 700;
 	line-height: 1.3;
 }
-.rd-prose h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+.rd-prose h1 { font-size: var(--rd-fs-h1); margin: 0 0 var(--rd-space-2); }
 .rd-prose h2 {
-	font-size: 1.5rem;
-	margin: 2.5rem 0 1rem;
+	font-size: var(--rd-fs-h2);
+	margin: var(--rd-gap-section) 0 var(--rd-gap-block);
 	padding-left: 0.9rem;
 	position: relative;
 }
@@ -150,8 +241,9 @@
 	border-radius: 0.125rem;
 	background: var(--rd-primary);
 }
-.rd-prose h3 { font-size: 1.2rem; margin: 1.75rem 0 0.5rem; }
-.rd-prose p { margin: 0.75rem 0; }
+.rd-prose h3 { font-size: var(--rd-fs-h3); margin: var(--rd-gap-block) 0 var(--rd-gap-para); }
+.rd-prose p { margin: var(--rd-gap-para) 0; max-width: var(--rd-measure); }
+.rd-prose li { max-width: var(--rd-measure); }
 .rd-prose a {
 	color: var(--rd-accent);
 	text-decoration: underline;
@@ -159,9 +251,9 @@
 	text-underline-offset: 3px;
 }
 .rd-prose a:hover { text-decoration-color: var(--rd-accent); }
-.rd-prose hr { border: 0; border-top: 1px dashed var(--rd-line); margin: 2rem 0; }
+.rd-prose hr { border: 0; border-top: 1px dashed var(--rd-line); margin: var(--rd-gap-section) 0; }
 .rd-prose blockquote {
-	margin: 1rem 0;
+	margin: var(--rd-gap-block) 0;
 	padding: 0.25rem 1rem;
 	border-left: 0.25rem solid var(--rd-primary);
 	background: var(--rd-btn-bg);
@@ -178,61 +270,79 @@
 .rd-prose pre {
 	background: var(--rd-codeblock-bg);
 	color: var(--rd-codeblock-fg);
-	padding: 1rem;
+	padding: var(--rd-pad-card);
 	border-radius: var(--rd-radius-sm);
 	overflow-x: auto;
 }
 .rd-prose pre code { background: none; color: inherit; padding: 0; }
 
-.rd-meta { color: var(--rd-text-muted); font-size: 0.875rem; }
+.rd-meta { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
 .rd-eyebrow {
 	color: var(--rd-text-muted);
-	font-size: 0.75rem;
+	font-size: var(--rd-fs-xs);
 	font-weight: 500;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 }
 
 /* ---- Tables (scroll inside the container, never widen the page) ---- */
-.rd-table-wrap { overflow-x: auto; margin: 1rem 0; border-radius: var(--rd-radius-sm); }
-.rd-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
-.rd-table th, .rd-table td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
+.rd-table-wrap { overflow-x: auto; margin: var(--rd-gap-block) 0; border-radius: var(--rd-radius-sm); scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.rd-table { width: 100%; border-collapse: collapse; font-size: var(--rd-fs-table); font-variant-numeric: tabular-nums; }
+.rd-table th, .rd-table td { padding: var(--rd-pad-cell-y) var(--rd-pad-cell-x); text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
 .rd-table th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); }
 .rd-table td.rd-num, .rd-table th.rd-num { text-align: right; }
+.rd-table code { font-size: 1em; } /* keep table code at the cell size: never below the 11px floor */
 .rd-table tr:hover td { background: var(--rd-plain-hover); }
 
 /* ---- Stat tiles: the headline-number pattern ---- */
-.rd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.75rem; margin: 1rem 0; }
-.rd-stat { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; }
-.rd-stat__value { font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--rd-accent); font-variant-numeric: tabular-nums; }
-.rd-stat__label { margin-top: 0.25rem; color: var(--rd-text-muted); font-size: 0.8rem; }
-.rd-stat__note { margin-top: 0.5rem; color: var(--rd-text-muted); font-size: 0.8rem; }
+.rd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr)); gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; }
+.rd-stat { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); border-top: 3px solid var(--rd-line); }
+.rd-stat--candidate { border-top-color: var(--rd-accent); }
+.rd-stat--reference { border-top-color: var(--rd-cat-3); }
+.rd-stat--reference .rd-stat__value { color: var(--rd-text-strong); }
+.rd-stat__value { font-size: var(--rd-fs-stat); font-weight: 700; line-height: 1.1; color: var(--rd-accent); font-variant-numeric: tabular-nums; }
+.rd-stat__label { margin-top: var(--rd-space-1); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-stat__note { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-stat__delta { display: flex; align-items: center; gap: 0.3rem; margin-top: var(--rd-space-2); font-size: var(--rd-fs-sm); font-weight: 600; color: var(--rd-text-muted); }
+.rd-stat__delta--good { color: var(--rd-good); }
+.rd-stat__delta--bad { color: var(--rd-bad); }
 
 /* ---- Callouts ---- */
-.rd-callout { border-left: 0.25rem solid var(--rd-primary); background: var(--rd-card-bg); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; padding: 0.75rem 1rem; margin: 1rem 0; }
+.rd-callout { border-left: 0.25rem solid var(--rd-primary); background: var(--rd-card-bg); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; padding: var(--rd-pad-callout); margin: var(--rd-gap-block) 0; }
 .rd-callout--good { border-color: var(--rd-good); }
 .rd-callout--warn { border-color: var(--rd-warn); }
 .rd-callout--bad { border-color: var(--rd-bad); }
-.rd-callout__title { font-weight: 700; color: var(--rd-text-strong); margin: 0 0 0.25rem; }
+.rd-callout__title { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-1); }
 
 /* ---- Figures & charts ---- */
-.rd-figure { margin: 1.5rem 0; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem; }
-.rd-figure img, .rd-figure svg { max-width: 100%; height: auto; display: block; border-radius: var(--rd-radius-sm); }
-.rd-figure figcaption { margin-top: 0.75rem; color: var(--rd-text-muted); font-size: 0.85rem; }
+.rd-figure { margin: var(--rd-gap-section) 0; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); }
+.rd-figure { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.rd-figure img { max-width: 100%; height: auto; display: block; border-radius: var(--rd-radius-sm); }
+/* Charts: never shrink below ~42rem (the 680-unit viewBox at 1:1). On a phone the figure scrolls sideways
+   inside itself, so axis and annotation text stays at the density size instead of scaling below 11px. */
+.rd-figure > svg { display: block; width: 100%; min-width: 42rem; height: auto; border-radius: var(--rd-radius-sm); }
+.rd-figure figcaption { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
 
 /* ---- Buttons / chips / nav tabs ---- */
 .rd-btn {
 	display: inline-flex; align-items: center; gap: 0.35rem;
-	padding: 0.45rem 0.9rem; border: 0; border-radius: var(--rd-radius-sm);
-	background: var(--rd-btn-bg); color: var(--rd-accent); font: 500 0.9rem var(--rd-font); cursor: pointer;
+	min-height: var(--rd-control-h); padding: 0 var(--rd-space-3);
+	border: 0; border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg); color: var(--rd-accent); font: 500 var(--rd-fs-sm) var(--rd-font); cursor: pointer;
 }
 .rd-btn:hover { background: var(--rd-btn-bg-hover); }
-.rd-chip { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 500; }
+.rd-chip {
+	display: inline-flex; align-items: center; gap: 0.3rem;
+	padding: var(--rd-pad-chip); border-radius: 999px;
+	background: var(--rd-btn-bg); color: var(--rd-accent);
+	font-size: var(--rd-fs-xs); font-weight: 500; line-height: 1.6;
+}
 .rd-chip--good { color: var(--rd-good); }
 .rd-chip--warn { color: var(--rd-warn); }
 .rd-chip--bad { color: var(--rd-bad); }
-.rd-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--rd-line); margin: 1rem 0; }
-.rd-tabs a { padding: 0.5rem 0.9rem; border-radius: var(--rd-radius-sm) var(--rd-radius-sm) 0 0; color: var(--rd-text); text-decoration: none; }
+.rd-chip--neutral { color: var(--rd-text-muted); }
+.rd-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--rd-line); margin: var(--rd-gap-block) 0; }
+.rd-tabs a { display: inline-flex; align-items: center; min-height: var(--rd-control-h); padding: 0 var(--rd-space-3); border-radius: var(--rd-radius-sm) var(--rd-radius-sm) 0 0; color: var(--rd-text); text-decoration: none; }
 .rd-tabs a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
 .rd-tabs a[aria-current="page"], .rd-tabs a.is-active { color: var(--rd-accent); box-shadow: inset 0 -2px 0 var(--rd-primary); }
 
@@ -253,20 +363,20 @@
    ====================================================================== */
 .rd-prose { counter-reset: rd-eq rd-fig rd-tbl rd-thm; }
 
-.rd-authors { color: var(--rd-text-strong); font-weight: 500; margin: 0.25rem 0; }
-.rd-affil { color: var(--rd-text-muted); font-size: 0.85rem; margin: 0 0 1rem; }
-.rd-abstract { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 1rem 1.25rem; margin: 1.5rem 0; font-size: 0.95rem; }
-.rd-abstract > .rd-abstract__title { font-weight: 700; color: var(--rd-text-strong); margin: 0 0 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.75rem; }
-.rd-keywords { color: var(--rd-text-muted); font-size: 0.85rem; margin-top: 0.5rem; }
+.rd-authors { color: var(--rd-text-strong); font-weight: 500; margin: var(--rd-space-1) 0; }
+.rd-affil { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); margin: 0 0 var(--rd-gap-block); }
+.rd-abstract { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-base); }
+.rd-abstract > .rd-abstract__title { font-weight: 700; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-1); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--rd-fs-xs); }
+.rd-keywords { color: var(--rd-text-muted); font-size: var(--rd-fs-xs); margin-top: var(--rd-space-2); }
 .rd-keywords strong { color: var(--rd-text); }
 
 /* Math */
 .rd-prose .katex { font-size: 1.05em; color: inherit; }
-.rd-prose .katex-display { margin: 0; overflow-x: auto; overflow-y: hidden; padding: 0.25rem 0; }
+.rd-prose .katex-display { margin: 0; overflow-x: auto; overflow-y: hidden; padding: var(--rd-space-1) 0; }
 .rd-prose .katex-display > .katex { white-space: nowrap; }
 
 /* Numbered display equation: <div class="rd-equation" id="eq-model"> <KaTeX display> </div> */
-.rd-equation { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; margin: 1rem 0; counter-increment: rd-eq; }
+.rd-equation { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--rd-space-4); margin: var(--rd-gap-block) 0; counter-increment: rd-eq; }
 .rd-equation::after { content: "(" counter(rd-eq) ")"; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
 .rd-equation--unnumbered { counter-increment: none; }
 .rd-equation--unnumbered::after { content: ""; }
@@ -274,7 +384,7 @@
 
 /* Theorem-like blocks share one counter, like amsthm with [theorem] numbering */
 .rd-theorem, .rd-lemma, .rd-proposition, .rd-definition, .rd-corollary {
-	margin: 1.25rem 0; padding: 0.75rem 1.1rem; background: var(--rd-card-bg);
+	margin: var(--rd-gap-block) 0; padding: var(--rd-pad-callout); background: var(--rd-card-bg);
 	border-left: 0.25rem solid var(--rd-primary); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0;
 	counter-increment: rd-thm;
 }
@@ -288,7 +398,7 @@
 }
 .rd-theorem, .rd-lemma, .rd-proposition, .rd-corollary { font-style: italic; }
 .rd-definition { font-style: normal; }
-.rd-proof { margin: 0.75rem 0 1.5rem; padding-right: 1.5rem; position: relative; }
+.rd-proof { margin: var(--rd-gap-block) 0 var(--rd-gap-section); padding-right: 1.5rem; position: relative; }
 .rd-proof::before { content: "Proof. "; font-style: italic; font-weight: 700; color: var(--rd-text-strong); }
 .rd-proof::after { content: "\220E"; position: absolute; right: 0; bottom: 0; color: var(--rd-text-muted); }
 .rd-remark::before { content: "Remark. "; font-style: italic; font-weight: 700; }
@@ -297,27 +407,240 @@
 .rd-figure { counter-increment: rd-fig; }
 .rd-figure figcaption::before { content: "Figure " counter(rd-fig) ". "; font-weight: 700; color: var(--rd-text-strong); }
 .rd-table-wrap { counter-increment: rd-tbl; }
-.rd-table caption { caption-side: top; text-align: left; padding: 0 0 0.5rem; color: var(--rd-text-muted); font-size: 0.85rem; }
+.rd-table caption { caption-side: top; text-align: left; padding: 0 0 var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
 .rd-table caption::before { content: "Table " counter(rd-tbl) ". "; font-weight: 700; color: var(--rd-text-strong); }
 .rd-ref { color: var(--rd-accent); }
 
 /* Citations and references: <a class="rd-cite" href="#ref-dean">[1]</a>; <ol class="rd-refs"><li id="ref-dean"> */
 .rd-cite { color: var(--rd-accent); text-decoration: none; white-space: nowrap; }
 .rd-cite:hover { text-decoration: underline; }
-.rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: 1rem 0; font-size: 0.9rem; }
-.rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: 0.5rem 0; }
+.rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-sm); }
+.rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: var(--rd-space-2) 0; }
 .rd-refs li::before { content: "[" counter(rd-ref) "]"; position: absolute; left: 0; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
 .rd-refs li:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
 .rd-refs .rd-doi { color: var(--rd-accent); word-break: break-all; }
 
 /* Footnotes: <sup class="rd-fn"><a href="#fn1" id="fnref1">1</a></sup> */
+sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 .rd-fn a { color: var(--rd-accent); text-decoration: none; }
-.rd-footnotes { border-top: 1px solid var(--rd-line); margin-top: 2rem; padding-top: 0.5rem; font-size: 0.85rem; color: var(--rd-text-muted); }
+.rd-footnotes { border-top: 1px solid var(--rd-line); margin-top: var(--rd-gap-section); padding-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
 .rd-footnotes li:target { background: var(--rd-btn-bg); }
 
 @media print {
 	.rd-equation, .rd-theorem, .rd-lemma, .rd-proposition, .rd-definition, .rd-corollary, .rd-proof { break-inside: avoid; }
 	.rd-prose a { color: inherit; text-decoration: none; }
+}
+
+/* ======================================================================
+   Icons: Lucide, from the inlined sprite (scripts/build-lucide-sprite.mjs writes the
+   <symbol>s between the lucide-sprite markers of each page). Stroke comes from this class.
+   <svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>
+   ====================================================================== */
+.rd-icon {
+	display: inline-block;
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.2em;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.rd-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, 100%), 1fr)); gap: var(--rd-space-2); list-style: none; padding: 0; margin: var(--rd-gap-block) 0; }
+.rd-icon-grid li { display: flex; align-items: center; gap: var(--rd-space-2); padding: var(--rd-space-2) var(--rd-space-3); background: var(--rd-card-bg); border-radius: var(--rd-radius-sm); font-size: var(--rd-fs-sm); color: var(--rd-text-muted); overflow-wrap: anywhere; }
+.rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
+
+/* ======================================================================
+   Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
+   ====================================================================== */
+/* Experiment navbar: full width, sticky at top: 0. The site bar above it (56px, not sticky) scrolls
+   away, so the two never overlap. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
+.rd-expnav {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	display: flex;
+	gap: 0.125rem;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade (phones) shows more */
+	min-height: var(--rd-expnav-h);
+	padding: 0 max(var(--rd-space-4), calc((100% - var(--rd-content-width)) / 2));
+	background: var(--rd-page-bg);
+	box-shadow: 0 1px 0 var(--rd-line);
+}
+.rd-expnav::-webkit-scrollbar { display: none; }
+.rd-expnav a {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex: none;
+	min-height: var(--rd-expnav-h);
+	padding: 0 var(--rd-space-3);
+	color: var(--rd-text-muted);
+	font-size: var(--rd-fs-sm);
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+	box-shadow: inset 0 -3px 0 transparent;
+	transition: color 0.15s ease, box-shadow 0.15s ease;
+}
+.rd-expnav a:hover { color: var(--rd-text-strong); }
+.rd-expnav a.is-active { color: var(--rd-accent); box-shadow: inset 0 -3px 0 var(--rd-accent); }
+.rd-expnav a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+.rd-expnav .rd-icon { color: var(--rd-accent); }
+@media (max-width: 600px) {
+	/* Phones: the track runs off the right edge; a short fade says so. */
+	.rd-expnav { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); padding-right: var(--rd-space-6); }
+}
+@media (prefers-reduced-motion: no-preference) {
+	html:has(.rd-expnav) { scroll-behavior: smooth; }
+}
+
+/* Tabs: the expnav with role="tablist" and role="tab" links; one <div class="rd-tabpanel" role="tabpanel">
+   per tab (the page's JS sets [hidden] on the inactive ones). Without JS every panel shows.
+   Each panel is a .rd-with-toc: the content, and an "On this page" .rd-toc. Wide (1340px+): the content keeps
+   the 54.5rem post column, centred exactly like the navbar, and the .rd-toc sits sticky in a 12rem column on the
+   right. Narrow: the .rd-toc is a disclosure above the content (open by default, so no-JS sees every link). */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-content-width); margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-tabpanel[hidden] { display: none; }
+.rd-with-toc > .rd-toc { margin: 0; }
+.rd-tab__body { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-toc { font-size: var(--rd-fs-sm); }
+.rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); color: var(--rd-text-muted); font-weight: 600; cursor: pointer; list-style: none; }
+.rd-toc summary::-webkit-details-marker { display: none; }
+.rd-toc summary .rd-icon { color: var(--rd-accent); }
+.rd-toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; }
+.rd-toc a { display: block; padding: 0.25rem 0.6rem; border-radius: var(--rd-radius-sm); color: var(--rd-text); text-decoration: none; }
+.rd-toc a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
+.rd-toc a[aria-current="location"] { color: var(--rd-accent); font-weight: 600; }
+.rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+@media (min-width: 1340px) {
+	.rd-tabbed { max-width: none; width: calc(var(--rd-content-width) + 13.5rem); margin: 0 0 0 calc(50% - var(--rd-content-width) / 2); padding: 1.5rem 0 4rem; }
+	.rd-with-toc { grid-template-columns: minmax(0, var(--rd-content-width)) minmax(0, 1fr); column-gap: 1.5rem; align-items: start; }
+	.rd-with-toc > .rd-toc { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--rd-expnav-h) + var(--rd-space-4)); max-height: calc(100vh - var(--rd-expnav-h) - 2rem); overflow-y: auto; }
+	.rd-with-toc > .rd-toc summary { display: none; }
+	.rd-with-toc > .rd-tab__body { grid-column: 1; grid-row: 1; }
+	.rd-toc ol { flex-direction: column; flex-wrap: nowrap; gap: 0; border-left: 1px solid var(--rd-line); }
+	.rd-toc a { padding: 0.3rem 0.75rem; margin-left: -1px; border-left: 2px solid transparent; border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; }
+	.rd-toc a[aria-current="location"] { border-left-color: var(--rd-accent); }
+}
+
+/* Section header: an icon badge, an h2, and an id that the navbar links to. */
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
+.rd-prose .rd-section__head h2::before { content: none; }
+.rd-section__icon {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 2em;
+	height: 2em;
+	font-size: var(--rd-fs-h2);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg);
+	color: var(--rd-accent);
+}
+.rd-section__icon .rd-icon { width: 1em; height: 1em; }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-expnav-h) + var(--rd-space-4)); }
+
+/* Hero: eyebrow, h1, lede, a row of status chips and meta. */
+.rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }
+.rd-prose .rd-hero h1 { font-size: var(--rd-fs-h1); line-height: 1.2; letter-spacing: -0.01em; margin: var(--rd-space-1) 0 var(--rd-space-2); overflow-wrap: break-word; }
+.rd-hero__lede { font-size: var(--rd-fs-lede); color: var(--rd-text); max-width: var(--rd-measure); margin: 0 0 var(--rd-space-3); }
+.rd-hero__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rd-space-2) var(--rd-space-3); margin: 0; color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+
+/* Brief: three boxes (question, status, how to read), each with a coloured top rule. */
+.rd-brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; }
+.rd-brief__item { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); border-top: 3px solid var(--rd-accent); }
+.rd-brief__item:nth-child(2) { border-top-color: var(--rd-cat-5); }
+.rd-brief__item:nth-child(3) { border-top-color: var(--rd-cat-3); }
+.rd-prose .rd-brief__item > :first-child { margin-top: 0; }
+.rd-prose .rd-brief__item p { margin: var(--rd-space-1) 0 0; font-size: var(--rd-fs-base); }
+
+/* Findings: the numbered conclusions, each with its evidence line. */
+.rd-findings { list-style: none; display: grid; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; padding: 0; }
+.rd-finding { display: grid; grid-template-columns: auto 1fr; gap: var(--rd-space-3); align-items: start; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); }
+.rd-finding__icon { display: grid; place-items: center; width: 2em; height: 2em; font-size: var(--rd-fs-base); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); color: var(--rd-accent); }
+.rd-finding--good .rd-finding__icon { color: var(--rd-good); }
+.rd-finding--warn .rd-finding__icon { color: var(--rd-warn); }
+.rd-finding--bad .rd-finding__icon { color: var(--rd-bad); }
+.rd-prose .rd-finding__title { margin: 0; font-size: var(--rd-fs-base); font-weight: 700; color: var(--rd-text-strong); }
+.rd-finding p { margin: var(--rd-space-1) 0 0; }
+.rd-prose .rd-finding__evidence { margin-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-finding__evidence .rd-icon { vertical-align: -0.25em; margin-right: 0.25rem; }
+
+/* Comparison tables: reference rows tinted, best values bold, long tables scroll with a sticky header. */
+.rd-table tr.rd-table__ref td { background: color-mix(in oklch, var(--rd-cat-3) 14%, transparent); }
+.rd-table td.rd-best { color: var(--rd-good); font-weight: 700; }
+.rd-table .rd-chip { font-size: var(--rd-fs-xs); }
+.rd-table-wrap--tall { max-height: 70vh; overflow: auto; }
+.rd-table-wrap--tall th { position: sticky; top: 0; z-index: 1; }
+
+/* Figures: axis and annotation text, legend swatches, and a source line under the caption. */
+.rd-figure svg text { fill: var(--rd-text-muted); font-family: var(--rd-font); font-size: var(--rd-fs-sm); }
+.rd-figure svg .rd-annot { fill: var(--rd-text-strong); font-weight: 600; }
+.rd-figure svg .rd-axis { stroke: var(--rd-text-muted); stroke-width: 1; }
+.rd-legend { display: flex; flex-wrap: wrap; gap: var(--rd-space-1) var(--rd-space-4); list-style: none; margin: var(--rd-space-3) 0 0; padding: 0; font-size: var(--rd-fs-sm); color: var(--rd-text-muted); }
+.rd-legend li { display: inline-flex; align-items: center; gap: var(--rd-space-2); }
+.rd-legend__swatch { flex: none; width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--c); }
+.rd-legend__swatch--square { border-radius: 2px; }
+.rd-source { display: flex; align-items: flex-start; gap: 0.4rem; margin: var(--rd-space-2) 0 0; font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-source .rd-icon { margin-top: 0.15em; }
+.rd-figure .rd-source { margin-top: var(--rd-space-2); }
+
+/* Experiment cards: one per run, coloured by status. */
+.rd-run { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-3) 0; border-left: 4px solid var(--rd-line); }
+.rd-run--pass { border-left-color: var(--rd-good); }
+.rd-run--fail { border-left-color: var(--rd-bad); }
+.rd-run--running { border-left-color: var(--rd-accent); }
+.rd-run--waiting { border-left-color: var(--rd-warn); }
+.rd-run__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rd-space-2) var(--rd-space-3); }
+.rd-prose .rd-run__title { flex: 1 1 12rem; min-width: 0; margin: 0; font-size: var(--rd-fs-base); font-weight: 700; color: var(--rd-text-strong); overflow-wrap: anywhere; }
+.rd-run__meta { color: var(--rd-text-muted); font-size: var(--rd-fs-xs); }
+.rd-run p { margin: var(--rd-space-2) 0 0; }
+
+/* Folds: collapsible detail under a card-style summary. Native details, no JS. */
+.rd-fold { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 0 var(--rd-pad-card); margin: var(--rd-gap-block) 0; }
+.rd-fold > summary { display: flex; align-items: center; gap: var(--rd-space-2); min-height: var(--rd-control-h); padding: var(--rd-space-2) 0; cursor: pointer; font-weight: 700; color: var(--rd-text-strong); list-style: none; }
+.rd-fold > summary::-webkit-details-marker { display: none; }
+.rd-fold > summary::after { content: ""; margin-left: auto; flex: none; width: 0.45em; height: 0.45em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.15s ease; }
+.rd-fold[open] > summary::after { transform: rotate(-135deg); }
+.rd-fold > :not(summary):last-child { margin-bottom: var(--rd-space-3); }
+
+/* Definitions: term and meaning in a two-column grid that stacks on phones. */
+.rd-defs { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: var(--rd-space-2) var(--rd-space-5); margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-base); }
+.rd-defs dt { font-weight: 700; color: var(--rd-text-strong); }
+.rd-defs dd { margin: 0; }
+@media (max-width: 480px) {
+	.rd-defs { grid-template-columns: 1fr; gap: var(--rd-space-1); }
+	.rd-defs dd { margin-bottom: var(--rd-space-3); }
+}
+
+/* Icon lists: bullets replaced by an icon. Use --warn for caveats. */
+.rd-icon-list { list-style: none; display: grid; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; padding: 0; }
+.rd-icon-list li { display: flex; align-items: flex-start; gap: var(--rd-space-2); }
+.rd-icon-list .rd-icon { margin-top: 0.2em; color: var(--rd-accent); }
+.rd-icon-list--warn .rd-icon { color: var(--rd-warn); }
+
+/* Density demo: a scoped wrapper with its own data-density, so two densities can sit side by side. */
+.rd-demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); gap: var(--rd-space-3); margin: var(--rd-gap-block) 0; }
+.rd-demo { padding: var(--rd-pad-card); border-radius: var(--rd-radius); background: var(--rd-page-bg); box-shadow: inset 0 0 0 1px var(--rd-line); font-size: var(--rd-fs-base); line-height: var(--rd-lh); color: var(--rd-text); min-width: 0; }
+.rd-demo > :first-child { margin-top: 0; }
+.rd-demo > :last-child { margin-bottom: 0; }
+.rd-demo .rd-card { padding: var(--rd-pad-card); margin: var(--rd-gap-block) 0; }
+.rd-demo .rd-card h3 { margin: 0 0 var(--rd-space-1); font-size: var(--rd-fs-h3); color: var(--rd-text-strong); }
+.rd-demo .rd-card p { margin: 0; }
+
+@media print {
+	.rd-expnav { display: none; }
+	.rd-findings, .rd-run, .rd-stat, .rd-brief__item { break-inside: avoid; }
+	/* Print every tab, not just the one on screen; the tab bar and "On this page" lists are screen-only. */
+	.rd-tabpanel[hidden] { display: block !important; }
+	.rd-toc { display: none; }
 }
 
 /* Report layer: maps this report's components onto the research design system (--rd-* tokens only).
@@ -387,14 +710,66 @@ ul.plain { margin: 0; padding-left: 1.25rem; display: grid; gap: 6px }
 .ci .pt { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--rd-text-strong) }
 a { color: var(--rd-accent) }
 :focus-visible { outline: 2px solid var(--rd-primary); outline-offset: 2px }
+
+/* Tabs (report layer): hypothesis filter and paging. JS adds the tools and hides cards past the first page;
+   with no JS every card shows. Print shows every card. */
+.rd-ledger-tools { display: grid; gap: 0.5rem; margin: 0 0 1rem; }
+.rd-ledger-tools[hidden] { display: none; }
+.rd-ledger-tools__row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.rd-ledger-tools button { font: inherit; font-size: 0.85rem; min-height: var(--rd-control-h); padding: 0 0.75rem; border: 0; border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-text); cursor: pointer; }
+.rd-ledger-tools button:hover { background: var(--rd-btn-bg-hover); }
+.rd-ledger-tools button[aria-pressed="true"] { color: var(--rd-accent); box-shadow: inset 0 0 0 2px var(--rd-accent); }
+.rd-ledger-tools__count { font-size: 0.85rem; color: var(--rd-text-muted); margin: 0; }
+.ledger .hyp.is-off { display: none; }
+#brainstorm { column-width: 20rem; column-gap: 2rem; }
+#brainstorm h3 { break-after: avoid; margin: 1rem 0 0.25rem; }
+#brainstorm > h3:first-child { margin-top: 0; }
+#brainstorm ul { break-inside: avoid; }
+.rd-tabbed .rd-toc { margin: 0; }
+@media print {
+  .ledger .hyp.is-off { display: grid; }
+  .rd-ledger-tools { display: none; }
+}
 </style>
 <script>try{var s=localStorage.getItem('theme');if(s==='dark'||s==='light')document.documentElement.setAttribute('data-theme',s)}catch(e){}</script>
 
-<main>
-  <header>
+<body class="rd-body">
+<nav class="rd-expnav" role="tablist" aria-label="Report sections">
+<a role="tab" id="tab-summary" href="#summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
+<a role="tab" id="tab-results" href="#results" aria-controls="results" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Results</a>
+<a role="tab" id="tab-scale" href="#scale" aria-controls="scale" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Scaling</a>
+<a role="tab" id="tab-comparisons" href="#comparisons" aria-controls="comparisons" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg>Comparisons</a>
+<a role="tab" id="tab-method" href="#method" aria-controls="method" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Method</a>
+<a role="tab" id="tab-hypotheses" href="#hypotheses" aria-controls="hypotheses" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg>Hypotheses</a>
+<a role="tab" id="tab-synthesis" href="#synthesis" aria-controls="synthesis" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Brainstorm</a>
+<a role="tab" id="tab-caveats" href="#caveats" aria-controls="caveats" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Caveats &amp; sources</a>
+</nav>
+<!-- lucide-sprite:start -->
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-activity" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+<symbol id="i-book-open" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v16m8.001-2A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2a5 5 0 0 1 4-2z"/></symbol>
+<symbol id="i-chart-column" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v16a2 2 0 0 0 2 2h16m-3-4V9m-5 8V5M8 17v-3"/></symbol>
+<symbol id="i-chart-spline" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 16c.5-2 1.5-7 4-7c2 0 2 3 4 3c2.5 0 4.5-5 5-7"/></g></symbol>
+<symbol id="i-circle-x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9l-6 6m0-6l6 6"/></g></symbol>
+<symbol id="i-file-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 9H8m8 4H8m8 4H8"/></g></symbol>
+<symbol id="i-flask-conical" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/></symbol>
+<symbol id="i-git-branch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/></g></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></g></symbol>
+<symbol id="i-lightbulb" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 14c.2-1 .7-1.7 1.5-2.5c1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5c.7.7 1.3 1.5 1.5 2.5m0 4h6m-5 4h4"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
+<symbol id="i-list-checks" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3v18m7-13l3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2a17 17 0 0 0 8 2h1M5 8l3 8a5 5 0 0 1-6 0zV7m2 14h10"/></g></symbol>
+<symbol id="i-table" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18"/></g></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4m0 4h.01"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 14.66V17a1 1 0 0 1-1 1a2 2 0 0 0-2 2v2m7-7.34V17a1 1 0 0 0 1 1a2 2 0 0 1 2 2v2m.916-12H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"/></g></symbol>
+</svg>
+<!-- lucide-sprite:end -->
+<main class="rd-tabbed rd-prose">
+
+  <header class="rd-hero">
     <span class="eyebrow">Brev research · experiment E1 · Banking77</span>
     <h1>Brev Tree Benchmark</h1>
-    <span class="stamp">· created 2026-10-16 · updated <span id="updated">2026-10-24</span> ·</span>
+    <span class="stamp">created 2026-10-16 · updated <span id="updated">2026-10-24</span></span>
     <p class="lede">Can a decision tree hold the knowledge, so a 400M encoder that reads only the criteria on its path matches a 27B model given a short instruction, without its latency? laya walks the tree on an RTX 4060; Qwen3.8-27B answers through a shared model gateway.</p>
     <div class="legend">
       <span class="who"><span class="dot laya"></span>laya + tree (RTX 4060, 8 GB)</span>
@@ -402,9 +777,19 @@ a { color: var(--rd-accent) }
       <span class="who"><span class="dot small"></span>Qwen3-4B, Q4_K_M (llama.cpp, same RTX 4060)</span>
     </div>
   </header>
-
-  <section aria-labelledby="h-top">
-    <h2 id="h-top">Top results</h2>
+  <div class="rd-tabpanel rd-with-toc" id="summary" role="tabpanel" aria-labelledby="tab-summary">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-top">Top results</a></li>
+          <li><a href="#h-fail">What did not work</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-top" aria-labelledby="h-top-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-trophy"/></svg></span><h2 id="h-top-t">Top results</h2></header>
     <p>Goal: can a small model plus a tree or router match a large LLM on accuracy without losing speed? Short answer: yes for the headline pipeline, and a cheap trained head in front of it improves both accuracy and cost. Learning new classes from a few examples is the weak part. H5, 196 intents, 1,960 sealed rows (1,728 after removing near-duplicates where stated); 4B = Qwen3-4B-Instruct Q4_K_M on an 8 GB GPU. Curated summary, refreshed by hand; the ledger below is the source of truth.</p>
     <div class="scroll"><table>
       <tr><th>#</th><th>Hypothesis</th><th>Result</th><th class="num">Accuracy</th><th class="num">p50 / p95</th><th>Status</th></tr>
@@ -415,7 +800,9 @@ a { color: var(--rd-accent) }
       <tr><td>5</td><td><span class="armid">H89</span><span class="sub">Append-only prefix</span></td><td>Appending a rule invalidates 2% of the cache; inserting mid-prompt 51 to 99%</td><td class="num">n/a</td><td class="num">589 ms vs 5.5 to 9.4 s</td><td><span class="chip supported">supported</span></td></tr>
       <tr><td>6</td><td><span class="armid">H104</span><span class="sub">How many rule tokens a 4B can carry</span></td><td>About 40k tokens on this card; accuracy falls 2.7 pts and latency rises 1.6x; 60k spills VRAM and is 5x slower</td><td class="num">83.6% to 80.8%</td><td class="num">193 to 307 ms</td><td><span class="chip refuted">refuted</span><span class="sub">for bigger prefixes</span></td></tr>
     </table></div>
-    <h3>What did not work</h3>
+  </section>
+  <section class="rd-tabsec" id="h-fail" aria-labelledby="h-fail-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-x"/></svg></span><h2 id="h-fail-t">What did not work</h2></header>
     <ul class="plain">
       <li><strong>Self-improving router (H87, refuted).</strong> With a deployable escalation rule it escalates 83 to 94% of queries and reaches about 50% top-1 after 1,500 queries (5 examples per class, char n-grams). Earlier 13 to 17% escalation numbers used the gold label and are void.</li>
       <li><strong>Laya embeddings as the few-shot head.</strong> 46.7% vs 62.1% for char n-grams at 5 examples per class; worse than TF-IDF at every training size (H108).</li>
@@ -425,27 +812,27 @@ a { color: var(--rd-accent) }
       <li><strong>Poisoned teacher labels (H101/H102).</strong> Three seeds. At 10% wrong labels the router loses nothing outside noise; at 30% the stream answers lose about 6 points because served labels are wrong, while held-out router accuracy moves little. Neither gate helps: they catch about 0 of the injected labels. Injected errors are consistent, so a three-sample check cannot see them. Whether disagreement flags real 27B mistakes is still untested.</li>
     </ul>
   </section>
+  </div>
+  </div>
 
-  <section aria-labelledby="h-progress">
-    <h2 id="h-progress">Run progress</h2>
-    <div class="progress" id="progress"></div>
-  </section>
-
-  <section aria-labelledby="h-board">
-    <h2 id="h-board">Scoreboard</h2>
+  <div class="rd-tabpanel rd-with-toc" id="results" role="tabpanel" aria-labelledby="tab-results">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-board">Scoreboard</a></li>
+          <li><a href="#h-plot">Accuracy against latency</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-board" aria-labelledby="h-board-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg></span><h2 id="h-board-t">Scoreboard</h2></header>
     <p>3,080 test messages, 40 per intent, none seen by the tree's author. Latency is wall time per message at batch 1, measured from the client: laya on the GPU host, the 27B over HTTP.</p>
-    <div class="scroll"><table id="board"></table></div>
+    <div class="scroll rd-table-wrap--tall"><table id="board"></table></div>
   </section>
-
-  <section aria-labelledby="h-scale">
-    <h2 id="h-scale">Scaling to 196 intents</h2>
-    <p>H5. Banking77 plus CLINC150 without its banking and credit-card domains (and its duplicate exchange_rate): 196 intents, 10 test messages each. Each intent now carries a rich routing rule of up to 70 words, about 18k tokens across all of them. The LLMs either read all of it on every message or read only the rules of laya's shortlist.</p>
-    <div class="scroll"><table id="scaling"></table></div>
-    <div class="scroll"><table id="board-h5"></table></div>
-  </section>
-
-  <section aria-labelledby="h-plot">
-    <h2 id="h-plot">Accuracy against latency</h2>
+  <section class="rd-tabsec" id="h-plot" aria-labelledby="h-plot-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-spline"/></svg></span><h2 id="h-plot-t">Accuracy against latency</h2></header>
     <div class="grid2">
       <figure><svg id="scatter" viewBox="0 0 480 300" role="img" aria-label="Accuracy against median latency per arm"></svg>
         <figcaption>Each arm at its median latency. Up and to the left is better.</figcaption></figure>
@@ -453,41 +840,143 @@ a { color: var(--rd-accent) }
         <figcaption>Hold the lowest-margin walks and hand them to a resolver. Oracle is the ceiling; the 27B lines use its real answers on the held messages.</figcaption></figure>
     </div>
   </section>
+  </div>
+  </div>
 
-  <section aria-labelledby="h-ledger">
-    <h2 id="h-ledger">Hypotheses</h2>
-    <p>From the brainstorm rounds. Each card carries the test that would falsify it, and its status moves as runs land. Killed cards were dropped by a round without a run; the card says why.</p>
-    <div class="ledger" id="ledger"></div>
+  <div class="rd-tabpanel rd-with-toc" id="scale" role="tabpanel" aria-labelledby="tab-scale">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-scale">Scaling to 196 intents</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-scale" aria-labelledby="h-scale-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2 id="h-scale-t">Scaling to 196 intents</h2></header>
+    <p>H5. Banking77 plus CLINC150 without its banking and credit-card domains (and its duplicate exchange_rate): 196 intents, 10 test messages each. Each intent now carries a rich routing rule of up to 70 words, about 18k tokens across all of them. The LLMs either read all of it on every message or read only the rules of laya's shortlist.</p>
+    <div class="scroll rd-table-wrap--tall"><table id="scaling"></table></div>
+    <div class="scroll rd-table-wrap--tall"><table id="board-h5"></table></div>
   </section>
+  </div>
+  </div>
 
-  <section aria-labelledby="h-diffs">
-    <h2 id="h-diffs">Paired differences</h2>
+  <div class="rd-tabpanel rd-with-toc" id="comparisons" role="tabpanel" aria-labelledby="tab-comparisons">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-diffs">Paired differences</a></li>
+          <li><a href="#h-tree">Inside the walk</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-diffs" aria-labelledby="h-diffs-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg></span><h2 id="h-diffs-t">Paired differences</h2></header>
     <p>Same messages on both sides; 95% interval from 2,000 paired bootstrap resamples. Positive means the first arm is more accurate.</p>
-    <div class="scroll"><table id="diffs"></table></div>
+    <div class="scroll rd-table-wrap--tall"><table id="diffs"></table></div>
   </section>
-
-  <section aria-labelledby="h-tree">
-    <h2 id="h-tree">Inside the walk</h2>
+  <section class="rd-tabsec" id="h-tree" aria-labelledby="h-tree-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-branch"/></svg></span><h2 id="h-tree-t">Inside the walk</h2></header>
     <div class="grid2">
       <div class="scroll"><table id="policies"></table></div>
       <div class="scroll"><table id="levels"></table></div>
     </div>
   </section>
+  </div>
+  </div>
 
-  <section aria-labelledby="h-method">
-    <h2 id="h-method">Method</h2>
+  <div class="rd-tabpanel rd-with-toc" id="method" role="tabpanel" aria-labelledby="tab-method">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#m-data">Data</a></li>
+          <li><a href="#m-tree">Tree</a></li>
+          <li><a href="#m-laya">laya arms</a></li>
+          <li><a href="#m-27b">27B arms</a></li>
+          <li><a href="#m-ablations">Ablations</a></li>
+          <li><a href="#h-progress">Run progress</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-method" aria-labelledby="h-method-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg></span><h2 id="h-method-t">Method</h2></header>
     <ul class="plain">
-      <li><b>Data.</b> Banking77 (PolyAI): 77 intents with confusable siblings, such as <i>card_arrival</i> against <i>card_delivery_estimate</i>. Train 10,003, test 3,080.</li>
-      <li><b>Tree.</b> Authored by gpt-oss-120b, a third model, from the 77 label names and 5 seeded train examples each, in two asks: group the labels, then write each node's question and one criterion of at most 12 words per option. It was frozen before any test message was scored: 7 groups, 23 question nodes, depth 2 to 3, fanout at most 8. claude-sonnet-5-5 was the first choice of author; its API quota had run out.</li>
-      <li><b>laya arms.</b> laya-typed-decisions (laya 0.3.28, CUDA, its own mixed precision). Every node was scored for every message once, and greedy, beam and hold policies were replayed from those posteriors. Latency comes from 300 real greedy walks at batch 1.</li>
-      <li><b>27B arms.</b> <code>the 27B model</code> (Qwen3.8-27B on vLLM, thinking off, temperature 0, at most 32 tokens out). The knowledge sits in the system message so the prefix cache can reuse it. Accuracy ran 4 in flight; latency is a separate pass of 300 calls, one at a time.</li>
-      <li><b>Ablations.</b> <i>names</i> drops every criterion. <i>shuf</i> gives each option a sibling's criterion. <i>opaque</i> replaces every name with an id such as <code>o014</code>, so only the criteria carry meaning, on both sides.</li>
+      <li id="m-data"><b>Data.</b> Banking77 (PolyAI): 77 intents with confusable siblings, such as <i>card_arrival</i> against <i>card_delivery_estimate</i>. Train 10,003, test 3,080.</li>
+      <li id="m-tree"><b>Tree.</b> Authored by gpt-oss-120b, a third model, from the 77 label names and 5 seeded train examples each, in two asks: group the labels, then write each node's question and one criterion of at most 12 words per option. It was frozen before any test message was scored: 7 groups, 23 question nodes, depth 2 to 3, fanout at most 8. claude-sonnet-5-5 was the first choice of author; its API quota had run out.</li>
+      <li id="m-laya"><b>laya arms.</b> laya-typed-decisions (laya 0.3.28, CUDA, its own mixed precision). Every node was scored for every message once, and greedy, beam and hold policies were replayed from those posteriors. Latency comes from 300 real greedy walks at batch 1.</li>
+      <li id="m-27b"><b>27B arms.</b> <code>the 27B model</code> (Qwen3.8-27B on vLLM, thinking off, temperature 0, at most 32 tokens out). The knowledge sits in the system message so the prefix cache can reuse it. Accuracy ran 4 in flight; latency is a separate pass of 300 calls, one at a time.</li>
+      <li id="m-ablations"><b>Ablations.</b> <i>names</i> drops every criterion. <i>shuf</i> gives each option a sibling's criterion. <i>opaque</i> replaces every name with an id such as <code>o014</code>, so only the criteria carry meaning, on both sides.</li>
     </ul>
+  </section>
+  <section class="rd-tabsec" id="h-progress" aria-labelledby="h-progress-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-activity"/></svg></span><h2 id="h-progress-t">Run progress</h2></header>
+    <div class="progress" id="progress"></div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="hypotheses" role="tabpanel" aria-labelledby="tab-hypotheses">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-ledger">Hypotheses</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-ledger" aria-labelledby="h-ledger-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2 id="h-ledger-t">Hypotheses</h2></header>
+    <p>From the brainstorm rounds. Each card carries the test that would falsify it, and its status moves as runs land. Killed cards were dropped by a round without a run; the card says why.</p>
+    <div class="rd-ledger-tools" id="ledger-tools" hidden>
+      <div class="rd-ledger-tools__row" id="ledger-filters" role="group" aria-label="Filter by status"></div>
+      <p class="rd-ledger-tools__count" id="ledger-count" aria-live="polite"></p>
+      <div class="rd-ledger-tools__row"><button type="button" id="ledger-more">Show 8 more</button><button type="button" id="ledger-all">Show all</button></div>
+    </div>
+    <div class="ledger" id="ledger"></div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="synthesis" role="tabpanel" aria-labelledby="tab-synthesis">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-bs">Brainstorm synthesis</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-bs" aria-labelledby="h-bs-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg></span><h2 id="h-bs-t">Brainstorm synthesis</h2></header>
+    <div id="brainstorm"></div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="caveats" role="tabpanel" aria-labelledby="tab-caveats">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#h-caveats">Caveats</a></li>
+          <li><a href="#h-rw">Related work</a></li>
+        </ol>
+      </details>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-caveats" aria-labelledby="h-caveats-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="h-caveats-t">Caveats</h2></header>
     <p class="note">Caveats. Banking77 is public, so both models may have seen it in training; the opaque arms are the control for that. The 27B is a shared endpoint, so its latency includes queueing behind other work. Every 4B number comes from llama.cpp on the same RTX 4060 as laya. An earlier run on the Mac was too loaded to time (load average 77) and is not shown. laya in the G- arms runs in fp16, because fp32 does not fit beside the 4B. laya's latency excludes network, because it runs on the machine that asks.</p>
   </section>
-
-  <section aria-labelledby="h-rw">
-    <h2 id="h-rw">Related work</h2>
+  <section class="rd-tabsec" id="h-rw" aria-labelledby="h-rw-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2 id="h-rw-t">Related work</h2></header>
     <p>Found by web search on 2026-10-17 from abstracts and secondary summaries; the papers themselves were not read, so check a claim before leaning on it.</p>
     <ul class="plain">
       <li><a href="https://arxiv.org/pdf/2309.10954">In-Context Learning for Text Classification with Many Labels</a> (Milios et al.): a dense retriever shortlists the labels and examples shown to the LLM, on Banking77, HWU64 and CLINC150. This is our shortlist cascade (H15, H18, H20). We add that a cached flat prompt of written rules beats it while the whole base fits.</li>
@@ -507,12 +996,10 @@ a { color: var(--rd-accent) }
     </ul>
     <p class="note">What none of these covers, as far as the abstracts show: small-model-with-written-rules against a larger model's short prompt at matched latency, token-budgeted fanout per reader, and leaves as knowledge chunks (H30, H31).</p>
   </section>
-
-  <section aria-labelledby="h-bs">
-    <h2 id="h-bs">Brainstorm synthesis</h2>
-    <div id="brainstorm"></div>
-  </section>
+  </div>
+  </div>
 </main>
+
 
 <script>
 const R = {
@@ -2422,4 +2909,162 @@ function brainstorm() {
 }
 
 progress(); board(); scaling(); scatter(); frontier(); ledger(); diffs(); inside(); brainstorm();
+</script>
+<script>
+// Tabs: one panel per tab, the tab id in the URL hash (one history entry per tab change), deep links to any
+// section (#h-board opens its tab and scrolls to it), keyboard (arrows, Home, End), and an "On this page" list per tab.
+// Also the hypothesis filter. Progressive: with no JS every panel and every card shows.
+(function () {
+  // History policy: a tab click pushes one entry (#<tab>); a TOC link is a native fragment navigation (one entry);
+  // Back/Forward (popstate, hashchange) and bfcache restore (pageshow persisted) re-sync the tab from the hash
+  // without writing history. Guarded so the init can never run twice on one document.
+  if (window.__breviewTabs) return;
+  window.__breviewTabs = true;
+  var bar = document.querySelector('.rd-expnav[role="tablist"]');
+  if (!bar) return;
+  var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
+  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+  var wide = window.matchMedia('(min-width: 1340px)');
+  var navH = function () { return bar.offsetHeight; };
+
+  function tabOf(id) {
+    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('aria-controls') === id) return i;
+    return -1;
+  }
+  function panelOf(el) {
+    for (var i = 0; i < panels.length; i++) if (panels[i] && panels[i].contains(el)) return i;
+    return -1;
+  }
+  function show(i) {
+    tabs.forEach(function (t, j) {
+      var on = j === i;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.setAttribute('tabindex', on ? '0' : '-1');
+      t.classList.toggle('is-active', on);
+      panels[j].hidden = !on;
+    });
+    spy();
+  }
+  function go(i, push) {
+    show(i);
+    if (push) {
+      var hash = '#' + tabs[i].getAttribute('aria-controls');
+      if (location.hash !== hash) history.pushState(null, '', hash);
+    }
+  }
+  function sync() {
+    var h = decodeURIComponent(location.hash.slice(1));
+    var t = tabOf(h);
+    if (t >= 0) return show(t);
+    var el = h ? document.getElementById(h) : null;
+    var p = el ? panelOf(el) : -1;
+    if (p >= 0) {
+      show(p);
+      el.scrollIntoView();
+      return;
+    }
+    show(0);
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (t.getAttribute('aria-selected') === 'true') return;
+      go(i, true);
+      var top = panels[i].getBoundingClientRect().top;
+      if (top < navH()) window.scrollTo(0, window.scrollY + top - navH() - 8);
+    });
+  });
+  bar.addEventListener('keydown', function (e) {
+    var i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    var n = null;
+    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === 'Home') n = 0;
+    else if (e.key === 'End') n = tabs.length - 1;
+    else if (e.key === ' ') { e.preventDefault(); tabs[i].click(); return; }
+    if (n === null) return;
+    e.preventDefault();
+    tabs[n].focus();
+    go(n, true);
+  });
+  window.addEventListener('popstate', sync);
+  window.addEventListener('hashchange', sync);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) sync(); });
+
+  // "On this page": the details list is open on wide screens (its summary is hidden there), collapsible on narrow.
+  function openToc() {
+    document.querySelectorAll('.rd-toc details').forEach(function (d) { if (wide.matches) d.open = true; });
+  }
+  wide.addEventListener('change', openToc);
+  openToc();
+
+  // Scroll-spy for the active tab's "On this page" list.
+  var ticking = false;
+  function spy() {
+    ticking = false;
+    var i = panels.findIndex(function (p) { return !p.hidden; });
+    var links = panels[i] ? panels[i].querySelectorAll('.rd-toc a') : [];
+    var cur = links[0];
+    Array.prototype.forEach.call(links, function (a) {
+      var s = document.getElementById(a.getAttribute('href').slice(1));
+      if (s && s.getBoundingClientRect().top <= navH() + 24) cur = a;
+    });
+    Array.prototype.forEach.call(links, function (a) {
+      if (a === cur) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+
+  // Hypothesis filter and paging (the ledger cards are rendered by the page script above).
+  var list = document.getElementById('ledger');
+  var tools = document.getElementById('ledger-tools');
+  if (list && tools) {
+    var cards = Array.prototype.slice.call(list.querySelectorAll('.hyp'));
+    var PAGE = 8;
+    var status = 'all';
+    var shown = PAGE;
+    var filters = document.getElementById('ledger-filters');
+    var count = document.getElementById('ledger-count');
+    var more = document.getElementById('ledger-more');
+    var all = document.getElementById('ledger-all');
+    var buttons = [];
+    var tally = {};
+    cards.forEach(function (c) {
+      var chip = c.querySelector('.chip');
+      c.dataset.status = chip ? chip.textContent.trim() : 'pending';
+      tally[c.dataset.status] = (tally[c.dataset.status] || 0) + 1;
+    });
+    function pick(value, label) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.addEventListener('click', function () { status = value; shown = PAGE; render(); });
+      filters.appendChild(b);
+      buttons.push([value, b]);
+    }
+    pick('all', 'All (' + cards.length + ')');
+    Object.keys(tally).sort().forEach(function (s) { pick(s, s.charAt(0).toUpperCase() + s.slice(1) + ' (' + tally[s] + ')'); });
+    function matches() { return cards.filter(function (c) { return status === 'all' || c.dataset.status === status; }); }
+    function render() {
+      var m = matches();
+      cards.forEach(function (c) { c.classList.add('is-off'); });
+      m.slice(0, shown).forEach(function (c) { c.classList.remove('is-off'); });
+      var left = Math.max(0, m.length - shown);
+      count.textContent = 'Showing ' + Math.min(shown, m.length) + ' of ' + m.length + ' hypotheses';
+      more.hidden = left === 0;
+      all.hidden = left === 0;
+      more.textContent = 'Show ' + Math.min(PAGE, left) + ' more';
+      buttons.forEach(function (pair) { pair[1].setAttribute('aria-pressed', pair[0] === status ? 'true' : 'false'); });
+    }
+    more.addEventListener('click', function () { shown += PAGE; render(); });
+    all.addEventListener('click', function () { shown = Infinity; render(); });
+    tools.hidden = false;
+    render();
+  }
+
+  sync();
+})();
 </script>

@@ -495,6 +495,36 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 	html:has(.rd-expnav) { scroll-behavior: smooth; }
 }
 
+/* Tabs: the expnav with role="tablist" and role="tab" links; one <div class="rd-tabpanel" role="tabpanel">
+   per tab (the page's JS sets [hidden] on the inactive ones). Without JS every panel shows.
+   Each panel is a .rd-with-toc: the content, and an "On this page" .rd-toc. Wide (1340px+): the content keeps
+   the 54.5rem post column, centred exactly like the navbar, and the .rd-toc sits sticky in a 12rem column on the
+   right. Narrow: the .rd-toc is a disclosure above the content (open by default, so no-JS sees every link). */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-content-width); margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-tabpanel[hidden] { display: none; }
+.rd-with-toc > .rd-toc { margin: 0; }
+.rd-tab__body { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-toc { font-size: var(--rd-fs-sm); }
+.rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); color: var(--rd-text-muted); font-weight: 600; cursor: pointer; list-style: none; }
+.rd-toc summary::-webkit-details-marker { display: none; }
+.rd-toc summary .rd-icon { color: var(--rd-accent); }
+.rd-toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; }
+.rd-toc a { display: block; padding: 0.25rem 0.6rem; border-radius: var(--rd-radius-sm); color: var(--rd-text); text-decoration: none; }
+.rd-toc a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
+.rd-toc a[aria-current="location"] { color: var(--rd-accent); font-weight: 600; }
+.rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+@media (min-width: 1340px) {
+	.rd-tabbed { max-width: none; width: calc(var(--rd-content-width) + 13.5rem); margin: 0 0 0 calc(50% - var(--rd-content-width) / 2); padding: 1.5rem 0 4rem; }
+	.rd-with-toc { grid-template-columns: minmax(0, var(--rd-content-width)) minmax(0, 1fr); column-gap: 1.5rem; align-items: start; }
+	.rd-with-toc > .rd-toc { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--rd-expnav-h) + var(--rd-space-4)); max-height: calc(100vh - var(--rd-expnav-h) - 2rem); overflow-y: auto; }
+	.rd-with-toc > .rd-toc summary { display: none; }
+	.rd-with-toc > .rd-tab__body { grid-column: 1; grid-row: 1; }
+	.rd-toc ol { flex-direction: column; flex-wrap: nowrap; gap: 0; border-left: 1px solid var(--rd-line); }
+	.rd-toc a { padding: 0.3rem 0.75rem; margin-left: -1px; border-left: 2px solid transparent; border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; }
+	.rd-toc a[aria-current="location"] { border-left-color: var(--rd-accent); }
+}
+
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
 .rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-expnav-h) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
@@ -604,4 +634,7 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 @media print {
 	.rd-expnav { display: none; }
 	.rd-findings, .rd-run, .rd-stat, .rd-brief__item { break-inside: avoid; }
+	/* Print every tab, not just the one on screen; the tab bar and "On this page" lists are screen-only. */
+	.rd-tabpanel[hidden] { display: block !important; }
+	.rd-toc { display: none; }
 }
