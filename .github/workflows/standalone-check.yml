@@ -28,4 +28,5 @@ jobs:
       - run: pnpm check:standalone
       - run: pnpm check:report-history
       - run: pnpm check:theme
+      - run: pnpm check:design-system
       - run: pnpm check:listen

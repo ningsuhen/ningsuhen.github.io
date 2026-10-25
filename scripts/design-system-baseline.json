@@ -1,0 +1,268 @@
+{
+	"entries": [
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "axe",
+			"owner": "Brev",
+			"reason": "color-contrast (serious) on text in the Brev report (muted or small text on the card background). Fix the source colours."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "axe",
+			"owner": "Brev",
+			"reason": "color-contrast (serious) on text in the Brev report (muted or small text on the card background). Fix the source colours."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "body-class",
+			"owner": "EcoSimulation",
+			"reason": "Own page shell: body has no rd-body class and the page does not use the design-system layout."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "colour-tokens",
+			"owner": "EcoSimulation",
+			"reason": "Raw hex/rgb/oklch colours in the page CSS and chart palette. Map them to --rd-* tokens or move chart colours into SVG data."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "console-errors",
+			"owner": "EcoSimulation",
+			"reason": "Console errors come from the blocked external scripts and fonts; they go away with the external-requests fix."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "container-class",
+			"owner": "EcoSimulation",
+			"reason": "Main is a page-owned layout (main.page), not rd-container or rd-container--wide."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "content-align",
+			"owner": "EcoSimulation",
+			"reason": "Content does not share the navbar card's left edge or the main post column's left edge."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "content-width",
+			"owner": "EcoSimulation",
+			"reason": "Content column is 1120px at 1280px, not the 872px post column or the navbar card."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "css-canonical",
+			"owner": "EcoSimulation",
+			"reason": "Page ships its own stylesheet (palette, spacing, type) instead of research.css. Re-export on the design system."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "external-requests",
+			"owner": "EcoSimulation",
+			"reason": "Loads d3, d3-sankey and Google Fonts from CDNs. Self-host or drop them (blocked in the check)."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "footer-box",
+			"owner": "EcoSimulation",
+			"reason": "No license card on the design-system footer: the page's own footer/column is aligned differently."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "footer-type",
+			"owner": "EcoSimulation",
+			"reason": "License card text size and colour differ from the site footer (page-owned footer styling)."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "head-order",
+			"owner": "EcoSimulation",
+			"reason": "<title> comes before the charset and viewport metas in the export. Move the two metas to the top of <head>."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "icon-glyph",
+			"owner": "EcoSimulation",
+			"reason": "Arrow glyphs (→ ←) are used as tab and control labels. Use the sprite icons (i-arrow-right, i-arrow-up) instead."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "overflow",
+			"owner": "EcoSimulation",
+			"reason": "Page is 5px wider than the 375px viewport once the classic scrollbar takes its width. Fix the element that overflows (EcoSimulation layout)."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "rail-presence",
+			"owner": "EcoSimulation",
+			"reason": "The page has an On this page rail at 1920px and the main post does not (or the reverse). Align the breakpoint."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "surface",
+			"owner": "EcoSimulation",
+			"reason": "Page background (own palette, e.g. rgb(244,246,247)) differs from the site background tokens."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "tab-aria",
+			"owner": "EcoSimulation",
+			"reason": "Tab buttons point at panels without role=tabpanel and rd-tabpanel (the design-system tab pattern)."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "tab-rail",
+			"owner": "EcoSimulation",
+			"reason": "Visible tab panels have no shared rd-toc (On this page rail)."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "tap-target",
+			"owner": "EcoSimulation",
+			"reason": "Filter and source-tier controls at 375px are smaller than 24px."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "theme-owned",
+			"owner": "EcoSimulation",
+			"reason": "Page reads prefers-color-scheme in its own CSS or script. Theme must come from html[data-theme] only."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "typography-scale",
+			"owner": "EcoSimulation",
+			"reason": "Headings and body use the page's own type scale, not the compact template scale in the design-system guide."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "content-align",
+			"owner": "site",
+			"reason": "Design-system container (rd-container) is centred in the page; the main post column is offset by the 17.5rem sidebar grid."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "footer-box",
+			"owner": "site",
+			"reason": "License card is centred on the page (design-system container) while the main post column sits beside the sidebar. Align the container with the post column."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "footer-gap",
+			"owner": "site",
+			"reason": "Gap above the license card differs from the main post's footer spacing. Decide one spacing for both."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "footer-type",
+			"owner": "site",
+			"reason": "License card text is 15px and muted differently from the main site footer text (14px). One footer style for both."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "nav-card",
+			"owner": "site",
+			"reason": "Main post navbar sits at 56px at 1280 with a classic scrollbar; standalone pages sit at 48.5px (centred on the content box). Measured on both; the cause on the main site is not traced yet."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "prose-type",
+			"owner": "site",
+			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "rail-presence",
+			"owner": "site",
+			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
+		},
+		{
+			"page": "/experiments/brev-tree-traversal/",
+			"rule": "scrollbar-gutter",
+			"owner": "site",
+			"reason": "Navbar moves 7.5px when a classic scrollbar appears (short page to long page). Fix: scrollbar-gutter: stable on the navbar injection and the main site, then update the width expectation in check-standalone-pages.mjs."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "footer-gap",
+			"owner": "site",
+			"reason": "Gap above the license card (32px) differs from the main post's footer spacing. Decide one spacing for both."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "nav-card",
+			"owner": "site",
+			"reason": "Main post navbar sits at 56px at 1280 with a classic scrollbar; this page at 48.5px. Shared with the main-site navbar offset; see the site entries."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "scrollbar-gutter",
+			"owner": "site",
+			"reason": "Navbar moves 7.5px when a classic scrollbar appears. Shared standalone-shell issue; see the site entries."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "footer-box",
+			"owner": "site",
+			"reason": "License card is centred on the page (design-system container) while the main post column sits beside the sidebar. Align the container with the post column."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "footer-gap",
+			"owner": "site",
+			"reason": "Gap above the license card differs from the main post's footer spacing. Decide one spacing for both."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "footer-type",
+			"owner": "site",
+			"reason": "License card text is 15px and muted differently from the main site footer text (14px). One footer style for both."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "nav-card",
+			"owner": "site",
+			"reason": "Main post navbar sits at 56px at 1280 with a classic scrollbar; standalone pages sit at 48.5px (centred on the content box). Measured on both; the cause on the main site is not traced yet."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "prose-type",
+			"owner": "site",
+			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "rail-geometry",
+			"owner": "site",
+			"reason": "Standalone rail is a 12rem column inside the page; the main TOC sits to the right of the navbar card. Different placement by design."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "rail-indicator",
+			"owner": "site",
+			"reason": "Standalone rail marks the active heading with a solid left border; the main TOC uses a dashed box."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "rail-presence",
+			"owner": "site",
+			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "rail-type",
+			"owner": "site",
+			"reason": "Standalone rail text is 13px; the main TOC is 12px."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "scrollbar-gutter",
+			"owner": "site",
+			"reason": "Navbar moves 7.5px when a classic scrollbar appears (short page to long page). Fix: scrollbar-gutter: stable on the navbar injection and the main site, then update the width expectation in check-standalone-pages.mjs."
+		},
+		{
+			"page": "/research/brev-tree-benchmark/",
+			"rule": "typography-scale",
+			"owner": "site",
+			"reason": "Compact density is intentional (guide: Density): the template's compact sizes are the reference here."
+		}
+	]
+}

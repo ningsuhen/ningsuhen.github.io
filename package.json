@@ -21,6 +21,7 @@
     "check:standalone": "node scripts/check-standalone-pages.mjs",
     "check:report-history": "node scripts/check-report-history.mjs",
     "check:theme": "node scripts/check-theme.mjs",
+    "check:design-system": "node scripts/check-design-system.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
     "check:leaks": "node scripts/check-public-leaks.mjs",
@@ -85,6 +86,7 @@
     "@types/markdown-it": "^14.1.2",
     "@types/mdast": "^4.0.4",
     "@types/sanitize-html": "^2.16.0",
+    "axe-core": "4.10.2",
     "playwright-core": "^1.64.1",
     "postcss-import": "^16.1.1",
     "postcss-nesting": "^13.0.2"
