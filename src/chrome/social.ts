@@ -3,11 +3,11 @@ import path from "node:path";
 import { siteConfig } from "../config";
 import { esc } from "./util";
 
-// The /research/ and /experiments/ cards carry a one-line summary; use it as the social description when the
+// The /research/ and /playground/ cards carry a one-line summary; use it as the social description when the
 // exported page has no <meta name="description"> of its own.
 function entrySummaries(): Map<string, string> {
 	const out = new Map<string, string>();
-	for (const file of ["research.json", "experiments.json"]) {
+	for (const file of ["research.json", "playground.json"]) {
 		try {
 			const data = JSON.parse(readFileSync(path.resolve(`src/data/${file}`), "utf8")) as { items?: { href?: string; summary?: string }[] };
 			for (const item of data.items ?? []) if (item.href && item.summary) out.set(item.href, item.summary);

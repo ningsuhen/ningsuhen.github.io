@@ -1,4 +1,4 @@
-/** One card on /research/ (src/data/research.json), /experiments/ (src/data/experiments.json) or /ideas/ (src/data/ideas.json). */
+/** One card on /research/ (src/data/research.json), /playground/ (src/data/playground.json) or /ideas/ (src/data/ideas.json). */
 export type Entry = {
 	title: string;
 	summary: string;

@@ -49,8 +49,8 @@ export const navBarConfig: NavBarConfig = {
 			url: "/research/",
 		},
 		{
-			name: "Experiments",
-			url: "/experiments/",
+			name: "Playground",
+			url: "/playground/",
 		},
 		{
 			name: "Ideas",

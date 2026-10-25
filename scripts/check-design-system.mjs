@@ -1,4 +1,4 @@
-// Design-system conformance for standalone pages (public/research/**, public/experiments/**, public/ideas/**), measured in a real browser
+// Design-system conformance for standalone pages (public/research/**, public/playground/**, public/ideas/**), measured in a real browser
 // over the built dist. Every page is held to the research design system (public/design-system/index.html, "Conformance")
 // and to the main site's post page, which is rendered in the same run at 1280/1440/1920, light and dark.
 // Run after `pnpm build`:  pnpm check:design-system  (CHROME_PATH, or `pnpm exec playwright-core install chromium`).
@@ -51,7 +51,7 @@ const RULES = {
 	"injected-once": "the site navbar and the license card are each present exactly once",
 	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
-	axe: "no axe WCAG 2.0/2.1 A and AA violations at 375 and 1440, light and dark, on every standalone page (research, experiments, ideas and the design-system pages)",
+	axe: "no axe WCAG 2.0/2.1 A and AA violations at 375 and 1440, light and dark, on every standalone page (research, playground, ideas and the design-system pages)",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
 	"tab-aria": "tablist/tab/tabpanel wiring: aria-controls, one aria-selected, rd-tabpanel",
 	"tab-keys": "ArrowRight moves to the next tab",
@@ -78,7 +78,7 @@ const RULES = {
 };
 
 const pages = standalonePages({ sections: SECTIONS, depth: 3 });
-// Accessibility (axe) runs on every standalone page — reports, experiments, ideas and the design-system
+// Accessibility (axe) runs on every standalone page — reports, playground, ideas and the design-system
 // pages — at 375 and 1440, light and dark. Both sets come from the shared page registry, so a new page is
 // covered without editing this file. template.html is a scaffold source (placeholder content, not a shipped
 // page), so it is excluded.

@@ -2,15 +2,15 @@
 title: I ran 50,000 paths through a model of the AI economy
 published: 2026-10-24
 description: "A stock-flow-consistent model of the AI economy, run 50,000 times. The page lets you condition it on a driver state and watch six series re-fan."
-tags: [Experiment, AI, Simulation]
-category: Experiment
+tags: [Playground, AI, Simulation]
+category: Playground
 thumbnail: ./thumb.webp
 draft: true
 ---
 
 I built a model of the AI economy and let it run. It's a network of companies and countries where every payment has a payer and a payee. So the cash is conserved, and the accounting identities get checked every tick. I drew 50,000 paths from one fixed seed and put 10,000 of them on a page. The data is cut at 2026-10-17.
 
-On the [experiment page](/experiments/ecosimulation/) you pick a driver state and watch six series re-fan across five years: GDP growth, unemployment, the S&P 500, high-yield credit spreads, big-4 AI capex and direct AI revenue. The fuller [report](/research/ai-economy/) has the live engine and the source facts.
+On the [experiment page](/playground/ecosimulation/) you pick a driver state and watch six series re-fan across five years: GDP growth, unemployment, the S&P 500, high-yield credit spreads, big-4 AI capex and direct AI revenue. The fuller [report](/research/ai-economy/) has the live engine and the source facts.
 
 ## What the paths show
 

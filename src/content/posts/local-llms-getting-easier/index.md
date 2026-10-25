@@ -48,7 +48,7 @@ A small model is fast alone and slow under load. One number hides that.
 
 ## What is next
 
-I want to build a small GPU speed test for the browser. It does not exist yet. If it works, it goes on the [experiments page](/experiments/). My Brev notes say its LLM decode loop has never run. That is one more reason to measure it.
+I want to build a small GPU speed test for the browser. It does not exist yet. If it works, it goes on the [playground](/playground/). My Brev notes say its LLM decode loop has never run. That is one more reason to measure it.
 
 ## What I don't trust yet
 

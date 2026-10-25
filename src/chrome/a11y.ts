@@ -3,7 +3,7 @@ export const A11Y_MARKER = "data-site-a11y";
 // Keyboard access for scrollable content (WCAG 2.1.1). A wide table, figure or code block scrolls with the
 // mouse but not the keyboard unless it is focusable. This makes every genuinely scrollable region in the
 // page's own document focusable (tabindex=0). It is injected into every standalone page (reports,
-// experiments, ideas, design-system) — including compiled exports that don't load rd.js — so the fix lives
+// playground, ideas, design-system) — including compiled exports that don't load rd.js — so the fix lives
 // in one shared place instead of each page. Only regions that actually overflow get a tab stop; a
 // MutationObserver, plus re-runs on load, resize and font load, keep it true if content reflows later
 // (e.g. a chart renders after load). The observer watches childList only, not attributes: the expnav
