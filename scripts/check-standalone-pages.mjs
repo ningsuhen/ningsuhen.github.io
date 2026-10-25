@@ -205,7 +205,7 @@ for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
 // Wide container (tabbed reports, class rd-container--wide = the navbar's width): from 1200px up, the content's
 // left and right edges must sit on the navbar card's edges, so the page reads as one column with the navbar.
 const WIDE_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
-for (const rel of pages.filter((p) => /class=["'][^"']*\brd-container--wide\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")))) {
+for (const rel of pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-container--wide\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")))) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const width of WIDE_VIEWPORTS) {
 		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
@@ -224,6 +224,116 @@ for (const rel of pages.filter((p) => /class=["'][^"']*\brd-container--wide\b/.t
 		await ctx.close();
 	}
 }
+// Tabbed reports (rd-tabbed): from 1200px up the tab bar and the content sit on the navbar card's edges. The "On this
+// page" rail is outside that width in the right margin from 1536px up (the main post page's rule), and a disclosure below.
+// Drift guard: the report rail must match the main post page's TOC (x, width, top, first entry, badge and text metrics),
+// and both must highlight the headings whose section meets the viewport (the same rule, at the same scroll offsets).
+const TAB_VIEWPORTS = [1920, 1600, 1536, 1440, 1280, 1024, 768, 375];
+const railLog = [];
+const tabbed = pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-tabbed\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
+for (const rel of tabbed) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	for (const width of TAB_VIEWPORTS) {
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		const m = await page.evaluate(() => {
+			const R = (el) => { const b = el?.getBoundingClientRect(); return b ? { l: b.left, r: b.right, t: b.top, w: b.width } : null; };
+			const navb = R(document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header"));
+			const panel = [...document.querySelectorAll(".rd-tabpanel")].find((p) => !p.hidden);
+			const rail = panel?.querySelector(".rd-toc");
+			return {
+				navb, tabs: R(document.querySelector('.rd-expnav[role="tablist"]')), main: R(document.querySelector("main.rd-tabbed")),
+				rail: R(rail), railFixed: !!rail && getComputedStyle(rail).position === "fixed",
+				tabCount: document.querySelectorAll('.rd-expnav[role="tablist"] [role="tab"]').length,
+				panelCount: document.querySelectorAll(".rd-tabpanel").length,
+			};
+		});
+		const tag = `${urlPath} @${width}`;
+		if (!m.navb || !m.tabs || !m.main) failures.push(`${tag}: navbar, tab bar or main.rd-tabbed not found`);
+		if (m.tabCount !== m.panelCount || m.tabCount !== 8) failures.push(`${tag}: ${m.tabCount} tabs for ${m.panelCount} panels (expected 8 and 8)`);
+		if (width >= 1200 && m.navb && m.tabs && m.main) {
+			for (const [name, box] of [["tab bar", m.tabs], ["content", m.main]]) {
+				if (Math.abs(box.l - m.navb.l) > 1 || Math.abs(box.r - m.navb.r) > 1) failures.push(`${tag}: ${name} ${Math.round(box.l)}..${Math.round(box.r)} differs from the navbar card ${Math.round(m.navb.l)}..${Math.round(m.navb.r)}`);
+			}
+		}
+		if (m.railFixed !== (width >= 1536)) failures.push(`${tag}: rail ${m.railFixed ? "fixed in the margin" : "not in the margin"} but the rule is 1536px and up`);
+		if (m.railFixed && m.rail && m.navb && (m.rail.l < m.navb.r + 15 || m.rail.r > width)) failures.push(`${tag}: rail ${Math.round(m.rail.l)}..${Math.round(m.rail.r)} overlaps the content or leaves the viewport`);
+		railLog.push(`${width}:${m.railFixed ? "rail" : "disclosure"}`);
+		await ctx.close();
+	}
+}
+// Drift: the report rail against the main post TOC, at 1536 and 1920 (both shown there).
+const mainTocPage = "/posts/rust-learnings/";
+if (tabbed.length && existsSync(path.join(DIST, "posts/rust-learnings/index.html"))) {
+	for (const width of [1536, 1920]) {
+		const grab = async (urlPath, sel) => {
+			const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+			const page = await ctx.newPage();
+			await page.goto(base + urlPath, { waitUntil: "load" });
+			await page.waitForTimeout(400);
+			const r = await page.evaluate((s) => {
+				const q = (x) => document.querySelector(x);
+				const rail = q(s.rail), first = rail?.querySelector("a");
+				const b = (el) => el && el.getBoundingClientRect();
+				const cs = (el, p) => el && getComputedStyle(el).getPropertyValue(p);
+				const badge = first?.children[0], text = first?.children[1];
+				return {
+					railX: b(rail)?.left, railW: b(rail)?.width, railTop: b(rail)?.top,
+					firstTop: b(first) && b(first).top - b(rail).top, firstH: b(first)?.height,
+					badgeW: b(badge)?.width, badgeH: b(badge)?.height, badgeBg: cs(badge, "background-color"),
+					badgeFg: cs(badge, "color"), badgeFont: cs(badge, "font-size"), badgeWeight: cs(badge, "font-weight"),
+					textFont: cs(text, "font-size"), textLh: cs(text, "line-height"), textColor: cs(text, "color"),
+					radius: cs(first, "border-radius"), minH: cs(first, "min-height"), padL: cs(first, "padding-left"), gap: cs(first, "column-gap"),
+				};
+			}, sel);
+			await ctx.close();
+			return r;
+		};
+		const mainR = await grab(mainTocPage, { rail: "#toc-inner-wrapper" });
+		const repR = await grab(`/${pages.find((p) => tabbed.includes(p)).replace(/index\.html$/, "").split(path.sep).join("/")}`, { rail: ".rd-tabpanel:not([hidden]) .rd-toc" });
+		const exact = ["badgeBg", "badgeFg", "badgeFont", "badgeWeight", "textFont", "textLh", "textColor", "radius", "minH", "padL", "gap"];
+		for (const k of exact) if (mainR[k] !== repR[k]) failures.push(`TOC drift @${width}: ${k} main=${mainR[k]} report=${repR[k]}`);
+		for (const k of ["railX", "railW", "railTop", "firstTop", "badgeW", "badgeH"]) {
+			if (mainR[k] == null || repR[k] == null) { if (width >= 1536) failures.push(`TOC drift @${width}: ${k} missing`); continue; }
+			if (Math.abs(mainR[k] - repR[k]) > 1) failures.push(`TOC drift @${width}: ${k} main=${mainR[k]} report=${repR[k]}`);
+		}
+	}
+	// Highlight rule: the entries marked .visible must be exactly the headings whose section meets the viewport.
+	// Main TOC: links in #toc, the section is each heading's parent. Report: the visible panel's rail, its sections.
+	const SCROLLS = [0, 500, 1100, 1700];
+	const rule = async (urlPath, linkSel, idOf) => {
+		const ctx = await browser.newContext({ viewport: { width: 1920, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		const out = [];
+		for (const y of SCROLLS) {
+			await page.evaluate((yy) => window.scrollTo({ top: yy, behavior: "instant" }), y);
+			await page.waitForTimeout(700);
+			out.push(await page.evaluate(({ linkSel, idOf }) => {
+				const links = [...document.querySelectorAll(linkSel)].filter((a) => a.offsetParent !== null || a.getClientRects().length);
+				const vh = window.innerHeight;
+				const sectionOf = (a) => {
+					const id = decodeURIComponent(a.hash.slice(1));
+					const h = document.getElementById(id);
+					return idOf === "parent" ? h?.parentElement : h;
+				};
+				const meets = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; };
+				const expected = links.map((a) => meets(sectionOf(a)));
+				const marked = links.map((a) => a.classList.contains("visible"));
+				return { n: links.length, expected: expected.join(""), marked: marked.join(""), any: marked.some(Boolean) };
+			}, { linkSel, idOf }));
+		}
+		await ctx.close();
+		return out;
+	};
+	const mainRule = await rule(mainTocPage, "#toc table-of-contents a", "parent");
+	const repPage = `/${pages.find((p) => tabbed.includes(p)).replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	const repRule = await rule(repPage, ".rd-tabpanel:not([hidden]) .rd-toc a", "self");
+	mainRule.forEach((r, i) => { if (r.expected !== r.marked) failures.push(`TOC highlight @scroll${SCROLLS[i]} main: marked ${r.marked} != intersecting ${r.expected}`); });
+	repRule.forEach((r, i) => { if (r.expected !== r.marked) failures.push(`TOC highlight @scroll${SCROLLS[i]} report: marked ${r.marked} != intersecting ${r.expected}`); });
+}
+
 await browser.close();
 server.close();
 
@@ -231,4 +341,4 @@ if (failures.length) {
 	console.error(`standalone page check FAILED (${failures.length}):\n - ${failures.join("\n - ")}`);
 	process.exit(1);
 }
-console.log(`standalone page check passed: ${pages.length} page(s) x ${VIEWPORTS.length} viewports`);
+console.log(`standalone page check passed: ${pages.length} page(s) x ${VIEWPORTS.length} viewports; tabbed rail by width: ${railLog.join(" ") || "none"}`);

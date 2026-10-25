@@ -277,10 +277,10 @@ function buildLicenseScript(base: string, hue: number): string {
 	const css =
 		`:host{all:initial;display:block;--hue:${hue};--bg:#fff;--strong:#1d2228;--body:#3d444d;--muted:#5b626b;--accent:oklch(.5 .12 var(--hue));--hover:oklch(.95 .03 var(--hue))}` +
 		":host([data-theme=dark]){--bg:oklch(.23 .015 var(--hue));--strong:rgba(255,255,255,.92);--body:#c9ced6;--muted:#a7aeb8;--accent:oklch(.75 .1 var(--hue));--hover:oklch(.3 .04 var(--hue))}" +
-		"footer{box-sizing:border-box;width:min(54.5rem,calc(100% - 2rem));margin:2rem auto 2.5rem;padding:1.5rem 1.5rem 1.25rem;border-radius:1rem;background:var(--bg);" +
-		"font:400 0.9375rem/1.6 Roboto,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--body);overflow-wrap:anywhere}" +
+		"footer{box-sizing:border-box;width:min(var(--rd-footer-width,54.5rem),calc(100% - 2rem));margin:2.5rem auto 3rem;padding:1.5rem 1.5rem 1.25rem;border-radius:1rem;background:var(--bg);" +
+		"font:400 0.875rem/1.4286 Roboto,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--body);overflow-wrap:anywhere}" +
 		"p{margin:0;max-width:60ch}p+p{margin-top:.5rem}" +
-		".copy{font-weight:600;font-size:1rem;color:var(--strong)}" +
+		".copy{font-weight:600;font-size:0.875rem;color:var(--strong)}" +
 		".quote{font-size:.875rem;color:var(--muted)}" +
 		"a{display:inline-flex;align-items:center;gap:.5rem;margin-top:1rem;min-height:2.75rem;box-sizing:border-box;padding:.5rem 1rem;border:1px solid var(--accent);border-radius:.5rem;color:var(--strong);font-weight:500;text-decoration:none}" +
 		"a:hover{background:var(--hover)}a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}" +
