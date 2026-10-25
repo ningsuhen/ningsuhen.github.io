@@ -125,6 +125,8 @@ function ensureHead(html: string, canonical: string): string {
 	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) early.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
 	if (!/<link[^>]+rel=["']icon["']/i.test(html)) late.push(FAVICONS);
 	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) late.push(`<link rel="canonical" href="${esc(canonical)}">`);
+	// Machine-readable AI/TDM opt-out (W3C TDMRep), same as the shared head layout.
+	if (!/<meta[^>]+name=["']tdm-reservation["']/i.test(html)) late.push(`<meta name="tdm-reservation" content="1"><meta name="tdm-policy" content="${esc(new URL("/license/", canonical).href)}">`);
 	let rest = withHtmlLang(doctype ? html.slice(doctype.length) : html);
 	const headEnd = rest.search(/<\/head>/i);
 	if (headEnd !== -1) rest = rest.slice(0, headEnd) + late.join("") + rest.slice(headEnd);
@@ -330,7 +332,7 @@ function buildLicenseScript(base: string, hue: number): string {
 	const markup =
 		`<style>${css}</style><footer>` +
 		`<p class="copy">\u00a9 ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</p>` +
-		`<p>Research, experiments and ideas on this site may not be reused, copied, republished or used to train models without my written permission.</p>` +
+		`<p>Research, experiments and ideas on this site may not be reused, copied, republished or used to train AI models without my written permission.</p>` +
 		`<p>Short quotes with attribution and a link are fine.</p>` +
 		`<p class="links"><a href="${esc(prefix)}/license/">${icon}License</a> &middot; <a href="${esc(prefix)}/rss.xml">RSS</a> &middot; <a href="${esc(prefix)}/sitemap-index.xml">Sitemap</a></p>` +
 		`<p class="power">Powered by <a href="https://astro.build" target="_blank" rel="noopener">Astro</a> &amp; <a href="https://github.com/saicaca/fuwari" target="_blank" rel="noopener">Fuwari</a></p></footer>`;
