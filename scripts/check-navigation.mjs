@@ -14,14 +14,15 @@ const VIEWPORTS = [
 	{ width: 375, height: 800 },
 ];
 const SITE = ["/", "/archive/", "/about/", "/research/", "/experiments/", "/posts/ai-boom-trajectories/"];
-// Every standalone page shipped from public/research/<slug>/ and public/experiments/<slug>/ (found, not listed).
-const STANDALONE = ["research", "experiments"].flatMap((section) =>
-	existsSync(path.resolve("public", section))
-		? readdirSync(path.resolve("public", section), { withFileTypes: true })
-				.filter((e) => e.isDirectory() && existsSync(path.resolve("public", section, e.name, "index.html")))
-				.map((e) => `/${section}/${e.name}/`)
-		: [],
-);
+// Standalone pages that a list page links to: public/<section>/<slug>/index.html with a Live (or Coming soon-free) entry.
+// Found from the data files, so a new report is covered without editing this script.
+const STANDALONE = ["research", "experiments"].flatMap((section) => {
+	const entries = JSON.parse(readFileSync(path.resolve("src/data", `${section}.json`), "utf8")).items;
+	return entries
+		.filter((e) => !["draft", "coming soon"].includes(e.status.toLowerCase()))
+		.map((e) => e.href)
+		.filter((href) => existsSync(path.resolve("public", href.replace(/^\/|\/$/g, ""), "index.html")));
+});
 const LIST_OF = (page) => (page.startsWith("/research/") ? "/research/" : "/experiments/");
 const NAV = ["/", "/archive/", "/about/", "/research/", "/experiments/"];
 const STEPS = 14;
@@ -69,6 +70,11 @@ const FINGERPRINT = () => {
 		navOpacity: wrap ? getComputedStyle(wrap).opacity : null,
 		scrollY: Math.round(scrollY),
 		licRect: box(q("div[data-site-license]")),
+		// The visible footer (mobile or desktop): on site pages it must carry the same license block as a fresh load.
+		footer: (() => {
+			const f = [...document.querySelectorAll("div.footer")].find((d) => getComputedStyle(d).display !== "none");
+			return f ? f.innerText.replace(/\s+/g, " ").trim().slice(0, 60) + " | aside=" + !!f.querySelector("aside") : null;
+		})(),
 		mainRect: box(q("#main-grid") ?? q("main")),
 		h1Rect: box(q("h1")),
 		articles: document.querySelectorAll("article").length,
@@ -80,9 +86,12 @@ const FINGERPRINT = () => {
 	};
 };
 
-const diff = (a, b) =>
+// Standalone reports size themselves from scroll position (scroll spy, IntersectionObserver), so their document
+// geometry is not comparable across a fresh load; their navbar, license text and counts still are.
+const REPORT_GEOMETRY = ["mainRect", "h1Rect", "licRect", "scrollY"];
+const diff = (a, b, ignore = []) =>
 	Object.keys({ ...a, ...b })
-		.filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]))
+		.filter((k) => !ignore.includes(k) && JSON.stringify(a[k]) !== JSON.stringify(b[k]))
 		.map((k) => `${k}: ${JSON.stringify(a[k])} (sequence) != ${JSON.stringify(b[k])} (fresh)`);
 
 // Clicks the navbar link (the mobile menu is opened first). Content links are the fallback, for cards on a list page.
@@ -103,7 +112,8 @@ async function clickLink(page, href) {
 }
 
 // Owner report: Experiments and Research from other pages, Back/Forward chains, a standalone report, reloads, hash jumps.
-const [FIRST_REPORT, LAST_REPORT] = [STANDALONE[0], STANDALONE[STANDALONE.length - 1]];
+const RESEARCH = STANDALONE.filter((p) => p.startsWith("/research/"));
+const [FIRST_REPORT, LAST_REPORT] = [RESEARCH[0], RESEARCH[RESEARCH.length - 1]]; // both on /research/, reached from its list
 const SCRIPT = [
 	["goto", "/"], ["click", "/research/"], ["scroll", 900], ["click", FIRST_REPORT], ["scroll", 1200],
 	["back"], ["forward"], ["back"], ["click", "/archive/"], ["click", "/about/"], ["click", "/research/"],
@@ -236,7 +246,7 @@ async function runSequence(label, plan, vp, burst, strict) {
 			if (seq.navHosts !== 0) problems.push(`injected navbar on a site page (${seq.navHosts})`);
 			if (seq.navWrapper !== 1) problems.push(`site navbar count=${seq.navWrapper} (want 1)`);
 		}
-		problems.push(...diff(seq, freshFp).map((d) => `layout ${d}`));
+		problems.push(...diff(seq, freshFp, standalone ? REPORT_GEOMETRY : []).map((d) => `layout ${d}`));
 		problems.push(...errs);
 		done.push(`${i} ${desc} -> ${url.pathname}${url.hash}`);
 		if (process.env.VERBOSE) console.log(`    ${label} ${i} ${desc} -> ${url.pathname}${url.hash} scrollY=${seq.scrollY} navHidden=${seq.navHidden} navOpacity=${seq.navOpacity} fresh.navHidden=${freshFp.navHidden} fresh.navOpacity=${freshFp.navOpacity}`);

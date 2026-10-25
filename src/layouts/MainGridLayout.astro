@@ -97,15 +97,16 @@ const mainPanelTop = siteConfig.banner.enable
                     <!-- the overflow-hidden here prevent long text break the layout-->
                     <!-- make id different from windows.swup global property -->
                     <slot></slot>
+                    <!-- Both footers live inside #swup-container: Swup swaps only that element, so a footer outside it kept the
+                         previous page's license block on mobile after a Swup visit. -->
                     <div class="footer col-span-2 onload-animation hidden lg:block">
+                        <Footer license={license}></Footer>
+                    </div>
+                    <div class="footer col-span-2 onload-animation block lg:hidden">
                         <Footer license={license}></Footer>
                     </div>
                 </div>
             </main>
-
-            <div class="footer col-span-2 onload-animation block lg:hidden">
-                <Footer license={license}></Footer>
-            </div>
         </div>
 
         <BackToTop></BackToTop>
