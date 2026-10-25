@@ -17,6 +17,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - Old report URLs redirect (`redirects` in `astro.config.mjs`): add one there when moving a page.
 - `public/design-system/`: design system and `template.html` (scaffold source). Do not edit casually.
 - Listen player (every post, opt-out `noListen: true`): `src/components/ListenPlayer.astro` + `src/scripts/tts/` (engine contract `engine.ts`, normaliser `normalize.ts`, article extraction `extract.ts`, Web Speech engine, Kokoro stub, `listen-player.ts`). Neural engine (Kokoro-82M, `public/tts/`, from Brev): `kokoro.js`, `kokoro_glue.js`, `kokoro_bg.wasm`, `snippets/`; `vendor/ort/` (ONNX Runtime JavaScript) and `lexicon-en-us.txt` are tracked. The ONNX Runtime WebAssembly binary is not in the tree: `public/tts/ort-runtime.js` fetches it from the pinned Hugging Face repository (`ningsuhen/onnxruntime-web-1.27.0`), checks size and SHA-256, and caches it in Cache Storage. Off unless `KOKORO_ENABLED` is true in `ListenPlayer.astro`; the CPU tier stays off (`window.__KOKORO_CPU`). ORT base: `PUBLIC_KOKORO_ORT_BASE` at build time, default `/tts/vendor/ort/`. Licences: `public/tts/LICENSES.txt`. `pnpm check:kokoro`: real-browser check (needs internet; not in `pnpm check`).
+- In-place editing (the owner's browser extension): `src/plugins/remark-source-map.mjs` stamps every top-level post block with `data-src="<first>-<last>"` (source lines) and `data-src-kind` (`text` or `raw`), and post pages emit `<meta name="edit-source">` (repo, branch, path, git blob SHA; repo constant `sourceRepo` in `src/config.ts`). The extension splices edits by those lines and opens a PR. `pnpm check:source-map` (CI, after build) fails on a wrong map.
 - `src/integrations/standalone-header.ts`: injects the navbar and license footer into every `public/**/*.html` at build and in dev.
 - `src/config.ts`: `navBarConfig` (the standalone navbar derives from it).
 - `scripts/`: `new-experiment.mjs` (scaffold; `--research` for Research, `--idea` for Ideas), `check-standalone-pages.mjs`, `sync-dev-next.sh`, `merge-pr.sh`, `test-pre-push.sh`, `dev-server.sh`, `install-hooks.sh`.
@@ -66,7 +67,7 @@ This repo holds the site and the compiled output that research and experiments n
 
 ## Git and PR flow
 
-- `master` is protected. Work on a branch in a worktree under `.worktrees/` only. Open PRs with `gh pr create --base master`; merge with squash (`pnpm merge-pr <n>`).
+- `master` is protected. Work on a branch in a worktree under `.worktrees/` only. Open PRs with `gh pr create --base master`; merge with squash (`pnpm merge-pr <n>`). Branch protection requires the `check` (Standalone page check) and `gitleaks` jobs, so a merge waits for both; GitHub auto-merge is allowed (the in-place editor arms it on its PRs) and merged branches are deleted.
 - PR body ends with a blank line, `---`, then `<sub>Ning›🤖›</sub>`.
 - `pr-conflicts.yml` labels open PRs that conflict with master (`conflict`), keeps one bot comment per PR, and clears both on resolve; logic in `.github/scripts/pr-conflicts.mjs` (`pnpm test:pr-conflicts`); API-only, never checks out PR code.
 - Git hooks: `pnpm install` runs `prepare`, which installs `.githooks/` into the repo. Needs `gitleaks` (`brew install gitleaks`); pre-commit and pre-push scan for secrets.
