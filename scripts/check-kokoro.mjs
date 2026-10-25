@@ -17,6 +17,8 @@ import { chromium } from "playwright-core";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC = path.join(ROOT, "public");
 const MODE = process.env.KOKORO_MODE === "cpu" ? "cpu" : "auto";
+/** Same pinned revision as the player (src/scripts/tts/listen-player.ts). */
+const MODEL_BASE = "https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/1939ad2a8e416c0acfeecc08a694d14ef25f2231/";
 const SENTENCES = [
 	"Realtime audio is generated on your device.",
 	"The GPU ran at one point five teraflops with sixteen gigabytes of memory.",
@@ -89,11 +91,11 @@ try {
 	await page.goto(`${base}/__kokoro-check.html${MODE === "cpu" ? "?mode=cpu" : ""}`);
 
 	const result = await page.evaluate(
-		async ({ sentences, mode }) => {
+		async ({ sentences, mode, modelBase }) => {
 			const { createEngine } = await import("/tts/kokoro.js");
 			const engine = await createEngine();
 			const t0 = performance.now();
-			await engine.init({ variant: mode === "cpu" ? "q8f16" : undefined, ortBase: new URL("/tts/vendor/ort/", location.href).href });
+			await engine.init({ variant: mode === "cpu" ? "q8f16" : undefined, baseUrl: modelBase, ortBase: new URL("/tts/vendor/ort/", location.href).href });
 			const initMs = performance.now() - t0;
 			const runs = [];
 			for (const text of sentences) {
@@ -118,7 +120,7 @@ try {
 			engine.dispose();
 			return { accelerator: engine.accelerator, initMs, beacons, runs };
 		},
-		{ sentences: SENTENCES, mode: MODE },
+		{ sentences: SENTENCES, mode: MODE, modelBase: MODEL_BASE },
 	);
 	const metrics = { mode: MODE, browserWebGpu: result.accelerator === "webgpu", accelerator: result.accelerator, initMs: Math.round(result.initMs) };
 	if (result.beacons.length) failures.push(`telemetry beacon sent: ${result.beacons.join(", ")}`);

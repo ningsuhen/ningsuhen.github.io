@@ -16,6 +16,19 @@ import { loadKokoroEngine } from "./kokoro-engine";
 import { WebSpeechEngine, webSpeechAvailable } from "./web-speech-engine";
 
 type EngineId = "web-speech" | "kokoro";
+/** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
+type KokoroChoice = KokoroVariant | "web";
+
+/** Neural-voice speed guard. Past these the player pauses and offers the browser voice. */
+const SLOW_FIRST_AUDIO_MS = 8000;
+/** Average generation time over the last chunks, divided by their audio length. Above 1 the voice falls behind. */
+const SLOW_RTF = 1;
+/** Chunks in a row where playback caught up with generation. */
+const SLOW_STALLS = 2;
+/** A model download with no progress for this long counts as failed. */
+const INIT_STALL_MS = 30000;
+/** Set on this device when the neural voice was too slow. Next visit starts on the browser voice. */
+const SLOW_KEY = "listen-neural-slow";
 type PlayState = "idle" | "playing" | "paused";
 
 declare global {
@@ -71,10 +84,63 @@ function isStream(
 	);
 }
 
+/** Judges whether the neural engine keeps up with playback. Reports at most once per sentence. */
+class SpeedMonitor {
+	private requestedAt = performance.now();
+	private stalls = 0;
+	private ratios: number[] = [];
+	private reported = false;
+
+	constructor(private readonly onSlow: () => void) {}
+
+	/** Called as each chunk arrives. `queueEmpty` means playback had caught up; `first` marks the first chunk. */
+	chunk(durationS: number, queueEmpty: boolean, first: boolean): void {
+		const waitedMs = performance.now() - this.requestedAt;
+		this.requestedAt = performance.now();
+		if (this.reported) return;
+		if (first && waitedMs > SLOW_FIRST_AUDIO_MS) return this.report();
+		this.stalls = queueEmpty && !first ? this.stalls + 1 : 0;
+		if (this.stalls >= SLOW_STALLS) return this.report();
+		this.ratios = [...this.ratios.slice(-3), waitedMs / 1000 / Math.max(durationS, 0.01)];
+		const average = this.ratios.reduce((a, b) => a + b, 0) / this.ratios.length;
+		if (this.ratios.length >= 3 && average > SLOW_RTF) this.report();
+	}
+
+	private report(): void {
+		this.reported = true;
+		this.onSlow();
+	}
+}
+
+/** Runs a load and fails it when `ms` pass without a progress touch. The stalled load is not disposed here. */
+function withStallGuard<T>(run: (touch: () => void) => Promise<T>, ms: number): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		let timer = setTimeout(stalled, ms);
+		function stalled(): void {
+			reject(new Error("the download stalled"));
+		}
+		const touch = (): void => {
+			clearTimeout(timer);
+			timer = setTimeout(stalled, ms);
+		};
+		run(touch).then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(err: unknown) => {
+				clearTimeout(timer);
+				reject(err);
+			},
+		);
+	});
+}
+
 async function playStream(
 	chunks: AsyncIterable<AudioChunk>,
 	ctx: AudioContext | null,
 	signal: AbortSignal,
+	monitor: SpeedMonitor,
 ): Promise<void> {
 	if (!ctx) throw new Error("AudioContext is not available");
 	if (ctx.state === "suspended") await ctx.resume();
@@ -93,6 +159,11 @@ async function playStream(
 	try {
 		for await (const chunk of chunks) {
 			if (signal.aborted) break;
+			monitor.chunk(
+				chunk.samples.length / chunk.sampleRate,
+				sources.length > 0 && at <= ctx.currentTime + 0.02,
+				sources.length === 0,
+			);
 			const buffer = ctx.createBuffer(
 				1,
 				chunk.samples.length,
@@ -152,6 +223,8 @@ class ListenPlayer extends HTMLElement {
 	private rate = 1;
 	private voice: string | null = null;
 	private runId = 0;
+	/** Set when the listener chooses to keep the neural voice after the too-slow notice. */
+	private slowAcknowledged = false;
 	private abort: AbortController | null = null;
 	private activeBlock: HTMLElement | null = null;
 	private lastUserScroll = 0;
@@ -197,6 +270,7 @@ class ListenPlayer extends HTMLElement {
 
 		// A saved neural choice loads without a dialog only when the visitor already consented on this device.
 		const savedKokoro =
+			!readStorage(SLOW_KEY, false) &&
 			prefs.engine === "kokoro" &&
 			window.__KOKORO_READY === true &&
 			readStorage(CONSENT_KEY, false);
@@ -264,17 +338,26 @@ class ListenPlayer extends HTMLElement {
 		id: EngineId,
 		askConsent: boolean,
 	): Promise<TtsEngine | null> {
-		if (activeEngine && activeEngineId === id) return activeEngine;
-		const variant =
-			id === "kokoro"
-				? askConsent
-					? await this.confirmDownload()
-					: readStorage<KokoroVariant | null>(CONSENT_KEY, null)
-				: null;
-		if (id === "kokoro" && !variant) return null;
+		if (activeEngine && activeEngineId === id) {
+			this.syncEngineSelect(id);
+			return activeEngine;
+		}
+		let variant: KokoroVariant | null = null;
+		if (id === "kokoro") {
+			const choice = askConsent
+				? await this.confirmDownload()
+				: readStorage<KokoroChoice | null>(CONSENT_KEY, null);
+			if (choice === "web") return this.ensureEngine("web-speech", false);
+			if (!choice) {
+				this.syncEngineSelect(activeEngineId);
+				return null;
+			}
+			variant = choice;
+		}
 		try {
-			const engine =
-				variant ? await this.loadKokoro(variant) : await this.loadWebSpeech();
+			const engine = variant
+				? await this.loadKokoro(variant)
+				: await this.loadWebSpeech();
 			activeEngine?.dispose();
 			activeEngine = engine;
 			activeEngineId = id;
@@ -287,13 +370,14 @@ class ListenPlayer extends HTMLElement {
 			this.refreshEngineUI();
 			return engine;
 		} catch (err) {
-			this.status(
-				`${id === "kokoro" ? "Neural voice" : "Built-in voice"} is not available: ${errorText(err)}`,
-			);
-			if (id !== "web-speech") {
-				this.syncEngineSelect("web-speech");
-				return this.ensureEngine("web-speech", false);
+			if (variant) {
+				const fallback = await this.ensureEngine("web-speech", false);
+				this.status(
+					`The neural voice is not available here (${errorText(err)}). Using the browser voice.`,
+				);
+				return fallback;
 			}
+			this.status(`The browser voice is not available: ${errorText(err)}`);
 			return null;
 		}
 	}
@@ -309,19 +393,30 @@ class ListenPlayer extends HTMLElement {
 		const engine = await loadKokoroEngine(
 			this.dataset.kokoroSrc ?? "/tts/kokoro.js",
 		);
-		await engine.init({
-			variant,
-			baseUrl: KOKORO_MODEL_BASE,
-			ortBase: new URL(this.dataset.kokoroOrt ?? "/tts/vendor/ort/", location.href).href,
-			onProgress: (f) =>
-				this.status(`Downloading model ${Math.round(f * 100)}%`),
-		});
+		try {
+			await withStallGuard(
+				(touch) =>
+					engine.init({
+						variant,
+						baseUrl: KOKORO_MODEL_BASE,
+						ortBase: new URL(this.dataset.kokoroOrt ?? "/tts/vendor/ort/", location.href).href,
+						onProgress: (f) => {
+							touch();
+							this.status(`Downloading model ${Math.round(f * 100)}%`);
+						},
+					}),
+				INIT_STALL_MS,
+			);
+		} catch (err) {
+			engine.dispose();
+			throw err;
+		}
 		writeStorage(CONSENT_KEY, variant);
 		this.status("");
 		return engine;
 	}
 
-	private async confirmDownload(): Promise<KokoroVariant | null> {
+	private async confirmDownload(): Promise<KokoroChoice | null> {
 		const saved = readStorage<KokoroVariant | null>(CONSENT_KEY, null);
 		if (saved) return saved;
 		const dialog = this.querySelector<HTMLDialogElement>("[data-consent]");
@@ -338,7 +433,7 @@ class ListenPlayer extends HTMLElement {
 				"close",
 				() => {
 					const value = dialog.returnValue;
-					resolve(value === "fp32" || value === "q8f16" ? value : null);
+					resolve(value === "fp32" || value === "q8f16" || value === "web" ? value : null);
 				},
 				{ once: true },
 			);
@@ -386,17 +481,15 @@ class ListenPlayer extends HTMLElement {
 	private syncEngineSelect(id: EngineId): void {
 		const select = this.querySelector<HTMLSelectElement>("[data-engine]");
 		if (!select) return;
-		if (
-			window.__KOKORO_READY &&
-			!select.querySelector("option[value=kokoro]")
-		) {
-			select.append(new Option("Neural voice (Kokoro)", "kokoro"));
+		const neural = select.querySelector<HTMLOptionElement>("option[value=kokoro]");
+		if (neural) {
+			const ready = window.__KOKORO_READY === true;
+			neural.disabled = !ready;
+			neural.textContent = ready ? "Neural voice" : "Neural voice (not available here)";
 		}
 		select.value = id;
-		{
-			const wrap = select.closest<HTMLElement>("[data-engine-wrap]");
-			if (wrap) wrap.hidden = select.options.length < 2;
-		}
+		const wrap = select.closest<HTMLElement>("[data-engine-wrap]");
+		if (wrap) wrap.hidden = false;
 	}
 
 	/* ---------- playback ---------- */
@@ -439,12 +532,13 @@ class ListenPlayer extends HTMLElement {
 			this.setIndex(i, true);
 			for (const unit of this.sentences[i].units) {
 				try {
+					const monitor = new SpeedMonitor(() => this.neuralTooSlow(id));
 					const out = engine.speak(unit.text, {
 						rate: this.rate,
 						voice: this.voice,
 						signal,
 					});
-					if (isStream(out)) await playStream(out, audioContext, signal);
+					if (isStream(out)) await playStream(out, audioContext, signal, monitor);
 					else await out;
 				} catch (err) {
 					if (id === this.runId) this.fail(err);
@@ -651,6 +745,8 @@ class ListenPlayer extends HTMLElement {
 			});
 			if (this.state === "playing") this.run(this.index);
 		});
+		on<HTMLButtonElement>("[data-slow-browser]", "click", () => void this.leaveNeural());
+		on<HTMLButtonElement>("[data-slow-wait]", "click", () => this.keepWaiting());
 		on<HTMLSelectElement>(
 			"[data-engine]",
 			"change",
@@ -683,6 +779,30 @@ class ListenPlayer extends HTMLElement {
 			);
 		}
 		this.setState("idle");
+	}
+
+	/** The neural voice fell behind: pause, remember it for this device, and offer the browser voice. */
+	private neuralTooSlow(runId: number): void {
+		if (runId !== this.runId || this.slowAcknowledged) return;
+		writeStorage(SLOW_KEY, true);
+		this.stopPlayback();
+		this.setState("paused");
+		this.need<HTMLElement>("[data-slow]").hidden = false;
+		this.status("");
+	}
+
+	/** Continues from the current sentence on the browser voice. */
+	private async leaveNeural(): Promise<void> {
+		this.need<HTMLElement>("[data-slow]").hidden = true;
+		await this.switchEngine("web-speech");
+		this.run(this.index);
+	}
+
+	/** Keeps the neural voice for this sentence list and stops offering the switch. */
+	private keepWaiting(): void {
+		this.need<HTMLElement>("[data-slow]").hidden = true;
+		this.slowAcknowledged = true;
+		this.run(this.index);
 	}
 
 	private async switchEngine(id: EngineId): Promise<void> {
