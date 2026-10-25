@@ -34,7 +34,8 @@
     "new-idea": "node scripts/new-experiment.mjs --idea",
     "sync": "sh scripts/sync-dev-next.sh",
     "merge-pr": "sh scripts/merge-pr.sh",
-    "test:hooks": "sh scripts/test-pre-push.sh"
+    "test:hooks": "sh scripts/test-pre-push.sh",
+    "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
