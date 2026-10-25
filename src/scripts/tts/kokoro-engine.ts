@@ -32,10 +32,12 @@ function tuneOrt(): void {
 	const existing = Object.getOwnPropertyDescriptor(window, "ort");
 	if (existing && !existing.configurable) return;
 	const diagnostics: Diagnostics = (window.__kokoroDiagnostics ??= { sessionCreates: 0 });
+	// Until the real script runs, `window.ort` is an empty object: the loader reads `window.ort[INIT_SYMBOL]`
+	// and would throw on undefined (which surfaced as "reading 'then'" inside the glue).
 	let current: OrtLike | undefined;
 	Object.defineProperty(window, "ort", {
 		configurable: true,
-		get: () => current,
+		get: () => current ?? {},
 		set: (value: OrtLike) => {
 			current = value;
 			value.env.logLevel = "error";

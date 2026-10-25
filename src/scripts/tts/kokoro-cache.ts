@@ -6,7 +6,7 @@
 
 export const CACHE_NAME = "kokoro-tts-v1";
 
-export type KokoroVariant = "fp32" | "q8f16";
+export type KokoroVariant = "fp32" | "fp16" | "q8f16";
 
 interface ManifestFile {
 	bytes: number;
@@ -33,9 +33,15 @@ export async function loadManifest(url: string): Promise<Manifest> {
 	return (await response.json()) as Manifest;
 }
 
+const MODEL_FILES: Record<KokoroVariant, string> = {
+	fp32: "onnx/model.onnx",
+	fp16: "onnx/model_fp16.onnx",
+	q8f16: "onnx/model_q8f16.onnx",
+};
+
 /** The files one variant needs: its model, both voices, and the lexicon next to kokoro.js. */
 export function specsFor(manifest: Manifest, variant: KokoroVariant, ttsUrl: string): FileSpec[] {
-	const model = variant === "fp32" ? "onnx/model.onnx" : "onnx/model_q8f16.onnx";
+	const model = MODEL_FILES[variant];
 	const remote = [model, "voices/af_heart.bin", "voices/am_michael.bin"].map((key) => ({
 		key,
 		url: manifest.base + key,

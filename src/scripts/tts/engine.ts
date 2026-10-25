@@ -42,7 +42,7 @@ export interface EngineInitOptions {
 	/** 0-1 while model files download. */
 	onProgress?: (fraction: number) => void;
 	/** Neural engines: "fp32" (GPU) or "q8f16" (CPU). Omit to let the engine pick. */
-	variant?: "fp32" | "q8f16";
+	variant?: "fp32" | "fp16" | "q8f16";
 	/** Neural engines: absolute URL the model files load from (pinned Hugging Face revision). */
 	baseUrl?: string;
 	/** Neural engines: absolute URL of the ONNX Runtime dist (served from this site). */

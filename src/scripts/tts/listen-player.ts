@@ -27,6 +27,7 @@ import {
 	totalMB,
 } from "./kokoro-cache";
 import { WebSpeechEngine, webSpeechAvailable } from "./web-speech-engine";
+import { Pipeline, UNDERRUN_S } from "./playback";
 
 type EngineId = "web-speech" | "kokoro";
 /** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
@@ -151,61 +152,6 @@ function withStallGuard<T>(
 	});
 }
 
-async function playStream(
-	chunks: AsyncIterable<AudioChunk>,
-	ctx: AudioContext | null,
-	signal: AbortSignal,
-	monitor: SpeedMonitor,
-): Promise<void> {
-	if (!ctx) throw new Error("AudioContext is not available");
-	if (ctx.state === "suspended") await ctx.resume();
-	const sources: AudioBufferSourceNode[] = [];
-	const stop = (): void => {
-		for (const s of sources) {
-			try {
-				s.stop();
-			} catch {
-				// Already ended.
-			}
-		}
-	};
-	signal.addEventListener("abort", stop, { once: true });
-	let at = ctx.currentTime;
-	try {
-		for await (const chunk of chunks) {
-			if (signal.aborted) break;
-			monitor.chunk(
-				chunk.samples.length / chunk.sampleRate,
-				sources.length > 0 && at <= ctx.currentTime + 0.02,
-				sources.length === 0,
-			);
-			const buffer = ctx.createBuffer(
-				1,
-				chunk.samples.length,
-				chunk.sampleRate,
-			);
-			buffer.copyToChannel(chunk.samples as Float32Array<ArrayBuffer>, 0);
-			const source = ctx.createBufferSource();
-			source.buffer = buffer;
-			source.connect(ctx.destination);
-			at = Math.max(at, ctx.currentTime + 0.02);
-			source.start(at);
-			at += buffer.duration;
-			sources.push(source);
-		}
-		const last = sources[sources.length - 1];
-		if (last && !signal.aborted) {
-			await new Promise<void>((resolve) => {
-				last.onended = () => resolve();
-				signal.addEventListener("abort", () => resolve(), { once: true });
-			});
-		}
-	} finally {
-		signal.removeEventListener("abort", stop);
-	}
-}
-
-/** True when the browser exposes a WebGPU adapter. Any failure counts as no. */
 async function hasWebGpuAdapter(): Promise<boolean> {
 	const gpu = (navigator as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
 	try {
@@ -233,10 +179,10 @@ let neuralInit: Promise<void> | null = null;
 let neuralReady = false;
 let manifestLoad: Promise<Manifest> | null = null;
 
-/** WebGPU gives the GPU model. The CPU model is used only when its flag is set (it is not verified yet). */
+/** WebGPU gives the GPU model. The CPU model (fp16, Brev's CPU default) is used only when its flag is set: it still runs slower than real time and produces NaN chunks. */
 async function neuralVariant(): Promise<KokoroVariant | null> {
 	if (await hasWebGpuAdapter()) return "fp32";
-	return window.__KOKORO_CPU === true ? "q8f16" : null;
+	return window.__KOKORO_CPU === true ? "fp16" : null;
 }
 let audioContext: AudioContext | null = null;
 
@@ -675,19 +621,13 @@ class ListenPlayer extends HTMLElement {
 		id: number,
 		signal: AbortSignal,
 	): Promise<void> {
+		if (engine.id !== "web-speech") return this.loopStreamed(engine, from, id, signal);
 		for (let i = from; i < this.sentences.length; i++) {
 			if (id !== this.runId) return;
 			this.setIndex(i, true);
 			for (const unit of this.sentences[i].units) {
 				try {
-					const monitor = new SpeedMonitor(() => this.neuralTooSlow(id));
-					const out = engine.speak(unit.text, {
-						rate: this.rate,
-						voice: this.voice,
-						signal,
-					});
-					if (isStream(out)) await playStream(out, audioContext, signal, monitor);
-					else await out;
+					await engine.speak(unit.text, { rate: this.rate, voice: this.voice, signal });
 				} catch (err) {
 					if (id === this.runId) this.fail(err);
 					return;
@@ -695,6 +635,52 @@ class ListenPlayer extends HTMLElement {
 				if (id !== this.runId) return;
 			}
 		}
+		this.finish(id);
+	}
+
+	/**
+	 * Neural voice: one producer synthesises ahead of playback and every chunk is scheduled on the AudioContext
+	 * clock (see playback.ts). Nothing waits for a sentence to finish before the next one is synthesised.
+	 */
+	private async loopStreamed(
+		engine: TtsEngine,
+		from: number,
+		id: number,
+		signal: AbortSignal,
+	): Promise<void> {
+		if (!audioContext) return this.fail(new Error("AudioContext is not available"));
+		const monitor = new SpeedMonitor(() => this.neuralTooSlow(id));
+		const pipeline = new Pipeline(audioContext, signal, {
+			onSentence: (i) => {
+				if (id === this.runId) this.setIndex(i, true);
+			},
+			onBuffering: (waiting) => this.status(waiting ? "Buffering…" : ""),
+			onChunk: (durationS, ahead, first) => monitor.chunk(durationS, ahead < UNDERRUN_S && !first, first),
+		});
+		try {
+			for (let i = from; i < this.sentences.length; i++) {
+				for (const unit of this.sentences[i].units) {
+					const out = engine.speak(unit.text, { rate: this.rate, voice: this.voice, signal });
+					if (!isStream(out)) {
+						await out;
+						continue;
+					}
+					for await (const chunk of out) {
+						if (id !== this.runId) return;
+						await pipeline.push(chunk, i);
+					}
+					if (id !== this.runId) return;
+				}
+			}
+			await pipeline.drain();
+		} catch (err) {
+			if (id === this.runId) this.fail(err);
+			return;
+		}
+		this.finish(id);
+	}
+
+	private finish(id: number): void {
 		if (id !== this.runId) return;
 		this.setState("idle");
 		this.setIndex(0, false);
