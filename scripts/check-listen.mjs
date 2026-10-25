@@ -275,7 +275,20 @@ for (const [name, viewport, theme] of [
 	}
 
 	await page.evaluate(() => window.scrollTo(0, 1500));
-	await page.waitForTimeout(400);
+	// The dock compensation (marginBottom) reflows the document; wait for the height to settle
+	// before measuring, so a slow reflow is not read as a layout shift.
+	await page
+		.waitForFunction(
+			() => {
+				const h = document.documentElement.scrollHeight;
+				const prev = window.__prevDockH;
+				window.__prevDockH = h;
+				return prev !== undefined && prev === h;
+			},
+			null,
+			{ timeout: 4000, polling: 100 },
+		)
+		.catch(() => expect(false, `${name}: document height did not settle after docking`));
 	const docked = await page.evaluate((rail) => {
 		const el = document.querySelector("listen-player");
 		const r = el.getBoundingClientRect();
