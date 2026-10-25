@@ -19,6 +19,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "sh scripts/install-hooks.sh",
     "check:standalone": "node scripts/check-standalone-pages.mjs",
+    "check:report-history": "node scripts/check-report-history.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
