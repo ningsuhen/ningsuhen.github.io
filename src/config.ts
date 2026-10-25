@@ -52,6 +52,10 @@ export const navBarConfig: NavBarConfig = {
 			name: "Experiments",
 			url: "/experiments/",
 		},
+		{
+			name: "Ideas",
+			url: "/ideas/",
+		},
 		LinkPreset.About,
 	],
 };
@@ -75,6 +79,11 @@ export const profileConfig: ProfileConfig = {
 			name: "X (Twitter)",
 			icon: "lucide:twitter",
 			url: "https://twitter.com/ningsuhen",
+		},
+		{
+			name: "Medium",
+			icon: "fa6-brands:medium",
+			url: "https://medium.com/@ningsuhen",
 		},
 	],
 };

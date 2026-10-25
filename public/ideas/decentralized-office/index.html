@@ -9,6 +9,7 @@
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
 .idea-fig svg { width: 100%; height: auto; max-width: 100%; color: var(--rd-text-strong); }
+.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; } /* wide diagrams scroll inside their figure, never the page */
 .idea-fig svg text { font-family: var(--rd-font); }
 .idea-box { fill: var(--rd-card-bg); stroke: currentColor; stroke-width: 1.5; }
 .idea-box--key { stroke: var(--rd-accent); }
@@ -625,6 +626,9 @@
 // Tabs and history (design-system "Tabbed pages"). A tab is a ?tab= link. A section jump or a tab change is one
 // history entry (pushState) that keeps the saved scroll; Back and Forward restore tab, section and scroll; a deep link
 // (?tab=x#section, or a bare #section) opens its tab with no entry. Widgets on this page never touch history.
+// Reload: every scroll is also written to sessionStorage under the entry's URL (a write made in pagehide does not
+// reach the entry a reload restores from). The restore is re-applied after fonts load, and <html data-history-ready>
+// marks it done.
 (function () {
   var bar = document.querySelector('.rd-expnav[role="tablist"]');
   if (!bar) return;
@@ -638,8 +642,19 @@
     for (var i = 0; i < panels.length; i++) if (panels[i].contains(el)) return i;
     return -1;
   }
+  function keyOf() { return location.pathname + location.search + location.hash; }
+  function remember(y) {
+    try { sessionStorage.setItem('rd-y:' + keyOf(), String(y)); } catch (e) {}
+  }
+  // Only for an entry this page wrote (history.state is set): a fresh visit to the same URL starts at the top.
+  function recalled() {
+    if (!history.state) return null;
+    try { var v = sessionStorage.getItem('rd-y:' + keyOf()); return v === null ? null : Number(v); } catch (e) { return null; }
+  }
   function saveScroll() {
-    history.replaceState(Object.assign({}, history.state, { y: window.pageYOffset }), '');
+    var y = Math.round(window.pageYOffset);
+    remember(y);
+    history.replaceState(Object.assign({}, history.state, { y: y }), '');
   }
   function activate(i) {
     tabs.forEach(function (t, k) {
@@ -654,6 +669,29 @@
     el.setAttribute('tabindex', '-1');
     el.focus({ preventScroll: true });
     el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
+  // First paint: restore the saved position (or the section), then once more after load and after fonts, unless the
+  // reader has moved. Sets data-history-ready when done.
+  function restoreFirst(y, sectionEl) {
+    var touched = false;
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
+      window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
+    });
+    var apply = function () {
+      if (touched) return;
+      if (y !== null) window.scrollTo({ top: y, behavior: 'instant' });
+      else if (sectionEl) reveal(sectionEl);
+    };
+    var mark = function () { document.documentElement.setAttribute('data-history-ready', ''); };
+    apply();
+    window.addEventListener('load', function () {
+      apply();
+      var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+      fonts.then(function () {
+        if (!touched && y !== null && Math.abs(window.pageYOffset - y) > 2) apply();
+        mark();
+      }, mark);
+    }, { once: true });
   }
   // Show what the URL names. mode: 'load' | 'pop' | 'nav' | 'show'.
   function sync(mode) {
@@ -674,20 +712,16 @@
     }
     activate(i);
     if (mode === 'show') return;
-    var y = history.state && typeof history.state.y === 'number' ? history.state.y : null;
-    if (y !== null && mode !== 'nav') {
-      if (mode === 'load' && location.hash) { // no browser fragment scroll on reload: drop the hash, restore, put it back
-        var keep = location.pathname + location.search;
-        var hashNow = location.hash;
-        history.replaceState(history.state, '', keep);
-        window.scrollTo({ top: y, behavior: 'instant' });
-        var back = function () { history.replaceState(history.state, '', keep + hashNow); window.scrollTo({ top: y, behavior: 'instant' }); };
-        if (document.readyState === 'complete') setTimeout(back, 0); else window.addEventListener('load', back, { once: true });
-      } else {
-        window.scrollTo({ top: y, behavior: 'instant' });
-      }
+    var section = hashEl && hashEl !== panels[i] ? hashEl : null;
+    if (mode === 'load') {
+      var rec = recalled();
+      var saved = rec !== null ? rec : history.state && typeof history.state.y === 'number' ? history.state.y : null;
+      restoreFirst(saved, section);
+      return;
     }
-    else if (hashEl && hashEl !== panels[i]) reveal(hashEl);
+    var y = history.state && typeof history.state.y === 'number' ? history.state.y : null;
+    if (y !== null && mode !== 'nav') window.scrollTo({ top: y, behavior: 'instant' });
+    else if (section) reveal(section);
     else if (mode === 'nav' || mode === 'pop') window.scrollTo({ top: 0, behavior: 'instant' });
   }
   function go(href, mode) {
@@ -722,9 +756,10 @@
     if (n !== null) { e.preventDefault(); tabs[n].focus({ preventScroll: true }); return; }
     if (e.key === ' ') { e.preventDefault(); tabs[i].click(); }
   });
+  window.addEventListener('scroll', function () { remember(Math.round(window.pageYOffset)); }, { passive: true });
   window.addEventListener('popstate', function () { sync('pop'); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) sync('show'); });
-  window.addEventListener('pagehide', saveScroll); // a reload or a bfcache exit keeps this entry's scroll
+  window.addEventListener('pagehide', saveScroll);
   sync('load');
 })();
 

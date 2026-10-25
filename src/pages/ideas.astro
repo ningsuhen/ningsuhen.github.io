@@ -1,0 +1,17 @@
+---
+import EntryCards from "@components/EntryCards.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import data from "../data/ideas.json";
+import type { Entry } from "../types/entry";
+
+// Drafts are hidden, so the empty state shows when nothing else would render.
+const items = (data.items as Entry[]).filter((e) => e.status.toLowerCase() !== "draft");
+---
+
+<MainGridLayout license hasOwnHeading title="Ideas" description="Short write-ups of ideas I may build or test.">
+    <div class="card-base px-9 py-6 w-full">
+        <h1 class="text-3xl font-bold text-90 mb-1">Ideas</h1>
+        <p class="text-50 mb-6">Short write-ups of ideas I may build or test. Not research yet, not experiments yet.</p>
+        {items.length ? <EntryCards items={items} kind="idea" /> : <p class="text-75">Nothing here yet.</p>}
+    </div>
+</MainGridLayout>

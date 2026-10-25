@@ -6,18 +6,19 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 
 ## Structure
 
-- Wording: Research = reports (static analyses and benchmarks you read). Experiments = live experiments (things you play with in the browser).
-- `src/content/posts/<slug>/index.md`: posts. Report posts: tag and category `Research`. Live-experiment posts: tag and category `Experiment`. Both show the LicenseNote.
+- Wording: Research = reports (static analyses and benchmarks you read). Experiments = live experiments (things you play with in the browser). Ideas = short write-ups of things I may build or test (not research or experiments yet).
+- `src/content/posts/<slug>/index.md`: posts. Report posts: tag and category `Research`. Live-experiment posts: tag and category `Experiment`. Idea posts: tag and category `Idea`. All three show the LicenseNote.
 - `/research/`: `src/pages/research.astro`, data `src/data/research.json` (cards chipped "Report").
 - `/experiments/`: `src/pages/experiments.astro`, data `src/data/experiments.json` (cards chipped "Live experiment"). Status `Coming soon` shows a dimmed card with no links; `Draft` is hidden on both pages.
+- `/ideas/`: `src/pages/ideas.astro`, data `src/data/ideas.json` (cards chipped "Idea"). An idea links to its post (`href` `/posts/<slug>/`) or, with `--page`, to a standalone page at `public/ideas/<slug>/index.html` (`href` `/ideas/<slug>/`, `post` = its companion write-up). Empty shows "Nothing here yet." Never create `public/ideas/index.html`: the Astro page owns `/ideas/`.
 - Shared card list: `src/components/EntryCards.astro` (prop `kind`), type `src/types/entry.ts`.
-- Standalone pages: reports at `public/research/<slug>/index.html`, live experiments at `public/experiments/<slug>/index.html`. Shipped as-is, not Fuwari pages. Never create `public/research/index.html` or `public/experiments/index.html`: the Astro pages own those URLs.
+- Standalone pages: reports at `public/research/<slug>/index.html`, live experiments at `public/experiments/<slug>/index.html`, idea pages at `public/ideas/<slug>/index.html`. Shipped as-is, not Fuwari pages. Never create `public/research/index.html` or `public/experiments/index.html`: the Astro pages own those URLs.
 - Old report URLs redirect (`redirects` in `astro.config.mjs`): add one there when moving a page.
 - `public/design-system/`: design system and `template.html` (scaffold source). Do not edit casually.
 - Listen player (every post, opt-out `noListen: true`): `src/components/ListenPlayer.astro` + `src/scripts/tts/` (engine contract `engine.ts`, normaliser `normalize.ts`, article extraction `extract.ts`, Web Speech engine, Kokoro stub, `listen-player.ts`). Neural engine (Kokoro-82M, `public/tts/`, from Brev): `kokoro.js`, `kokoro_glue.js`, `kokoro_bg.wasm`, `snippets/`; `vendor/ort/` and `lexicon-en-us.txt` are gitignored until the owner decides vendor vs CDN+SRI. Off unless `KOKORO_ENABLED` is true in `ListenPlayer.astro`; the CPU tier stays off (`window.__KOKORO_CPU`). ORT base: `PUBLIC_KOKORO_ORT_BASE` at build time, default `/tts/vendor/ort/`. Licences: `public/tts/LICENSES.txt`. `pnpm check:kokoro`: real-browser check (needs internet; not in `pnpm check`).
 - `src/integrations/standalone-header.ts`: injects the navbar and license footer into every `public/**/*.html` at build and in dev.
 - `src/config.ts`: `navBarConfig` (the standalone navbar derives from it).
-- `scripts/`: `new-experiment.mjs` (scaffold; `--research` for Research), `check-standalone-pages.mjs`, `sync-dev-next.sh`, `merge-pr.sh`, `test-pre-push.sh`, `dev-server.sh`, `install-hooks.sh`.
+- `scripts/`: `new-experiment.mjs` (scaffold; `--research` for Research, `--idea` for Ideas), `check-standalone-pages.mjs`, `sync-dev-next.sh`, `merge-pr.sh`, `test-pre-push.sh`, `dev-server.sh`, `install-hooks.sh`.
 
 ## Commands
 
@@ -30,7 +31,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - `pnpm check:design-system`: conformance of every standalone page against the design system and the main post page (`/posts/rust-learnings/`), in a real browser. Needs a build. `--update-baseline` for local triage only. Rules, exceptions and baseline policy: design-system guide, "Conformance".
 - `pnpm check:listen`: real-browser check of the Listen player on a built post (speech is stubbed). `pnpm test:tts`: unit tests for the speech normaliser and chunker.
 - `pnpm astro check`: type check.
-- `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. Then set the entry's status to `Live` (or `Coming soon`).
+- `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. `pnpm new-idea [--page] <slug> "<Title>" ["<summary>"]`: draft post and Draft entry; `--page` also scaffolds `public/ideas/<slug>/index.html`. Then set the entry's status to `Live` (or `Coming soon`).
 - `pnpm sync`: local-only dev/next sync (see below). `pnpm merge-pr <n>`: squash-merge a PR, then sync.
 - `pnpm test:hooks`: tests the pre-push guard.
 - `pnpm check:leaks`: scans the built site, `public/`, `src/content/`, `src/data/` and these docs for leaks (see CRITICAL "No leaks"). `node scripts/check-public-leaks.mjs <dir>` scans any export folder.
@@ -52,6 +53,7 @@ This repo holds the site and the compiled output that research and experiments n
 
 - Navbar and license footer are injected by the build. Never hand-roll them in a standalone page. Standalone pages set `<html data-theme>`; light is the default. The navbar mounts on `<html>` before `<body>`.
 - Standalone pages: no iframes. Swup must not intercept links to standalone pages (`src/layouts/Layout.astro`, `src/utils/standalone-utils.ts`).
+- Comments: reports, experiments and ideas get a click-to-load giscus section from the injector (same repo and category as the posts). Nothing may load from giscus.app before the reader clicks; opt out with `<meta name="rd-comments" content="off">`.
 - Icons inside standalone pages are Lucide (`<svg class="rd-icon"><use href="#i-name"/></svg>`; `pnpm build` generates the sprite). No emoji or glyph arrows as UI icons.
 - Standalone pages must conform to the design system (`pnpm check:design-system`, CI). Known violations are in `scripts/design-system-baseline.json` with an owner (EcoSimulation, Brev, site). New violations fail; an entry that stops firing must be deleted in the same PR. Never add an entry for a new violation to get green: fix it, or document an exception (`<meta name="ds-allow">`). Re-exports from EcoSimulation or Brev must pass the check before they land.
 - CRITICAL, posts: every post (new or substantially edited) must be in the owner's voice: run `/tmc-brainstorm` on it for title/outline/voice and apply it; learn the voice from the owner's own old posts, About page and `local-llms-getting-easier` (casual first person, short plain sentences, honest about what is unmeasured, no hype or AI filler, no emoji). Keep a claim table (claim | source | verified) and delete unverified claims; never invent personal facts; never name private projects, hosts, paths or employers (leak-scan before merging). First-person or sensitive posts are merged only after the owner confirms the voice.

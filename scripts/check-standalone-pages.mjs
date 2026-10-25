@@ -128,7 +128,7 @@ for (const rel of pages) {
 // Navigation regression: from a site page, a link to a standalone page must be a normal full navigation,
 // and Back must restore the site page intact (Swup used to intercept the link and corrupt the page).
 const standaloneUrls = new Set(pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`));
-for (const sitePath of ["/experiments/", "/research/"]) {
+for (const sitePath of ["/experiments/", "/research/", "/ideas/"]) {
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	const resp = await page.goto(base + sitePath, { waitUntil: "load" });
@@ -154,6 +154,7 @@ for (const sitePath of ["/experiments/", "/research/"]) {
 for (const [section, listPath] of [
 	["research", "/research/"],
 	["experiments", "/experiments/"],
+	["ideas", "/ideas/"],
 ]) {
 	if (pages.includes(path.join(section, "index.html"))) failures.push(`public/${section}/index.html exists: the Astro page owns /${section}/`);
 	// Draft entries are hidden on purpose (work in progress), so they are exempt.
@@ -192,8 +193,8 @@ for (const [, from, to] of redirectBlock.matchAll(/"([^"]+)":\s*"([^"]+)"/g)) {
 	await ctx.close();
 }
 // Site pages: the navbar used to overflow the page between 768 and 1023px (links shown at md, search only at lg).
-for (const sitePath of ["/", "/archive/", "/research/"]) {
-	for (const vp of [{ width: 768, height: 1000 }, { width: 375, height: 800 }]) {
+for (const sitePath of ["/", "/archive/", "/research/", "/experiments/", "/ideas/"]) {
+	for (const vp of [375, 768, 1024, 1280, 1440].map((width) => ({ width, height: 1000 }))) {
 		const ctx = await browser.newContext({ viewport: vp });
 		const page = await ctx.newPage();
 		await page.goto(base + sitePath, { waitUntil: "load" });
@@ -218,7 +219,7 @@ for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
 }
 // Every main page must have exactly one <h1>: the shared layout supplies a screen-reader heading on
 // pages whose visible title is a styled div, and the section/404 pages render their own visible <h1>.
-for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments/", "/license/", "/posts/ai-boom-trajectories/"]) {
+for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/experiments/", "/ideas/", "/license/", "/posts/ai-boom-trajectories/"]) {
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	await page.goto(base + sitePath, { waitUntil: "load" });
@@ -461,7 +462,7 @@ const licensedPosts = readdirSync(path.join(DIST, "posts"), { withFileTypes: tru
 const within = (inner, outer) => inner[0] >= outer[0] - 0.5 && inner[1] <= outer[1] + 0.5;
 const fmt = (r) => r.map(Math.round).join("..");
 for (const width of FOOTER_WIDTHS) {
-	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/experiments/", ...licensedPosts]) {
+	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/experiments/", "/ideas/", ...licensedPosts]) {
 		const isStandalone = standaloneUrls.has(urlPath);
 		const hasLicense = isStandalone || readFileSync(path.join(DIST, urlPath, "index.html"), "utf8").includes(LICENSE_ASIDE);
 		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
@@ -573,6 +574,12 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 		await s.ctx.close();
 		if (main.bar.bg !== std.bar.bg || !near(main.bar.x, std.bar.x) || !near(main.bar.w, std.bar.w) || !near(main.bar.h, std.bar.h)) failures.push(`${tag}: bar ${JSON.stringify(std.bar)} vs main ${JSON.stringify(main.bar)}`);
 		if (std.sbw !== 0) failures.push(`${tag}: page scrollbar takes ${std.sbw}px of layout width (main takes 0)`);
+		// Every visible link (Ideas included) must sit inside the navbar card, on both navbars: an overflowing nav wraps or spills out.
+		for (const [who, st] of [["main", main], ["standalone", std]]) {
+			for (const [name, c] of Object.entries(st.controls)) {
+				if (c.x < st.bar.x - 1 || c.x + c.w > st.bar.x + st.bar.w + 1) failures.push(`${tag}: "${name}" ${Math.round(c.x)}..${Math.round(c.x + c.w)} outside the ${who} navbar card ${Math.round(st.bar.x)}..${Math.round(st.bar.x + st.bar.w)}`);
+			}
+		}
 		if (std.scrollable !== main.scrollable && h === 900) failures.push(`${tag}: scroll state differs (main ${main.scrollable}, standalone ${std.scrollable})`);
 		for (const [name, mc] of Object.entries(main.controls)) {
 			const sc = std.controls[name];
@@ -581,6 +588,93 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 			if (name !== "Ning Waikhom" && (mc.color !== sc.color || mc.fs !== sc.fs || mc.fw !== sc.fw)) failures.push(`${tag}: "${name}" is ${sc.color} ${sc.fs} ${sc.fw}, main ${mc.color} ${mc.fs} ${mc.fw}`);
 		}
 		for (const name of Object.keys(std.controls)) if (!main.controls[name]) failures.push(`${tag}: "${name}" only in the standalone navbar`);
+	}
+}
+
+// Comments (giscus, click to load). Reports, live experiments and ideas get a section above the license card; other
+// standalone pages get none (static, from the built HTML). In a browser: nothing reaches giscus.app before "Load comments"
+// is pressed; after it the client script loads, the section keeps the column and the footer order, and a theme change
+// reaches the giscus frame. giscus.app is stubbed here (no network), so this checks our side of the contract only.
+const COMMENTS_PAGE = /^\/(research|experiments|ideas)\/[^/]+\/$/;
+const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
+const commentsSrc = readFileSync("src/config.ts", "utf8");
+const commentCfg = (key) => commentsSrc.match(new RegExp(`\\b${key}: "([^"]+)"`))?.[1];
+const GISCUS_STUB = "(function(){var s=document.currentScript;var f=document.createElement('iframe');f.className='giscus-frame';f.src='about:blank';s.parentElement.appendChild(f);f.contentWindow.postMessage=function(m,o){(window.__posted=window.__posted||[]).push([m,o])};})();";
+for (const rel of pages) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	const expected = COMMENTS_PAGE.test(urlPath) && !COMMENTS_OPT_OUT.test(readFileSync(path.join(PUBLIC, rel), "utf8"));
+	const built = readFileSync(path.join(DIST, rel), "utf8");
+	const has = built.includes("data-site-comments");
+	if (has !== expected) failures.push(`${urlPath}: comments section ${has ? "present" : "missing"}, expected ${expected ? "present" : "absent"}`);
+	else if (has && built.indexOf("data-site-comments") > built.indexOf("data-site-license")) failures.push(`${urlPath}: comments section is below the license card`);
+	if (!expected) continue;
+	for (const width of [1440, 375]) {
+		const tag = `${urlPath} @${width} comments`;
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		let clicked = false;
+		const before = [];
+		const after = [];
+		await page.route("https://giscus.app/**", (route) => {
+			const u = route.request().url();
+			(clicked ? after : before).push(u);
+			if (u.endsWith("/client.js")) return route.fulfill({ status: 200, contentType: "text/javascript", body: GISCUS_STUB });
+			return route.abort();
+		});
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.waitForTimeout(300);
+		const pre = await page.evaluate(() => {
+			const box = (el) => el?.getBoundingClientRect();
+			const sec = box(document.querySelector("[data-site-comments]"));
+			const lic = box(document.querySelector("div[data-site-license]"));
+			const main = box(document.querySelector("main"));
+			return {
+				sec: sec && { top: sec.top, bottom: sec.bottom, w: sec.width },
+				lic: lic && lic.top,
+				mainBottom: main ? main.bottom : null,
+				button: !!document.querySelector(".rd-comments__load"),
+				frames: document.querySelectorAll("iframe.giscus-frame, script[src*='giscus']").length,
+				cw: document.documentElement.clientWidth,
+				sw: document.documentElement.scrollWidth,
+			};
+		});
+		if (!pre.sec || !pre.button) failures.push(`${tag}: section or "Load comments" button not found`);
+		else {
+			if (pre.lic !== null && pre.sec.bottom > pre.lic + 1) failures.push(`${tag}: section ends below the license card top`);
+			if (pre.mainBottom !== null && pre.mainBottom > pre.sec.top + 1) failures.push(`${tag}: section starts above the end of the content`);
+			// 872px (54.5rem) column, narrower when the page's own body gutter is in the way; never wider.
+			if (pre.sec.w > Math.min(872, pre.cw) + 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px is wider than 872px or the viewport`);
+			if (width >= 1000 && Math.abs(pre.sec.w - 872) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected 872px (54.5rem)`);
+		}
+		if (before.length) failures.push(`${tag}: request(s) to giscus.app before the click: ${[...new Set(before)].slice(0, 3).join(", ")}`);
+		if (pre.frames) failures.push(`${tag}: giscus script or frame present before the click`);
+		clicked = true;
+		await page.click(".rd-comments__load");
+		await page.waitForSelector("iframe.giscus-frame", { timeout: 5000 }).catch(() => {});
+		const post = await page.evaluate(() => {
+			const s = document.querySelector('script[src="https://giscus.app/client.js"]');
+			return {
+				focus: document.activeElement?.id ?? "",
+				button: !!document.querySelector(".rd-comments__load"),
+				repoId: s?.getAttribute("data-repo-id"),
+				categoryId: s?.getAttribute("data-category-id"),
+				mapping: s?.getAttribute("data-mapping"),
+				theme: s?.getAttribute("data-theme"),
+				frame: !!document.querySelector("iframe.giscus-frame"),
+			};
+		});
+		if (!after.some((u) => u.endsWith("/client.js"))) failures.push(`${tag}: giscus client.js not requested after the click`);
+		if (post.button || !post.frame) failures.push(`${tag}: button not replaced by the giscus frame`);
+		if (post.repoId !== commentCfg("repoId") || post.categoryId !== commentCfg("categoryId")) failures.push(`${tag}: repo/category ids differ from src/config.ts`);
+		if (post.mapping !== "pathname") failures.push(`${tag}: data-mapping is ${post.mapping}, expected pathname`);
+		if (post.focus !== "rd-comments-slot") failures.push(`${tag}: focus not moved into the comments after the click (${post.focus || "none"})`);
+		const themeNow = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+		if (post.theme !== (themeNow === "dark" ? "dark" : "light")) failures.push(`${tag}: giscus theme ${post.theme} does not match the page (${themeNow})`);
+		await page.evaluate(() => document.documentElement.setAttribute("data-theme", "dark"));
+		await page.waitForFunction(() => (window.__posted || []).some((p) => p[1] === "https://giscus.app" && p[0].giscus?.setConfig?.theme === "dark"), null, { timeout: 3000 }).catch(() => {});
+		const synced = await page.evaluate(() => (window.__posted || []).some((p) => p[1] === "https://giscus.app" && p[0].giscus?.setConfig?.theme === "dark"));
+		if (!synced) failures.push(`${tag}: theme change to dark was not posted to the giscus frame`);
+		await ctx.close();
 	}
 }
 

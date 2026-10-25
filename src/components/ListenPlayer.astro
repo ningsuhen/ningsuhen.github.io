@@ -13,9 +13,9 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 ---
 
 <script is:inline>
-	// Neural voice switch. Off until the owner decides how the ONNX Runtime files and the 4.6 MB lexicon ship
-	// (vendored under public/tts vs CDN + SRI). Turn on only with public/tts/vendor/ort and lexicon-en-us.txt deployed.
-	var KOKORO_ENABLED = false;
+	// Neural voice switch. On: the ONNX Runtime trio (public/tts/vendor/ort) and the lexicon ship with the site;
+	// model weights load from Hugging Face after the visitor's consent.
+	var KOKORO_ENABLED = true;
 	// CPU tier (q8f16 on wasm): off until fp16 on wasm is verified. It returns NaN chunks for some inputs today.
 	window.__KOKORO_CPU = false;
 	// Offers the neural voice only where it can run: WebAssembly, BigInt64Array (int64 model inputs), DecompressionStream (lexicon).
@@ -55,10 +55,11 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 			<span>Speed</span>
 			<select data-rate class="listen-select" aria-label="Speed"></select>
 		</label>
-		<label class="listen-field" data-engine-wrap hidden>
-			<span>Engine</span>
+		<label class="listen-field" data-engine-wrap>
+			<span>Voice source</span>
 			<select data-engine class="listen-select">
-				<option value="web-speech">Built-in voice</option>
+				<option value="web-speech">Browser voice</option>
+				<option value="kokoro">Neural voice</option>
 			</select>
 		</label>
 		<p class="listen-note">
@@ -67,6 +68,11 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 			<span data-note-remote hidden>This voice is a remote service: the sentence text is sent to it.</span>
 		</p>
 		<p class="listen-status" data-status aria-live="polite"></p>
+		<div class="listen-slow" data-slow hidden role="status">
+			<p>Neural voice is too slow on this device.</p>
+			<button type="button" class="listen-btn listen-primary" data-slow-browser>Switch to browser voice</button>
+			<button type="button" class="listen-btn listen-text" data-slow-wait>Keep waiting</button>
+		</div>
 	</div>
 
 	<dialog class="listen-dialog" data-consent aria-labelledby="listen-consent-title">
@@ -77,9 +83,11 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 				<li><strong>Fast: GPU</strong>, about 355 MB. Uses WebGPU; runs faster than real time.</li>
 				<li><strong>Light: CPU</strong>, about 105 MB. Works without WebGPU; may pause between sentences.</li>
 			</ul>
+			<p>No download? Choose the browser voice. You can switch at any time from the player.</p>
 			<p class="listen-credit">Speech by Kokoro-82M (hexgrad, Apache-2.0), ONNX export by onnx-community. Training data includes Koniwa (CC BY 3.0) and SIWIS (CC BY 4.0).</p>
 			<menu>
 				<button type="submit" value="cancel" class="listen-btn listen-text">Cancel</button>
+				<button type="submit" value="web" class="listen-btn" data-choice="web">Use browser voice</button>
 				<button type="submit" value="q8f16" class="listen-btn" data-variant="q8f16">Light: CPU</button>
 				<button type="submit" value="fp32" class="listen-btn listen-primary" data-variant="fp32">Fast: GPU</button>
 			</menu>
@@ -215,6 +223,23 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	}
 	.listen-status:empty {
 		display: none;
+	}
+	.listen-slow {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+		margin: 0.5rem 0 0;
+		padding: 0.5rem 0.75rem;
+		border: 1px solid var(--line-divider);
+		border-radius: 0.5rem;
+	}
+	.listen-slow[hidden] {
+		display: none;
+	}
+	.listen-slow p {
+		flex: 1 1 100%;
+		margin: 0;
 	}
 	.listen-note sup {
 		font-size: 0.65em;
