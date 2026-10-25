@@ -20,6 +20,7 @@
     "prepare": "sh scripts/install-hooks.sh",
     "check:standalone": "node scripts/check-standalone-pages.mjs",
     "check:report-history": "node scripts/check-report-history.mjs",
+    "check:theme": "node scripts/check-theme.mjs",
     "check:thumbnails": "node scripts/check-thumbnails.mjs",
     "check:links": "node scripts/check-internal-links.mjs",
     "check:leaks": "node scripts/check-public-leaks.mjs",

@@ -27,4 +27,5 @@ jobs:
       - run: pnpm exec playwright-core install --with-deps chromium
       - run: pnpm check:standalone
       - run: pnpm check:report-history
+      - run: pnpm check:theme
       - run: pnpm check:listen
