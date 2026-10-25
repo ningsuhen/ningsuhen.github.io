@@ -28,6 +28,7 @@ import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import standaloneHeader from "./src/integrations/standalone-header.ts";
 import { draftHrefs, isDraftPage } from "./scripts/lib/draft-pages.mjs";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
+import { remarkSourceMap } from "./src/plugins/remark-source-map.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
 const SITE = "https://ningsuhen.github.io/";
@@ -149,6 +150,7 @@ export default defineConfig({
 			remarkDirective,
 			remarkSectionize,
 			parseDirectiveNode,
+			[remarkSourceMap, { root: ROOT }],
 		],
 		rehypePlugins: [
 			rehypeKatex,
