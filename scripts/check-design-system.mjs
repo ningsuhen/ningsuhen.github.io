@@ -50,7 +50,7 @@ const RULES = {
 	"tap-target": "interactive controls are at least 24px at 375",
 	"injected-once": "the site navbar and the license card are each present exactly once",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
-	axe: "no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark",
+	axe: "no axe WCAG 2.0/2.1 A and AA violations at 375 and 1440, light and dark, on every standalone page (research, experiments, ideas and the design-system pages)",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
 	"tab-aria": "tablist/tab/tabpanel wiring: aria-controls, one aria-selected, rd-tabpanel",
 	"tab-keys": "ArrowRight moves to the next tab",
@@ -84,6 +84,11 @@ function htmlPages(dir = "") {
 }
 const drafts = draftHrefs();
 const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
+// Accessibility (axe) runs on every standalone page — reports, experiments, ideas and the design-system
+// guide — at 375 and 1440, light and dark. Discovered from the same glob as the conformance set, plus the
+// design-system dir, so a new page is covered without editing this file. template.html is a scaffold source
+// (placeholder content, not a shipped page), so it is excluded.
+const a11yPages = [...pages, ...htmlPages("design-system").filter((rel) => rel !== "design-system/template.html")].filter((rel) => !isDraftPage(rel, drafts));
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -620,7 +625,8 @@ async function tabChecks(page, ok) {
 await Promise.all(pages.map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page);
-	// Each width x theme: chrome against the live reference. At 1440 also the structure, typography, axe.
+	// Each width x theme: chrome against the live reference. At 1440 also the structure and typography. (axe runs
+	// separately, on every standalone page, at 375 and 1440 — see the accessibility pass below.)
 	for (const w of WIDTHS) for (const t of THEMES) {
 		const { ctx, external, errors } = await newCtx({ width: w, height: DESKTOP_H }, t);
 		const p = await open(ctx, page);
@@ -665,14 +671,6 @@ await Promise.all(pages.map(async (rel) => {
 					}
 				}
 			}
-			if (!ok.has("axe")) {
-				await p.addScriptTag({ path: path.resolve("node_modules/axe-core/axe.min.js") });
-				const v = await p.evaluate(async () => {
-					const r = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] }, resultTypes: ["violations"] });
-					return r.violations.map((x) => ({ id: x.id, impact: x.impact, n: x.nodes.length }));
-				});
-				for (const x of v) add(page, "axe", `@1440 ${t}: ${x.id} (${x.impact}) on ${x.n} node(s)`);
-			}
 		}
 		await ctx.close();
 	}
@@ -687,6 +685,28 @@ await Promise.all(pages.map(async (rel) => {
 		await ctx.close();
 	}
 	await tabChecks(page, ok);
+}));
+
+// ---- Accessibility: axe on every standalone page at 375 and 1440, light and dark ------------------------------------
+// The conformance loop above only reaches the report/experiment/idea pages and only ran axe at 1440. This pass
+// closes the two blind spots: it also runs axe at 375, and it covers the design-system guide page too. Pages are
+// discovered from the glob (a11yPages), not a hardcoded list, so a new page is covered without editing this file.
+await Promise.all(a11yPages.map(async (rel) => {
+	const page = urlOf(rel);
+	const ok = allowedBy.get(page) ?? new Set();
+	for (const w of [375, 1440]) for (const t of THEMES) {
+		const { ctx } = await newCtx({ width: w, height: DESKTOP_H }, t);
+		const p = await open(ctx, page);
+		if (!ok.has("axe")) {
+			await p.addScriptTag({ path: path.resolve("node_modules/axe-core/axe.min.js") });
+			const v = await p.evaluate(async () => {
+				const r = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] }, resultTypes: ["violations"] });
+				return r.violations.map((x) => `${x.id} (${x.impact}) on ${x.nodes.length} node(s)`);
+			});
+			for (const x of v) add(page, "axe", `@${w} ${t}: ${x}`);
+		}
+		await ctx.close();
+	}
 }));
 await browser.close();
 server.close();

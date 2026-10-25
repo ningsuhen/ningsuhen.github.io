@@ -15,6 +15,7 @@ const face = (w: number, b64: string) => `@font-face{font-family:"RobotoNav";fon
 const FONT_FACE = face(700, ROBOTO_700) + face(400, ROBOTO_400);
 
 const MARKER = "data-site-navbar";
+const A11Y_MARKER = "data-site-a11y";
 const THEME_MARKER = "data-site-theme";
 // Theme model in <head>, before first paint (see src/utils/theme-runtime.ts). Light unless the reader chose otherwise.
 const HEAD_THEME = `<script ${THEME_MARKER}>${themeRuntimeScript(true)}</script>`;
@@ -105,7 +106,8 @@ export default function standaloneHeader(): AstroIntegration {
 /** Navbar + meta fixes for one standalone HTML document (shared by build and dev). `extra` is appended before </body>. */
 function transform(html: string, script: string, extra: string, footer: string, urlPath: string, base: string, site: string): string {
 	const comments = commentsFor(html, urlPath);
-	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
+	const a11y = html.includes(A11Y_MARKER) ? "" : buildA11yScript();
+	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	return withThemeScript(ensureHead(versionedBundle(body), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
 }
@@ -429,6 +431,33 @@ function buildLicenseScript(base: string, hue: number): string {
 		`function sync(){h.setAttribute("data-theme",d.getAttribute("data-theme")==="dark"?"dark":"light");h.style.setProperty("--hue",get("hue","${hue}"))}` +
 		`sync();new MutationObserver(sync).observe(d,{attributes:true,attributeFilter:["data-theme"]});addEventListener("storage",sync);` +
 		`d.appendChild(h)})()</script>`
+	);
+}
+
+// Keyboard access for scrollable content (WCAG 2.1.1). A wide table, figure or code block scrolls with the
+// mouse but not the keyboard unless it is focusable. This makes every genuinely scrollable region in the
+// page's own document focusable (tabindex=0). It is injected into every standalone page (reports,
+// experiments, ideas, design-system) — including compiled exports that don't load rd.js — so the fix lives
+// in one shared place instead of each page. Only regions that actually overflow get a tab stop; a
+// MutationObserver, plus re-runs on load, resize and font load, keep it true if content reflows later
+// (e.g. a chart renders after load). The observer watches childList only, not attributes: the expnav
+// scroll-spy toggles classes on every page scroll, and reacting to that would force reflows on heavy
+// pages and race the layout checks. New content adds nodes, which is the only reflow case that matters.
+function buildA11yScript(): string {
+	return (
+		`<script ${A11Y_MARKER}>(function(){` +
+		`var SEL=".rd-table-wrap,.rd-figure,.rd-prose pre,.rd-prose .katex-display,pre,table";` +
+		`function scrollable(el){return el.scrollWidth>el.clientWidth+1||el.scrollHeight>el.clientHeight+1}` +
+		`function run(){document.querySelectorAll(SEL).forEach(function(el){` +
+		`if(!scrollable(el))return;` +
+		`if(el.getAttribute("tabindex")===null)el.setAttribute("tabindex","0")})}` +
+		`run();` +
+		`if(window.MutationObserver){var mo=new MutationObserver(function(){run()});` +
+		`mo.observe(document.body,{childList:true,subtree:true});}` +
+		`addEventListener("resize",run);` +
+		`addEventListener("load",run);` +
+		`if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run).catch(function(){});` +
+		`})()</script>`
 	);
 }
 
