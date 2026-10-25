@@ -257,6 +257,12 @@
 			"rule": "rail-type",
 			"owner": "site",
 			"reason": "Standalone rail text is 13px; the main TOC is 12px."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "axe",
+			"owner": "site",
+			"reason": "rail text 3.8:1 and link 4.18:1 are the main post's own colours; fixed for all pages in the shared token pass, then this entry is deleted"
 		}
 	]
 }
