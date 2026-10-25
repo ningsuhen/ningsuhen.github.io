@@ -202,6 +202,28 @@ for (const sitePath of ["/", "/archive/", "/posts/ai-boom-trajectories/"]) {
 	if (m.emptyLinks) failures.push(`${sitePath}: ${m.emptyLinks} empty link(s) (href="" or "#")`);
 	await ctx.close();
 }
+// Wide container (tabbed reports, class rd-container--wide = the navbar's width): from 1200px up, the content's
+// left and right edges must sit on the navbar card's edges, so the page reads as one column with the navbar.
+const WIDE_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
+for (const rel of pages.filter((p) => /class=["'][^"']*\brd-container--wide\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")))) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	for (const width of WIDE_VIEWPORTS) {
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		const m = await page.evaluate(() => {
+			const bar = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
+			const main = document.querySelector(".rd-container--wide")?.getBoundingClientRect();
+			return { bar: bar ? [bar.left, bar.right] : null, main: main ? [main.left, main.right] : null };
+		});
+		const tag = `${urlPath} @${width}`;
+		if (!m.bar || !m.main) failures.push(`${tag}: navbar header or .rd-container--wide not found`);
+		else if (width >= 1200 && (Math.abs(m.main[0] - m.bar[0]) > 1 || Math.abs(m.main[1] - m.bar[1]) > 1)) {
+			failures.push(`${tag}: wide content edges ${m.main.map(Math.round).join("..")} differ from the navbar card ${m.bar.map(Math.round).join("..")}`);
+		}
+		await ctx.close();
+	}
+}
 await browser.close();
 server.close();
 
