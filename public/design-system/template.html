@@ -10,6 +10,8 @@
        - the site navbar + light/dark toggle (mounted on <html> before <body>, so nothing here can offset it)
        - the "All rights reserved, no reuse without permission" footer
        - a Comments section (giscus, click to load) above the footer, on pages under research/, experiments/ and ideas/ (opt out: <meta name="rd-comments" content="off">)
+       - the breadcrumb band under the navbar (opaque, sticky; it holds the trail: Home, section, title, from the title and the URL). Style: .rd-crumb-band and .rd-breadcrumb in research.css.
+         Never write one by hand (check:standalone fails on a second one). A page opts out with the rd-breadcrumb meta (content off).
      Do not add your own navbar, theme toggle, comments or license footer. `pnpm check:standalone` fails the PR if either is missing,
      misplaced, or the page overflows horizontally at 1440px or 375px.
      Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Use only --rd-* colors.

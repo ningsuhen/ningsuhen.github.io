@@ -14,7 +14,8 @@
 	--hue: 250;
 	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
 	--rd-navbar-width: 73rem;
-	--rd-navbar-gap: 1rem; /* space between the injected navbar card and the section bar under it (the main site's 16px rhythm) */
+	--rd-navbar-gap: 1rem; /* height of the empty breadcrumb band (pages with no trail): the main site's 16px rhythm under the navbar card */
+	--rd-crumb-h: 2.5rem; /* the breadcrumb band under the navbar card: opaque, holds the trail (standalone-header.ts) */
 	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
@@ -453,24 +454,96 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 .rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
 
 /* ======================================================================
+   Breadcrumb band (rd-crumb-band) and trail (rd-breadcrumb). standalone-header.ts injects the band as the first child of
+   <body>: sticky directly under the navbar card (top = --rd-navbar-h), opaque (--rd-page-bg), the navbar card's width and
+   --rd-crumb-h tall. It holds the trail, aligned to the content column; the section bar sticks under the band. A page
+   with no trail (opt-out, no title) gets an empty band of one gap (--rd-navbar-gap), so the rhythm holds. The band is
+   never transparent: content scrolls under it and is hidden. One line: a long title ends in an ellipsis. Pages never
+   write these by hand; the separator is a CSS chevron (no glyph, no sprite).
+   ====================================================================== */
+.rd-crumb-band {
+	position: sticky;
+	top: var(--rd-navbar-h);
+	z-index: 19;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	max-width: var(--rd-navbar-width);
+	height: var(--rd-crumb-h);
+	margin: 0 auto;
+	background: var(--rd-page-bg);
+}
+html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
+.rd-crumb-band .rd-breadcrumb {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	max-width: var(--rd-content-width);
+	height: 100%;
+	margin: 0 auto;
+	padding: 0 var(--rd-space-4);
+	font: 400 var(--rd-fs-sm) / var(--rd-lh) var(--rd-font);
+	color: var(--rd-text-muted);
+}
+.rd-crumb-band--wide .rd-breadcrumb { max-width: var(--rd-navbar-width); }
+/* Tabbed reports have no side padding of their own (rd-tabbed), so the trail has none either. */
+.rd-crumb-band--tabbed .rd-breadcrumb { padding-left: 0; padding-right: 0; }
+.rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
+.rd-breadcrumb li:last-child { flex: 0 1 auto; }
+.rd-breadcrumb li + li::before {
+	content: "";
+	flex: none;
+	width: 0.875em;
+	height: 0.875em;
+	margin: 0 0.25em;
+	background: var(--rd-text-faint);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rd-breadcrumb a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.5rem; /* 24px tap target at every width */
+	border-radius: var(--rd-radius-sm);
+	color: inherit;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.rd-breadcrumb a:hover { color: var(--rd-accent); }
+.rd-breadcrumb a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+.rd-breadcrumb [aria-current="page"] {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.5rem;
+	color: var(--rd-text);
+}
+@media print { .rd-crumb-band { display: none; } }
+
+/* ======================================================================
    Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
    ====================================================================== */
-/* Section bar (rd-expnav): the navbar-width frame, one gap (--rd-navbar-gap) under the injected navbar card. Its first
+/* Section bar (rd-expnav): the navbar-width frame, the breadcrumb band's height (--rd-crumb-h) under the injected navbar card. Its first
    link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
    container padding. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
-   --rd-navbar-h + --rd-navbar-gap (one gap under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
+   --rd-navbar-h + --rd-crumb-h (the band's height under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
    link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 @media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
 .rd-expnav {
 	position: sticky;
-	top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap));
+	top: calc(var(--rd-navbar-h) + var(--rd-crumb-h));
 	z-index: 20;
 	box-sizing: border-box;
 	display: flex;
 	gap: 0.125rem;
 	width: 100%;
 	max-width: var(--rd-navbar-width);
-	margin: var(--rd-navbar-gap) auto 0;
+	margin: 0 auto;
 	padding: 0 var(--rd-space-4);
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
@@ -572,7 +645,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
-.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
 .rd-prose .rd-section__head h2::before { content: none; }
 .rd-section__icon {
@@ -587,7 +660,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: var(--rd-accent);
 }
 .rd-section__icon .rd-icon { width: 1em; height: 1em; }
-.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 
 /* Hero: eyebrow, h1, lede, a row of status chips and meta. */
 .rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }
