@@ -31,7 +31,7 @@ content:
         # verbatim instead of being forced under the media root.
         options: { media: false }
       - name: thumbnail
-        label: Card thumbnail (square 800x800, ONE focal element, never a wide chart; optional, otherwise the site default)
+        label: Card thumbnail, required when published (square 800x800, ONE focal element, no text; if the post has no image, generate one from its content)
         type: image
         options: { media: false }
       - { name: tags, label: Tags, type: string, list: true }

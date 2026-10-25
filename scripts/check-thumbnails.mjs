@@ -1,5 +1,6 @@
-// Checks card thumbnails: every post `thumbnail:` and the site default must be a near-square,
-// full-size, small image so it reads as ONE focal element in a square card.  Run: pnpm check:thumbnails
+// Enforces card thumbnails. Every published post (draft: false) must set `thumbnail:` to a square
+// 800x800 image under 60 KB that shows ONE focal element; the site default must meet the same size rules.
+// Run: pnpm check:thumbnails
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
@@ -7,15 +8,17 @@ import sharp from "sharp";
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
 const DEFAULT_THUMB = path.join(ROOT, "public/images/default-thumbnail.webp");
-const MIN_ASPECT = 0.85;
-const MAX_ASPECT = 1.18;
-const MIN_WIDTH = 400;
-const MAX_BYTES = 120 * 1024;
+const SIDE = 800;
+const MAX_BYTES = 60 * 1024;
 
-/** Returns the raw `thumbnail:` value from a markdown file's frontmatter, or "". */
-function frontmatterThumbnail(file) {
-	const [, fm = ""] = readFileSync(file, "utf8").match(/^---\n([\s\S]*?)\n---/) ?? [];
-	const value = fm.match(/^thumbnail:\s*(.+?)\s*$/m)?.[1] ?? "";
+/** Returns the frontmatter block of a markdown file, or "". */
+function frontmatter(file) {
+	return readFileSync(file, "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+}
+
+/** Returns one frontmatter field's raw value, without quotes, or "". */
+function field(fm, key) {
+	const value = fm.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, "m"))?.[1] ?? "";
 	return value.replace(/^["']|["']$/g, "");
 }
 
@@ -28,13 +31,9 @@ async function problems(label, file) {
 		return [`${label}: file not found (${file})`];
 	}
 	const { width = 0, height = 0 } = await sharp(file).metadata();
-	const aspect = width / height;
 	const out = [];
-	if (!(aspect >= MIN_ASPECT && aspect <= MAX_ASPECT)) {
-		out.push(`${label}: aspect ${aspect.toFixed(2)} (${width}x${height}) must be between ${MIN_ASPECT} and ${MAX_ASPECT}; a wide chart is cropped mid-panel on cards`);
-	}
-	if (width < MIN_WIDTH) out.push(`${label}: width ${width}px must be >= ${MIN_WIDTH}`);
-	if (stat.size >= MAX_BYTES) out.push(`${label}: ${(stat.size / 1024).toFixed(1)} KB must be < 120 KB`);
+	if (width !== SIDE || height !== SIDE) out.push(`${label}: ${width}x${height} must be ${SIDE}x${SIDE}`);
+	if (stat.size >= MAX_BYTES) out.push(`${label}: ${(stat.size / 1024).toFixed(1)} KB must be < 60 KB`);
 	return out;
 }
 
@@ -42,16 +41,23 @@ const failures = [];
 let checked = 0;
 for (const slug of readdirSync(POSTS, { withFileTypes: true }).filter((e) => e.isDirectory())) {
 	const index = path.join(POSTS, slug.name, "index.md");
-	let thumb = "";
+	let fm = "";
 	try {
-		thumb = frontmatterThumbnail(index);
+		fm = frontmatter(index);
 	} catch {
 		continue;
 	}
-	if (!thumb) continue;
+	const label = `src/content/posts/${slug.name}`;
+	const thumb = field(fm, "thumbnail");
+	if (!thumb) {
+		if (field(fm, "draft") !== "true") {
+			failures.push(`${label}: no \`thumbnail\` in frontmatter; add a square ${SIDE}x${SIDE} thumb.webp (generate one from the post if it has no suitable image)`);
+		}
+		continue;
+	}
 	const file = thumb.startsWith("/") ? path.join(ROOT, "public", thumb) : path.resolve(POSTS, slug.name, thumb);
 	checked++;
-	failures.push(...(await problems(`src/content/posts/${slug.name}`, file)));
+	failures.push(...(await problems(label, file)));
 }
 failures.push(...(await problems("public/images/default-thumbnail.webp", DEFAULT_THUMB)));
 
