@@ -252,7 +252,7 @@
 .rd-prose p { margin: var(--rd-gap-para) 0; max-width: var(--rd-measure); }
 .rd-prose li { max-width: var(--rd-measure); }
 .rd-prose a {
-	color: var(--rd-accent);
+	color: var(--rd-accent-ink);
 	text-decoration: underline;
 	text-decoration-color: var(--rd-line);
 	text-underline-offset: 3px;
@@ -416,20 +416,20 @@
 .rd-table-wrap { counter-increment: rd-tbl; }
 .rd-table caption { caption-side: top; text-align: left; padding: 0 0 var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
 .rd-table caption::before { content: "Table " counter(rd-tbl) ". "; font-weight: 700; color: var(--rd-text-strong); }
-.rd-ref { color: var(--rd-accent); }
+.rd-ref { color: var(--rd-accent-ink); }
 
 /* Citations and references: <a class="rd-cite" href="#ref-dean">[1]</a>; <ol class="rd-refs"><li id="ref-dean"> */
-.rd-cite { color: var(--rd-accent); text-decoration: none; white-space: nowrap; }
+.rd-cite { color: var(--rd-accent-ink); text-decoration: none; white-space: nowrap; }
 .rd-cite:hover { text-decoration: underline; }
 .rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-sm); }
 .rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: var(--rd-space-2) 0; }
 .rd-refs li::before { content: "[" counter(rd-ref) "]"; position: absolute; left: 0; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
 .rd-refs li:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
-.rd-refs .rd-doi { color: var(--rd-accent); word-break: break-all; }
+.rd-refs .rd-doi { color: var(--rd-accent-ink); word-break: break-all; }
 
 /* Footnotes: <sup class="rd-fn"><a href="#fn1" id="fnref1">1</a></sup> */
 sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
-.rd-fn a { color: var(--rd-accent); text-decoration: none; }
+.rd-fn a { color: var(--rd-accent-ink); text-decoration: none; }
 .rd-footnotes { border-top: 1px solid var(--rd-line); margin-top: var(--rd-gap-section); padding-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
 .rd-footnotes li:target { background: var(--rd-btn-bg); }
 
@@ -613,10 +613,10 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
    Below 1536px the rail is a disclosure ("On this page") above the content, open by default so no-JS sees every link. */
 :root {
   --rd-toc-width: calc((100vw - var(--rd-navbar-width)) / 2 - 2rem); /* = the main TOC: the 16px gap to the navbar card, 16px to the viewport edge */
-  --rd-toc-badge-bg: oklch(0.89 0.05 var(--hue));
+  --rd-toc-badge-bg: oklch(0.91 0.05 var(--hue)); /* = main --toc-badge-bg; accent-ink on it 4.59:1 at hue 250 */
   --rd-toc-hover: oklch(0.926 0.015 var(--hue));
   --rd-toc-active: oklch(0.9 0.015 var(--hue));
-  --rd-toc-text: rgba(0, 0, 0, 0.5);
+  --rd-toc-text: rgba(0, 0, 0, 0.56); /* = main .text-50; 4.5:1+ on page, hover and active grounds */
   --rd-toc-text-faint: rgba(0, 0, 0, 0.3);
 }
 :root[data-theme="dark"],
@@ -646,7 +646,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 .rd-toc a:hover { background: var(--rd-toc-hover); }
 .rd-toc a:active { background: var(--rd-toc-active); }
 .rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
-.rd-toc__badge { display: flex; align-items: center; justify-content: center; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; background: var(--rd-toc-badge-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 700; }
+.rd-toc__badge { display: flex; align-items: center; justify-content: center; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; background: var(--rd-toc-badge-bg); color: var(--rd-accent-ink); font-size: 0.75rem; font-weight: 700; }
 .rd-toc__text { min-width: 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--rd-toc-text); overflow-wrap: anywhere; }
 .rd-toc__indicator { display: none; position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: -1; box-sizing: border-box; border: 2px dashed var(--rd-toc-hover); border-radius: 0.75rem; background: var(--rd-toc-hover); pointer-events: none; transition: all 0.15s ease; }
 /* Narrow: the disclosure. The highlighted entries get the hover fill (the indicator bar is the rail's form). */

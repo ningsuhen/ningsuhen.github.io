@@ -56,7 +56,7 @@
 .rd-prose p { margin: var(--rd-gap-para) 0; max-width: var(--rd-measure); }
 .rd-prose li { max-width: var(--rd-measure); }
 .rd-prose a {
-	color: var(--rd-accent);
+	color: var(--rd-accent-ink);
 	text-decoration: underline;
 	text-decoration-color: var(--rd-line);
 	text-underline-offset: 3px;

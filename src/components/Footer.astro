@@ -22,11 +22,11 @@ const currentYear = new Date().getFullYear();
 		<!-- text-75 (not text-50): the footer sits on the page background, where 50% drops below 4.5:1. -->
 		<div class="transition text-75 text-sm text-center">
 			&copy; <span class="copyright-year">{currentYear}</span> {profileConfig.name}. All Rights Reserved. /
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] font-medium" target="_blank" href={url('rss.xml')}><Icon name="lucide:rss" class="inline-block align-[-0.15em] text-[0.9em] mr-1" />RSS</a> /
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] font-medium" target="_blank" href={url('sitemap-index.xml')}>Sitemap</a><br>
+			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href={url('rss.xml')}><Icon name="lucide:rss" class="inline-block align-[-0.15em] text-[0.9em] mr-1" />RSS</a> /
+			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href={url('sitemap-index.xml')}>Sitemap</a><br>
 			Powered by
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] font-medium" target="_blank" href="https://astro.build">Astro</a> &
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] font-medium" target="_blank" href="https://github.com/saicaca/fuwari">Fuwari</a>
+			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href="https://astro.build">Astro</a> &
+			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href="https://github.com/saicaca/fuwari">Fuwari</a>
 		</div>
 	</div>
 )}

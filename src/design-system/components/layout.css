@@ -67,10 +67,10 @@
    Below 1536px the rail is a disclosure ("On this page") above the content, open by default so no-JS sees every link. */
 :root {
   --rd-toc-width: calc((100vw - var(--rd-navbar-width)) / 2 - 2rem); /* = the main TOC: the 16px gap to the navbar card, 16px to the viewport edge */
-  --rd-toc-badge-bg: oklch(0.89 0.05 var(--hue));
+  --rd-toc-badge-bg: oklch(0.91 0.05 var(--hue)); /* = main --toc-badge-bg; accent-ink on it 4.59:1 at hue 250 */
   --rd-toc-hover: oklch(0.926 0.015 var(--hue));
   --rd-toc-active: oklch(0.9 0.015 var(--hue));
-  --rd-toc-text: rgba(0, 0, 0, 0.5);
+  --rd-toc-text: rgba(0, 0, 0, 0.56); /* = main .text-50; 4.5:1+ on page, hover and active grounds */
   --rd-toc-text-faint: rgba(0, 0, 0, 0.3);
 }
 :root[data-theme="dark"],
@@ -100,7 +100,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 .rd-toc a:hover { background: var(--rd-toc-hover); }
 .rd-toc a:active { background: var(--rd-toc-active); }
 .rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
-.rd-toc__badge { display: flex; align-items: center; justify-content: center; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; background: var(--rd-toc-badge-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 700; }
+.rd-toc__badge { display: flex; align-items: center; justify-content: center; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; background: var(--rd-toc-badge-bg); color: var(--rd-accent-ink); font-size: 0.75rem; font-weight: 700; }
 .rd-toc__text { min-width: 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--rd-toc-text); overflow-wrap: anywhere; }
 .rd-toc__indicator { display: none; position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: -1; box-sizing: border-box; border: 2px dashed var(--rd-toc-hover); border-radius: 0.75rem; background: var(--rd-toc-hover); pointer-events: none; transition: all 0.15s ease; }
 /* Narrow: the disclosure. The highlighted entries get the hover fill (the indicator bar is the rail's form). */
