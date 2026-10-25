@@ -7,9 +7,12 @@ interface Props {
 }
 const className = Astro.props.class;
 ---
-<div class:list={["card-base px-6 py-4 text-sm text-75", className]}>
-    <Icon name="lucide:shield-check" class="inline-block align-[-0.2em] text-base mr-1.5 text-[var(--primary)]" />
-    <strong class="text-90">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</strong>
-    Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission.
-    Short quotes with attribution and a link are fine. <a href={url("/license/")} class="link text-[var(--primary)]">License</a>
-</div>
+<aside class:list={["card-base px-6 py-5 text-sm text-75", className]} aria-label="Copyright and license">
+	<p class="font-semibold text-base text-90">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</p>
+	<p class="mt-2">Research and experiments on this site may not be reused, copied, republished or used to train models without my written permission.</p>
+	<p class="mt-2 text-75">Short quotes with attribution and a link are fine.</p>
+	<a href={url("/license/")} class="inline-flex items-center gap-2 mt-4 min-h-11 px-4 py-2 rounded-lg border border-[var(--primary)] text-90 font-medium hover:bg-black/5 dark:hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-[3px]">
+		<Icon name="lucide:scale" aria-hidden="true" class="w-[1.125rem] h-[1.125rem] text-[var(--primary)]" />
+		License
+	</a>
+</aside>
