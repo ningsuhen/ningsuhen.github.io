@@ -3,18 +3,16 @@
  * and every chunk is scheduled on the AudioContext clock, back to back, with a short crossfade at each join.
  * Nothing waits for a chunk to finish before the next one is synthesised.
  *
- * Underrun: when the scheduled audio is nearly used up while synthesis is still running, the clock is suspended
- * (so no silent hole is played), the player shows "buffering", and the clock resumes once RESUME_BUFFER_S of
- * audio is scheduled again. Position follows the scheduled audio, not generation.
+ * Underrun: when synthesis falls behind, the clock keeps running and nothing pauses. The audio already scheduled
+ * plays out; the next chunk is scheduled the moment it arrives, so a slow device only hears a longer gap between
+ * sentences. Position follows the scheduled audio, not generation.
  */
 import type { AudioChunk } from "./engine";
 
-/** How far synthesis may run ahead of playback. Bounds memory and the cost of a Stop. */
-export const LOOKAHEAD_S = 15;
-/** Scheduled audio below this, while synthesis is still running, suspends the clock. */
+/** How far synthesis may run ahead of playback (about 6 MB of samples). A deep buffer makes gaps rarer. */
+export const LOOKAHEAD_S = 60;
+/** Scheduled audio below this when a chunk arrives means playback had caught up with synthesis. */
 export const UNDERRUN_S = 0.25;
-/** A suspended clock resumes once this much audio is scheduled again. */
-export const RESUME_BUFFER_S = 5;
 /** Crossfade at each join. The next chunk starts this much before the previous one ends. */
 export const CROSSFADE_S = 0.02;
 /** Delay before the first chunk plays, so the first sample is not clipped by scheduling. */
@@ -24,8 +22,6 @@ const TICK_MS = 100;
 export interface PipelineHooks {
 	/** Called with the sentence whose audio is playing now (from the scheduled timeline). */
 	onSentence: (index: number) => void;
-	/** Called when playback waits for synthesis (true) and when it resumes (false). */
-	onBuffering: (waiting: boolean) => void;
 	/** Called once per chunk, after it is accepted for scheduling. `ahead` is scheduled audio in seconds. */
 	onChunk?: (durationS: number, ahead: number, first: boolean) => void;
 }
@@ -41,7 +37,6 @@ export class Pipeline {
 	private readonly timeline: Scheduled[] = [];
 	private readonly sources: AudioBufferSourceNode[] = [];
 	private produced = 0;
-	private suspended = false;
 	private finished = false;
 	private timer: ReturnType<typeof setInterval> | null = null;
 	private wake: (() => void) | null = null;
@@ -66,7 +61,6 @@ export class Pipeline {
 		this.hooks.onChunk?.(duration, this.ahead(), this.produced === 0);
 		this.schedule(chunk, sentence);
 		this.produced += 1;
-		this.resumeIfBuffered();
 	}
 
 	/** Schedules silence after the audio so far: a punctuation pause, attributed to the sentence it follows. */
@@ -74,7 +68,6 @@ export class Pipeline {
 		if (this.signal.aborted || seconds <= 0) return;
 		this.schedule({ samples: new Float32Array(Math.round(seconds * 24000)), sampleRate: 24000 }, sentence);
 		this.produced += 1;
-		this.resumeIfBuffered();
 	}
 
 	/** Resolves when every scheduled chunk has played, or on abort. */
@@ -86,7 +79,7 @@ export class Pipeline {
 		this.dispose();
 	}
 
-	/** Seconds of scheduled audio still to play (frozen while suspended). */
+	/** Seconds of scheduled audio still to play. */
 	private ahead(): number {
 		return Math.max(0, this.nextStart - this.ctx.currentTime);
 	}
@@ -116,27 +109,9 @@ export class Pipeline {
 		this.nextStart = start + duration;
 	}
 
-	/** Watchdog: detects underrun, suspends the clock, and reports position. */
+	/** Reports position. The clock is never suspended: a gap simply waits for the next chunk. */
 	private tick(): void {
-		if (this.signal.aborted) return;
-		this.reportSentence();
-		if (this.finished || this.suspended || this.produced === 0) return;
-		if (this.ahead() < UNDERRUN_S) this.suspend();
-	}
-
-	private suspend(): void {
-		this.suspended = true;
-		void this.ctx.suspend();
-		this.hooks.onBuffering(true);
-	}
-
-	private resumeIfBuffered(): void {
-		if (!this.suspended) return;
-		if (this.ahead() >= RESUME_BUFFER_S || this.finished) {
-			this.suspended = false;
-			void this.ctx.resume();
-			this.hooks.onBuffering(false);
-		}
+		if (!this.signal.aborted) this.reportSentence();
 	}
 
 	private reportSentence(): void {
@@ -162,8 +137,6 @@ export class Pipeline {
 			};
 			const timer = setTimeout(done, ms);
 			this.wake = done;
-		}).then(() => {
-			this.resumeIfBuffered();
 		});
 	}
 
@@ -179,9 +152,5 @@ export class Pipeline {
 			}
 		}
 		this.sources.length = 0;
-		if (this.suspended) {
-			this.suspended = false;
-			void this.ctx.resume();
-		}
 	}
 }

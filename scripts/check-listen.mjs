@@ -676,9 +676,11 @@ await step("8. init failure", async () => {
 	await ctx.close();
 });
 
-// 9. Too slow: a neural engine whose first audio takes 9 s pauses itself, remembers the device, and offers the browser voice.
+// 9. Too slow: a neural engine slower than real time (1 s of audio every 2 s, RTF 2) never pauses playback.
+// The notice and its button show while audio plays, gaps are bridged without any click, the post does not shift,
+// and only the pause button pauses. Switching to the browser voice is remembered for the next visit.
 await step("9. too slow", async () => {
-	const ctx = await neuralContext(browser, { delayMs: 9000 });
+	const ctx = await neuralContext(browser, { delayMs: 2000 });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
@@ -687,13 +689,50 @@ await step("9. too slow", async () => {
 	await page.click("[data-variant=fp32]");
 	await page.waitForFunction(() => /Neural voice: downloaded/.test(document.querySelector("[data-download-state]")?.textContent ?? ""), null, { timeout: 15000 })
 		.catch(() => expect(false, "slow engine: download did not complete before Play"));
+	// Every state the player enters from here on, and the post's document offset (layout shift probe).
+	const postTop = () => page.evaluate(() => {
+		const next = document.querySelector("listen-player").nextElementSibling;
+		return Math.round(next.getBoundingClientRect().top + scrollY);
+	});
+	const topBefore = await postTop();
+	await page.evaluate(() => {
+		const player = document.querySelector("listen-player");
+		window.__states = [];
+		new MutationObserver(() => window.__states.push(player.dataset.state)).observe(player, { attributeFilter: ["data-state"] });
+	});
+	const position = () => page.$eval("[data-position]", (el) => Number.parseInt(el.textContent ?? "0", 10));
+	const state = () => page.$eval("listen-player", (el) => el.dataset.state);
 	await page.click("[data-action=play]");
 	await page.waitForSelector("[data-slow]:not([hidden])", { timeout: 25000 })
-		.catch(() => expect(false, "slow engine: too-slow notice did not appear"));
+		.catch(() => expect(false, "slow engine: slow notice did not appear"));
+	expect(await state() === "playing", `slow engine: state is ${await state()} when the notice shows, want playing`);
+	expect(await page.isVisible("[data-slow-browser]"), "slow engine: 'Switch to browser voice' not visible");
+	expect(await postTop() === topBefore, "slow engine: the notice shifted the post");
 	expect(
 		await page.evaluate(() => localStorage.getItem("listen-neural-slow") === "true"),
 		"slow engine: device not remembered",
 	);
+	// Gaps (synthesis is twice as slow as playback) are bridged by waiting: position advances with no click.
+	const atNotice = await position();
+	await page.waitForFunction((from) => Number.parseInt(document.querySelector("[data-position]").textContent ?? "0", 10) >= from + 2, atNotice, { timeout: 15000 })
+		.catch(() => expect(false, "slow engine: playback did not continue on its own after a gap"));
+	expect(await state() === "playing", `slow engine: state is ${await state()} after gaps, want playing`);
+	// Keeping the neural voice only hides the notice: no restart, still playing.
+	await page.click("[data-slow-keep]");
+	expect(await page.$eval("[data-slow]", (el) => el.hidden), "slow engine: notice still visible after 'Keep neural voice'");
+	expect(await state() === "playing", "slow engine: 'Keep neural voice' changed the play state");
+	const states = await page.evaluate(() => window.__states);
+	expect(states.every((s) => s === "playing"), `slow engine: player left 'playing' without a pause click: ${states.join(", ")}`);
+	// Pause happens only via the pause button, and then position holds.
+	await page.click("[data-action=play]");
+	expect(await state() === "paused", `slow engine: pause button gave state ${await state()}`);
+	const held = await position();
+	await page.waitForTimeout(3000);
+	expect(await position() === held, "slow engine: position moved while paused");
+	await page.click("[data-action=play]");
+	expect(await state() === "playing", "slow engine: play after pause did not resume");
+	// The switch still works mid-playback (the notice is shown again on a fresh page below).
+	await page.evaluate(() => { document.querySelector("[data-slow]").hidden = false; });
 	await page.click("[data-slow-browser]");
 	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 5000 })
 		.catch(() => expect(false, "slow engine: switch to browser voice failed"));

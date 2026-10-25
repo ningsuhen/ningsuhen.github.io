@@ -34,7 +34,7 @@ type EngineId = "web-speech" | "kokoro";
 /** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
 type KokoroChoice = KokoroVariant | "web";
 
-/** Neural-voice speed guard. Past these the player pauses and offers the browser voice. */
+/** Neural-voice speed guard. Past these the player offers the browser voice; playback never pauses for it. */
 const SLOW_FIRST_AUDIO_MS = 8000;
 /** Average generation time over the last chunks, divided by their audio length. Above 1 the voice falls behind. */
 const SLOW_RTF = 1;
@@ -230,7 +230,7 @@ class ListenPlayer extends HTMLElement {
 	private rate = 1;
 	private voice: string | null = null;
 	private runId = 0;
-	/** Set when the listener chooses to keep the neural voice after the too-slow notice. */
+	/** Set when the listener dismisses the slow notice and keeps the neural voice. */
 	private slowAcknowledged = false;
 	private downloadAbort: AbortController | null = null;
 	private abort: AbortController | null = null;
@@ -782,7 +782,6 @@ class ListenPlayer extends HTMLElement {
 			onSentence: (i) => {
 				if (id === this.runId) this.setIndex(i, true);
 			},
-			onBuffering: (waiting) => this.status(waiting ? "Buffering…" : ""),
 			onChunk: (durationS, ahead, first) => monitor.chunk(durationS, ahead < UNDERRUN_S && !first, first),
 		});
 		try {
@@ -1012,7 +1011,7 @@ class ListenPlayer extends HTMLElement {
 		on<HTMLButtonElement>("[data-download-cancel]", "click", () => this.downloadAbort?.abort());
 		on<HTMLButtonElement>("[data-download-remove]", "click", () => void this.removeNeural());
 		on<HTMLButtonElement>("[data-slow-browser]", "click", () => void this.leaveNeural());
-		on<HTMLButtonElement>("[data-slow-wait]", "click", () => this.keepWaiting());
+		on<HTMLButtonElement>("[data-slow-keep]", "click", () => this.keepNeural());
 		on<HTMLSelectElement>(
 			"[data-engine]",
 			"change",
@@ -1044,14 +1043,11 @@ class ListenPlayer extends HTMLElement {
 		this.setState("idle");
 	}
 
-	/** The neural voice fell behind: pause, remember it for this device, and offer the browser voice. */
+	/** The neural voice fell behind: remember it for this device and offer the browser voice. Audio keeps playing. */
 	private neuralTooSlow(runId: number): void {
 		if (runId !== this.runId || this.slowAcknowledged) return;
 		writeStorage(SLOW_KEY, true);
-		this.stopPlayback();
-		this.setState("paused");
 		this.need<HTMLElement>("[data-slow]").hidden = false;
-		this.status("");
 	}
 
 	/** Continues from the current sentence on the browser voice. */
@@ -1061,11 +1057,10 @@ class ListenPlayer extends HTMLElement {
 		this.run(this.index);
 	}
 
-	/** Keeps the neural voice for this sentence list and stops offering the switch. */
-	private keepWaiting(): void {
+	/** Keeps the neural voice and stops offering the switch. Playback is not touched. */
+	private keepNeural(): void {
 		this.need<HTMLElement>("[data-slow]").hidden = true;
 		this.slowAcknowledged = true;
-		this.run(this.index);
 	}
 
 	private async switchEngine(id: EngineId): Promise<void> {
