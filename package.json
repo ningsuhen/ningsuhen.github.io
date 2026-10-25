@@ -42,7 +42,8 @@
     "merge-pr": "sh scripts/merge-pr.sh",
     "test:hooks": "sh scripts/test-pre-push.sh",
     "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs",
-    "test:leaks-embedded": "node --test scripts/test-leak-embedded.mjs"
+    "test:leaks-embedded": "node --test scripts/test-leak-embedded.mjs",
+    "render:mermaid": "node scripts/render-mermaid.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -94,6 +95,7 @@
     "@astrojs/ts-plugin": "^1.10.6",
     "@biomejs/biome": "2.2.5",
     "@iconify-json/lucide": "^1.2.147",
+    "@mermaid-js/mermaid-cli": "12.0.0",
     "@rollup/plugin-yaml": "^4.1.2",
     "@types/hast": "^3.0.4",
     "@types/markdown-it": "^14.1.2",
