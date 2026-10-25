@@ -9,6 +9,11 @@ permissions:
 # One build, then the checks fan out in parallel. The aggregate `check` job is the single required
 # status for branch protection; the individual legs are for diagnosis. Browser legs retry only on
 # browser-launch (infra) failures, never on assertion failures.
+#
+# Browser legs get 15 min: that covers setup (pnpm install + the Playwright browser, ~1-2 min on a
+# warm cache, more on a cold one) plus the check itself, with margin. The 8 min that used to sit here
+# was eaten by setup (the apt --with-deps install ran ~6 min), leaving the check ~1 min before the job
+# was killed — see the setup-timing summary each leg writes to the job summary.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -67,7 +72,7 @@ jobs:
   standalone:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -88,7 +93,7 @@ jobs:
   report-history:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -111,7 +116,7 @@ jobs:
   theme:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -132,7 +137,7 @@ jobs:
   navigation:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -153,7 +158,7 @@ jobs:
   listen:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -178,7 +183,7 @@ jobs:
   design-system:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -199,7 +204,7 @@ jobs:
   dates:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:
@@ -222,7 +227,7 @@ jobs:
   cwv:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
         with:

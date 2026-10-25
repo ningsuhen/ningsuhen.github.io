@@ -8,6 +8,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Mark setup start
+      run: echo "SETUP_START=$(date +%s)" >> "$GITHUB_ENV"
+      shell: bash
     - uses: pnpm/action-setup@v4
     - uses: actions/setup-node@v4
       with:
@@ -20,3 +23,8 @@ runs:
       with:
         name: dist
         path: dist
+    - name: Setup timing
+      run: |
+        elapsed=$(( $(date +%s) - ${SETUP_START:-$(date +%s)} ))
+        echo "### Check setup (pnpm + dist): ${elapsed}s" >> "$GITHUB_STEP_SUMMARY"
+      shell: bash
