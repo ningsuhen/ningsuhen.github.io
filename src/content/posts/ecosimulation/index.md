@@ -5,7 +5,7 @@ description: "A stock-flow-consistent model of the AI economy, run 50,000 times.
 tags: [Experiment, AI, Simulation]
 category: Experiment
 thumbnail: ./thumb.webp
-draft: true
+draft: false
 ---
 
 I built a model of the AI economy and let it run. It is a network of companies and countries where every payment has a payer and a payee, so the cash is conserved and the accounting identities are checked every tick. I drew 50,000 paths from one fixed seed and exported 10,000 of them to a page. The data is cut at 2026-10-17.
