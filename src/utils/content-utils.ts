@@ -17,11 +17,6 @@ async function getRawSortedPosts() {
 	return sorted;
 }
 
-/** True when a post body references a local (relative) image: markdown ![](./x) or <img src="./x">. */
-export function hasBodyImage(body = ""): boolean {
-	return /!\[[^\]]*\]\(\s*\.{0,2}\/?[^)\s:]+\.(?:png|jpe?g|webp|avif|gif|svg)/i.test(body) || /<img[^>]+src=["']\.{0,2}\/?[^"':]+\.(?:png|jpe?g|webp|avif|gif|svg)/i.test(body);
-}
-
 export const DEFAULT_THUMBNAIL = "/images/default-thumbnail.webp";
 
 /** Card thumbnail: the post's purpose-made square `thumbnail`, else the site default. Never an auto-cropped cover or body image. */
@@ -29,13 +24,11 @@ export function postThumbnail(entry: CollectionEntry<"posts">): string {
 	return entry.data.thumbnail || DEFAULT_THUMBNAIL;
 }
 
-/** Build-time nudge: posts with images but no `thumbnail`. Call once per build. */
+/** Build-time warning: published posts with no `thumbnail`. `pnpm check:thumbnails` fails on the same rule. */
 export function warnMissingThumbnails(posts: CollectionEntry<"posts">[]): void {
-	const missing = posts
-		.filter((p) => !p.data.thumbnail && (p.data.image || hasBodyImage(p.body)))
-		.map((p) => p.slug);
+	const missing = posts.filter((p) => !p.data.draft && !p.data.thumbnail).map((p) => p.slug);
 	if (missing.length > 0) {
-		console.warn(`[thumbnails] ${missing.length} post(s) have images but no \`thumbnail\` (add a square 800x800 thumb.webp): ${missing.join(", ")}`);
+		console.warn(`[thumbnails] ${missing.length} published post(s) have no \`thumbnail\` (every post needs a square 800x800 thumb.webp; pnpm check:thumbnails fails): ${missing.join(", ")}`);
 	}
 }
 

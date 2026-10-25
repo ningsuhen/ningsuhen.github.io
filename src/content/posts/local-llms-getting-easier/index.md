@@ -4,6 +4,7 @@ published: 2026-10-24
 description: "Local models are simpler to run than they were. The browser is next, and I want to test a small model there."
 tags: [AI, Local LLM, WebGPU, Opinion]
 category: Thoughts
+thumbnail: ./thumb.webp
 draft: false
 ---
 
