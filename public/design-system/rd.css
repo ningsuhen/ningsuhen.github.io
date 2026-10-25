@@ -1,0 +1,686 @@
+/*
+ * Research design system: matches the ningsuhen.github.io theme (Fuwari-derived tokens).
+ * Light by default; dark via <html data-theme="dark"> or <html class="dark">.
+ * Density: compact by default (technical papers, experiments, dashboards). Switch with
+ *   <html data-density="comfortable">  (essays, long-form reading, main-site feel)  or  data-density="dense"
+ * on <html>, or on any wrapper to change one block. Components read ONLY the density tokens for size and
+ * spacing (--rd-fs-*, --rd-lh, --rd-space-*, --rd-pad-*, --rd-gap-*, --rd-control-h, --rd-expnav-h, --rd-measure).
+ * The site navbar (injected at build time) sets data-theme from localStorage "theme".
+ * Source of truth: public/design-system/research.css. Inline it into self-contained reports.
+ * Prefix: rd-  (never restyle bare elements outside .rd-prose, so it can't clash with a report's own CSS).
+ */
+
+:root {
+	--hue: 250;
+	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
+	--rd-navbar-width: 73rem;
+	--rd-navbar-gap: 1rem; /* space between the injected navbar card and the section bar under it (the main site's 16px rhythm) */
+	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
+	--rd-content-width: 54.5rem;
+	--rd-radius: 1rem;
+	--rd-radius-md: 0.75rem;
+	--rd-radius-sm: 0.5rem;
+
+	/* Surface */
+	--rd-page-bg: oklch(0.95 0.01 var(--hue));
+	--rd-card-bg: #fff;
+	--rd-primary: oklch(0.7 0.14 var(--hue));
+	--rd-accent: oklch(0.55 0.12 var(--hue)); /* links, badges, rules */
+	--rd-accent-ink: oklch(0.5 0.12 var(--hue)); /* text on tab, button and page grounds (4.5:1+ on each) */
+	--rd-title-active: oklch(0.6 0.1 var(--hue));
+	--rd-btn-bg: oklch(0.95 0.025 var(--hue));
+	--rd-btn-bg-hover: oklch(0.9 0.05 var(--hue));
+	--rd-plain-hover: oklch(0.95 0.025 var(--hue));
+
+	/* Text */
+	--rd-text: rgba(0, 0, 0, 0.75);
+	--rd-text-strong: oklch(0.25 0.02 var(--hue));
+	--rd-text-muted: rgba(0, 0, 0, 0.6);
+	--rd-text-faint: rgba(0, 0, 0, 0.3);
+
+	/* Lines */
+	--rd-line: rgba(0, 0, 0, 0.1);
+	--rd-line-soft: rgba(0, 0, 0, 0.08);
+
+	/* Code */
+	--rd-code-bg: var(--rd-btn-bg);
+	--rd-code-fg: var(--rd-accent-ink);
+	--rd-codeblock-bg: oklch(0.17 0.015 var(--hue));
+	--rd-codeblock-fg: rgba(255, 255, 255, 0.85);
+
+	/* Semantic (status) */
+	--rd-good: oklch(0.48 0.12 160);
+	--rd-warn: oklch(0.52 0.13 80);
+	--rd-bad: oklch(0.55 0.17 25);
+
+	/* Chart palette: sequential follows the hue; categorical is Okabe-Ito (colour-blind safe). */
+	--rd-seq-1: oklch(0.92 0.04 var(--hue));
+	--rd-seq-2: oklch(0.82 0.08 var(--hue));
+	--rd-seq-3: oklch(0.7 0.12 var(--hue));
+	--rd-seq-4: oklch(0.55 0.13 var(--hue));
+	--rd-seq-5: oklch(0.4 0.11 var(--hue));
+	--rd-cat-1: #e69f00;
+	--rd-cat-2: #0072b2;
+	--rd-cat-3: #cc79a7;
+	--rd-cat-4: #009e73;
+	--rd-cat-5: #56b4e9;
+	--rd-cat-6: #d55e00;
+
+	--rd-font: Roboto, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+	--rd-font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ---- Density tokens. Compact is the default (the first block; no attribute needed). ---- */
+:root,
+[data-density="compact"] {
+	/* Type: sizes and line height. Nothing below 11px. */
+	--rd-fs-base: 0.875rem; /* 14px */
+	--rd-fs-sm: 0.8125rem; /* 13px */
+	--rd-fs-xs: 0.75rem; /* 12px */
+	--rd-fs-table: 0.8rem; /* 12.8px */
+	--rd-fs-lede: 0.95rem;
+	--rd-fs-h1: 1.6rem;
+	--rd-fs-h2: 1.2rem;
+	--rd-fs-h3: 1rem;
+	--rd-fs-stat: 1.6rem;
+	--rd-lh: 1.5;
+	/* Spacing: a 4px-based scale (space-1 = 4px). Semantic tokens below pick from it. */
+	--rd-space-1: 0.25rem;
+	--rd-space-2: 0.5rem;
+	--rd-space-3: 0.75rem;
+	--rd-space-4: 1rem;
+	--rd-space-5: 1.25rem;
+	--rd-space-6: 1.5rem;
+	--rd-pad-card: var(--rd-space-4);
+	--rd-pad-callout: 0.625rem 0.875rem;
+	--rd-pad-cell-y: 0.375rem; /* 6px */
+	--rd-pad-cell-x: 0.625rem; /* 10px */
+	--rd-pad-chip: 0.125rem 0.5rem;
+	--rd-gap-section: 2rem;
+	--rd-gap-block: var(--rd-space-3);
+	--rd-gap-para: var(--rd-space-2);
+	/* Controls: tap targets stay >= 24px (WCAG 2.2 target size). */
+	--rd-control-h: 1.75rem; /* 28px */
+	--rd-expnav-h: 2.5rem; /* 40px */
+	/* Prose line length, inside the 54.5rem column. */
+	--rd-measure: 75ch;
+}
+
+[data-density="comfortable"] {
+	--rd-fs-base: 1rem;
+	--rd-fs-sm: 0.875rem;
+	--rd-fs-xs: 0.8125rem;
+	--rd-fs-table: 0.9rem;
+	--rd-fs-lede: 1.125rem;
+	--rd-fs-h1: 2.25rem;
+	--rd-fs-h2: 1.5rem;
+	--rd-fs-h3: 1.2rem;
+	--rd-fs-stat: 2rem;
+	--rd-lh: 1.7; /* the main site's reading line height */
+	--rd-space-1: 0.5rem;
+	--rd-space-2: 0.75rem;
+	--rd-space-3: 1rem;
+	--rd-space-4: 1.25rem;
+	--rd-space-5: 1.5rem;
+	--rd-space-6: 2rem;
+	--rd-pad-card: 1.5rem;
+	--rd-pad-callout: 1rem 1.25rem;
+	--rd-pad-cell-y: 0.625rem;
+	--rd-pad-cell-x: 0.75rem;
+	--rd-pad-chip: 0.25rem 0.75rem;
+	--rd-gap-section: 3rem;
+	--rd-gap-block: 1.25rem;
+	--rd-gap-para: 0.875rem;
+	--rd-control-h: 2.5rem; /* 40px */
+	--rd-expnav-h: 3rem; /* 48px */
+	--rd-measure: 70ch;
+}
+
+[data-density="dense"] {
+	--rd-fs-base: 0.8125rem; /* 13px */
+	--rd-fs-sm: 0.75rem; /* 12px */
+	--rd-fs-xs: 0.6875rem; /* 11px, the floor */
+	--rd-fs-table: 0.75rem; /* 12px */
+	--rd-fs-lede: 0.875rem;
+	--rd-fs-h1: 1.4rem;
+	--rd-fs-h2: 1.05rem;
+	--rd-fs-h3: 0.9rem;
+	--rd-fs-stat: 1.35rem;
+	--rd-lh: 1.4;
+	--rd-pad-card: 0.75rem;
+	--rd-pad-callout: 0.5rem 0.75rem;
+	--rd-pad-cell-y: 0.25rem;
+	--rd-pad-cell-x: 0.5rem;
+	--rd-pad-chip: 0.0625rem 0.375rem;
+	--rd-gap-section: 1.25rem;
+	--rd-gap-block: 0.5rem;
+	--rd-gap-para: 0.375rem;
+	--rd-control-h: 1.5rem; /* 24px, the minimum */
+	--rd-expnav-h: 2.25rem; /* 36px */
+	--rd-measure: none;
+}
+
+:root[data-theme="dark"],
+:root.dark {
+	--rd-page-bg: oklch(0.16 0.014 var(--hue));
+	--rd-card-bg: oklch(0.23 0.015 var(--hue));
+	--rd-primary: oklch(0.75 0.14 var(--hue));
+	--rd-accent: oklch(0.75 0.1 var(--hue));
+	--rd-accent-ink: var(--rd-accent);
+	--rd-btn-bg: oklch(0.33 0.035 var(--hue));
+	--rd-btn-bg-hover: oklch(0.38 0.04 var(--hue));
+	--rd-plain-hover: oklch(0.3 0.035 var(--hue));
+	--rd-text: rgba(255, 255, 255, 0.75);
+	--rd-text-strong: rgba(255, 255, 255, 0.92);
+	--rd-text-muted: rgba(255, 255, 255, 0.6);
+	--rd-text-faint: rgba(255, 255, 255, 0.3);
+	--rd-line: rgba(255, 255, 255, 0.1);
+	--rd-line-soft: rgba(255, 255, 255, 0.08);
+	--rd-codeblock-bg: oklch(0.17 0.015 var(--hue));
+	--rd-seq-1: oklch(0.3 0.04 var(--hue));
+	--rd-seq-2: oklch(0.42 0.08 var(--hue));
+	--rd-seq-3: oklch(0.55 0.11 var(--hue));
+	--rd-seq-4: oklch(0.7 0.13 var(--hue));
+	--rd-seq-5: oklch(0.85 0.1 var(--hue));
+	--rd-good: oklch(0.72 0.12 160);
+	--rd-warn: oklch(0.78 0.12 80);
+	--rd-bad: oklch(0.72 0.15 25);
+}
+
+/* ---- Page ---- */
+.rd-body {
+	margin: 0;
+	background: var(--rd-page-bg);
+	color: var(--rd-text);
+	font: 400 var(--rd-fs-base) / var(--rd-lh) var(--rd-font);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Width contract: default = the main site's content column (54.5rem). --wide = the navbar's width (1168px):
+   the content edges line up with the navbar card. Use it for tabbed reports, never for a single column. */
+.rd-container {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: var(--rd-content-width);
+	margin: 0 auto;
+	padding: var(--rd-gap-block) var(--rd-space-4) var(--rd-gap-section);
+}
+.rd-container--wide { max-width: var(--rd-navbar-width); } /* matches the injected navbar width */
+
+/* ---- Cards ---- */
+.rd-card {
+	background: var(--rd-card-bg);
+	border-radius: var(--rd-radius);
+	padding: var(--rd-pad-card);
+	margin: var(--rd-gap-block) 0;
+}
+.rd-card > :first-child { margin-top: 0; }
+.rd-card > :last-child { margin-bottom: 0; }
+
+/* ---- Type (scoped so it never leaks into a report's own components) ---- */
+.rd-prose { color: var(--rd-text); }
+.rd-prose h1, .rd-prose h2, .rd-prose h3, .rd-prose h4 {
+	color: var(--rd-text-strong);
+	font-weight: 700;
+	line-height: 1.3;
+}
+.rd-prose h1 { font-size: var(--rd-fs-h1); margin: 0 0 var(--rd-space-2); }
+.rd-prose h2 {
+	font-size: var(--rd-fs-h2);
+	margin: var(--rd-gap-section) 0 var(--rd-gap-block);
+	padding-left: 0.9rem;
+	position: relative;
+}
+.rd-prose h2::before { /* the site's accent bar before section headings */
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0.2em;
+	bottom: 0.2em;
+	width: 0.25rem;
+	border-radius: 0.125rem;
+	background: var(--rd-primary);
+}
+.rd-prose h3 { font-size: var(--rd-fs-h3); margin: var(--rd-gap-block) 0 var(--rd-gap-para); }
+.rd-prose p { margin: var(--rd-gap-para) 0; max-width: var(--rd-measure); }
+.rd-prose li { max-width: var(--rd-measure); }
+.rd-prose a {
+	color: var(--rd-accent);
+	text-decoration: underline;
+	text-decoration-color: var(--rd-line);
+	text-underline-offset: 3px;
+}
+.rd-prose a:hover { text-decoration-color: var(--rd-accent); }
+.rd-prose hr { border: 0; border-top: 1px dashed var(--rd-line); margin: var(--rd-gap-section) 0; }
+.rd-prose blockquote {
+	margin: var(--rd-gap-block) 0;
+	padding: 0.25rem 1rem;
+	border-left: 0.25rem solid var(--rd-primary);
+	background: var(--rd-btn-bg);
+	border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0;
+}
+.rd-prose code {
+	font-family: var(--rd-font-mono);
+	font-size: 0.875em;
+	background: var(--rd-code-bg);
+	color: var(--rd-code-fg);
+	padding: 0.1em 0.35em;
+	border-radius: 0.25rem;
+}
+.rd-prose pre {
+	background: var(--rd-codeblock-bg);
+	color: var(--rd-codeblock-fg);
+	padding: var(--rd-pad-card);
+	border-radius: var(--rd-radius-sm);
+	overflow-x: auto;
+}
+.rd-prose pre code { background: none; color: inherit; padding: 0; }
+
+.rd-meta { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-eyebrow {
+	color: var(--rd-text-muted);
+	font-size: var(--rd-fs-xs);
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* ---- Tables (scroll inside the container, never widen the page) ---- */
+.rd-table-wrap { overflow-x: auto; margin: var(--rd-gap-block) 0; border-radius: var(--rd-radius-sm); scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.rd-table { width: 100%; border-collapse: collapse; font-size: var(--rd-fs-table); font-variant-numeric: tabular-nums; }
+.rd-table th, .rd-table td { padding: var(--rd-pad-cell-y) var(--rd-pad-cell-x); text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
+.rd-table th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); }
+.rd-table td.rd-num, .rd-table th.rd-num { text-align: right; }
+.rd-table code { font-size: 1em; } /* keep table code at the cell size: never below the 11px floor */
+.rd-table tr:hover td { background: var(--rd-plain-hover); }
+
+/* ---- Stat tiles: the headline-number pattern ---- */
+.rd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr)); gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; }
+.rd-stat { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); border-top: 3px solid var(--rd-line); }
+.rd-stat--candidate { border-top-color: var(--rd-accent); }
+.rd-stat--reference { border-top-color: var(--rd-cat-3); }
+.rd-stat--reference .rd-stat__value { color: var(--rd-text-strong); }
+.rd-stat__value { font-size: var(--rd-fs-stat); font-weight: 700; line-height: 1.1; color: var(--rd-accent); font-variant-numeric: tabular-nums; }
+.rd-stat__label { margin-top: var(--rd-space-1); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-stat__note { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-stat__delta { display: flex; align-items: center; gap: 0.3rem; margin-top: var(--rd-space-2); font-size: var(--rd-fs-sm); font-weight: 600; color: var(--rd-text-muted); }
+.rd-stat__delta--good { color: var(--rd-good); }
+.rd-stat__delta--bad { color: var(--rd-bad); }
+
+/* ---- Callouts ---- */
+.rd-callout { border-left: 0.25rem solid var(--rd-primary); background: var(--rd-card-bg); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; padding: var(--rd-pad-callout); margin: var(--rd-gap-block) 0; }
+.rd-callout--good { border-color: var(--rd-good); }
+.rd-callout--warn { border-color: var(--rd-warn); }
+.rd-callout--bad { border-color: var(--rd-bad); }
+.rd-callout__title { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-1); }
+
+/* ---- Figures & charts ---- */
+.rd-figure { margin: var(--rd-gap-section) 0; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); }
+.rd-figure { overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.rd-figure img { max-width: 100%; height: auto; display: block; border-radius: var(--rd-radius-sm); }
+/* Charts: never shrink below ~42rem (the 680-unit viewBox at 1:1). On a phone the figure scrolls sideways
+   inside itself, so axis and annotation text stays at the density size instead of scaling below 11px. */
+.rd-figure > svg { display: block; width: 100%; min-width: 42rem; height: auto; border-radius: var(--rd-radius-sm); }
+.rd-figure figcaption { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+
+/* ---- Buttons / chips / nav tabs ---- */
+.rd-btn {
+	display: inline-flex; align-items: center; gap: 0.35rem;
+	min-height: var(--rd-control-h); padding: 0 var(--rd-space-3);
+	border: 0; border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg); color: var(--rd-accent-ink); font: 500 var(--rd-fs-sm) var(--rd-font); cursor: pointer;
+}
+.rd-btn:hover { background: var(--rd-btn-bg-hover); }
+.rd-chip {
+	display: inline-flex; align-items: center; gap: 0.3rem;
+	padding: var(--rd-pad-chip); border-radius: 999px;
+	background: var(--rd-btn-bg); color: var(--rd-accent-ink);
+	font-size: var(--rd-fs-xs); font-weight: 500; line-height: 1.6;
+}
+.rd-chip--good { color: var(--rd-good); }
+.rd-chip--warn { color: var(--rd-warn); }
+.rd-chip--bad { color: var(--rd-bad); }
+.rd-chip--neutral { color: var(--rd-text-muted); }
+.rd-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--rd-line); margin: var(--rd-gap-block) 0; }
+.rd-tabs a { display: inline-flex; align-items: center; min-height: var(--rd-control-h); padding: 0 var(--rd-space-3); border-radius: var(--rd-radius-sm) var(--rd-radius-sm) 0 0; color: var(--rd-text); text-decoration: none; }
+.rd-tabs a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
+.rd-tabs a[aria-current="page"], .rd-tabs a.is-active { color: var(--rd-accent-ink); box-shadow: inset 0 -2px 0 var(--rd-primary); }
+
+/* ---- Focus & motion & print ---- */
+.rd-body :focus-visible { outline: 2px solid var(--rd-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .rd-body * { transition: none !important; animation: none !important; } }
+@media print {
+	.rd-body { background: #fff; color: #000; }
+	.rd-card, .rd-stat, .rd-figure { break-inside: avoid; box-shadow: none; }
+}
+
+/* ======================================================================
+   Scientific writing: math, numbered equations/figures/tables, theorems,
+   proofs, citations, references, footnotes, abstract.
+   Math is rendered with KaTeX (pinned 0.16.27). Markdown posts get it from the site
+   ($...$ inline, $$...$$ display; escape a literal dollar as \$). Standalone reports pre-render
+   with katex.renderToString at build time and link katex.min.css; no runtime JS needed.
+   ====================================================================== */
+.rd-prose { counter-reset: rd-eq rd-fig rd-tbl rd-thm; }
+
+.rd-authors { color: var(--rd-text-strong); font-weight: 500; margin: var(--rd-space-1) 0; }
+.rd-affil { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); margin: 0 0 var(--rd-gap-block); }
+.rd-abstract { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-base); }
+.rd-abstract > .rd-abstract__title { font-weight: 700; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-1); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--rd-fs-xs); }
+.rd-keywords { color: var(--rd-text-muted); font-size: var(--rd-fs-xs); margin-top: var(--rd-space-2); }
+.rd-keywords strong { color: var(--rd-text); }
+
+/* Math */
+.rd-prose .katex { font-size: 1.05em; color: inherit; }
+.rd-prose .katex-display { margin: 0; overflow-x: auto; overflow-y: hidden; padding: var(--rd-space-1) 0; }
+.rd-prose .katex-display > .katex { white-space: nowrap; }
+
+/* Numbered display equation: <div class="rd-equation" id="eq-model"> <KaTeX display> </div> */
+.rd-equation { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--rd-space-4); margin: var(--rd-gap-block) 0; counter-increment: rd-eq; }
+.rd-equation::after { content: "(" counter(rd-eq) ")"; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
+.rd-equation--unnumbered { counter-increment: none; }
+.rd-equation--unnumbered::after { content: ""; }
+.rd-equation:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
+
+/* Theorem-like blocks share one counter, like amsthm with [theorem] numbering */
+.rd-theorem, .rd-lemma, .rd-proposition, .rd-definition, .rd-corollary {
+	margin: var(--rd-gap-block) 0; padding: var(--rd-pad-callout); background: var(--rd-card-bg);
+	border-left: 0.25rem solid var(--rd-primary); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0;
+	counter-increment: rd-thm;
+}
+.rd-theorem::before { content: "Theorem " counter(rd-thm) ". "; }
+.rd-lemma::before { content: "Lemma " counter(rd-thm) ". "; }
+.rd-proposition::before { content: "Proposition " counter(rd-thm) ". "; }
+.rd-corollary::before { content: "Corollary " counter(rd-thm) ". "; }
+.rd-definition::before { content: "Definition " counter(rd-thm) ". "; }
+.rd-theorem::before, .rd-lemma::before, .rd-proposition::before, .rd-corollary::before, .rd-definition::before {
+	font-weight: 700; color: var(--rd-text-strong);
+}
+.rd-theorem, .rd-lemma, .rd-proposition, .rd-corollary { font-style: italic; }
+.rd-definition { font-style: normal; }
+.rd-proof { margin: var(--rd-gap-block) 0 var(--rd-gap-section); padding-right: 1.5rem; position: relative; }
+.rd-proof::before { content: "Proof. "; font-style: italic; font-weight: 700; color: var(--rd-text-strong); }
+.rd-proof::after { content: "\220E"; position: absolute; right: 0; bottom: 0; color: var(--rd-text-muted); }
+.rd-remark::before { content: "Remark. "; font-style: italic; font-weight: 700; }
+
+/* Auto-numbered figure and table captions */
+.rd-figure { counter-increment: rd-fig; }
+.rd-figure figcaption::before { content: "Figure " counter(rd-fig) ". "; font-weight: 700; color: var(--rd-text-strong); }
+.rd-table-wrap { counter-increment: rd-tbl; }
+.rd-table caption { caption-side: top; text-align: left; padding: 0 0 var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.rd-table caption::before { content: "Table " counter(rd-tbl) ". "; font-weight: 700; color: var(--rd-text-strong); }
+.rd-ref { color: var(--rd-accent); }
+
+/* Citations and references: <a class="rd-cite" href="#ref-dean">[1]</a>; <ol class="rd-refs"><li id="ref-dean"> */
+.rd-cite { color: var(--rd-accent); text-decoration: none; white-space: nowrap; }
+.rd-cite:hover { text-decoration: underline; }
+.rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-sm); }
+.rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: var(--rd-space-2) 0; }
+.rd-refs li::before { content: "[" counter(rd-ref) "]"; position: absolute; left: 0; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
+.rd-refs li:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
+.rd-refs .rd-doi { color: var(--rd-accent); word-break: break-all; }
+
+/* Footnotes: <sup class="rd-fn"><a href="#fn1" id="fnref1">1</a></sup> */
+sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
+.rd-fn a { color: var(--rd-accent); text-decoration: none; }
+.rd-footnotes { border-top: 1px solid var(--rd-line); margin-top: var(--rd-gap-section); padding-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-footnotes li:target { background: var(--rd-btn-bg); }
+
+@media print {
+	.rd-equation, .rd-theorem, .rd-lemma, .rd-proposition, .rd-definition, .rd-corollary, .rd-proof { break-inside: avoid; }
+	.rd-prose a { color: inherit; text-decoration: none; }
+}
+
+/* ======================================================================
+   Icons: Lucide, from the inlined sprite (scripts/build-lucide-sprite.mjs writes the
+   <symbol>s between the lucide-sprite markers of each page). Stroke comes from this class.
+   <svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>
+   ====================================================================== */
+.rd-icon {
+	display: inline-block;
+	flex: none;
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.2em;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.rd-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, 100%), 1fr)); gap: var(--rd-space-2); list-style: none; padding: 0; margin: var(--rd-gap-block) 0; }
+.rd-icon-grid li { display: flex; align-items: center; gap: var(--rd-space-2); padding: var(--rd-space-2) var(--rd-space-3); background: var(--rd-card-bg); border-radius: var(--rd-radius-sm); font-size: var(--rd-fs-sm); color: var(--rd-text-muted); overflow-wrap: anywhere; }
+.rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
+
+/* ======================================================================
+   Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
+   ====================================================================== */
+/* Section bar (rd-expnav): the navbar-width frame, one gap (--rd-navbar-gap) under the injected navbar card. Its first
+   link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
+   container padding. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
+   --rd-navbar-h + --rd-navbar-gap (one gap under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
+   link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
+@media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
+.rd-expnav {
+	position: sticky;
+	top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap));
+	z-index: 20;
+	box-sizing: border-box;
+	display: flex;
+	gap: 0.125rem;
+	width: 100%;
+	max-width: var(--rd-navbar-width);
+	margin: var(--rd-navbar-gap) auto 0;
+	padding: 0 var(--rd-space-4);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
+	min-height: var(--rd-expnav-h);
+	background: var(--rd-page-bg);
+	border-bottom: 1px solid var(--rd-line);
+}
+.rd-expnav::-webkit-scrollbar { display: none; }
+.rd-expnav a {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex: none;
+	min-height: var(--rd-expnav-h);
+	padding: 0 var(--rd-space-3);
+	color: var(--rd-text-muted);
+	font-size: var(--rd-fs-sm);
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+	box-shadow: inset 0 -3px 0 transparent;
+	transition: color 0.15s ease, box-shadow 0.15s ease;
+}
+.rd-expnav a:hover { color: var(--rd-text-strong); }
+.rd-expnav a.is-active { color: var(--rd-accent-ink); box-shadow: inset 0 -3px 0 var(--rd-accent); }
+.rd-expnav a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+.rd-expnav .rd-icon { color: var(--rd-accent); }
+/* Edge fades: the scroll-spy sets .is-fade-start / .is-fade-end only while links are hidden on that side. The fades are
+   sticky pseudo-elements with zero flow width, so the bar's own background stays opaque under them. */
+.rd-expnav::before, .rd-expnav::after { content: none; }
+/* The gap between the navbar card and the section bar is page-coloured, so scrolled content does not show through it. */
+.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
+.rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
+	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
+}
+.rd-expnav.is-fade-start::before { left: 0; margin-right: -2.5rem; background: linear-gradient(to right, var(--rd-page-bg) 30%, transparent); }
+.rd-expnav.is-fade-end::after { right: 0; margin-left: -2.5rem; background: linear-gradient(to left, var(--rd-page-bg) 30%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+	html:has(.rd-expnav) { scroll-behavior: smooth; }
+}
+
+/* Tabbed reports. The tab bar and the content use the navbar card's width (--rd-navbar-width, 1168px from 1200px up),
+   so their edges line up with the navbar card. The "On this page" rail (.rd-toc) sits OUTSIDE that width in the right
+   page margin, as the main post page's TOC does (Fuwari, src/components/widget/TOC.astro; measured on /posts/rust-learnings/):
+   from 1536px up (the main site's 2xl breakpoint) it is position:fixed at top 3.5rem, width (100vw - navbar) / 2 - 1rem,
+   height calc(100vh - 20rem), a 2rem spacer at the top and bottom, and a dashed indicator bar spanning every section that
+   intersects the viewport (the report's scroll-spy script ports TOC.astro's logic; keep them in step).
+   Below 1536px the rail is a disclosure ("On this page") above the content, open by default so no-JS sees every link. */
+:root {
+  --rd-toc-width: calc((100vw - var(--rd-navbar-width)) / 2 - 2rem); /* = the main TOC: the 16px gap to the navbar card, 16px to the viewport edge */
+  --rd-toc-badge-bg: oklch(0.89 0.05 var(--hue));
+  --rd-toc-hover: oklch(0.926 0.015 var(--hue));
+  --rd-toc-active: oklch(0.9 0.015 var(--hue));
+  --rd-toc-text: rgba(0, 0, 0, 0.5);
+  --rd-toc-text-faint: rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"],
+:root.dark {
+  --rd-toc-badge-bg: var(--rd-btn-bg);
+  --rd-toc-hover: oklch(0.22 0.02 var(--hue));
+  --rd-toc-active: oklch(0.25 0.02 var(--hue));
+  --rd-toc-text: rgba(255, 255, 255, 0.5);
+  --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
+}
+html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem var(--rd-space-4) 4rem; }
+.rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
+.rd-tabpanel[hidden] { display: none; }
+.rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
+/* Below 1536px the rail is the disclosure above the content. It sticks under the section bar (like the main TOC), so it stays
+   in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
+.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-3)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-navbar-gap) - var(--rd-expnav-h) - var(--rd-space-4)); overflow-y: auto; background: var(--rd-page-bg); }
+.rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
+.rd-toc summary::-webkit-details-marker { display: none; }
+.rd-toc summary .rd-icon { color: var(--rd-accent); }
+.rd-toc ol { list-style: none; margin: 0; padding: 0; position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0 0.5rem; }
+.rd-toc li { margin: 0; min-width: 0; }
+/* Entries: the main TOC's markup and metrics (px-2 py-2 gap-2, min-h 36px, rounded-xl; 20px badge, rounded-lg; text-sm 14px/20px). */
+.rd-toc a { position: relative; display: flex; gap: 0.5rem; width: 100%; min-height: 2.25rem; box-sizing: border-box; padding: 0.5rem; border-radius: 0.75rem; color: inherit; text-decoration: none; transition: background-color 0.15s ease; }
+.rd-toc a:hover { background: var(--rd-toc-hover); }
+.rd-toc a:active { background: var(--rd-toc-active); }
+.rd-toc a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+.rd-toc__badge { display: flex; align-items: center; justify-content: center; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 0.5rem; background: var(--rd-toc-badge-bg); color: var(--rd-accent); font-size: 0.75rem; font-weight: 700; }
+.rd-toc__text { min-width: 0; font-size: 0.875rem; line-height: 1.25rem; color: var(--rd-toc-text); overflow-wrap: anywhere; }
+.rd-toc__indicator { display: none; position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: -1; box-sizing: border-box; border: 2px dashed var(--rd-toc-hover); border-radius: 0.75rem; background: var(--rd-toc-hover); pointer-events: none; transition: all 0.15s ease; }
+/* Narrow: the disclosure. The highlighted entries get the hover fill (the indicator bar is the rail's form). */
+@media (max-width: 1535px) {
+  .rd-toc a.visible { background: var(--rd-toc-hover); }
+}
+/* Wide (1536px+): the rail, fixed in the right margin, like the main post page's TOC. */
+@media (min-width: 1536px) {
+  .rd-toc { position: fixed; top: 3.5rem; left: calc(50% + var(--rd-navbar-width) / 2 + 1rem); z-index: 1; width: var(--rd-toc-width); height: calc(100vh - 20rem); box-sizing: border-box; padding: 2rem 0; overflow-x: hidden; overflow-y: scroll; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); }
+  .rd-toc::-webkit-scrollbar { display: none; }
+  .rd-toc summary { display: none; }
+  .rd-toc ol { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .rd-toc.is-live .rd-toc__indicator { display: block; }
+  .rd-toc:hover .rd-toc__indicator { background: transparent; border-color: var(--rd-toc-active); }
+}
+
+/* Section header: an icon badge, an h2, and an id that the navbar links to. */
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
+.rd-prose .rd-section__head h2::before { content: none; }
+.rd-section__icon {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 2em;
+	height: 2em;
+	font-size: var(--rd-fs-h2);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-btn-bg);
+	color: var(--rd-accent);
+}
+.rd-section__icon .rd-icon { width: 1em; height: 1em; }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+
+/* Hero: eyebrow, h1, lede, a row of status chips and meta. */
+.rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }
+.rd-prose .rd-hero h1 { font-size: var(--rd-fs-h1); line-height: 1.2; letter-spacing: -0.01em; margin: var(--rd-space-1) 0 var(--rd-space-2); overflow-wrap: break-word; }
+.rd-hero__lede { font-size: var(--rd-fs-lede); color: var(--rd-text); max-width: var(--rd-measure); margin: 0 0 var(--rd-space-3); }
+.rd-hero__meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rd-space-2) var(--rd-space-3); margin: 0; color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+
+/* Brief: three boxes (question, status, how to read), each with a coloured top rule. */
+.rd-brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; }
+.rd-brief__item { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); border-top: 3px solid var(--rd-accent); }
+.rd-brief__item:nth-child(2) { border-top-color: var(--rd-cat-5); }
+.rd-brief__item:nth-child(3) { border-top-color: var(--rd-cat-3); }
+.rd-prose .rd-brief__item > :first-child { margin-top: 0; }
+.rd-prose .rd-brief__item p { margin: var(--rd-space-1) 0 0; font-size: var(--rd-fs-base); }
+
+/* Findings: the numbered conclusions, each with its evidence line. */
+.rd-findings { list-style: none; display: grid; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; padding: 0; }
+.rd-finding { display: grid; grid-template-columns: auto 1fr; gap: var(--rd-space-3); align-items: start; background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); }
+.rd-finding__icon { display: grid; place-items: center; width: 2em; height: 2em; font-size: var(--rd-fs-base); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); color: var(--rd-accent); }
+.rd-finding--good .rd-finding__icon { color: var(--rd-good); }
+.rd-finding--warn .rd-finding__icon { color: var(--rd-warn); }
+.rd-finding--bad .rd-finding__icon { color: var(--rd-bad); }
+.rd-prose .rd-finding__title { margin: 0; font-size: var(--rd-fs-base); font-weight: 700; color: var(--rd-text-strong); }
+.rd-finding p { margin: var(--rd-space-1) 0 0; }
+.rd-prose .rd-finding__evidence { margin-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-finding__evidence .rd-icon { vertical-align: -0.25em; margin-right: 0.25rem; }
+
+/* Comparison tables: reference rows tinted, best values bold, long tables scroll with a sticky header. */
+.rd-table tr.rd-table__ref td { background: color-mix(in oklch, var(--rd-cat-3) 14%, transparent); }
+.rd-table td.rd-best { color: var(--rd-good); font-weight: 700; }
+.rd-table .rd-chip { font-size: var(--rd-fs-xs); }
+.rd-table-wrap--tall { max-height: 70vh; overflow: auto; }
+.rd-table-wrap--tall th { position: sticky; top: 0; z-index: 1; }
+
+/* Figures: axis and annotation text, legend swatches, and a source line under the caption. */
+.rd-figure svg text { fill: var(--rd-text-muted); font-family: var(--rd-font); font-size: var(--rd-fs-sm); }
+.rd-figure svg .rd-annot { fill: var(--rd-text-strong); font-weight: 600; }
+.rd-figure svg .rd-axis { stroke: var(--rd-text-muted); stroke-width: 1; }
+.rd-legend { display: flex; flex-wrap: wrap; gap: var(--rd-space-1) var(--rd-space-4); list-style: none; margin: var(--rd-space-3) 0 0; padding: 0; font-size: var(--rd-fs-sm); color: var(--rd-text-muted); }
+.rd-legend li { display: inline-flex; align-items: center; gap: var(--rd-space-2); }
+.rd-legend__swatch { flex: none; width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--c); }
+.rd-legend__swatch--square { border-radius: 2px; }
+.rd-source { display: flex; align-items: flex-start; gap: 0.4rem; margin: var(--rd-space-2) 0 0; font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-source .rd-icon { margin-top: 0.15em; }
+.rd-figure .rd-source { margin-top: var(--rd-space-2); }
+
+/* Experiment cards: one per run, coloured by status. */
+.rd-run { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-3) 0; border-left: 4px solid var(--rd-line); }
+.rd-run--pass { border-left-color: var(--rd-good); }
+.rd-run--fail { border-left-color: var(--rd-bad); }
+.rd-run--running { border-left-color: var(--rd-accent); }
+.rd-run--waiting { border-left-color: var(--rd-warn); }
+.rd-run__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rd-space-2) var(--rd-space-3); }
+.rd-prose .rd-run__title { flex: 1 1 12rem; min-width: 0; margin: 0; font-size: var(--rd-fs-base); font-weight: 700; color: var(--rd-text-strong); overflow-wrap: anywhere; }
+.rd-run__meta { color: var(--rd-text-muted); font-size: var(--rd-fs-xs); }
+.rd-run p { margin: var(--rd-space-2) 0 0; }
+
+/* Folds: collapsible detail under a card-style summary. Native details, no JS. */
+.rd-fold { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: 0 var(--rd-pad-card); margin: var(--rd-gap-block) 0; }
+.rd-fold > summary { display: flex; align-items: center; gap: var(--rd-space-2); min-height: var(--rd-control-h); padding: var(--rd-space-2) 0; cursor: pointer; font-weight: 700; color: var(--rd-text-strong); list-style: none; }
+.rd-fold > summary::-webkit-details-marker { display: none; }
+.rd-fold > summary::after { content: ""; margin-left: auto; flex: none; width: 0.45em; height: 0.45em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.15s ease; }
+.rd-fold[open] > summary::after { transform: rotate(-135deg); }
+.rd-fold > :not(summary):last-child { margin-bottom: var(--rd-space-3); }
+
+/* Definitions: term and meaning in a two-column grid that stacks on phones. */
+.rd-defs { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: var(--rd-space-2) var(--rd-space-5); margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-base); }
+.rd-defs dt { font-weight: 700; color: var(--rd-text-strong); }
+.rd-defs dd { margin: 0; }
+@media (max-width: 480px) {
+	.rd-defs { grid-template-columns: 1fr; gap: var(--rd-space-1); }
+	.rd-defs dd { margin-bottom: var(--rd-space-3); }
+}
+
+/* Icon lists: bullets replaced by an icon. Use --warn for caveats. */
+.rd-icon-list { list-style: none; display: grid; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; padding: 0; }
+.rd-icon-list li { display: flex; align-items: flex-start; gap: var(--rd-space-2); }
+.rd-icon-list .rd-icon { margin-top: 0.2em; color: var(--rd-accent); }
+.rd-icon-list--warn .rd-icon { color: var(--rd-warn); }
+
+/* Density demo: a scoped wrapper with its own data-density, so two densities can sit side by side. */
+.rd-demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)); gap: var(--rd-space-3); margin: var(--rd-gap-block) 0; }
+.rd-demo { padding: var(--rd-pad-card); border-radius: var(--rd-radius); background: var(--rd-page-bg); box-shadow: inset 0 0 0 1px var(--rd-line); font-size: var(--rd-fs-base); line-height: var(--rd-lh); color: var(--rd-text); min-width: 0; }
+.rd-demo > :first-child { margin-top: 0; }
+.rd-demo > :last-child { margin-bottom: 0; }
+.rd-demo .rd-card { padding: var(--rd-pad-card); margin: var(--rd-gap-block) 0; }
+.rd-demo .rd-card h3 { margin: 0 0 var(--rd-space-1); font-size: var(--rd-fs-h3); color: var(--rd-text-strong); }
+.rd-demo .rd-card p { margin: 0; }
+
+@media print {
+	.rd-expnav { display: none; }
+	.rd-findings, .rd-run, .rd-stat, .rd-brief__item { break-inside: avoid; }
+	/* Print every tab, not just the one on screen; the tab bar and "On this page" lists are screen-only. */
+	.rd-tabpanel[hidden] { display: block !important; }
+	.rd-toc { display: none; }
+}

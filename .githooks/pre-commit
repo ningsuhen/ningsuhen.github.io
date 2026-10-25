@@ -19,3 +19,13 @@ run_gitleaks git --staged $(repo_config | tr '\n' ' ') || {
 	echo "pre-commit: possible secret in staged changes. Remove it; rotate it if it was real." >&2
 	exit 1
 }
+
+# Design-system bundle: the shipped public/design-system/{rd.css,research.css,manifest.json} must equal a
+# fresh build of src/design-system/. If you edited the sources, run `pnpm build:design-system` and re-stage.
+ds=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E '^(src/design-system/|public/design-system/(rd\.css|research\.css|manifest\.json)$|scripts/build-design-system\.mjs$)' || true)
+if [ -n "$ds" ]; then
+	node scripts/build-design-system.mjs --check || {
+		echo "pre-commit: design-system bundle is stale. Run 'pnpm build:design-system' and re-stage the outputs." >&2
+		exit 1
+	}
+fi
