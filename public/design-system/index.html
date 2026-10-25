@@ -35,6 +35,7 @@
 <symbol id="i-flask-conical" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/></symbol>
 <symbol id="i-gauge" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
 <symbol id="i-git-branch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/></g></symbol>
+<symbol id="i-help-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01"/></g></symbol>
 <symbol id="i-history" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9a9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5m4-1v5l4 2"/></g></symbol>
 <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
 <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></g></symbol>
@@ -378,6 +379,20 @@
 <div class="rd-chat__msg rd-chat__msg--me">Show me the 12-month numbers.</div>
 <div class="rd-chat__msg rd-chat__msg--them">A 30% drawdown has a 1% chance in 12 months.</div>
 <div class="rd-chat__input"><input class="rd-input" id="chat-demo" type="text" aria-label="Message" placeholder="Type a message"><button type="button" class="rd-btn rd-btn--primary">Send</button></div>
+</div>
+</div>
+
+<header class="rd-section__head" id="quiz"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-help-circle"/></svg></span><h2>Quiz</h2></header>
+<p>A <code>.rd-quiz</code> is a question with selectable options and a feedback line. The options reuse <code>.rd-choice</code> (a labelled native radio), so they stay keyboard-operable and screen-reader-friendly. The feedback line uses the semantic <code>--good</code> / <code>--bad</code> colours to announce the result.</p>
+<div class="rd-card">
+<div class="rd-quiz">
+<p class="rd-quiz__q">What is the 12-month drawdown risk?</p>
+<div class="rd-quiz__opts">
+<label class="rd-choice"><input type="radio" name="q-drawdown" checked>1%</label>
+<label class="rd-choice"><input type="radio" name="q-drawdown">11%</label>
+<label class="rd-choice"><input type="radio" name="q-drawdown">42%</label>
+</div>
+<p class="rd-quiz__feedback rd-quiz__feedback--good" aria-live="polite">Correct — 1%.</p>
 </div>
 </div>
 
