@@ -14,7 +14,8 @@ interface Props {
 const { items, kind } = Astro.props;
 const kindChip = { report: "Report", experiment: "Live experiment", idea: "Idea" }[kind];
 const kindIcon = { report: "lucide:microscope", experiment: "lucide:flask-conical", idea: "lucide:lightbulb" }[kind];
-const openLabel = kind === "idea" ? "Read the idea" : "Open";
+// A card whose href is a post (an idea without a page) says "Read the idea"; everything else says "Open".
+const openLabel = (href: string) => (href.startsWith("/posts/") ? "Read the idea" : "Open");
 const sorted = items
 	.filter((e) => e.status.toLowerCase() !== "draft")
 	.sort((a, b) => (b.updated ?? b.started).localeCompare(a.updated ?? a.started));
@@ -44,7 +45,7 @@ const sorted = items
                         {
                             !soon && (
                                 <a href={url(e.href)} class="btn-plain h-8 px-3 rounded-lg text-[var(--primary)] font-medium inline-flex items-center gap-1.5">
-                                    {openLabel} <Icon name="lucide:arrow-right" class="text-base" />
+                                    {openLabel(e.href)} <Icon name="lucide:arrow-right" class="text-base" />
                                 </a>
                             )
                         }

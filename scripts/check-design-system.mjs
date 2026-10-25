@@ -1,4 +1,4 @@
-// Design-system conformance for standalone pages (public/research/**, public/experiments/**), measured in a real browser
+// Design-system conformance for standalone pages (public/research/**, public/experiments/**, public/ideas/**), measured in a real browser
 // over the built dist. Every page is held to the research design system (public/design-system/index.html, "Conformance")
 // and to the main site's post page, which is rendered in the same run at 1280/1440/1920, light and dark.
 // Run after `pnpm build`:  pnpm check:design-system  (CHROME_PATH, or `pnpm exec playwright-core install chromium`).
@@ -78,7 +78,7 @@ function htmlPages(dir = "") {
 		return e.name.endsWith(".html") ? [rel] : [];
 	});
 }
-const pages = [...htmlPages("research"), ...htmlPages("experiments")].filter((rel) => rel.split(path.sep).length === 3);
+const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3);
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));

@@ -128,7 +128,7 @@ for (const rel of pages) {
 // Navigation regression: from a site page, a link to a standalone page must be a normal full navigation,
 // and Back must restore the site page intact (Swup used to intercept the link and corrupt the page).
 const standaloneUrls = new Set(pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`));
-for (const sitePath of ["/experiments/", "/research/"]) {
+for (const sitePath of ["/experiments/", "/research/", "/ideas/"]) {
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	const resp = await page.goto(base + sitePath, { waitUntil: "load" });

@@ -186,8 +186,9 @@ a,button{color:inherit;text-decoration:none;font:inherit;cursor:pointer;backgrou
 .brand:hover::before,nav a:hover::before,.end button:hover::before,.menu-panel a:hover::before{background:var(--hover);transform:scale(1)}
 .brand:active::before,nav a:active::before,.end button:active::before,.menu-panel a:active::before{background:var(--active)}
 a:hover,button:hover{color:var(--prime)}
-.brand{height:3.25em;padding:0 1.25em;color:var(--prime);font-weight:700;flex:none}
-.brand svg{width:1.75em;height:1.75em;margin:0 .5em .25em 0;flex:none}
+/* The brand shrinks and wraps when the links need the room, as the main navbar's does (measured parity at 1024px). */
+.brand{height:3.25em;padding:0 1.25em;color:var(--prime);font-weight:700;white-space:normal;text-align:center}
+.brand svg{width:1.75em;height:1.75em;margin:0 .5em .25em 0}
 .brand:active,nav a:active,.end button:active{transform:scale(.95)}
 nav{display:none;align-items:center}
 nav a{height:2.75em;padding:0 1.25em;font-weight:700}

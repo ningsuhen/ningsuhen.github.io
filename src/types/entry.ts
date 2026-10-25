@@ -2,9 +2,9 @@
 export type Entry = {
 	title: string;
 	summary: string;
-	/** Standalone page or app, site-relative with trailing slash. Ideas have no standalone page: href is the idea post. */
+	/** Standalone page or app, site-relative with trailing slash. An idea without a page links to its post (/posts/<slug>/). */
 	href: string;
-	/** Write-up post, site-relative. */
+	/** Write-up post, site-relative. Optional for ideas: a companion post for a standalone idea page. */
 	post?: string;
 	started: string;
 	updated?: string;
