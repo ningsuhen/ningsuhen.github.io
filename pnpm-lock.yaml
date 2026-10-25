@@ -41,6 +41,9 @@ importers:
       '@iconify-icons/lucide':
         specifier: ^2.0.23
         version: 2.0.23
+      '@iconify-json/fa6-brands':
+        specifier: 1.2.6
+        version: 1.2.6
       '@iconify-json/lucide':
         specifier: ^1.2.147
         version: 1.2.147
@@ -1386,6 +1389,9 @@ packages:
 
   '@iconify-icons/lucide@2.0.23':
     resolution: {integrity: sha512-WKUum2zGelWfegxYkqkckfT+wGwfhbngzFzADlX9lChoqb5CTBaxipzlX6/GADCyFeL7cQ3MtcGGAzsh2wtscA==}
+
+  '@iconify-json/fa6-brands@1.2.6':
+    resolution: {integrity: sha512-twL3X4KWcxAhbc1vz/mIDsVr+CAItk1/EIfxKUVQtpv6O4eydk5KNYqTZWdvJNHGInUgd6vKg21aWfVgb5DXEg==}
 
   '@iconify-json/lucide@1.2.147':
     resolution: {integrity: sha512-7Qqa/joSBeUxihWsQJx5nKcqMWtV3YrH90Jldxcx4J9ciTLavRUlpexQwRTcx9dcb7CJpISfjZTj42zD/30sqA==}
@@ -7182,6 +7188,10 @@ snapshots:
   '@fontsource/roboto@5.2.9': {}
 
   '@iconify-icons/lucide@2.0.23':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/fa6-brands@1.2.6':
     dependencies:
       '@iconify/types': 2.0.0
 

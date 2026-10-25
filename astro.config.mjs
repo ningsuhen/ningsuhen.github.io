@@ -87,6 +87,7 @@ export default defineConfig({
 		icon({
 			include: {
 				lucide: ["*"],
+				"fa6-brands": ["medium"],
 			},
 		}),
 		expressiveCode({
