@@ -27,7 +27,7 @@ const redact = (s) => `${s.slice(0, 4)}...(${s.length} chars)`;
 
 /** textOnly rules skip binary files (random bytes match them). @type {{id: string, re: RegExp, docs: boolean, textOnly?: boolean, allow?: (m: string, file: string) => boolean, canary: string}[]} */
 const RULES = [
-	{ id: "home-path", re: /\/Users\/[\w.-]+|\/home\/[a-z][\w.-]*\/|\b[A-Za-z]:\\+(?:Users|Documents)\b|file:\/\/\/?[A-Za-z]/g, docs: true, allow: (m, file) => m === "/Users/runner" && VENDOR_DIR.test(file), canary: "/Users/alice/git" },
+	{ id: "home-path", re: /\/Users\/[\w.-]+|\/home\/[a-z][\w.-]*\/|\b[A-Za-z]:\\+(?:Users|Documents)\b|file:\/\/\/?[A-Za-z]/g, docs: true, allow: (m, file) => /^\/(?:Users|home)\/runner$/.test(m) && VENDOR_DIR.test(file), canary: "/Users/alice/git" },
 	{ id: "home-tilde", re: /(?<=[\s"'`(=,>])~\/[\w.-]/g, docs: true, textOnly: true, canary: "open ~/git/app" },
 	{ id: "worktree-path", re: /\.worktrees\b|\.claude\/(?:worktrees|projects)\b/g, docs: false, textOnly: true, canary: ".worktrees/task" },
 	{ id: "machine-name", re: /\bmac-?mini[\w-]*|\bmacmini\b/gi, docs: true, canary: "mac-mini" },
