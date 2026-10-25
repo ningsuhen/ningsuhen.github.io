@@ -12,6 +12,8 @@ This report compares the tools for making technical YouTube videos with AI as of
 
 The short version: film the talking head, clone the voice for fixes, build slides as code, and buy AI B-roll by the second. Under the report's assumptions, a finished 10-minute video costs about \$0 to \$10 on the cheapest pipeline, \$60 to \$75 on the best-value one, and \$122 to \$230 on the top-quality one. B-roll seconds are the largest cost in every paid pipeline.
 
+The report also sets out a two-tier workflow: iterate the script, timing and shots with a cheap draft voice (such as Kokoro) and draft video modes, then render the final voice and only the chosen shots once. Under its assumptions, drafting B-roll breaks even within two review rounds for every pair it models. Tiering the voice saves time more than money.
+
 Every price was read on the vendor's own page on 2026-10-25, and each claim is in a table in the report with its source. No video, avatar or voice was generated, so quality is not measured. Where the report gives a quality view, it labels it as judgment.
 
 It also covers what changed this year (Sora is gone, and the Veo 3.1 preview on the Gemini API has closed), YouTube's rules on disclosing synthetic content, and the prices that could not be verified.
