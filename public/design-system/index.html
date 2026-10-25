@@ -33,6 +33,7 @@
 <symbol id="i-flask-conical" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/></symbol>
 <symbol id="i-gauge" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
 <symbol id="i-git-branch" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 6a9 9 0 0 0-9 9V3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/></g></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9a9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5m4-1v5l4 2"/></g></symbol>
 <symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
 <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></g></symbol>
 <symbol id="i-layout-dashboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></g></symbol>
@@ -132,6 +133,7 @@
 
 <header class="rd-section__head" id="theme"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sun"/></svg></span><h2>Theme contract</h2></header>
 <p>Light is the default and ignores the OS setting. Dark is <code>&lt;html data-theme="dark"&gt;</code> (or <code>class="dark"</code>). The site navbar is injected into every standalone page at build time; it reads and writes <code>localStorage "theme"</code> and sets <code>data-theme</code> for you, so a report needs no toggle of its own. Never read the OS preference to pick a theme. Use only the <code>--rd-*</code> variables for color so both modes work.</p>
+<p>Footer rule: one small-print license block (12px, muted; copyright, permission, quotes, License · RSS · Sitemap) in a card no wider than the navbar (73rem). Never restyle it.</p>
 
 <header class="rd-section__head" id="colour"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-palette"/></svg></span><h2>Colour</h2></header>
 <div class="grid"><div class="sw"><span style="background:var(--rd-page-bg)"></span><code>page-bg</code><small>Page</small></div><div class="sw"><span style="background:var(--rd-card-bg)"></span><code>card-bg</code><small>Card</small></div><div class="sw"><span style="background:var(--rd-primary)"></span><code>primary</code><small>Primary</small></div><div class="sw"><span style="background:var(--rd-accent)"></span><code>accent</code><small>Accent / links</small></div><div class="sw"><span style="background:var(--rd-btn-bg)"></span><code>btn-bg</code><small>Chip / button</small></div><div class="sw"><span style="background:var(--rd-codeblock-bg)"></span><code>codeblock-bg</code><small>Code block</small></div><div class="sw"><span style="background:var(--rd-good)"></span><code>good</code><small>Good</small></div><div class="sw"><span style="background:var(--rd-warn)"></span><code>warn</code><small>Warn</small></div><div class="sw"><span style="background:var(--rd-bad)"></span><code>bad</code><small>Bad</small></div></div>
@@ -346,6 +348,16 @@
 </ol>
 <ol class="rd-footnotes"><li id="fn1">Footnotes sit at the end of the page and link back. <a href="#fnref1">&#8617;</a></li></ol>
 
+<header class="rd-section__head" id="tabs"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-history"/></svg></span><h2>Tabbed pages</h2></header>
+<p>A page with tabs (a <code>role="tablist"</code> bar and one <code>.rd-tabpanel</code> per tab) follows one history rule. The reference is the tab script of <code>research/brev-tree-benchmark</code>, which is copied into the page, not into this template. <code>pnpm check:report-history</code> asserts the rule on every built page that has a tab panel.</p>
+<ul>
+<li>Every user navigation adds exactly one entry: a tab, an "On this page" link, an in-page cross-reference, a filter, a page of cards. None when the view is already there.</li>
+<li>Back, Forward, reload and bfcache restore re-sync the tab, section, filter and scroll from the entry. They never add an entry.</li>
+<li>Scroll is restored from the entry's state, so the page sets <code>history.scrollRestoration = 'manual'</code> and restores with <code>behavior: 'instant'</code>.</li>
+<li>A deep link (<code>#h-board</code>) opens its tab, scrolls the section below the bar after layout, and moves focus to its heading (<code>tabindex="-1"</code>).</li>
+<li>Arrows, Home, End and Space on the tab list behave like a click. Reduced motion turns smooth scrolling off.</li>
+</ul>
+
 <header class="rd-section__head" id="checklist"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Checklist for a new report</h2></header>
 <ul>
 <li>Math, citations, numbered equations and theorems follow the Scientific writing section; escape literal <code>$</code> in Markdown.</li>
@@ -355,6 +367,7 @@
 <li>Title and page heading carry <code>created YYYY-MM-DD · updated YYYY-MM-DD</code>.</li>
 <li>Colors only via <code>--rd-*</code>; charts use the sequential or categorical palette.</li>
 <li>No iframes; no dependence on a host runtime; navigation that users trigger creates history entries.</li>
+<li>Tabbed pages follow the history rule in the Tabbed pages section; <code>pnpm check:report-history</code> passes.</li>
 <li>Caveats and unvalidated results are stated on the page, not buried.</li>
 <li>Check both themes and a 375px viewport before publishing.</li>
 </ul>

@@ -22,9 +22,11 @@ interface Props {
 	lang?: string;
 	setOGTypeArticle?: boolean;
 	headings?: MarkdownHeading[];
+	license?: boolean;
 }
 
 const {
+	license = false,
 	title,
 	banner,
 	description,
@@ -88,13 +90,13 @@ const mainPanelTop = siteConfig.banner.enable
                     <!-- make id different from windows.swup global property -->
                     <slot></slot>
                     <div class="footer col-span-2 onload-animation hidden lg:block">
-                        <Footer></Footer>
+                        <Footer license={license}></Footer>
                     </div>
                 </div>
             </main>
 
             <div class="footer col-span-2 onload-animation block lg:hidden">
-                <Footer></Footer>
+                <Footer license={license}></Footer>
             </div>
         </div>
 

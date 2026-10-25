@@ -143,6 +143,9 @@ class ListenPlayer extends HTMLElement {
 	private programmaticUntil = 0;
 	private frame = 0;
 	private teardown: Array<() => void> = [];
+	private dockObserver: IntersectionObserver | null = null;
+	private sentinel: HTMLElement | null = null;
+	private rateHome: Element | null = null;
 
 	connectedCallback(): void {
 		void this.init();
@@ -155,6 +158,10 @@ class ListenPlayer extends HTMLElement {
 		if (CAN_HIGHLIGHT) CSS.highlights.delete(HIGHLIGHT);
 		for (const undo of this.teardown) undo();
 		this.teardown = [];
+		this.dockObserver?.disconnect();
+		this.sentinel?.remove();
+		this.removeAttribute("data-docked");
+		document.documentElement.style.scrollPaddingTop = "";
 	}
 
 	private async init(): Promise<void> {
@@ -186,7 +193,54 @@ class ListenPlayer extends HTMLElement {
 		const engine = await this.ensureEngine(wanted, false);
 		if (!engine) return;
 		this.removeAttribute("hidden");
+		this.observeDock();
 		this.setIndex(0, false);
+	}
+
+	/* ---------- docking ---------- */
+
+	/** A zero-height sentinel above the player: once it scrolls past the top of the viewport, the player docks. */
+	private observeDock(): void {
+		const sentinel = document.createElement("div");
+		sentinel.className = "listen-sentinel";
+		sentinel.setAttribute("aria-hidden", "true");
+		this.before(sentinel);
+		this.sentinel = sentinel;
+		this.dockObserver = new IntersectionObserver(([entry]) => {
+			this.setDocked(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+		});
+		this.dockObserver.observe(sentinel);
+	}
+
+	private setDocked(docked: boolean): void {
+		if (docked === this.hasAttribute("data-docked")) return;
+		// Keep the flow height: the inline card and the docked row take the same space in the post.
+		const flow =
+			this.offsetHeight +
+			Number.parseFloat(getComputedStyle(this).marginBottom);
+		this.toggleAttribute("data-docked", docked);
+		this.relocate(docked);
+		this.style.marginBottom = docked ? `${flow - this.offsetHeight}px` : "";
+		// Sentence follow and TOC jumps must land below the docked row.
+		document.documentElement.style.scrollPaddingTop = docked
+			? `${this.offsetHeight + 16}px`
+			: "";
+	}
+
+	/** Moves the speed select and the slider between the inline bar and the docked row or dropdown. */
+	private relocate(docked: boolean): void {
+		const bar = this.need<HTMLElement>(".listen-bar");
+		const panel = this.need<HTMLElement>("#listen-panel");
+		const rate = this.need<HTMLElement>(".listen-rate");
+		const range = this.need<HTMLElement>("[data-progress]");
+		if (docked) {
+			this.rateHome ??= rate.nextElementSibling;
+			bar.insertBefore(rate, this.need("[data-follow]"));
+			panel.prepend(range);
+		} else {
+			panel.insertBefore(rate, this.rateHome);
+			bar.insertBefore(range, this.need("[data-position]"));
+		}
 	}
 
 	/* ---------- engines ---------- */
