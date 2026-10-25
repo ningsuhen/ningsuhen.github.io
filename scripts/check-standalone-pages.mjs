@@ -65,6 +65,18 @@ for (const rel of pages) {
 	for (const vp of VIEWPORTS) {
 		const ctx = await browser.newContext({ viewport: vp });
 		const page = await ctx.newPage();
+		// Standalone pages must be self-contained: no cross-origin subresource requests (script/css/font/
+		// image/fetch). Outbound <a href> navigations are user-initiated and are not subresources.
+		// blob: URLs are in-page workers/eval (not network), and the in-flight ai-economy report still loads
+		// d3 from a CDN until its re-export lands — both are exempt, mirroring SCRIPT_ROUTED_HASHES elsewhere.
+		const EXEMPT_EXTERNAL = new Set(["/research/ai-economy/"]);
+		const externalReqs = [];
+		page.on("request", (rq) => {
+			const u = rq.url();
+			if (u.startsWith(base) || u.startsWith("blob:") || rq.resourceType() === "document") return;
+			if (EXEMPT_EXTERNAL.has(urlPath)) return;
+			externalReqs.push(`${rq.resourceType()} ${u}`);
+		});
 		await page.goto(base + urlPath, { waitUntil: "load" });
 		const m = await page.evaluate(() => {
 			const lic = document.querySelector("div[data-site-license]");
@@ -107,6 +119,7 @@ for (const rel of pages) {
 		if (m.mojibake) failures.push(`${tag}: mojibake in page text (missing/wrong charset)`);
 		if (m.compat !== "CSS1Compat") failures.push(`${tag}: rendered in quirks mode (missing doctype)`);
 		if (!m.lang) failures.push(`${tag}: <html lang> missing`);
+		if (externalReqs.length) failures.push(`${tag}: external subresource request(s): ${[...new Set(externalReqs)].slice(0, 4).join(", ")}`);
 		await ctx.close();
 	}
 }
