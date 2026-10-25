@@ -326,7 +326,7 @@ for (const rel of barPages) {
 				navb: R(host?.shadowRoot?.querySelector("header")), brandL: R(host?.shadowRoot?.querySelector(".brand"))?.l,
 				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l, padL: bar ? parseFloat(getComputedStyle(bar).paddingLeft) : null,
 				band: R(document.querySelector(".rd-crumb-band")), bandEmpty: !!document.querySelector(".rd-crumb-band--empty"),
-				bandBg: getComputedStyle(document.querySelector(".rd-crumb-band") ?? document.body).backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
+				bandBg: getComputedStyle(document.querySelector(".rd-crumb-band") ?? document.body, "::before").backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
 			};
 		});
 		const tag = `${urlPath} @${width}`;
@@ -362,7 +362,7 @@ for (const rel of barPages) {
 				const el = document.elementFromPoint(x, bb.top + bb.height / 2);
 				return !!el?.closest(".rd-crumb-band");
 			}) : [];
-			const alpha = bb ? getComputedStyle(band).backgroundColor : "";
+			const alpha = bb ? getComputedStyle(band, "::before").backgroundColor : "";
 			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY, bandTop: bb?.top ?? null, bandBottom: bb?.bottom ?? null, hits, bandBg: alpha, bodyBg: getComputedStyle(document.body).backgroundColor };
 		});
 		// The navbar is sticky (parity with the main site); the band sticks under it and the section bar under the band.
@@ -822,7 +822,10 @@ for (const rel of bandPages) {
 				const band = document.querySelector("[data-site-breadcrumb]");
 				const hd = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
 				if (!band || !hd) return null;
-				const b = band.getBoundingClientRect();
+				// The opaque surface is the band's ::before (the navbar card's frame); the band box spans the body's content box.
+				const r = band.getBoundingClientRect();
+				const sur = getComputedStyle(band, "::before");
+				const b = { left: r.left + parseFloat(sur.left), width: parseFloat(sur.width), top: r.top, height: r.height };
 				const covered = [];
 				for (const kx of [0.01, 0.25, 0.5, 0.75, 0.99]) for (const ky of [0.1, 0.5, 0.9]) {
 					const x = b.left + b.width * kx, yy = b.top + b.height * ky;
@@ -831,10 +834,10 @@ for (const rel of bandPages) {
 				}
 				// The page background as the screen shows it: paint the band's computed colour on a canvas (sRGB, like the screenshot).
 				const c = document.createElement("canvas").getContext("2d");
-				c.fillStyle = getComputedStyle(band).backgroundColor;
+				c.fillStyle = sur.backgroundColor;
 				c.fillRect(0, 0, 1, 1);
 				const bg = [...c.getImageData(0, 0, 1, 1).data];
-				return { x: b.left, w: b.width, t: b.top, h: b.height, hdX: hd.left, hdW: hd.width, hdB: hd.bottom, covered, bg, bodyBg: getComputedStyle(document.body).backgroundColor, bandBg: getComputedStyle(band).backgroundColor, empty: band.classList.contains("rd-crumb-band--empty") };
+				return { x: b.left, w: b.width, t: b.top, h: b.height, hdX: hd.left, hdW: hd.width, hdB: hd.bottom, covered, bg, bodyBg: getComputedStyle(document.body).backgroundColor, bandBg: sur.backgroundColor, empty: band.classList.contains("rd-crumb-band--empty") };
 			});
 			const at = `${tag} scrollY ${y}`;
 			if (!m) { failures.push(`${at}: band or navbar card not found`); break; }
