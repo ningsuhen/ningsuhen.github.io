@@ -391,20 +391,26 @@ const probeChrome = (isRef) => {
 	const footRadius = footEl ? parseFloat(getComputedStyle(footEl).borderTopLeftRadius) : null;
 	const footGap = footRect && contentRect ? Math.round(footRect.y - contentRect.b) : null;
 	const rail = isRef ? [...document.querySelectorAll("table-of-contents")].find(vis) : [...document.querySelectorAll(".rd-toc")].find(vis);
+	// Geometry box: the main post's fixed #toc-inner-wrapper and the standalone .rd-toc both pin their top to the
+	// navbar bottom, so they compare. The inner table-of-contents sits 32px lower (a top spacer) and would not.
+	const railBox = isRef ? document.querySelector("#toc-inner-wrapper") ?? rail : rail;
 	const railEntries = rail ? [...rail.querySelectorAll(isRef ? ":scope > a" : "a")] : [];
+	// The active-heading indicator is a dashed box on both sides (#active-indicator / .rd-toc__indicator), not a
+	// border on the active link. Read its border-left style + width on each side so the two values have the same shape.
 	const railIndicator = rail
 		? isRef
-			? rail.querySelector("#active-indicator")
-				? getComputedStyle(rail.querySelector("#active-indicator")).borderTopStyle
-				: "none"
+			? (() => {
+					const i = rail.querySelector("#active-indicator");
+					return i ? `${getComputedStyle(i).borderLeftStyle} ${getComputedStyle(i).borderLeftWidth}` : "none";
+				})()
 			: (() => {
-					const a = rail.querySelector('a[aria-current="location"]') || railEntries[0];
-					return a ? `${getComputedStyle(a).borderLeftStyle} ${getComputedStyle(a).borderLeftWidth}` : "none";
+					const i = rail.querySelector(".rd-toc__indicator");
+					return i ? `${getComputedStyle(i).borderLeftStyle} ${getComputedStyle(i).borderLeftWidth}` : "none";
 				})()
 		: null;
 	const railText = railEntries[0] ? (isRef ? railEntries[0].querySelector("div") : railEntries[0]) : null;
 	const railTypo = railText ? { fs: parseFloat(getComputedStyle(railText).fontSize), c: rgb(getComputedStyle(railText).color) } : null;
-	const railRect = rect(rail);
+	const railRect = rect(railBox);
 	const railOff = railRect && navRect ? { x: Math.round(railRect.x - navRect.r), w: Math.round(railRect.w), y: Math.round(railRect.y - navRect.b) } : null;
 	const prose = isRef ? [...document.querySelectorAll(".prose")].find((e) => e.querySelector("h2")) : [...document.querySelectorAll(".rd-prose")].find((e) => e.querySelector("h2"));
 	const proseTypo = prose
