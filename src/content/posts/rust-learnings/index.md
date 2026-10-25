@@ -8,7 +8,13 @@ category: Thoughts
 draft: false
 ---
 
+<!-- owner:scene Why did you start rewriting in Rust? The post never says. A one-line reason (packaging pain, the 7.5 s import, curiosity?) only if it is true. -->
+
 This year I rewrote several of my Python programs in Rust, some small and some not. I'll keep their names out of it. AI coding agents did a lot of the work, so I also wanted to know if that changed the answer.
+
+<!-- owner:question Want a harder cut toward one third of the words? That would mean dropping some data, for example the CI failure tally or the second table. -->
+
+<!-- owner:voice Is "Short version:" OK, or do you prefer the original bullet TL;DR? -->
 
 Short version: the clearest speed win was startup, and most other gains came from algorithm changes, not the language. The FFI boundary can take back most of a numeric gain. Some bugs moved to compile time, but hangs and design-level memory growth did not move at all. There is a checklist at the end if you are weighing the same move.
 
@@ -29,6 +35,8 @@ That is not a benchmark, and it mixes the language with the import tree. A lazy-
 ## The FFI boundary took a lot back
 
 For the numeric parts I used PyO3 and kept the Python code as a fallback. A day-by-day loop looked great: 6.9 times faster per run on a 2,000-day input, 8 ms against 55 ms with marshalling included. A metrics function did not hold up. It was 5.1 times faster on 200 items but only 2.3 times on 1,000, because the cost of passing each column across grows with the input.
+
+<!-- owner:scene Was there a moment you found the date regression across the boundary? A sentence of what you saw, only if it happened. -->
 
 Dates were the worst. I sent them as ISO strings at first, and formatting the strings dominated the boundary cost, turning the faster core into a 7 times regression. Integer day ordinals were about 35 times cheaper to marshal, and they removed a dependency.
 
@@ -74,6 +82,8 @@ The pinned library has no partial-evaluation API, so every edit is a full pass o
 ## Bugs that were not the borrow checker
 
 The borrow checker cost me some time, but not the kind that mattered. Three other bugs did.
+
+<!-- owner:scene How did you find the silent server (workers parked on the database mutex)? A sentence of what you saw, only if it happened. -->
 
 A blocking database mutex was taken on async worker threads, and under load the server went silent with most workers parked on the same lock. The fix was a bounded lock and a watchdog thread. The proper fix, a writer actor, is still pending. A cache cleanup step on a shared CI runner pruned the cargo home other jobs were using, so unrelated builds failed, and I made the cache opt-in on shared runners. And `cargo test` runs every test in one process, so a test that changes an environment variable breaks its neighbours. The fix was to inject paths instead.
 

@@ -18,6 +18,8 @@ Each claim becomes its own record, with the exact passage and the version of the
 
 ## Something I found while checking
 
+<!-- owner:scene This section is titled "Something I found while checking" but gives no reaction. Did anything about the existing guideline surprise you? -->
+
 English Wikipedia already has a content guideline on large language models. Its short version says not to use them to generate or rewrite article content. It does allow suggested fixes to your own writing, after review, and translation ([guideline](https://en.wikipedia.org/wiki/Wikipedia:Writing_articles_with_large_language_models)). My machine-drafted layer goes further, so this is a what-if, not a proposal for Wikipedia as it runs now.
 
 ## What I could not settle
