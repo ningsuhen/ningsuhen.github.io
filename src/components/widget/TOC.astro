@@ -71,6 +71,9 @@ class TableOfContents extends HTMLElement {
     tocEntries: HTMLAnchorElement[] = [];
     active: boolean[] = [];
     activeIndicator: HTMLElement | null = null;
+    /** One lifetime per connection: the element can be moved (OverlayScrollbars re-parents body children). */
+    life: AbortController | null = null;
+    initialised = false;
 
     constructor() {
         super();
@@ -201,18 +204,29 @@ class TableOfContents extends HTMLElement {
     };
 
     connectedCallback() {
+        this.life?.abort();
+        const life = new AbortController();
+        this.life = life;
         // wait for the onload animation to finish, which makes the `getBoundingClientRect` return correct values
         const element = document.querySelector('.prose');
-        if (element) {
-            element.addEventListener('animationend', () => {
-                this.init();
-            }, { once: true });
-        } else {
+        if (!element) {
             console.debug('Animation element not found');
+            return;
         }
+        // A reconnect after the animation ended (a DOM move) initialises at once; animationend will not fire again.
+        const animating = element.getAnimations().some((a) => a.playState !== 'finished');
+        if (this.initialised && !animating) {
+            this.init(life.signal);
+            return;
+        }
+        element.addEventListener('animationend', () => {
+            this.init(life.signal);
+        }, { once: true, signal: life.signal });
     };
 
-    init() {
+    init(signal: AbortSignal) {
+        if (signal.aborted) return;
+        this.initialised = true;
         this.tocEl = document.getElementById(
             "toc-inner-wrapper"
         );
@@ -221,6 +235,7 @@ class TableOfContents extends HTMLElement {
 
         this.tocEl.addEventListener("click", this.handleAnchorClick, {
             capture: true,
+            signal,
         });
 
         this.activeIndicator = document.getElementById("active-indicator");
@@ -254,11 +269,12 @@ class TableOfContents extends HTMLElement {
     };
 
     disconnectedCallback() {
+        this.life?.abort();
+        this.life = null;
         this.sections.forEach((section) =>
             this.observer.unobserve(section)
         );
         this.observer.disconnect();
-        this.tocEl?.removeEventListener("click", this.handleAnchorClick);
     };
 }
 

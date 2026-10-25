@@ -198,9 +198,19 @@ function pickDefaultVoice(voices: Voice[], lang: string): string | null {
 // The active engine lives at module level: it survives Swup page changes, so a loaded model is reused.
 let activeEngine: TtsEngine | null = null;
 let activeEngineId: EngineId = "web-speech";
-/** One neural engine per page session: created on first use, initialised once, kept across Swup visits. */
-let neuralEngine: TtsEngine | null = null;
+/**
+ * One neural engine per page session: created on first use, initialised once, kept across Swup visits.
+ * The load promise is cached, not the engine, so concurrent callers share one module load and one engine.
+ */
+let neuralLoad: Promise<TtsEngine> | null = null;
 let neuralInit: Promise<void> | null = null;
+/** An in-flight consented preparation (prompt, download, init), shared by every caller. */
+let neuralPrepare: Promise<TtsEngine | null> | null = null;
+/** An in-flight browser-voice load, shared by concurrent callers so only one engine is created. */
+let webSpeechLoad: Promise<TtsEngine> | null = null;
+/** The player whose actions the lock screen calls. Media session handlers are global and last-set wins. */
+let mediaOwner: HTMLElement | null = null;
+const MEDIA_ACTIONS: MediaSessionAction[] = ["play", "pause", "previoustrack", "nexttrack", "stop"];
 let neuralReady = false;
 let manifestLoad: Promise<Manifest> | null = null;
 
@@ -228,29 +238,43 @@ class ListenPlayer extends HTMLElement {
 	private lastUserScroll = 0;
 	private programmaticUntil = 0;
 	private frame = 0;
-	private teardown: Array<() => void> = [];
+	/** Lives from connect to disconnect. Every listener is bound to it; a reconnect aborts the old one first. */
+	private life: AbortController | null = null;
+	/** Set while a Play click waits for its engine, so a second click cannot start a second load. */
+	private starting = false;
 	private dockObserver: IntersectionObserver | null = null;
 	private sentinel: HTMLElement | null = null;
 	private rateHome: Element | null = null;
 
+	// The element can be disconnected and reconnected without leaving the page: OverlayScrollbars moves every
+	// body child into its viewport on a hard load (classic scrollbars only). Each connection gets one lifetime,
+	// so a move never leaves two sets of handlers behind.
 	connectedCallback(): void {
-		void this.init();
+		this.life?.abort();
+		this.life = new AbortController();
+		void this.init(this.life.signal);
 	}
 
 	disconnectedCallback(): void {
+		this.life?.abort();
+		this.life = null;
+		this.starting = false;
 		this.stopPlayback();
 		this.activeBlock?.removeAttribute("data-listen-current");
 		this.activeBlock?.classList.remove("listen-active");
+		this.activeBlock = null;
 		if (CAN_HIGHLIGHT) CSS.highlights.delete(HIGHLIGHT);
-		for (const undo of this.teardown) undo();
-		this.teardown = [];
 		this.dockObserver?.disconnect();
+		this.dockObserver = null;
 		this.sentinel?.remove();
+		this.sentinel = null;
+		if (this.hasAttribute("data-docked")) this.relocate(false);
 		this.removeAttribute("data-docked");
+		this.style.marginBottom = "";
 		document.documentElement.style.scrollPaddingTop = "";
 	}
 
-	private async init(): Promise<void> {
+	private async init(signal: AbortSignal): Promise<void> {
 		const root = document.querySelector<HTMLElement>(this.dataset.target ?? "");
 		const engineOffered =
 			webSpeechAvailable() || window.__KOKORO_READY === true;
@@ -262,9 +286,9 @@ class ListenPlayer extends HTMLElement {
 		const savedRate = prefs.rate ?? 1;
 		this.rate = RATES.includes(savedRate) ? savedRate : 1;
 		this.voice = prefs.voice ?? null;
-		this.bindControls();
-		this.bindScrollTracking();
-		this.setupMediaSession();
+		this.bindControls(signal);
+		this.bindScrollTracking(signal);
+		this.setupMediaSession(signal);
 
 		// A saved neural choice loads without a dialog only when the visitor already consented on this device.
 		// Page load never downloads. A stored neural voice is prepared (not initialised) and starts on first Play.
@@ -282,11 +306,15 @@ class ListenPlayer extends HTMLElement {
 				  (explicit === "kokoro" || (await hasWebGpuAdapter()))
 				? "kokoro"
 				: "web-speech";
+		if (signal.aborted) return;
 		// The placeholder holds the bar's space while the engine loads (a saved neural voice can take seconds).
 		this.setAttribute("data-loading", "");
 		this.removeAttribute("hidden");
 		const engine =
 			(await this.ensureEngine(wanted, false)) ?? (await this.activateWebSpeech());
+		// A newer connection (or a disconnect) owns the element now: it settles the player, and this run must not
+		// add a second sentinel.
+		if (signal.aborted) return;
 		if (!engine) return this.settle(false);
 		this.settle(true);
 		this.observeDock();
@@ -304,6 +332,8 @@ class ListenPlayer extends HTMLElement {
 
 	/** A zero-height sentinel above the player: once it scrolls past the top of the viewport, the player docks. */
 	private observeDock(): void {
+		this.dockObserver?.disconnect();
+		this.sentinel?.remove();
 		const sentinel = document.createElement("div");
 		sentinel.className = "listen-sentinel";
 		sentinel.setAttribute("aria-hidden", "true");
@@ -359,6 +389,16 @@ class ListenPlayer extends HTMLElement {
 			this.syncEngineSelect("kokoro");
 			return activeEngine;
 		}
+		if (!askConsent) return this.prepareNeural(false);
+		// One consent prompt and one download at a time: a Play click during a voice switch waits for the switch.
+		neuralPrepare ??= this.prepareNeural(true).finally(() => {
+			neuralPrepare = null;
+		});
+		return neuralPrepare;
+	}
+
+	/** Gets the neural engine ready: checks storage, asks and downloads when allowed, loads and (if asked) initialises. */
+	private async prepareNeural(askConsent: boolean): Promise<TtsEngine | null> {
 		let variant = await neuralVariant();
 		if (!variant) {
 			this.status("The neural voice needs WebGPU on this device.");
@@ -410,37 +450,49 @@ class ListenPlayer extends HTMLElement {
 	}
 
 	private async loadWebSpeech(): Promise<TtsEngine> {
-		const engine = new WebSpeechEngine();
-		await engine.init();
-		return engine;
+		webSpeechLoad ??= (async () => {
+			const engine = new WebSpeechEngine();
+			await engine.init();
+			return engine;
+		})().finally(() => {
+			webSpeechLoad = null;
+		});
+		return webSpeechLoad;
 	}
 
-	private async createNeural(): Promise<TtsEngine> {
-		neuralEngine ??= await loadKokoroEngine(this.dataset.kokoroSrc ?? "/tts/kokoro.js");
-		return neuralEngine;
+	/** Loads the single neural engine. Concurrent callers share one load; a failed load can be retried. */
+	private createNeural(): Promise<TtsEngine> {
+		neuralLoad ??= loadKokoroEngine(this.dataset.kokoroSrc ?? "/tts/kokoro.js").catch((err: unknown) => {
+			neuralLoad = null;
+			throw err;
+		});
+		return neuralLoad;
 	}
 
-	/** Initialises the single neural engine once per page session. Reads only stored files. */
-	private async initNeural(variant: KokoroVariant): Promise<void> {
-		if (neuralReady) return;
-		const engine = await this.createNeural();
-		const manifest = await this.manifest();
-		neuralInit ??= engine
-			.init({
+	/** Initialises the single neural engine once per page session. Reads only stored files. Single-flight. */
+	private initNeural(variant: KokoroVariant): Promise<void> {
+		if (neuralReady) return Promise.resolve();
+		if (neuralInit) return neuralInit;
+		const run: Promise<void> = (async () => {
+			const engine = await this.createNeural();
+			const manifest = await this.manifest();
+			await engine.init({
 				variant,
 				baseUrl: manifest.base,
 				ortBase: new URL(this.dataset.kokoroOrt ?? "/tts/vendor/ort/", location.href).href,
-			})
-			.then(
-				() => {
-					neuralReady = true;
-				},
-				(err: unknown) => {
-					neuralInit = null;
-					throw err;
-				},
-			);
-		await neuralInit;
+			});
+		})().then(
+			() => {
+				// removeNeural() may have dropped this engine while it initialised.
+				if (neuralInit === run) neuralReady = true;
+			},
+			(err: unknown) => {
+				if (neuralInit === run) neuralInit = null;
+				throw err;
+			},
+		);
+		neuralInit = run;
+		return run;
 	}
 
 	private manifest(): Promise<Manifest> {
@@ -536,9 +588,10 @@ class ListenPlayer extends HTMLElement {
 			this.setState("paused");
 			await this.activateWebSpeech("Neural voice download removed. Using the browser voice.");
 		}
-		neuralEngine?.dispose();
-		neuralEngine = null;
+		const loading = neuralLoad;
+		neuralLoad = null;
 		neuralInit = null;
+		void loading?.then((engine) => engine.dispose(), () => {});
 		neuralReady = false;
 		await removeDownload();
 		writeStorage(CONSENT_KEY, null);
@@ -655,12 +708,22 @@ class ListenPlayer extends HTMLElement {
 
 	private async play(): Promise<void> {
 		if (this.state === "playing") return this.pause();
+		// A click while the engine loads must not start a second load (or a second download).
+		if (this.starting) return;
 		// Create the AudioContext inside the click, before any await, so the browser allows it.
 		if (!audioContext && typeof AudioContext !== "undefined")
 			audioContext = new AudioContext();
 		const wanted = this.querySelector<HTMLSelectElement>("[data-engine]")
 			?.value as EngineId | undefined;
-		const engine = await this.ensureEngine(wanted ?? activeEngineId, true);
+		const life = this.life;
+		this.starting = true;
+		let engine: TtsEngine | null;
+		try {
+			engine = await this.ensureEngine(wanted ?? activeEngineId, true);
+		} finally {
+			if (life === this.life) this.starting = false;
+		}
+		if (!life || life.signal.aborted) return;
 		if (!engine) {
 			this.syncEngineSelect(activeEngineId);
 			return;
@@ -869,7 +932,7 @@ class ListenPlayer extends HTMLElement {
 		if (button) button.hidden = !away || this.sentences.length === 0;
 	}
 
-	private bindScrollTracking(): void {
+	private bindScrollTracking(signal: AbortSignal): void {
 		const onUser = (): void => {
 			if (Date.now() < this.programmaticUntil) return;
 			this.lastUserScroll = Date.now();
@@ -893,28 +956,23 @@ class ListenPlayer extends HTMLElement {
 			)
 				onUser();
 		};
-		window.addEventListener("wheel", onUser, { passive: true });
-		window.addEventListener("touchmove", onUser, { passive: true });
-		window.addEventListener("keydown", onKey);
-		window.addEventListener("scroll", onScroll, { passive: true });
-		this.teardown.push(() => {
-			window.removeEventListener("wheel", onUser);
-			window.removeEventListener("touchmove", onUser);
-			window.removeEventListener("keydown", onKey);
-			window.removeEventListener("scroll", onScroll);
-		});
+		window.addEventListener("wheel", onUser, { passive: true, signal });
+		window.addEventListener("touchmove", onUser, { passive: true, signal });
+		window.addEventListener("keydown", onKey, { signal });
+		window.addEventListener("scroll", onScroll, { passive: true, signal });
+		signal.addEventListener("abort", () => cancelAnimationFrame(this.frame), { once: true });
 	}
 
 	/* ---------- controls ---------- */
 
-	private bindControls(): void {
+	private bindControls(signal: AbortSignal): void {
 		const on = <T extends Element>(
 			sel: string,
 			type: string,
 			fn: (el: T, e: Event) => void,
 		): void => {
 			const el = this.querySelector<T>(sel);
-			el?.addEventListener(type, (e) => fn(el, e));
+			el?.addEventListener(type, (e) => fn(el, e), { signal });
 		};
 		on<HTMLButtonElement>(
 			"[data-action=play]",
@@ -981,10 +1039,7 @@ class ListenPlayer extends HTMLElement {
 				if (activeEngineId === "web-speech" && activeEngine)
 					this.refreshEngineUI();
 			};
-			speechSynthesis.addEventListener("voiceschanged", onVoices);
-			this.teardown.push(() =>
-				speechSynthesis.removeEventListener("voiceschanged", onVoices),
-			);
+			speechSynthesis.addEventListener("voiceschanged", onVoices, { signal });
 		}
 		this.setState("idle");
 	}
@@ -1042,7 +1097,7 @@ class ListenPlayer extends HTMLElement {
 
 	/* ---------- lock screen ---------- */
 
-	private setupMediaSession(): void {
+	private setupMediaSession(signal: AbortSignal): void {
 		const session = navigator.mediaSession;
 		if (!session || typeof MediaMetadata === "undefined") return;
 		const author =
@@ -1052,20 +1107,34 @@ class ListenPlayer extends HTMLElement {
 			title: this.dataset.title ?? document.title,
 			artist: author,
 		});
-		const actions: Array<[MediaSessionAction, () => void]> = [
-			["play", () => void this.play()],
-			["pause", () => this.pause()],
-			["previoustrack", () => this.seek(this.index - 1)],
-			["nexttrack", () => this.seek(this.index + 1)],
-			["stop", () => this.stop()],
-		];
-		for (const [action, handler] of actions) {
-			try {
-				session.setActionHandler(action, handler);
-			} catch {
-				// Browser does not support this action.
+		const handlers: Partial<Record<MediaSessionAction, () => void>> = {
+			play: () => void this.play(),
+			pause: () => this.pause(),
+			previoustrack: () => this.seek(this.index - 1),
+			nexttrack: () => this.seek(this.index + 1),
+			stop: () => this.stop(),
+		};
+		const set = (handler: (action: MediaSessionAction) => (() => void) | null): void => {
+			for (const action of MEDIA_ACTIONS) {
+				try {
+					session.setActionHandler(action, handler(action));
+				} catch {
+					// Browser does not support this action.
+				}
 			}
-		}
+		};
+		mediaOwner = this;
+		set((action) => handlers[action] ?? null);
+		// Handlers are global: clear them when this connection ends, unless a newer player already owns them.
+		signal.addEventListener(
+			"abort",
+			() => {
+				if (mediaOwner !== this) return;
+				mediaOwner = null;
+				set(() => null);
+			},
+			{ once: true },
+		);
 	}
 }
 
