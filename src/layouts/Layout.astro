@@ -164,6 +164,9 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
 		  data-overlayscrollbars-initialize
 	>
+		<!-- Keyboard users: jump straight past the sticky navbar to the content. Hidden until focused;
+		     data-swup-ignore so Swup does a native in-page jump instead of a page reload. -->
+		<a href="#swup-container" class="skip-link" data-swup-ignore>Skip to content</a>
 		<ConfigCarrier></ConfigCarrier>
 		<slot />
 
