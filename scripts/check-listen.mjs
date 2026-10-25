@@ -1017,6 +1017,60 @@ for (const [label, runtime, expected] of [
 	await ctx.close();
 }
 
+// 11. Pronunciation fixes reach the engine; the highlight still covers the written words.
+// A fixture paragraph (independent of the post's prose) exercises the global lexicon (src/data/pronunciations.json:
+// Wikipedia), post front matter (data-pronounce, set here) and an inline :say span (data-say); a reconnect re-extracts.
+await step("11. pronunciations", async () => {
+	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+	ctx.setDefaultTimeout(10000);
+	await ctx.addInitScript(SPEECH_STUB);
+	const page = await ctx.newPage();
+	await page.goto(`${base}/posts/wikipedia-ai-age/`, { waitUntil: "load" });
+	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.evaluate(async () => {
+		const el = document.querySelector("listen-player");
+		el.dataset.pronounce = JSON.stringify({ citation: "sigh tation" });
+		const p = document.createElement("p");
+		p.innerHTML = 'A plain first sentence. On Wikipedia a citation is a <span data-say="foot note">footnote</span> at the end, not for us.';
+		document.querySelector("#post-article .markdown-content")?.prepend(p);
+		const parent = el.parentNode;
+		const next = el.nextSibling;
+		el.remove();
+		await new Promise((r) => requestAnimationFrame(r));
+		parent.insertBefore(el, next);
+	});
+	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.click("[data-action=play]");
+	// Read the highlight in the same frame the second sentence becomes current (stub utterances last 120 ms).
+	const highlighted = await page
+		.waitForFunction(
+			() => {
+				if (document.querySelector("[data-listen-current]")?.getAttribute("data-listen-current") !== "s1") return null;
+				const hl = CSS.highlights?.get("listen-current");
+				return hl ? ([...hl][0]?.toString() ?? "") : "n/a";
+			},
+			null,
+			{ timeout: 5000, polling: 5 },
+		)
+		.then((h) => h.jsonValue())
+		.catch(() => null);
+	await page.waitForFunction(() => window.__tts.spoken.length >= 5, null, { timeout: 5000 }).catch(() => {});
+	const spoken = await page.evaluate(() => window.__tts.spoken);
+	const s1 = spoken[1] ?? "";
+	expect(/wicky pedia/.test(s1), `pronounce: global lexicon not applied: "${s1}"`);
+	expect(/sigh tation/.test(s1), `pronounce: front matter not applied: "${s1}"`);
+	expect(/foot note/.test(s1) && !/footnote/.test(s1), `pronounce: data-say not applied: "${s1}"`);
+	expect(/not for us\.$/.test(s1), `pronounce: the pronoun "us" changed: "${s1}"`);
+	const raw = spoken.find((t) => /Wikipedia/.test(t));
+	expect(!raw, `pronounce: the post's prose reached the engine unfixed: "${raw}"`);
+	expect(
+		highlighted === "n/a" ||
+			highlighted === "On Wikipedia a citation is a footnote at the end, not for us.",
+		`pronounce: highlight does not cover the written sentence: "${highlighted}"`,
+	);
+	await ctx.close();
+});
+
 // 6. The player is not on a post that opts out. Opt-out is a front-matter flag, so this checks a standalone page is untouched.
 await step("6. opt-out", async () => {
 	const ctx = await browser.newContext({

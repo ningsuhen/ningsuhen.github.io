@@ -6,8 +6,10 @@ import { Icon } from "astro-icon/components";
 
 interface Props {
 	title: string;
+	/** The post's `pronounce:` front matter: term -> spoken form (src/scripts/tts/pronounce.ts). */
+	pronounce?: Record<string, string>;
 }
-const { title } = Astro.props;
+const { title, pronounce } = Astro.props;
 // Where ONNX Runtime Web is served from. Set PUBLIC_KOKORO_ORT_BASE at build time to point at a CDN instead.
 const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor/ort/");
 ---
@@ -22,7 +24,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	// A value set before this script runs wins (check:listen forces it to test the consent path); otherwise the switch decides.
 	if (window.__KOKORO_READY === undefined) window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
 </script>
-<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase} data-kokoro-manifest={url("/tts/manifest.json")}>
+<listen-player hidden data-target="#post-article" data-title={title} data-pronounce={pronounce && Object.keys(pronounce).length ? JSON.stringify(pronounce) : undefined} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase} data-kokoro-manifest={url("/tts/manifest.json")}>
 	<!-- Shown (via data-loading) while the engine loads, at the bar's exact size, so the post never shifts down. -->
 	<div class="listen-skeleton" aria-hidden="true">
 		<span class="skeleton listen-skeleton-toggle"></span>
