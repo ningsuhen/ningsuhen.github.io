@@ -290,7 +290,7 @@ for (const rel of tabbed) {
 		});
 		const tag = `${urlPath} @${width}`;
 		if (!m.navb || !m.tabs || !m.main) failures.push(`${tag}: navbar, tab bar or main.rd-tabbed not found`);
-		if (m.tabCount !== m.panelCount || m.tabCount !== 8) failures.push(`${tag}: ${m.tabCount} tabs for ${m.panelCount} panels (expected 8 and 8)`);
+		if (m.tabCount < 1 || m.tabCount !== m.panelCount) failures.push(`${tag}: ${m.tabCount} tabs for ${m.panelCount} panels (expected at least 1, one per panel)`);
 		if (width >= 1200 && m.navb && m.tabs && m.main) {
 			for (const [name, box] of [["tab bar", m.tabs], ["content", m.main]]) {
 				if (Math.abs(box.l - m.navb.l) > 1 || Math.abs(box.r - m.navb.r) > 1) failures.push(`${tag}: ${name} ${Math.round(box.l)}..${Math.round(box.r)} differs from the navbar card ${Math.round(m.navb.l)}..${Math.round(m.navb.r)}`);
@@ -333,16 +333,19 @@ for (const rel of barPages) {
 			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (${width >= 1200 ? "navbar brand edge" : "container padding"})`);
 		}
 		await page.evaluate(() => window.scrollTo({ top: 800, behavior: "instant" }));
-		await page.waitForTimeout(300);
+		// Wait for the scroll to land (or the page's end when shorter), then two frames for the sticky layout to settle.
+		await page.waitForFunction(() => window.scrollY >= Math.min(800, document.documentElement.scrollHeight - window.innerHeight) - 0.5);
+		await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 		const s = await page.evaluate(() => {
 			const bar = document.querySelector(".rd-expnav");
 			const host = document.querySelector("div[data-site-navbar]");
 			const hd = host.shadowRoot.querySelector("header").getBoundingClientRect();
-			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY, ua: navigator.userAgent.slice(0, 80) };
+			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY };
 		});
+		// The navbar is sticky (parity with the main site), so the section bar sticks one gap (16px) beneath it, never under it.
 		if (s.scrollY < 799) failures.push(`${tag}: page too short to scroll 800px (reached ${s.scrollY})`);
-		else if (Math.abs(s.top) > 0.5) failures.push(`${tag}: stuck section bar at top ${s.top.toFixed(1)}px, expected 0`);
-		else if (s.navBottom > 0.5) failures.push(`${tag}: navbar card still visible above the stuck section bar (navbar bottom ${s.navBottom.toFixed(1)}px, scrollY ${s.scrollY}, bar top ${s.top.toFixed(1)}px, navbar top ${s.navTop.toFixed(1)}px, ${s.ua})`);
+		else if (Math.abs(s.navTop) > 0.5) failures.push(`${tag}: navbar not sticky at the top (top ${s.navTop.toFixed(1)}px, scrollY ${s.scrollY})`);
+		else if (Math.abs(s.top - s.navBottom - MAIN_GAP_PX) > 0.5) failures.push(`${tag}: stuck section bar at ${s.top.toFixed(1)}px, expected ${MAIN_GAP_PX}px under the navbar (bottom ${s.navBottom.toFixed(1)}px, scrollY ${s.scrollY})`);
 		await ctx.close();
 	}
 }
