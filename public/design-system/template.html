@@ -134,7 +134,8 @@
 </main>
 
 <script>
-// Experiment navbar scroll-spy: marks the section in view (aria-current + .is-active). No dependencies.
+// Section bar scroll-spy: marks the section in view (aria-current + .is-active), keeps that link visible on the bar
+// (the bar scrolls sideways, not the page) and shows an edge fade while links are hidden on that side. No dependencies.
 (function () {
   var nav = document.querySelector('.rd-expnav');
   if (!nav) return;
@@ -143,7 +144,16 @@
     var s = document.getElementById(a.getAttribute('href').slice(1));
     if (s) pairs.push([a, s]);
   });
-  var ticking = false;
+  var ticking = false, shown = null;
+  function edges() {
+    nav.classList.toggle('is-fade-start', nav.scrollLeft > 2);
+    nav.classList.toggle('is-fade-end', nav.scrollLeft < nav.scrollWidth - nav.clientWidth - 2);
+  }
+  function reveal(a) {
+    var pad = 40, l = a.offsetLeft, r = l + a.offsetWidth;
+    if (l < nav.scrollLeft + pad) nav.scrollLeft = l - pad;
+    else if (r > nav.scrollLeft + nav.clientWidth - pad) nav.scrollLeft = r - nav.clientWidth + pad;
+  }
   function update() {
     ticking = false;
     var line = nav.offsetHeight + 24; // a section counts once its top is under the navbar
@@ -156,10 +166,13 @@
       if (on) p[0].setAttribute('aria-current', 'location');
       else p[0].removeAttribute('aria-current');
     });
+    if (current && current[0] !== shown) { shown = current[0]; reveal(shown); }
+    edges();
   }
   function schedule() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule);
+  nav.addEventListener('scroll', edges, { passive: true });
   update();
 })();
 </script>

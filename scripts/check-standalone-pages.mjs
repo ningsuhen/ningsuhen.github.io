@@ -263,6 +263,65 @@ for (const rel of tabbed) {
 		await ctx.close();
 	}
 }
+// Section bar (rd-expnav) block for scripts/check-standalone-pages.mjs. Inserted before the "Drift" comment.
+// Section bar (rd-expnav) on every standalone page with one: one gap (--rd-navbar-gap) under the navbar card at 768px and up
+// (the main site's first card sits at least that far below its navbar), the first link on the navbar's brand edge from 1200px
+// up (the container padding below), and once scrolled 800px the bar is pinned at top 0 with the navbar card gone above it.
+const BAR_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
+const barPages = pages.filter((p) => /<nav\b[^>]*class=["'][^"']*\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
+const MAIN_GAP_PX = 16; // the main site's rhythm (MainGridLayout gap-4; the TOC sits 16px from the navbar card). A fixed reference, not --rd-navbar-gap: the token must match it.
+for (const rel of barPages) {
+	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
+	for (const width of BAR_VIEWPORTS) {
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		const m = await page.evaluate(() => {
+			const R = (el) => { const b = el?.getBoundingClientRect(); return b ? { t: b.top, b: b.bottom, l: b.left } : null; };
+			const host = document.querySelector("div[data-site-navbar]");
+			const bar = document.querySelector(".rd-expnav");
+			return {
+				navb: R(host?.shadowRoot?.querySelector("header")), brandL: R(host?.shadowRoot?.querySelector(".brand"))?.l,
+				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l, padL: bar ? parseFloat(getComputedStyle(bar).paddingLeft) : null,
+			};
+		});
+		const tag = `${urlPath} @${width}`;
+		if (!m.navb || !m.bar || m.firstL == null) failures.push(`${tag}: navbar card or section bar not found`);
+		else {
+			const gap = MAIN_GAP_PX;
+			if (width >= 768 && Math.abs(m.bar.t - m.navb.b - gap) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.navb.b).toFixed(1)}px below the navbar card, expected ${gap}px (the main site rhythm)`);
+			const edge = width >= 1200 ? m.brandL : m.bar.l + m.padL;
+			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (${width >= 1200 ? "navbar brand edge" : "container padding"})`);
+		}
+		await page.evaluate(() => window.scrollTo({ top: 800, behavior: "instant" }));
+		await page.waitForTimeout(300);
+		const s = await page.evaluate(() => {
+			const bar = document.querySelector(".rd-expnav");
+			const host = document.querySelector("div[data-site-navbar]");
+			return { top: bar.getBoundingClientRect().top, navBottom: host.shadowRoot.querySelector("header").getBoundingClientRect().bottom, scrollY: window.scrollY };
+		});
+		if (s.scrollY < 799) failures.push(`${tag}: page too short to scroll 800px (reached ${s.scrollY})`);
+		else if (Math.abs(s.top) > 0.5) failures.push(`${tag}: stuck section bar at top ${s.top.toFixed(1)}px, expected 0`);
+		else if (s.navBottom > 0.5) failures.push(`${tag}: navbar card still visible above the stuck section bar (bottom ${s.navBottom.toFixed(1)}px)`);
+		await ctx.close();
+	}
+}
+// Main site reference (the gap the standalone bar copies): on a post, the first card starts at least the token below the navbar card.
+{
+	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+	const page = await ctx.newPage();
+	await page.goto(base + "/posts/rust-learnings/", { waitUntil: "load" });
+	await page.waitForTimeout(600);
+	const m = await page.evaluate(() => {
+		const navb = document.querySelector("#navbar .card-base")?.getBoundingClientRect().bottom;
+		const top = Math.min(...[...document.querySelectorAll("#main-grid .card-base")].filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().top));
+		return { navb, top };
+	});
+	if (m.navb == null || !Number.isFinite(m.top)) failures.push("main site reference: navbar card or first card not found on /posts/rust-learnings/");
+	else if (m.top - m.navb < MAIN_GAP_PX - 1) failures.push(`main site: first card ${(m.top - m.navb).toFixed(1)}px below the navbar card, less than ${MAIN_GAP_PX}px`);
+	await ctx.close();
+}
+
 // Drift: the report rail against the main post TOC, at 1536 and 1920 (both shown there).
 const mainTocPage = "/posts/rust-learnings/";
 if (tabbed.length && existsSync(path.join(DIST, "posts/rust-learnings/index.html"))) {
