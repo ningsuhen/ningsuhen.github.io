@@ -16,6 +16,7 @@
 <meta name="ds-allow" content="rail-type: the shared rail uses the main TOC 14px entry text; the check reads the main TOC 12px label. Design-system decision.">
 <meta name="ds-allow" content="rail-indicator: the shared rail draws the main TOC dashed indicator as a separate element (.rd-toc__indicator); the check reads a border on the entry. Probe and design system disagree, not this page.">
 <link rel="stylesheet" href="/design-system/research.css">
+<script type="module" src="/design-system/rd.js"></script>
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
 /* Contrast on this page's own grounds, until the shared pass on rail text and links lands: rail entries at 4.5:1+ in
@@ -126,7 +127,7 @@
 </svg>
 <!-- lucide-sprite:end -->
 
-<nav class="rd-expnav" role="tablist" aria-label="Sections">
+<nav class="rd-expnav" role="tablist" aria-label="Sections" data-rd="tabs">
 <a role="tab" id="tab-summary" href="?tab=summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
 <a role="tab" id="tab-claims" href="?tab=claims" aria-controls="claims" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Claims</a>
 <a role="tab" id="tab-provenance" href="?tab=provenance" aria-controls="provenance" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-route"/></svg>Provenance</a>
@@ -153,7 +154,7 @@
 
 <!-- ================= SUMMARY ================= -->
 <div class="rd-tabpanel rd-with-toc" id="summary" role="tabpanel" aria-labelledby="tab-summary">
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#in-30-seconds"><span class="rd-toc__badge">1</span><span class="rd-toc__text">In 30 seconds</span></a></li>
     <li><a href="#the-problem"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The problem</span></a></li>
     <li><a href="#one-picture"><span class="rd-toc__badge">3</span><span class="rd-toc__text">The idea in one picture</span></a></li>
@@ -237,7 +238,7 @@
 
 <!-- ================= CLAIMS ================= -->
 <div class="rd-tabpanel rd-with-toc" id="claims" role="tabpanel" aria-labelledby="tab-claims" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#claims-not-pages"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Claims, not pages</span></a></li>
     <li><a href="#data-model"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The records</span></a></li>
     <li><a href="#pipeline"><span class="rd-toc__badge">3</span><span class="rd-toc__text">From draft to reviewed</span></a></li>
@@ -319,7 +320,7 @@
 
 <!-- ================= PROVENANCE ================= -->
 <div class="rd-tabpanel rd-with-toc" id="provenance" role="tabpanel" aria-labelledby="tab-provenance" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#source-to-answer"><span class="rd-toc__badge">1</span><span class="rd-toc__text">From source to answer</span></a></li>
     <li><a href="#remove-a-source"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Remove a source</span></a></li>
     <li><a href="#flooded-loop"><span class="rd-toc__badge">3</span><span class="rd-toc__text">The flooded-source loop</span></a></li>
@@ -411,7 +412,7 @@
 
 <!-- ================= PEOPLE AND AI ================= -->
 <div class="rd-tabpanel rd-with-toc" id="people" role="tabpanel" aria-labelledby="tab-people" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#two-layers"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Two layers</span></a></li>
     <li><a href="#ai-assistant"><span class="rd-toc__badge">2</span><span class="rd-toc__text">What the AI may do</span></a></li>
     <li><a href="#trust-signals"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Trust signals</span></a></li>
@@ -482,7 +483,7 @@
 
 <!-- ================= TECH ================= -->
 <div class="rd-tabpanel rd-with-toc" id="tech" role="tabpanel" aria-labelledby="tab-tech" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#content-hash"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Content hashes</span></a></li>
     <li><a href="#signatures"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Signed revisions</span></a></li>
     <li><a href="#citation-graph"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Citation graph</span></a></li>
@@ -567,7 +568,7 @@
 
 <!-- ================= LICENSING ================= -->
 <div class="rd-tabpanel rd-with-toc" id="licensing" role="tabpanel" aria-labelledby="tab-licensing" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#cc-by-sa"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What CC BY-SA asks</span></a></li>
     <li><a href="#attribution-line"><span class="rd-toc__badge">2</span><span class="rd-toc__text">An attribution line</span></a></li>
     <li><a href="#licence-questions"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Questions I cannot answer</span></a></li>
@@ -612,7 +613,7 @@
 
 <!-- ================= LEARN ================= -->
 <div class="rd-tabpanel rd-with-toc" id="learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#glossary"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Glossary</span></a></li>
     <li><a href="#analogies"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Pictures to keep</span></a></li>
     <li><a href="#quiz"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Check yourself</span></a></li>
@@ -699,7 +700,7 @@
 
 <!-- ================= ASK ================= -->
 <div class="rd-tabpanel rd-with-toc" id="ask" role="tabpanel" aria-labelledby="tab-ask" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#ask-this-idea"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Ask this idea</span></a></li>
   </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
   <div class="rd-tab__body">
@@ -734,7 +735,7 @@
 
 <!-- ================= RISKS AND LIMITS ================= -->
 <div class="rd-tabpanel rd-with-toc" id="risks" role="tabpanel" aria-labelledby="tab-risks" hidden>
-  <nav class="rd-toc" aria-label="On this page"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
+  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
     <li><a href="#risk-table"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Risks</span></a></li>
     <li><a href="#trade-offs"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Trade-offs</span></a></li>
     <li><a href="#open-problems"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Open problems</span></a></li>
@@ -904,303 +905,8 @@
 {"q":"Where do the sources come from?","a":"Only sources I opened and read are listed: Wikipedia's Verifiability policy, its large language model guideline, its reuse page, the CC BY-SA 4.0 legal code, the Shumailov paper and the C2PA 2.2 specification. Read on 2026-10-25.","k":"sources references citations read checked","s":"sources","t":"Sources"}
 ]</script>
 
-<script>
-// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
-// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
-// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
-// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
-(function () {
-  if (window.__rdToc) return;
-  window.__rdToc = true;
-  var wide = window.matchMedia('(min-width: 1536px)');
-  function Rail(nav) {
-    var self = this;
-    this.nav = nav;
-    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
-    this.indicator = nav.querySelector('.rd-toc__indicator');
-    this.sections = [];
-    this.index = new Map();
-    this.active = [];
-    this.anchorNavTarget = null;
-    this.links.forEach(function (a, i) {
-      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
-      self.sections.push(sec);
-      self.active.push(false);
-      if (sec) self.index.set(sec, i);
-    });
-    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
-    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
-    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
-    nav.classList.add('is-live');
-    this.fallback();
-    this.update();
-  }
-  Rail.prototype.onIntersect = function (entries) {
-    var self = this;
-    entries.forEach(function (e) {
-      var i = self.index.get(e.target);
-      if (i !== undefined) self.active[i] = e.isIntersecting;
-      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
-    });
-    if (this.active.indexOf(true) < 0) this.fallback();
-    this.update();
-  };
-  Rail.prototype.fallback = function () {
-    var vh = window.innerHeight;
-    for (var i = 0; i < this.sections.length; i++) {
-      var s = this.sections[i];
-      if (!s) continue;
-      var r = s.getBoundingClientRect();
-      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
-      else if (r.top > vh) break;
-    }
-  };
-  Rail.prototype.update = function () {
-    var self = this;
-    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
-  };
-  Rail.prototype.toggle = function () {
-    var links = this.links, a = this.active;
-    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
-    var i = links.length - 1, min = links.length - 1, max = -1;
-    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
-    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
-    while (i >= 0) { links[i].classList.remove('visible'); i--; }
-    if (!this.indicator) return;
-    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
-    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
-    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
-    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
-    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
-  };
-  Rail.prototype.scroll = function () {
-    if (this.anchorNavTarget || !wide.matches) return;
-    var vis = this.nav.querySelectorAll('a.visible');
-    if (!vis.length) return;
-    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
-    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
-    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
-  };
-  Rail.prototype.onClick = function (e) {
-    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
-    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
-  };
-  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
-  function openForWide() {
-    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
-  }
-  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
-  wide.addEventListener('change', refresh);
-  window.addEventListener('resize', refresh, { passive: true });
-  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
-  var mo = new MutationObserver(function (muts) {
-    muts.forEach(function (m) {
-      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
-    });
-  });
-  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
-  openForWide();
-})();
-</script>
 
 <script>
-// Tabs and history (design-system "Tabbed pages"; the same model as the report pages). A tab is a real ?tab= link: the
-// browser navigates and keeps its own history, one entry per click, no script. A section jump inside the current tab (an
-// "On this page" link) pushes one entry with the hash and the scroll; a section in another tab is a real navigation to
-// ?tab=<tab>#<section>. Back, Forward, reload and bfcache restore re-sync the tab, section and scroll; they never add an
-// entry. replaceState only saves the scroll into the current entry and maps a legacy hash-only URL to ?tab= on load.
-// Every scroll also goes to sessionStorage under the entry's key, because a write made in pagehide never reaches the entry
-// a reload restores from. <html data-history-ready> marks the first restore as done. Widgets never touch history.
-(function () {
-  if (window.__ideaTabs) return;
-  window.__ideaTabs = true;
-  var bar = document.querySelector('.rd-expnav[role="tablist"]');
-  if (!bar) return;
-  document.documentElement.classList.add('js');
-  var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
-  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var navH = function () { return bar.getBoundingClientRect().bottom; };
-  var saveTimer = 0;
-  var seq = Date.now();
-  var yByKey = {};
-  history.scrollRestoration = 'manual';
-
-  function tabOf(id) {
-    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('aria-controls') === id) return i;
-    return -1;
-  }
-  function panelOf(el) {
-    for (var i = 0; i < panels.length; i++) if (panels[i] && panels[i].contains(el)) return i;
-    return -1;
-  }
-  // What a hash names: a tab (a legacy #tab-id, el null), an element (its tab is the panel that holds it), or nothing.
-  function locate(id) {
-    if (!id) return null;
-    var t = tabOf(id);
-    if (t >= 0) return { tab: t, el: null };
-    var el = document.getElementById(id);
-    return el ? { tab: panelOf(el), el: el } : null;
-  }
-  function currentTab() {
-    var i = panels.findIndex(function (p) { return p && !p.hidden; });
-    return i < 0 ? 0 : i;
-  }
-  function viewFromUrl() {
-    var loc = locate(decodeURIComponent(location.hash.slice(1)));
-    var t = tabOf(new URLSearchParams(location.search).get('tab') || '');
-    if (t < 0) t = loc && loc.tab >= 0 ? loc.tab : 0;
-    return { tab: t, el: loc && loc.el ? loc.el : null };
-  }
-  function urlFor(tab, id) { return location.pathname + '?tab=' + panels[tab].id + (id ? '#' + id : ''); }
-  function barEdges() {
-    bar.classList.toggle('is-fade-start', bar.scrollLeft > 2);
-    bar.classList.toggle('is-fade-end', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 2);
-  }
-  function revealTab(t) {
-    var pad = 40, l = t.offsetLeft, r = l + t.offsetWidth;
-    if (l < bar.scrollLeft + pad) bar.scrollLeft = l - pad;
-    else if (r > bar.scrollLeft + bar.clientWidth - pad) bar.scrollLeft = r - bar.clientWidth + pad;
-  }
-  bar.addEventListener('scroll', barEdges, { passive: true });
-  window.addEventListener('resize', barEdges);
-  function show(i) {
-    tabs.forEach(function (t, j) {
-      var on = j === i;
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      t.setAttribute('tabindex', on ? '0' : '-1');
-      t.classList.toggle('is-active', on);
-      panels[j].hidden = !on;
-    });
-    revealTab(tabs[i]);
-    barEdges();
-  }
-  function focusTarget(el) {
-    var t = /^H[1-6]$/.test(el.tagName) ? el : el.querySelector('h1,h2,h3,h4,h5,h6') || el;
-    t.setAttribute('tabindex', '-1');
-    t.focus({ preventScroll: true });
-  }
-  function keyOf() {
-    var k = history.state && history.state.k;
-    return k ? String(k) : 'url:' + location.pathname + location.search + location.hash;
-  }
-  function remember(k, y) {
-    yByKey[k] = y;
-    try { sessionStorage.setItem('rd-y:' + k, String(y)); } catch (e) {}
-  }
-  function saveScroll() {
-    clearTimeout(saveTimer);
-    var y = Math.round(window.scrollY);
-    remember(keyOf(), y);
-    history.replaceState(Object.assign({}, history.state, { y: y }), '');
-  }
-  // Only for an entry this page wrote (state is set): a fresh visit to the same URL starts at the top.
-  function recalled(k) {
-    if (!history.state) return undefined;
-    var v = null;
-    try { v = sessionStorage.getItem('rd-y:' + k); } catch (e) {}
-    return v === null ? undefined : Number(v);
-  }
-  function showLoc(loc, o) {
-    if (loc.tab >= 0) show(loc.tab);
-    if (loc.el && o.focus) focusTarget(loc.el);
-    var behavior = o.smooth && !reduce.matches ? 'smooth' : 'instant';
-    if (typeof o.y === 'number') return window.scrollTo({ top: o.y, behavior: behavior });
-    if (loc.el) return loc.el.scrollIntoView({ block: 'start', behavior: behavior });
-    if (o.tabStart) {
-      var top = panels[loc.tab].getBoundingClientRect().top;
-      if (top < navH()) window.scrollTo({ top: window.scrollY + top - navH() - 8, behavior: behavior });
-    }
-  }
-  // Back, Forward, popstate, hashchange, bfcache restore: re-sync from the URL and the entry. Writes no entry.
-  function resync() {
-    var v = viewFromUrl();
-    var st = history.state || {};
-    var key = keyOf();
-    var saved = yByKey[key] !== undefined ? yByKey[key] : recalled(key);
-    var y = typeof saved === 'number' ? saved : typeof st.y === 'number' ? st.y : null;
-    showLoc({ tab: v.tab, el: v.el }, { y: y, focus: !!v.el, smooth: false, tabStart: true });
-    saveScroll();
-  }
-  // In-page links: a section in the current tab is one pushState entry; a section in another tab is a real navigation.
-  document.addEventListener('click', function (e) {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    var a = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null;
-    if (!a || a.target || a.getAttribute('href') === '#') return;
-    var id = decodeURIComponent(a.getAttribute('href').slice(1));
-    var loc = locate(id);
-    if (!loc) return;
-    e.preventDefault();
-    var secId = loc.el ? id : '';
-    if (loc.tab !== currentTab()) { location.assign(urlFor(loc.tab, secId)); return; }
-    var base = location.pathname + location.search + location.hash;
-    var next = location.pathname + location.search + (secId ? '#' + secId : '');
-    if (next !== base) {
-      saveScroll();
-      seq += 1;
-      var y0 = Math.round(window.scrollY);
-      remember(String(seq), y0);
-      history.pushState({ k: seq, y: y0 }, '', next);
-    }
-    showLoc({ tab: loc.tab, el: loc.el }, { smooth: true, focus: !!loc.el, tabStart: false });
-  });
-  // A tab is a real link. Following the tab that is already shown adds no entry.
-  bar.addEventListener('click', function (e) {
-    var t = e.target instanceof Element ? e.target.closest('[role="tab"]') : null;
-    if (t && t.getAttribute('aria-selected') === 'true' && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) e.preventDefault();
-  });
-  // Keyboard on the tab list: arrows, Home and End move focus; Space follows the focused tab.
-  bar.addEventListener('keydown', function (e) {
-    var i = tabs.indexOf(document.activeElement);
-    if (i < 0) return;
-    var n = null;
-    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
-    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
-    else if (e.key === 'Home') n = 0;
-    else if (e.key === 'End') n = tabs.length - 1;
-    else if (e.key === ' ') { e.preventDefault(); tabs[i].click(); return; }
-    if (n === null) return;
-    e.preventDefault();
-    tabs[n].focus();
-  });
-  window.addEventListener('popstate', resync);
-  window.addEventListener('hashchange', resync);
-  window.addEventListener('pageshow', function (e) { if (e.persisted) resync(); });
-  window.addEventListener('pagehide', saveScroll);
-  window.addEventListener('scroll', function () {
-    remember(keyOf(), Math.round(window.scrollY));
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveScroll, 150);
-  }, { passive: true });
-
-  // First paint. A legacy URL (hash only, or a tab id in the hash) is mapped to ?tab= with replaceState: no entry.
-  var v0 = viewFromUrl();
-  var restoreY = recalled(keyOf()) !== undefined ? recalled(keyOf()) : typeof (history.state || {}).y === 'number' ? history.state.y : null;
-  var touched = false;
-  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
-    window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
-  });
-  if (!new URLSearchParams(location.search).has('tab') || tabOf(decodeURIComponent(location.hash.slice(1))) >= 0) {
-    history.replaceState(history.state, '', urlFor(v0.tab, v0.el ? v0.el.id : ''));
-  }
-  resync();
-  function restoreFirst() {
-    if (touched) return;
-    if (v0.el) focusTarget(v0.el);
-    if (restoreY !== null) window.scrollTo({ top: restoreY, behavior: 'instant' });
-    else if (v0.el) v0.el.scrollIntoView({ block: 'start', behavior: 'instant' });
-  }
-  // Late fonts can move the page after load: put the saved position back once more (unless the reader has moved).
-  window.addEventListener('load', function () {
-    restoreFirst();
-    var mark = function () { document.documentElement.setAttribute('data-history-ready', ''); };
-    var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
-    fonts.then(function () {
-      if (!touched && restoreY !== null && Math.abs(window.scrollY - restoreY) > 2) window.scrollTo({ top: restoreY, behavior: 'instant' });
-      mark();
-    }, mark);
-  }, { once: true });
-})();
 
 // Step-through figures: Previous and Next move the highlight and the caption. Steps before the current one stay lit.
 // No history entries. On a phone the figure scrolls so the lit step is in view.
