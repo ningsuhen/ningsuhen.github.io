@@ -1,7 +1,8 @@
 ---
 title: "Brev tree traversal"
 published: 2026-10-24
-description: "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, then compare it with flat rules and a 27B model."
+updated: 2026-10-25
+description: "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, compare it with flat rules and a 27B model, then time the same encoder on your own GPU in the browser."
 tags: [Playground]
 category: Playground
 thumbnail: ./thumb.webp
@@ -30,9 +31,17 @@ For 865 messages the walk leaves the gold path at the root question. A wrong gro
 
 Speed is the part that holds up. The walk's p50 is 52 ms, one forward pass per level, on one RTX 4060. In the ledger, holding the lowest-margin 15% of walks for the 27B lifts the tree to 55.2%.
 
+## Speed test in your browser
+
+The page now has a Speed test tab. It runs laya on your own GPU, in the browser tab, with WebGPU. Nothing downloads until you tick the box and press Start. Then it fetches the 846 MB model and the 24 MB ONNX Runtime binary from Hugging Face and keeps both in the browser cache.
+
+So far I have numbers from one Apple Metal GPU in Chrome 155, on a Mac that was busy with other work. The download took 77.7 s, about 10.9 MB/s. It did 19 to 22 decisions a second. One pass took about 46 to 52 ms at p50. In all 3 runs every decision matched native fp32. On a second visit the model came from the cache and the test was ready in 1.8 s.
+
+That is one GPU and one browser, measured with an ONNX Runtime Web 1.31 preview. The page now uses the same 1.27.0 runtime as the rest of the site, and I have not rerun those numbers on it yet. Yours may differ, and I have not tried others.
+
 ## What it does not show
 
-- It is a replay. The probabilities were recorded from a real run. Nothing on the page calls a model, and there is no box to type your own message.
+- The walk is a replay. The probabilities were recorded from a real run. Only the Speed test tab runs the model, and there is no box to type your own message.
 - The 60 messages are a sample, weighted toward errors and short texts on purpose. Do not read accuracy off it.
 - One run, one tree, one dataset. The arms differ in model, prompt and hardware, so the latencies are not like-for-like: laya ran locally, and the 27B figure includes the network and a shared queue.
 - Banking77 is public, so any of these models may have seen it in training. I have not checked that.

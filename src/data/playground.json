@@ -14,11 +14,11 @@
     },
     {
       "title": "Brev tree traversal",
-      "summary": "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, then compare it with flat rules and a 27B model.",
+      "summary": "Watch a 400M encoder walk a 23-node intent tree on Banking77, node by node, replayed from a recorded run, compare it with flat rules and a 27B model, then time the same encoder on your own GPU in the browser.",
       "href": "/playground/brev-tree-traversal/",
       "post": "/posts/brev-tree-traversal/",
       "started": "2026-10-24",
-      "updated": "2026-10-24",
+      "updated": "2026-10-25",
       "status": "Live",
       "tags": [
         "Playground"
