@@ -1,0 +1,47 @@
+---
+import { Icon } from "astro-icon/components";
+
+// Breadcrumb trail for a main-site page. The last item is the current page: plain text, aria-current, no link.
+// Renders inside #swup-container (MainGridLayout), so Swup replaces it with the page. Standalone pages get the
+// same trail from standalone-header.ts (.rd-breadcrumb in research.css); sizes and colours match those tokens.
+export interface Crumb {
+	name: string;
+	url: string;
+}
+
+interface Props {
+	items: Crumb[];
+}
+
+const { items } = Astro.props;
+const jsonLd = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	itemListElement: items.map((item, i) => ({
+		"@type": "ListItem",
+		position: i + 1,
+		name: item.name,
+		item: new URL(item.url, Astro.site).href,
+	})),
+};
+const last = items.length - 1;
+---
+
+<!-- On the card surface: the content column overlaps the post banner, so bare text would sit on the picture. -->
+<nav aria-label="Breadcrumb" data-pagefind-ignore class="card-base mb-3 min-w-0 px-4 py-2 text-[0.8125rem] leading-6 text-black/60 dark:text-white/60">
+    <ol class="flex min-w-0 items-center">
+        {items.map((item, i) => (
+            <li class={i === last ? "flex min-w-0 items-center" : "flex flex-none items-center"}>
+                {i === last ? (
+                    <span aria-current="page" title={item.name} class="block min-w-0 truncate text-black/75 dark:text-white/75">{item.name}</span>
+                ) : (
+                    <>
+                        <a href={item.url} class="inline-flex min-h-6 items-center whitespace-nowrap rounded-md transition hover:text-[var(--primary)]">{item.name}</a>
+                        <Icon name="lucide:chevron-right" class="mx-1 flex-none text-black/30 dark:text-white/30" />
+                    </>
+                )}
+            </li>
+        ))}
+    </ol>
+</nav>
+<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
