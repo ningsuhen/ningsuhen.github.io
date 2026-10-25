@@ -20,14 +20,16 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 
 ## Commands
 
-- `pnpm dev`: dev server on http://127.0.0.1:4321.
+- `pnpm dev`: the always-on dev server on http://127.0.0.1:4321 (strict: exits if 4321 is taken).
+- `pnpm dev:agent`: ad-hoc dev server for agents and worktrees, first free port from 4400 up (the URL is printed).
+- Agents must NEVER start a server on port 4321 (`pnpm dev`, `pnpm preview`, `astro dev --port 4321`): the LaunchAgent owns it. Use `pnpm dev:agent`.
 - `pnpm build`: Astro build + Pagefind.
 - `pnpm check:standalone`: real-browser check of standalone pages and Back navigation. Needs a build and `CHROME_PATH` (or `pnpm exec playwright-core install chromium`).
 - `pnpm astro check`: type check.
 - `pnpm new-research <slug> "<Title>" ["<summary>"]` / `pnpm new-experiment <slug> "<Title>" ["<summary>"]`: scaffold page, draft post and Draft entry. Then set the entry's status to `Live` (or `Coming soon`).
 - `pnpm sync`: local-only dev/next sync (see below). `pnpm merge-pr <n>`: squash-merge a PR, then sync.
 - `pnpm test:hooks`: tests the pre-push guard.
-- Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 4321) against the branch checked out in the project root. Log: `~/Library/Logs/ningsuhen-github-io/dev.log`.
+- Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 4321) against the branch checked out in the project root. It only picks up merged work after `pnpm sync`. Log: `~/Library/Logs/ningsuhen-github-io/dev.log`.
 
 ## Rules
 

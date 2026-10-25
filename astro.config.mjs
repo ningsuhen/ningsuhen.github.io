@@ -29,6 +29,7 @@ import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
 const SITE = "https://ningsuhen.github.io/";
+const ROOT = fileURLToPath(new URL(".", import.meta.url));
 
 /** Standalone pages in public/ (reports, apps) are not Astro routes, so the sitemap needs them listed by hand. */
 function standaloneSitemapPages(dir = fileURLToPath(new URL("./public/", import.meta.url)), prefix = "") {
@@ -42,6 +43,11 @@ function standaloneSitemapPages(dir = fileURLToPath(new URL("./public/", import.
 // https://astro.build/config
 export default defineConfig({
 	site: SITE,
+	// Dev port is 4321 and fails loudly if taken (vite strictPort below). `pnpm dev:agent` overrides it to 4400+.
+	server: {
+		host: "127.0.0.1",
+		port: 4321,
+	},
 	base: "/",
 	trailingSlash: "always",
 	redirects: {
@@ -177,6 +183,16 @@ export default defineConfig({
 		],
 	},
 	vite: {
+		server: {
+			// Only `pnpm dev:agent` (npm_lifecycle_event) may fall back to the next free port.
+			strictPort: process.env.npm_lifecycle_event !== "dev:agent",
+			// Astro restarts the whole dev server on any astro.config.* change it sees, so a worktree's
+			// config or churn under .worktrees/ used to restart the LaunchAgent server again and again.
+			// Absolute globs: a relative "**/.worktrees/**" would also match this checkout when it lives under .worktrees/.
+			watch: {
+				ignored: [".worktrees", ".tmp", "dist"].map((dir) => `${ROOT}${dir}/**`),
+			},
+		},
 		build: {
 			rollupOptions: {
 				onwarn(warning, warn) {

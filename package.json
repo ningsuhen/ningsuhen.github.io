@@ -5,6 +5,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:agent": "astro dev --port 4400",
     "start": "astro dev",
     "check": "astro check",
     "build": "astro build && pagefind --site dist",
