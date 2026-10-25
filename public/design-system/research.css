@@ -500,6 +500,8 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 /* Edge fades: the scroll-spy sets .is-fade-start / .is-fade-end only while links are hidden on that side. The fades are
    sticky pseudo-elements with zero flow width, so the bar's own background stays opaque under them. */
 .rd-expnav::before, .rd-expnav::after { content: none; }
+/* The gap between the navbar card and the section bar is page-coloured, so scrolled content does not show through it. */
+.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
 .rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
 	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
 }
@@ -533,10 +535,10 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem 0 4rem; }
-.rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem var(--rd-space-4) 4rem; }
+.rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
-.rd-tab__body { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 /* Below 1536px the rail is the disclosure above the content. It sticks under the section bar (like the main TOC), so it stays
    in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
 .rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-3)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-navbar-gap) - var(--rd-expnav-h) - var(--rd-space-4)); overflow-y: auto; background: var(--rd-page-bg); }
