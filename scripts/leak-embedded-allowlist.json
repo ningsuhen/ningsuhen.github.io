@@ -1,5 +1,6 @@
 {
-	"_comment": "Time-boxed, hash-pinned exceptions for embedded-payload leaks. Each entry pins the sha256 of the DECODED payload (not the whole file) and names the file where it was found. A page ships at both public/… and its dist/… build copy, which differ only in the injected navbar/license but carry the identical payload, so one payload hash covers both. The entry stops applying when the payload changes (a re-export) or after `expires`. This is a tripwire, not a blanket skip: it suppresses only that payload's `embedded` findings. Remove an entry when the source is fixed.",
+	"_comment": "Time-boxed, hash-pinned exceptions for embedded-payload leaks. Each entry pins the sha256 of the DECODED payload (not the whole file) and names the file where it was found. A page ships at both public/… and its dist/… build copy, which differ only in the injected navbar/license but carry the identical payload, so one payload hash covers both. The entry stops applying when the payload changes (a re-export) or after `expires`. This is a tripwire, not a blanket skip: it suppresses only that payload's `embedded` findings.",
+	"removeWhen": "Both entries are removed together when EcoSimulation's clean re-export (v51, no embedded build paths) lands for /research/ai-economy/ and replaces /experiments/ecosimulation/. Until then the payload-hash pin and the 2026-11-08 expiry keep this failing automatically on re-export or after the date.",
 	"entries": [
 		{
 			"file": "public/research/ai-economy/index.html",
