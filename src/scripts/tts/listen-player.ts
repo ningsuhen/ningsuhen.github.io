@@ -28,6 +28,7 @@ import {
 } from "./kokoro-cache";
 import { WebSpeechEngine, webSpeechAvailable } from "./web-speech-engine";
 import { Pipeline, UNDERRUN_S } from "./playback";
+import { pauseAfter, scaledPause } from "./pauses";
 
 type EngineId = "web-speech" | "kokoro";
 /** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
@@ -671,6 +672,13 @@ class ListenPlayer extends HTMLElement {
 					}
 					if (id !== this.runId) return;
 				}
+				// Punctuation pause after the sentence, from the text and its block (see pauses.ts).
+				const next = this.sentences[i + 1];
+				const pause = pauseAfter({
+					tag: this.sentences[i].block.tagName,
+					endsBlock: !next || next.block !== this.sentences[i].block,
+				});
+				pipeline.silence(scaledPause(pause, this.rate), i);
 			}
 			await pipeline.drain();
 		} catch (err) {

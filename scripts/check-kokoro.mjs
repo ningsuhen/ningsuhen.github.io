@@ -88,6 +88,11 @@ try {
 		if (!ALLOWED_HOST.test(host)) failures.push(`request to ${host} (${req.url().slice(0, 80)})`);
 	});
 	page.on("pageerror", (e) => failures.push(`page error: ${e.message}`));
+	// ONNX Runtime's node-assignment note is noise (sessions run with logSeverityLevel 3); any copy is a regression.
+	page.on("console", (m) => {
+		if ((m.type() === "warning" || m.type() === "error") && /VerifyEachNodeIsAssignedToAnEp/.test(m.text()))
+			failures.push(`ORT console line: ${m.text().slice(0, 120)}`);
+	});
 	await page.goto(`${base}/__kokoro-check.html${MODE === "cpu" ? "?mode=cpu" : ""}`);
 
 	const result = await page.evaluate(
