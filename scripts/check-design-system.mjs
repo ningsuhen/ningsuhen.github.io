@@ -77,7 +77,7 @@ const RULES = {
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
 	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
 	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
-	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
+	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
 	"fullscreen-toggle": "every data-rd=fullscreen container has a [data-rd-fullscreen-toggle] button with aria-pressed and is focusable (wheel-only-after-focus)",
 };
 
@@ -321,11 +321,21 @@ const probeStructure = (canon) => {
 			operable: el.matches("button") || el.getAttribute("role") === "button",
 			pressed: el.hasAttribute("aria-pressed"),
 		})),
-		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
-		// A div/span styled as a button is not focusable and breaks keyboard use.
-		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
-			operable: el.matches("button") || el.getAttribute("role") === "button",
-		})),
+		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
+		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
+		// screen readers and most users.
+		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
+			const id = el.id;
+			const labelledBy = el.getAttribute("aria-labelledby");
+			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
+			return {
+				labelled:
+					hasFor ||
+					!!el.getAttribute("aria-label") ||
+					!!labelledBy ||
+					!!el.closest("label"),
+			};
+		}),
 		// Fullscreen: each data-rd=fullscreen container must carry an operable, accessible toggle
 		// (a [data-rd-fullscreen-toggle] button with aria-pressed). The container's focusability
 		// (tabindex=-1, for wheel-only-after-focus) is added by rd.js at mount, so it is not checked here.
@@ -757,7 +767,7 @@ await Promise.all(pages.map(async (rel) => {
 				[s.btns.some((b) => !b.operable), "button", "a .rd-btn is not a keyboard-operable <button> (or role=button)"],
 				[s.filters.some((f) => !f.operable), "filter", "a .rd-filter is not a keyboard-operable <button> (or role=button)"],
 				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
-				[s.btns.some((b) => !b.operable), "button", "a .rd-btn is not a keyboard-operable <button> (or role=button)"],
+				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
 				[s.fullscreen.some((f) => !f.hasToggle), "fullscreen-toggle", `a data-rd=fullscreen container has no [data-rd-fullscreen-toggle]`],
 				[s.fullscreen.some((f) => f.hasToggle && !f.isButton), "fullscreen-toggle", "a fullscreen toggle is not a button (use <button> or role=button)"],
 				[s.fullscreen.some((f) => f.hasToggle && !f.ariaPressed), "fullscreen-toggle", "a fullscreen toggle lacks aria-pressed"],

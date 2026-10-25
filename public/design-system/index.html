@@ -346,6 +346,14 @@
 <p><button type="button" class="rd-filter" aria-pressed="true">All</button> <button type="button" class="rd-filter" aria-pressed="false">Validated</button> <button type="button" class="rd-filter" aria-pressed="false">Partial</button> <button type="button" class="rd-filter" aria-pressed="false"><svg class="rd-icon" aria-hidden="true"><use href="#i-tag"/></svg>Tagged</button></p>
 </div>
 
+<header class="rd-section__head" id="field"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg></span><h2>Field</h2></header>
+<p>A <code>.rd-field</code> is a labelled control: a <code>.rd-field__label</code>, an <code>.rd-input</code> or <code>.rd-select</code>, and an optional <code>.rd-field__hint</code> or <code>.rd-field__error</code>. The control is full-width and floors at the tap-target height. An invalid control takes a <code>--rd-bad</code> border, paired with an <code>.rd-field__error</code> message (and <code>aria-invalid</code> on the control). Colours are the <code>--rd-*</code> tokens, so it follows the light and dark toggle.</p>
+<div class="rd-card">
+<div class="rd-field"><label class="rd-field__label" for="f-name">Name</label><input class="rd-input" id="f-name" type="text" placeholder="Full name"><p class="rd-field__hint">As it appears on the report.</p></div>
+<div class="rd-field"><label class="rd-field__label" for="f-tier">Tier</label><select class="rd-select" id="f-tier"><option>Small</option><option>Medium</option><option>Large</option></select></div>
+<div class="rd-field"><label class="rd-field__label" for="f-bad">Value</label><input class="rd-input" id="f-bad" type="text" aria-invalid="true" value="12.5"><p class="rd-field__error">Must be a whole number.</p></div>
+</div>
+
 <header class="rd-section__head" id="table"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg></span><h2>Table</h2></header>
 <div class="rd-table-wrap"><table class="rd-table"><thead><tr><th>Outcome</th><th class="rd-num">12m</th><th class="rd-num">24m</th><th class="rd-num">60m</th></tr></thead>
 <tbody><tr><td>Recession, any quarter</td><td class="rd-num">23%</td><td class="rd-num">43%</td><td class="rd-num">80%</td></tr>

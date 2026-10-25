@@ -901,3 +901,37 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: var(--rd-card-bg);
 }
 .rd-filter[aria-pressed="true"]:hover { background: var(--rd-primary); }
+/* rd-field: a form field — a label, a control (input or select), and an optional hint or error.
+   The control is full-width, token-compliant, and floors at the tap-target height. Ships in rd.css
+   only (the research.css compatibility alias stays the frozen core). */
+
+.rd-field { display: flex; flex-direction: column; gap: var(--rd-space-1); margin: 0; }
+.rd-field__label { font: 500 var(--rd-fs-sm) var(--rd-font); color: var(--rd-text-strong); }
+.rd-field__hint { margin: 0; font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-field__error { margin: 0; font-size: var(--rd-fs-xs); color: var(--rd-bad); }
+
+.rd-input,
+.rd-select {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: var(--rd-control-h);
+	padding: 0 var(--rd-space-3);
+	border: 1px solid var(--rd-line);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-card-bg);
+	color: var(--rd-text);
+	font: var(--rd-fs-base) var(--rd-font);
+}
+.rd-input::placeholder { color: var(--rd-text-faint); }
+.rd-input:focus,
+.rd-select:focus { border-color: var(--rd-accent); }
+.rd-input:disabled,
+.rd-select:disabled {
+	background: var(--rd-btn-bg);
+	color: var(--rd-text-muted);
+	cursor: default;
+}
+
+/* Error state: a bad border, paired with an .rd-field__error message. */
+.rd-input[aria-invalid="true"],
+.rd-select[aria-invalid="true"] { border-color: var(--rd-bad); }
