@@ -23,6 +23,7 @@ import {
 	withPauses,
 } from "../src/scripts/tts/chunk.ts";
 import { accelerationLabel } from "../src/scripts/tts/engine.ts";
+import { PAUSE_S, pauseAfter, scaledPause } from "../src/scripts/tts/pauses.ts";
 import {
 	CHUNK_BUDGET,
 	cardinal,
@@ -567,4 +568,23 @@ test("superscript label: GPU only when WebGPU is reported and exposed", () => {
 		if (original) Object.defineProperty(globalThis, "navigator", original);
 		else delete nav.navigator;
 	}
+});
+
+test("pause table: sentence, paragraph, heading and list item", () => {
+	assert.equal(pauseAfter({ tag: "P", endsBlock: false }), PAUSE_S.sentence);
+	assert.equal(pauseAfter({ tag: "P", endsBlock: true }), PAUSE_S.paragraph);
+	assert.equal(pauseAfter({ tag: "H2", endsBlock: true }), PAUSE_S.heading);
+	assert.equal(pauseAfter({ tag: "H3", endsBlock: false }), PAUSE_S.heading);
+	assert.equal(pauseAfter({ tag: "LI", endsBlock: true }), PAUSE_S.listItem);
+	assert.equal(pauseAfter({ tag: "LI", endsBlock: false }), PAUSE_S.sentence);
+});
+
+test("pause table: clause boundary", () => {
+	assert.equal(PAUSE_S.clause, 0.15);
+});
+
+test("pauses scale with the playback rate", () => {
+	assert.equal(scaledPause(0.4, 1), 0.4);
+	assert.equal(scaledPause(0.4, 2), 0.2);
+	assert.equal(scaledPause(0.4, 0.5), 0.8);
 });

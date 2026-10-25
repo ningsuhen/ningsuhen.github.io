@@ -28,6 +28,7 @@ import {
 } from "./kokoro-cache";
 import { WebSpeechEngine, webSpeechAvailable } from "./web-speech-engine";
 import { Pipeline, UNDERRUN_S } from "./playback";
+import { pauseAfter, scaledPause } from "./pauses";
 
 type EngineId = "web-speech" | "kokoro";
 /** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
@@ -54,6 +55,30 @@ declare global {
 
 const PREFS_KEY = "listen-prefs";
 const CONSENT_KEY = "listen-kokoro-consent";
+/** Defaults, in one place. The neural voice is the default wherever WebGPU exists; otherwise the browser voice. */
+const DEFAULT_ENGINE: EngineId = "kokoro";
+const DEFAULT_VOICE = "af_heart";
+/** The listener's explicit engine choice (engine menu, consent prompt, cancel). It wins over DEFAULT_ENGINE. */
+const CHOICE_KEY = "listen-engine-choice";
+/** Consecutive neural start failures, and when the default is offered again. A broken device is not re-prompted every visit. */
+const FAILED_KEY = "listen-neural-failed";
+const FAILURES_TO_COOL = 2;
+const COOL_DOWN_MS = 24 * 60 * 60 * 1000;
+/** Set when a prompt is cancelled, a download is cancelled or a start fails: the browser voice for this page session only. */
+let sessionFallback = false;
+
+function neuralCoolingDown(): boolean {
+	return readStorage<{ count: number; until: number }>(FAILED_KEY, { count: 0, until: 0 }).until > Date.now();
+}
+
+function recordNeuralFailure(): void {
+	const count = readStorage<{ count: number }>(FAILED_KEY, { count: 0 }).count + 1;
+	writeStorage(FAILED_KEY, { count, until: count >= FAILURES_TO_COOL ? Date.now() + COOL_DOWN_MS : 0 });
+}
+
+function clearNeuralFailures(): void {
+	writeStorage(FAILED_KEY, { count: 0, until: 0 });
+}
 /** Pinned revision of onnx-community/Kokoro-82M-v1.0-ONNX (Apache-2.0). Pinned so the cached files never drift. */
 const RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
 const FOLLOW_PAUSE_MS = 4000;
@@ -243,11 +268,18 @@ class ListenPlayer extends HTMLElement {
 
 		// A saved neural choice loads without a dialog only when the visitor already consented on this device.
 		// Page load never downloads. A stored neural voice is prepared (not initialised) and starts on first Play.
+		const explicit = readStorage<EngineId | null>(CHOICE_KEY, null);
+		const wantsNeural = explicit
+			? explicit === "kokoro"
+			: DEFAULT_ENGINE === "kokoro" &&
+				!readStorage(SLOW_KEY, false) &&
+				!sessionFallback &&
+				!neuralCoolingDown();
 		const wanted: EngineId = activeEngine
 			? activeEngineId
-			: !readStorage(SLOW_KEY, false) &&
-				  prefs.engine === "kokoro" &&
-				  window.__KOKORO_READY === true
+			: wantsNeural &&
+				  window.__KOKORO_READY === true &&
+				  (explicit === "kokoro" || (await hasWebGpuAdapter()))
 				? "kokoro"
 				: "web-speech";
 		// The placeholder holds the bar's space while the engine loads (a saved neural voice can take seconds).
@@ -318,6 +350,11 @@ class ListenPlayer extends HTMLElement {
 
 	private async ensureEngine(id: EngineId, askConsent: boolean): Promise<TtsEngine | null> {
 		if (id === "web-speech") return this.activateWebSpeech();
+		// A second start during a download would open a second prompt or a second download.
+		if (this.downloadAbort) {
+			this.status("The neural voice is still downloading.");
+			return null;
+		}
 		if (activeEngine && activeEngineId === "kokoro" && neuralReady) {
 			this.syncEngineSelect("kokoro");
 			return activeEngine;
@@ -333,25 +370,39 @@ class ListenPlayer extends HTMLElement {
 			// A stored, size-checked copy is used with no prompt and no network. Otherwise the listener agrees first.
 			if (!(await isCached(specs))) {
 				if (!askConsent) {
+					// Selected but not downloaded: nothing is fetched here. Play asks first.
+					this.activate(await this.createNeural(), "kokoro");
 					this.renderDownload();
-					return null;
+					return activeEngine;
 				}
 				const choice = await this.confirmDownload();
-				if (choice === "web") return this.activateWebSpeech();
+				if (choice === "web") {
+					writeStorage(CHOICE_KEY, "web-speech");
+					return this.activateWebSpeech();
+				}
 				if (!choice) {
-					this.syncEngineSelect(activeEngineId);
-					return null;
+					// Cancelled: the browser voice for this page session only. Nothing persists.
+					sessionFallback = true;
+					return this.activateWebSpeech();
 				}
 				variant = choice;
 				specs = await this.specsFor(variant);
-				if (!(await this.download(specs, variant)))
+				if (!(await this.download(specs, variant))) {
+					sessionFallback = true;
 					return this.activateWebSpeech("Download cancelled. Using the browser voice.");
+				}
 			}
 			const engine = await this.createNeural();
-			if (askConsent) await this.initNeural(variant);
+			if (askConsent) {
+				await this.initNeural(variant);
+				clearNeuralFailures();
+			}
 			this.activate(engine, "kokoro");
 			return engine;
 		} catch (err) {
+			// A failed start: the browser voice for this page session. Two in a row pause the default for 24 h.
+			sessionFallback = true;
+			recordNeuralFailure();
 			return this.activateWebSpeech(
 				`The neural voice is not available here (${errorText(err)}). Using the browser voice.`,
 			);
@@ -515,8 +566,11 @@ class ListenPlayer extends HTMLElement {
 		if (activeEngine !== engine && activeEngineId !== "kokoro") activeEngine?.dispose();
 		activeEngine = engine;
 		activeEngineId = id;
-		this.voice =
-			this.voice ?? pickDefaultVoice(engine.voices(), document.documentElement.lang || "en");
+		const voices = engine.voices();
+		// A voice from the other engine is not valid here: use this engine's default.
+		if (!voices.some((v) => v.id === this.voice))
+			this.voice =
+				id === "kokoro" ? DEFAULT_VOICE : pickDefaultVoice(voices, document.documentElement.lang || "en");
 		this.refreshEngineUI();
 	}
 
@@ -682,6 +736,13 @@ class ListenPlayer extends HTMLElement {
 					}
 					if (id !== this.runId) return;
 				}
+				// Punctuation pause after the sentence, from the text and its block (see pauses.ts).
+				const next = this.sentences[i + 1];
+				const pause = pauseAfter({
+					tag: this.sentences[i].block.tagName,
+					endsBlock: !next || next.block !== this.sentences[i].block,
+				});
+				pipeline.silence(scaledPause(pause, this.rate), i);
 			}
 			await pipeline.drain();
 		} catch (err) {
@@ -963,6 +1024,8 @@ class ListenPlayer extends HTMLElement {
 		this.setState("paused");
 		// Save the engine that is active, which can differ from the one asked for (browser voice chosen at the prompt).
 		writeStorage(PREFS_KEY, { engine: activeEngineId, voice: this.voice, rate: this.rate });
+		// Only an engine the listener really asked for is an explicit choice (a cancelled prompt is not).
+		if (activeEngineId === id) writeStorage(CHOICE_KEY, id);
 		if (wasPlaying) this.run(this.index);
 	}
 

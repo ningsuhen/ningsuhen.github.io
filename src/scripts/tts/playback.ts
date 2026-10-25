@@ -69,6 +69,14 @@ export class Pipeline {
 		this.resumeIfBuffered();
 	}
 
+	/** Schedules silence after the audio so far: a punctuation pause, attributed to the sentence it follows. */
+	silence(seconds: number, sentence: number): void {
+		if (this.signal.aborted || seconds <= 0) return;
+		this.schedule({ samples: new Float32Array(Math.round(seconds * 24000)), sampleRate: 24000 }, sentence);
+		this.produced += 1;
+		this.resumeIfBuffered();
+	}
+
 	/** Resolves when every scheduled chunk has played, or on abort. */
 	async drain(): Promise<void> {
 		this.finished = true;
