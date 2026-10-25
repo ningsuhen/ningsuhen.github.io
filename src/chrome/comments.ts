@@ -20,6 +20,9 @@ const COMMENTS_CSS = [
 	".rd-comments__note{margin:0;color:var(--rd-text-muted);font-size:var(--rd-fs-sm,.8125rem)}",
 	".rd-comments__load{display:inline-flex;align-items:center;min-height:2.5rem;padding:0 var(--rd-space-4,1rem);border:0;border-radius:var(--rd-radius-sm,.5rem);background:var(--rd-btn-bg);color:var(--rd-accent-ink,var(--rd-accent));font:500 var(--rd-fs-base,.875rem) var(--rd-font,Roboto,system-ui,sans-serif);cursor:pointer}",
 	".rd-comments__load:hover{background:var(--rd-btn-bg-hover)}",
+	".rd-comments__fail{display:flex;flex-direction:column;gap:var(--rd-space-3,.75rem)}",
+	".rd-comments__actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rd-space-4,1rem);margin:0}",
+	".rd-comments__actions a{color:var(--rd-accent-ink,var(--rd-accent))}",
 	// No animation here, so nothing needs a reduced-motion rule.
 ].join("");
 
@@ -43,11 +46,18 @@ function buildComments(): string {
 		`function theme(){return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light"}` +
 		`function sync(){var f=slot.querySelector("iframe.giscus-frame");if(f&&f.contentWindow)f.contentWindow.postMessage({giscus:{setConfig:{theme:theme()}}},"https://giscus.app")}` +
 		`new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});` +
-		`btn.addEventListener("click",function(){var s=document.createElement("script");s.src="https://giscus.app/client.js";s.async=true;s.crossOrigin="anonymous";` +
+		`function load(){var s=document.createElement("script");s.src="https://giscus.app/client.js";s.async=true;s.crossOrigin="anonymous";` +
 		`s.setAttribute("data-repo",C.repo);s.setAttribute("data-repo-id",C.repoId);s.setAttribute("data-category",C.category);s.setAttribute("data-category-id",C.categoryId);` +
 		`s.setAttribute("data-mapping","pathname");s.setAttribute("data-strict","0");s.setAttribute("data-reactions-enabled","1");s.setAttribute("data-emit-metadata","0");` +
-		`s.setAttribute("data-input-position","top");s.setAttribute("data-theme",theme());s.setAttribute("data-lang","en");` +
-		`btn.remove();slot.appendChild(s);slot.focus()})})();`;
+		`s.setAttribute("data-input-position","top");s.setAttribute("data-theme",theme());s.setAttribute("data-lang","en");s.onerror=fail;slot.appendChild(s)}` +
+		// Any giscus error except "Discussion not found" (normal for a page with no comments yet) is a failure: hide the
+		// widget and offer a retry and the discussions page instead of giscus's own error text.
+		`function fail(){if(slot.querySelector(".rd-comments__fail"))return;slot.querySelectorAll(".giscus,script[src*='giscus.app']").forEach(function(n){n.remove()});` +
+		`var d=document.createElement("div");d.className="rd-comments__fail";d.setAttribute("role","status");` +
+		`d.innerHTML='<p class="rd-comments__note">Comments could not load right now. Try again later.</p><p class="rd-comments__actions"><button type="button" class="rd-btn rd-comments__load">Try again</button> <a href="https://github.com/'+C.repo+'/discussions" rel="noopener">Open the discussions on GitHub</a></p>';` +
+		`d.querySelector("button").addEventListener("click",function(){d.remove();load();slot.focus()});slot.appendChild(d)}` +
+		`addEventListener("message",function(e){var g=e.origin==="https://giscus.app"&&e.data&&e.data.giscus;if(g&&g.error&&g.error!=="Discussion not found")fail()});` +
+		`btn.addEventListener("click",function(){btn.remove();load();slot.focus()})})();`;
 	// Own copy of the styles, scoped to .rd-comments, with rd-* tokens only: self-contained exports inline research.css
 	// verbatim (css-canonical), so a rule added there would not reach them. Dimensions fall back to the token values.
 	return (
