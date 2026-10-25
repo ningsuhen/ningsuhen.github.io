@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
-import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
+import { standalonePages } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -15,14 +15,6 @@ const VIEWPORTS = [
 	{ width: 375, height: 800 },
 ];
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
-
-function htmlPages(dir = "") {
-	return readdirSync(path.join(PUBLIC, dir), { withFileTypes: true }).flatMap((e) => {
-		const rel = path.join(dir, e.name);
-		if (e.isDirectory()) return htmlPages(rel);
-		return e.name.endsWith(".html") ? [rel] : [];
-	});
-}
 
 function findChrome() {
 	if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
@@ -59,8 +51,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 // Headless Chrome hides scrollbars by default, which would hide a 15px page scrollbar from this check.
 const browser = await chromium.launch({ executablePath: findChrome(), ignoreDefaultArgs: ["--hide-scrollbars"] });
 const failures = [];
-const drafts = draftHrefs();
-const pages = htmlPages().filter((rel) => !isDraftPage(rel, drafts));
+const pages = standalonePages();
 for (const rel of pages) {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
 	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
