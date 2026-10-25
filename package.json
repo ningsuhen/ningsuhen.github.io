@@ -33,6 +33,7 @@
     "check:cwv": "node scripts/check-cwv.mjs",
     "check:export": "node scripts/check-export.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
+    "check:visual": "node scripts/check-visual.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "test:drafts": "node --test scripts/test-draft-pages.mjs",
     "test:dates": "node --experimental-strip-types --test scripts/date-utils.test.ts",
@@ -110,7 +111,9 @@
     "@types/sanitize-html": "^2.16.0",
     "axe-core": "4.10.2",
     "esbuild": "0.28.2",
+    "pixelmatch": "^8.0.0",
     "playwright-core": "^1.64.1",
+    "pngjs": "^7.0.0",
     "postcss-import": "^16.1.1",
     "postcss-nesting": "^13.0.2"
   },

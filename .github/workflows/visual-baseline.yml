@@ -1,0 +1,54 @@
+name: Visual baseline
+
+# Regenerates the visual regression baseline on every master push. The PNGs live on the `visual-baseline`
+# branch (master itself carries no binaries). The branch is master + the baseline folder, kept current by
+# merging master into it and regenerating — a plain push, no force-push.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-baseline
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Always check out master (the new code); switch to the baseline branch if it already exists.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Switch to the baseline branch (if it exists)
+        run: |
+          if git ls-remote --exit-code --heads origin visual-baseline >/dev/null 2>&1; then
+            git fetch origin visual-baseline
+            git checkout -B visual-baseline origin/visual-baseline
+            git merge --no-edit origin/master
+          fi
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: ./.github/actions/playwright-env
+      - name: Regenerate the baseline
+        run: pnpm check:visual --generate visual-baseline
+      - name: Commit + push to visual-baseline
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A visual-baseline
+          if git diff --staged --quiet; then
+            echo "baseline unchanged"
+          else
+            git commit -m "visual: baseline $(date -u +%Y-%m-%d)"
+            git push origin HEAD:visual-baseline
+          fi
