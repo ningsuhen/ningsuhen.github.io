@@ -30,6 +30,7 @@
     "check:leaks": "node scripts/check-public-leaks.mjs",
     "check:source-map": "node scripts/check-source-map.mjs",
     "check:markers": "node scripts/check-markers.mjs",
+    "check:cwv": "node scripts/check-cwv.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "test:drafts": "node --test scripts/test-draft-pages.mjs",
     "test:dates": "node --experimental-strip-types --test scripts/date-utils.test.ts",

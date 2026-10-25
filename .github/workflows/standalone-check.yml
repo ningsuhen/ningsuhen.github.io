@@ -217,17 +217,40 @@ jobs:
           path: dates.log
           retention-days: 7
 
+  # Core Web Vitals budget: LCP/CLS/TBT on a fixed page set, mobile + desktop, under a CPU throttle, median of N
+  # runs, no external requests. Fails only on a budget breach (scripts/cwv-budget.json).
+  cwv:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "true"
+      - uses: ./.github/actions/playwright-env
+      - name: check:cwv
+        run: bash scripts/ci-check.sh cwv "pnpm check:cwv"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cwv-failure
+          path: cwv.log
+          retention-days: 7
+
   # Aggregate status: the single required check for branch protection. Fails if any leg fails.
   check:
     runs-on: ubuntu-latest
-    needs: [static, standalone, report-history, theme, navigation, listen, design-system, dates]
+    needs: [static, standalone, report-history, theme, navigation, listen, design-system, dates, cwv]
     if: always()
     timeout-minutes: 2
     steps:
       - name: Aggregate result
         run: |
           failed=0
-          for j in ${{ needs.static.result }} ${{ needs.standalone.result }} ${{ needs.report-history.result }} ${{ needs.theme.result }} ${{ needs.navigation.result }} ${{ needs.listen.result }} ${{ needs.design-system.result }} ${{ needs.dates.result }}; do
+          for j in ${{ needs.static.result }} ${{ needs.standalone.result }} ${{ needs.report-history.result }} ${{ needs.theme.result }} ${{ needs.navigation.result }} ${{ needs.listen.result }} ${{ needs.design-system.result }} ${{ needs.dates.result }} ${{ needs.cwv.result }}; do
             if [ "$j" != "success" ]; then
               echo "::error::a check leg did not pass (result: $j)"
               failed=1
