@@ -81,6 +81,7 @@ const RULES = {
 	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
 	"stepper": "every .rd-stepper has a minus and a plus <button> and a value region",
 	"chat": "every .rd-chat__msg has a variant (--me or --them) and every .rd-chat__input input is labelled",
+	"quiz": "every .rd-quiz has a question and at least one option, and its feedback line carries a --good/--bad variant",
 	"fullscreen-toggle": "every data-rd=fullscreen container has a [data-rd-fullscreen-toggle] button with aria-pressed and is focusable (wheel-only-after-focus)",
 };
 
@@ -358,6 +359,13 @@ const probeStructure = (canon) => {
 				const id = i.id;
 				return (id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`)) || !!i.getAttribute("aria-label") || !!i.getAttribute("aria-labelledby") || !!i.closest("label");
 			}),
+		})),
+		// Quiz: every .rd-quiz has a question, at least one option, and a feedback line that
+		// carries a semantic variant (--good / --bad) so the result is announced in colour.
+		quizzes: [...document.querySelectorAll(".rd-quiz")].map((el) => ({
+			hasQuestion: !!el.querySelector(".rd-quiz__q"),
+			hasManyOptions: el.querySelectorAll(".rd-quiz__opts .rd-choice").length > 0,
+			feedbackVariant: [...el.querySelectorAll(".rd-quiz__feedback")].every((f) => f.classList.contains("rd-quiz__feedback--good") || f.classList.contains("rd-quiz__feedback--bad")),
 		})),
 		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
 		// A div/span styled as a button is not focusable and breaks keyboard use.
@@ -826,6 +834,9 @@ await Promise.all(pages.map(async (rel) => {
 				[s.steppers.some((s) => !s.hasValue), "stepper", "a .rd-stepper has no .rd-stepper__value region"],
 				[s.chats.some((c) => c.msgs.some((v) => !v)), "chat", "a .rd-chat__msg has no variant (must be --me or --them)"],
 				[s.chats.some((c) => !c.inputLabelled), "chat", "a .rd-chat__input input has no associated label"],
+				[s.quizzes.some((q) => !q.hasQuestion), "quiz", "a .rd-quiz has no .rd-quiz__q question"],
+				[s.quizzes.some((q) => !q.hasManyOptions), "quiz", "a .rd-quiz has no options"],
+				[s.quizzes.some((q) => !q.feedbackVariant), "quiz", "a .rd-quiz__feedback line has no --good/--bad variant"],
 				[s.fullscreen.some((f) => !f.hasToggle), "fullscreen-toggle", `a data-rd=fullscreen container has no [data-rd-fullscreen-toggle]`],
 				[s.fullscreen.some((f) => f.hasToggle && !f.isButton), "fullscreen-toggle", "a fullscreen toggle is not a button (use <button> or role=button)"],
 				[s.fullscreen.some((f) => f.hasToggle && !f.ariaPressed), "fullscreen-toggle", "a fullscreen toggle lacks aria-pressed"],

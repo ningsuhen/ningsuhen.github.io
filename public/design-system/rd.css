@@ -1007,3 +1007,25 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	margin-top: var(--rd-space-1);
 }
 .rd-chat__input .rd-input { flex: 1; }
+/* rd-quiz: a question with selectable options and a feedback line. The options reuse .rd-choice
+   (a labelled native radio), so they stay keyboard-operable and screen-reader-friendly. The
+   feedback line (--good / --bad) announces the result in the design-system's semantic colours.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-quiz { display: flex; flex-direction: column; gap: var(--rd-space-2); }
+.rd-quiz__q {
+	margin: 0;
+	font: 500 var(--rd-fs-base) var(--rd-font);
+	color: var(--rd-text-strong);
+}
+.rd-quiz__opts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--rd-space-1);
+}
+.rd-quiz__feedback {
+	margin: 0;
+	font-size: var(--rd-fs-sm);
+}
+.rd-quiz__feedback--good { color: var(--rd-good); }
+.rd-quiz__feedback--bad { color: var(--rd-bad); }
