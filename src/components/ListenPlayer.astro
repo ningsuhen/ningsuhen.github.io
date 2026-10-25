@@ -46,6 +46,13 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		</button>
 	</div>
 
+	<p class="listen-status" data-status aria-live="polite"></p>
+	<div class="listen-slow" data-slow hidden role="status">
+			<p>Neural voice is too slow on this device.</p>
+			<button type="button" class="listen-btn listen-primary" data-slow-browser>Switch to browser voice</button>
+			<button type="button" class="listen-btn listen-text" data-slow-wait>Keep waiting</button>
+		</div>
+
 	<div id="listen-panel" class="listen-panel">
 		<label class="listen-field" data-voice-wrap>
 			<span>Voice</span>
@@ -75,12 +82,6 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 				<button type="button" class="listen-btn" data-download-remove hidden>Remove download</button>
 			</p>
 			<p class="listen-download-usage" data-download-usage hidden></p>
-		</div>
-		<p class="listen-status" data-status aria-live="polite"></p>
-		<div class="listen-slow" data-slow hidden role="status">
-			<p>Neural voice is too slow on this device.</p>
-			<button type="button" class="listen-btn listen-primary" data-slow-browser>Switch to browser voice</button>
-			<button type="button" class="listen-btn listen-text" data-slow-wait>Keep waiting</button>
 		</div>
 	</div>
 

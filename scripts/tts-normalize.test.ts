@@ -153,6 +153,10 @@ test("pause table: sentence, paragraph, heading and list item", () => {
 	assert.equal(pauseAfter({ tag: "LI", endsBlock: false }), PAUSE_S.sentence);
 });
 
+test("pause table: clause boundary", () => {
+	assert.equal(PAUSE_S.clause, 0.15);
+});
+
 test("pauses scale with the playback rate", () => {
 	assert.equal(scaledPause(0.4, 1), 0.4);
 	assert.equal(scaledPause(0.4, 2), 0.2);

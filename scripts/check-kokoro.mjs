@@ -123,7 +123,7 @@ try {
 			}
 			const beacons = window.__beacons;
 			engine.dispose();
-			return { accelerator: engine.accelerator, initMs, beacons, runs };
+			return { accelerator: engine.accelerator, initMs, beacons, runs, voices: engine.voices().map((v) => v.id) };
 		},
 		{ sentences: SENTENCES, mode: MODE, modelBase: MODEL_BASE },
 	);
@@ -150,6 +150,8 @@ try {
 		if (seconds < 1 || seconds > 8) failures.push(`implausible duration ${seconds.toFixed(2)} s for "${run.text}"`);
 	}
 	metrics.hosts = Object.fromEntries(hosts);
+	// The player's default neural voice is Heart (af_heart).
+	if (result.voices[0] !== "af_heart") failures.push(`default voice is ${result.voices[0]}, expected af_heart`);
 	console.log(JSON.stringify(metrics, null, 2));
 } finally {
 	await browser.close();

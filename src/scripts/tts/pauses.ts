@@ -12,6 +12,8 @@ export const PAUSE_S = {
 	heading: 0.8,
 	/** After a list item. */
 	listItem: 0.3,
+	/** Between clauses inside a long sentence (the chunker's "clause" boundary). */
+	clause: 0.15,
 } as const;
 
 /** What the pause rule needs about a sentence. */
