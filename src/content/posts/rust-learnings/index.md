@@ -100,7 +100,7 @@ The fair comparison is not hand-written Python against agent-written Rust. I cou
 
 - **Counted:** in one repository, about 1 in 8 Python-only commits carries an explicit co-author trailer that names an AI model. Among Rust-only commits it is about 1 in 100. The broad marker is a trailer or a task id, and the repo also puts task ids on human commits, so it does not measure AI use. The two markers disagree, so I cannot say the eras had matched agent shares. The Rust history is shorter and mixed with other work.
 
-What the compiler gave an agent was a precise error inside its own loop, instead of an incident later:
+What the compiler gave an agent was a precise error inside its own loop, instead of an incident later. In a two-caller toy Rust crate, changing one function signature gave one compile error per caller:
 
 | Bug | Python: where it surfaced | Rust: where it surfaced |
 |---|---|---|
@@ -113,7 +113,7 @@ What the compiler gave an agent was a precise error inside its own loop, instead
 
 What got worse:
 
-- **The loop got longer.** Compiles take longer than a Python test run. I have no timing logs, so I cannot give a number.
+- **The loop got longer.** In CI on one repo, the verify job went from a median of 1.9 minutes to 16.3 minutes, and the test job from 8.2 to 39.2 minutes (200 successful runs per side). The test job got slower too. The runner labels changed at the same time as the language, so I cannot separate the two effects.
 - **Agents reach for unwrap and clone.** The unwrap line count is the only evidence I have. I did not count clones.
 - **Code got wired in late or not at all.** Some new modules were not reached from the entry point, and a merge dropped whole call paths.
 - **Merges collided.** Concurrent pull requests merged cleanly in git and still broke the build.
