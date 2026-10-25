@@ -4,8 +4,9 @@
 //   2. rewrites the <!-- lucide-sprite:start --> … <!-- lucide-sprite:end --> block of each design-system page
 //      with only that page's symbols, so self-contained pages inline their icons (no request).
 // Runs as `prebuild`; idempotent. To add an icon: reference `<use href="#i-<name>"/>` in a page, then run it.
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { standalonePages } from "./lib/standalone-pages.mjs";
 
 const DIR = path.resolve("public/design-system");
 const START = "<!-- lucide-sprite:start -->";
@@ -21,14 +22,11 @@ function symbol(name) {
 }
 
 // Pages are paths relative to public/: the design-system pages, then each report page (research/<slug>/index.html).
+// Drafts are included: the sprite is regenerated on every build, and a draft page's icons must not 404 while it is reviewed.
 const PUBLIC = path.resolve("public");
 const pages = [
-	...readdirSync(DIR).filter((f) => f.endsWith(".html")).sort().map((f) => path.join("design-system", f)),
-	...["research", "ideas"].filter((group) => existsSync(path.join(PUBLIC, group))).flatMap((group) =>
-		readdirSync(path.join(PUBLIC, group), { withFileTypes: true })
-			.filter((d) => d.isDirectory() && statSync(path.join(PUBLIC, group, d.name, "index.html"), { throwIfNoEntry: false }))
-			.map((d) => path.join(group, d.name, "index.html")),
-	).sort(),
+	...standalonePages({ sections: ["design-system"], depth: 2, drafts: true }),
+	...standalonePages({ sections: ["research", "ideas"], depth: 3, drafts: true }),
 ];
 const used = new Map(); // page -> sorted icon names
 for (const page of pages) {

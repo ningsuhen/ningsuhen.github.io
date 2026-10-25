@@ -11,7 +11,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
-import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
+import { standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -77,20 +77,12 @@ const RULES = {
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
 };
 
-function htmlPages(dir = "") {
-	return readdirSync(path.join(PUBLIC, dir), { withFileTypes: true }).flatMap((e) => {
-		const rel = path.join(dir, e.name);
-		if (e.isDirectory()) return htmlPages(rel);
-		return e.name.endsWith(".html") ? [rel] : [];
-	});
-}
-const drafts = draftHrefs();
-const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
+const pages = standalonePages({ sections: SECTIONS, depth: 3 });
 // Accessibility (axe) runs on every standalone page — reports, experiments, ideas and the design-system
-// guide — at 375 and 1440, light and dark. Discovered from the same glob as the conformance set, plus the
-// design-system dir, so a new page is covered without editing this file. template.html is a scaffold source
-// (placeholder content, not a shipped page), so it is excluded.
-const a11yPages = [...pages, ...htmlPages("design-system").filter((rel) => rel !== "design-system/template.html")].filter((rel) => !isDraftPage(rel, drafts));
+// pages — at 375 and 1440, light and dark. Both sets come from the shared page registry, so a new page is
+// covered without editing this file. template.html is a scaffold source (placeholder content, not a shipped
+// page), so it is excluded.
+const a11yPages = [...pages, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -751,7 +743,7 @@ await Promise.all(pages.map(async (rel) => {
 // ---- Accessibility: axe on every standalone page at 375 and 1440, light and dark ------------------------------------
 // The conformance loop above only reaches the report/experiment/idea pages and only ran axe at 1440. This pass
 // closes the two blind spots: it also runs axe at 375, and it covers the design-system guide page too. Pages are
-// discovered from the glob (a11yPages), not a hardcoded list, so a new page is covered without editing this file.
+// discovered from the shared page registry (a11yPages), not a hardcoded list, so a new page is covered without editing this file.
 await Promise.all(a11yPages.map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page) ?? new Set();
