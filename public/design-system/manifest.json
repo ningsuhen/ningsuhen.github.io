@@ -1,8 +1,9 @@
 {
-	"version": "1.0.0",
-	"hash": "200a20b17948",
+	"version": "1.1.0",
+	"hash": "1efb0aa55890",
 	"files": {
-		"rd.css": "200a20b17948",
-		"research.css": "200a20b17948"
+		"rd.css": "1efb0aa55890",
+		"research.css": "200a20b17948",
+		"rd.js": "5a5ac4e36f2a"
 	}
 }

@@ -107,21 +107,31 @@ function transform(html: string, script: string, extra: string, footer: string, 
 	const comments = commentsFor(html, urlPath);
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
-	return withThemeScript(ensureHead(versionedCssLinks(body), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+	return withThemeScript(ensureHead(versionedBundle(body), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
 }
 
-// Cache-bust the design-system bundle: append ?v=<hash> to its <link> so a new bundle is fetched, not
-// the cached copy. The hash comes from the committed manifest.json (the shipped bundle's content hash).
-// Pages that still inline the CSS (no <link>) are untouched — the bundle-linked check nudges them to link.
-function versionedCssLinks(html: string): string {
-	let v = "";
+// Cache-bust the design-system bundle: append ?v=<hash> to its <link> and <script> so a new bundle is
+// fetched, not the cached copy. The hashes come from the committed manifest.json (per-file content
+// hashes). Pages that still inline the CSS (no <link>) are untouched — the bundle-linked check nudges
+// them to link. rd.js is only versioned when the page actually references it.
+function versionedBundle(html: string): string {
+	let files: Record<string, string> = {};
 	try {
-		v = (JSON.parse(readFileSync(path.resolve("public/design-system/manifest.json"), "utf8")) as { hash?: string }).hash ?? "";
+		files = (JSON.parse(readFileSync(path.resolve("public/design-system/manifest.json"), "utf8")) as { files?: Record<string, string> }).files ?? {};
 	} catch {
 		return html; // no manifest yet (pre-build): leave the links as-is
 	}
-	if (!v) return html;
-	return html.replace(/(<link\b[^>]*\bhref=["'])(\/design-system\/(?:research|rd)\.css)(["'])/gi, (m, pre, href, quote) => `${pre}${href}?v=${v}${quote}`);
+	if (!files["rd.css"] && !files["rd.js"]) return html;
+	const css = (f: string) => files[f] ?? "";
+	const js = files["rd.js"] ?? "";
+	// CSS <link>s: research.css (frozen alias) and rd.css (forward bundle), each with its own hash.
+	let out = html.replace(/(<link\b[^>]*\bhref=["'])(\/design-system\/(?:research|rd)\.css)(["'])/gi, (m, pre, href, quote) => {
+		const name = href.includes("rd.css") ? "rd.css" : "research.css";
+		return `${pre}${href}?v=${css(name)}${quote}`;
+	});
+	// The rd.js runtime <script> (module), if the page references it.
+	if (js) out = out.replace(/(<script\b[^>]*\bsrc=["'])(\/design-system\/rd\.js)(["'])/gi, (m, pre, src, quote) => `${pre}${src}?v=${js}${quote}`);
+	return out;
 }
 
 // The theme script goes at the end of <head>, or right after <html> when the export has no </head>.

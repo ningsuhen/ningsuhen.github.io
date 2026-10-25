@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Research Design System · created 2026-10-24 · updated 2026-10-24</title>
-<link rel="stylesheet" href="research.css">
+<link rel="stylesheet" href="/design-system/rd.css">
+<script type="module" src="/design-system/rd.js"></script>
 <!-- KaTeX is vendored locally (pinned 0.16.27, woff2 only) so this page makes no external requests. -->
 <link rel="stylesheet" href="katex/katex.min.css">
 <style>
@@ -61,8 +62,8 @@
 </svg>
 <!-- lucide-sprite:end -->
 
-<!-- Experiment navbar (live): the same markup and scroll-spy script a report uses. -->
-<nav class="rd-expnav" aria-label="Sections">
+<!-- Experiment navbar (live): the same markup a report uses. data-rd="expnav" makes rd.js run the scroll-spy. -->
+<nav class="rd-expnav" data-rd="expnav" aria-label="Sections">
 <a href="#use" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg>Use it</a>
 <a href="#density"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Density</a>
 <a href="#width"><svg class="rd-icon" aria-hidden="true"><use href="#i-ruler"/></svg>Width</a>
@@ -391,48 +392,5 @@
 <h3>Baseline policy</h3>
 <p>Violations that exist today are listed in <code>scripts/design-system-baseline.json</code>, one entry per page and rule, with an owner (<code>EcoSimulation</code>, <code>Brev</code> or <code>site</code>) and a real reason. The rule is a ratchet: a new violation fails CI, and an entry that no longer fires fails CI until it is removed. Fix the source project or this repo, then delete the entry in the same PR. Locally, <code>pnpm check:design-system --update-baseline</code> adds new findings with a placeholder reason and drops fixed ones; the reasons must then be written by hand before the PR. Warnings (not failures): a missing <code>&lt;meta name="ds-contract"&gt;</code> version marker, and inline CSS over 80 KB.</p>
 </main>
-<script>
-// Section bar scroll-spy: marks the section in view (aria-current + .is-active), keeps that link visible on the bar
-// (the bar scrolls sideways, not the page) and shows an edge fade while links are hidden on that side. No dependencies.
-(function () {
-  var nav = document.querySelector('.rd-expnav');
-  if (!nav) return;
-  var pairs = [];
-  nav.querySelectorAll('a[href^="#"]').forEach(function (a) {
-    var s = document.getElementById(a.getAttribute('href').slice(1));
-    if (s) pairs.push([a, s]);
-  });
-  var ticking = false, shown = null;
-  function edges() {
-    nav.classList.toggle('is-fade-start', nav.scrollLeft > 2);
-    nav.classList.toggle('is-fade-end', nav.scrollLeft < nav.scrollWidth - nav.clientWidth - 2);
-  }
-  function reveal(a) {
-    var pad = 40, l = a.offsetLeft, r = l + a.offsetWidth;
-    if (l < nav.scrollLeft + pad) nav.scrollLeft = l - pad;
-    else if (r > nav.scrollLeft + nav.clientWidth - pad) nav.scrollLeft = r - nav.clientWidth + pad;
-  }
-  function update() {
-    ticking = false;
-    var line = nav.getBoundingClientRect().bottom + 24; // a section counts once its top is under the navbar
-    var current = pairs[0];
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = pairs[pairs.length - 1];
-    else pairs.forEach(function (p) { if (p[1].getBoundingClientRect().top <= line) current = p; });
-    pairs.forEach(function (p) {
-      var on = p === current;
-      p[0].classList.toggle('is-active', on);
-      if (on) p[0].setAttribute('aria-current', 'location');
-      else p[0].removeAttribute('aria-current');
-    });
-    if (current && current[0] !== shown) { shown = current[0]; reveal(shown); }
-    edges();
-  }
-  function schedule() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
-  window.addEventListener('scroll', schedule, { passive: true });
-  window.addEventListener('resize', schedule);
-  nav.addEventListener('scroll', edges, { passive: true });
-  update();
-})();
-</script>
 </body>
 </html>
