@@ -470,7 +470,9 @@ const near = (a, b, tol) => a != null && b != null && Math.abs(a - b) <= tol;
 const r1 = (v) => (v == null ? "missing" : `${Math.round(v * 10) / 10}px`);
 
 function compareAt(page, w, t, c, r) {
-	const bad = (rule, msg) => add(page, rule, `@${w} ${t}: ${msg}`);
+	const bad = (rule, msg) => {
+		if (!allowedBy.get(page)?.has(rule)) add(page, rule, `@${w} ${t}: ${msg}`); // a page's ds-allow covers the parity rules too
+	};
 	const cmp = (rule, label, a, b, tol) => {
 		if (!near(a, b, tol)) bad(rule, `${label} ${r1(b)}, main post ${r1(a)}`);
 	};
