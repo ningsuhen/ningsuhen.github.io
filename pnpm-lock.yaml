@@ -170,6 +170,9 @@ importers:
       unist-util-visit:
         specifier: ^5.2.0
         version: 5.2.0
+      zod:
+        specifier: ^4.6.6
+        version: 4.6.7
     devDependencies:
       '@astrojs/markdown-remark':
         specifier: ^7.3.1
