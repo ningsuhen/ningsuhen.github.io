@@ -4,7 +4,7 @@
 //   2. rewrites the <!-- lucide-sprite:start --> … <!-- lucide-sprite:end --> block of each design-system page
 //      with only that page's symbols, so self-contained pages inline their icons (no request).
 // Runs as `prebuild`; idempotent. To add an icon: reference `<use href="#i-<name>"/>` in a page, then run it.
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const DIR = path.resolve("public/design-system");
@@ -24,10 +24,11 @@ function symbol(name) {
 const PUBLIC = path.resolve("public");
 const pages = [
 	...readdirSync(DIR).filter((f) => f.endsWith(".html")).sort().map((f) => path.join("design-system", f)),
-	...readdirSync(path.join(PUBLIC, "research"), { withFileTypes: true })
-		.filter((d) => d.isDirectory() && statSync(path.join(PUBLIC, "research", d.name, "index.html"), { throwIfNoEntry: false }))
-		.map((d) => path.join("research", d.name, "index.html"))
-		.sort(),
+	...["research", "ideas"].filter((group) => existsSync(path.join(PUBLIC, group))).flatMap((group) =>
+		readdirSync(path.join(PUBLIC, group), { withFileTypes: true })
+			.filter((d) => d.isDirectory() && statSync(path.join(PUBLIC, group, d.name, "index.html"), { throwIfNoEntry: false }))
+			.map((d) => path.join(group, d.name, "index.html")),
+	).sort(),
 ];
 const used = new Map(); // page -> sorted icon names
 for (const page of pages) {
