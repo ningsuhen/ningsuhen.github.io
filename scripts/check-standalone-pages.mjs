@@ -334,6 +334,57 @@ if (tabbed.length && existsSync(path.join(DIST, "posts/rust-learnings/index.html
 	repRule.forEach((r, i) => { if (r.expected !== r.marked) failures.push(`TOC highlight @scroll${SCROLLS[i]} report: marked ${r.marked} != intersecting ${r.expected}`); });
 }
 
+// Footer, every page at these widths: the license card is never wider than the navbar card (edges within 0.5px), the
+// small print is <= 13px, and each page has one license block (Astro: one visible) and one copyright line. From 1200px
+// up the standalone card sits exactly on the navbar's edges.
+const FOOTER_WIDTHS = [1920, 1440, 1280, 1200, 1024, 768, 375];
+const LICENSE_ASIDE = 'aria-label="Copyright and license"';
+const licensedPosts = readdirSync(path.join(DIST, "posts"), { withFileTypes: true })
+	.filter((d) => d.isDirectory())
+	.map((d) => `/posts/${d.name}/`)
+	.filter((u) => existsSync(path.join(DIST, u, "index.html")) && readFileSync(path.join(DIST, u, "index.html"), "utf8").includes(LICENSE_ASIDE));
+const within = (inner, outer) => inner[0] >= outer[0] - 0.5 && inner[1] <= outer[1] + 0.5;
+const fmt = (r) => r.map(Math.round).join("..");
+for (const width of FOOTER_WIDTHS) {
+	for (const urlPath of [...pages.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`), "/", "/archive/", "/research/", "/experiments/", ...licensedPosts]) {
+		const isStandalone = standaloneUrls.has(urlPath);
+		const hasLicense = isStandalone || readFileSync(path.join(DIST, urlPath, "index.html"), "utf8").includes(LICENSE_ASIDE);
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		const m = await page.evaluate(() => {
+			const visible = (e) => e.offsetParent !== null;
+			const sr = document.querySelectorAll("div[data-site-license]");
+			const shadowFooter = sr[0]?.shadowRoot?.querySelector("footer");
+			const bar = (document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header") ?? document.querySelector("#navbar .card-base"))?.getBoundingClientRect();
+			const aside = [...document.querySelectorAll('aside[aria-label="Copyright and license"]')].filter(visible)[0];
+			const card = (shadowFooter ?? aside)?.getBoundingClientRect();
+			const fontRoot = shadowFooter ?? aside;
+			const fonts = [...(fontRoot?.querySelectorAll("p, a") ?? [])].map((e) => parseFloat(getComputedStyle(e).fontSize));
+			const copyText = shadowFooter ? shadowFooter.textContent : document.body.innerText;
+			return {
+				licenses: shadowFooter ? sr.length : [...document.querySelectorAll('aside[aria-label="Copyright and license"]')].filter(visible).length,
+				bar: bar ? [bar.left, bar.right] : null,
+				card: card ? [card.left, card.right] : null,
+				site: [...document.querySelectorAll(".footer")].filter(visible).map((e) => { const b = e.getBoundingClientRect(); return [b.left, b.right]; }),
+				maxFont: Math.max(0, ...fonts),
+				copyrights: (copyText.match(/all rights reserved/gi) ?? []).length,
+			};
+		});
+		const tag = `${urlPath} @${width}`;
+		const want = hasLicense ? 1 : 0;
+		if (isStandalone && !m.card) failures.push(`${tag}: license notice missing`);
+		if (m.licenses !== want) failures.push(`${tag}: ${m.licenses} license block(s), expected ${want}`);
+		if (m.copyrights !== 1) failures.push(`${tag}: "All rights reserved" appears ${m.copyrights} time(s), expected 1`);
+		if (m.card && m.maxFont > 13) failures.push(`${tag}: license text ${m.maxFont}px (small print must be <= 13px)`);
+		if (m.bar && m.card && !within(m.card, m.bar)) failures.push(`${tag}: license card ${fmt(m.card)} wider than the navbar card ${fmt(m.bar)}`);
+		if (m.bar && m.card && isStandalone && width >= 1200 && (Math.abs(m.card[0] - m.bar[0]) > 1 || Math.abs(m.card[1] - m.bar[1]) > 1)) {
+			failures.push(`${tag}: license card ${fmt(m.card)} differs from the navbar card ${fmt(m.bar)}`);
+		}
+		if (m.bar && !isStandalone) for (const s of m.site) if (!within(s, m.bar)) failures.push(`${tag}: site footer ${fmt(s)} outside the navbar card ${fmt(m.bar)}`);
+		await ctx.close();
+	}
+}
 await browser.close();
 server.close();
 
