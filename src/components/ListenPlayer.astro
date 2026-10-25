@@ -22,7 +22,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	// A value set before this script runs wins (check:listen forces it to test the consent path); otherwise the switch decides.
 	if (window.__KOKORO_READY === undefined) window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
 </script>
-<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase}>
+<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase} data-kokoro-manifest={url("/tts/manifest.json")}>
 	<div class="listen-bar">
 		<button type="button" class="listen-btn listen-toggle" data-toggle aria-expanded="false" aria-controls="listen-panel">
 			<Icon name="lucide:headphones" class="listen-headphones" />
@@ -67,6 +67,15 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 			<span class="listen-credit" data-notice hidden></span>
 			<span data-note-remote hidden>This voice is a remote service: the sentence text is sent to it.</span>
 		</p>
+		<div class="listen-download" data-download hidden>
+			<p class="listen-download-state" data-download-state></p>
+			<progress class="listen-download-bar" data-download-bar max="1" value="0" hidden></progress>
+			<p class="listen-download-actions">
+				<button type="button" class="listen-btn" data-download-cancel hidden>Cancel download</button>
+				<button type="button" class="listen-btn" data-download-remove hidden>Remove download</button>
+			</p>
+			<p class="listen-download-usage" data-download-usage hidden></p>
+		</div>
 		<p class="listen-status" data-status aria-live="polite"></p>
 		<div class="listen-slow" data-slow hidden role="status">
 			<p>Neural voice is too slow on this device.</p>
@@ -223,6 +232,30 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	}
 	.listen-status:empty {
 		display: none;
+	}
+	.listen-download {
+		margin: 0.5rem 0 0;
+		font-size: 0.875rem;
+	}
+	.listen-download p {
+		margin: 0.25rem 0;
+	}
+	.listen-download-bar {
+		display: block;
+		width: 100%;
+		height: 0.5rem;
+	}
+	.listen-download-bar[hidden],
+	.listen-download[hidden] {
+		display: none;
+	}
+	.listen-download-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.listen-download-usage {
+		opacity: 0.75;
 	}
 	.listen-slow {
 		display: flex;

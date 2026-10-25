@@ -3,7 +3,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import type { AstroIntegration } from "astro";
-import { navBarConfig, siteConfig } from "../config";
+import { commentConfig, navBarConfig, siteConfig } from "../config";
 import { LinkPreset } from "../types/config";
 import { themeRuntimeScript } from "../utils/theme-runtime";
 
@@ -19,6 +19,10 @@ const THEME_MARKER = "data-site-theme";
 const HEAD_THEME = `<script ${THEME_MARKER}>${themeRuntimeScript(true)}</script>`;
 const LICENSE_MARKER = "data-site-license";
 const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
+const COMMENTS_MARKER = "data-site-comments";
+const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
+// Reports, live experiments and ideas get comments (one folder deep, e.g. /research/<slug>/). The design-system pages don't.
+const COMMENTS_PAGE = /^\/(research|experiments|ideas)\/[^/]+\/$/;
 
 type NavItem = { name: string; url: string; external: boolean };
 
@@ -91,9 +95,10 @@ export default function standaloneHeader(): AstroIntegration {
 
 /** Navbar + meta fixes for one standalone HTML document (shared by build and dev). `extra` is appended before </body>. */
 function transform(html: string, script: string, extra: string, footer: string, urlPath: string, base: string, site: string): string {
-	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
+	const comments = commentsFor(html, urlPath);
+	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
-	return withThemeScript(ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href));
+	return withThemeScript(ensureHead(body, new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
 }
 
 // The theme script goes at the end of <head>, or right after <html> when the export has no </head>.
@@ -111,14 +116,57 @@ function withThemeScript(html: string): string {
 	return html.replace(/<html(?=[\s>])[^>]*>/i, (tag) => tag + HEAD_THEME);
 }
 
+// The /research/ and /experiments/ cards carry a one-line summary; use it as the social description when the
+// exported page has no <meta name="description"> of its own.
+function entrySummaries(): Map<string, string> {
+	const out = new Map<string, string>();
+	for (const file of ["research.json", "experiments.json"]) {
+		try {
+			const data = JSON.parse(readFileSync(path.resolve(`src/data/${file}`), "utf8")) as { items?: { href?: string; summary?: string }[] };
+			for (const item of data.items ?? []) if (item.href && item.summary) out.set(item.href, item.summary);
+		} catch {
+			/* no data file: fall back to the page/site description */
+		}
+	}
+	return out;
+}
+
+// Open Graph / Twitter cards for a standalone page: the visible title (minus the created/updated stamp) and the
+// page's own description when it has one, so a share is not a blank card. Head-only: it lands in the "late" group
+// (after the charset/viewport metas), so the design-system head-order rule — charset then viewport first — holds.
+function buildSocialMeta(html: string, canonical: string, site: string): string {
+	if (/<meta[^>]+property=["']og:title["']/i.test(html)) return ""; // the page already declares OG
+	let title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? siteConfig.title).trim();
+	title = title.replace(/\s*[·•]\s*created \d{4}-\d{2}-\d{2}\s*[·•]\s*updated \d{4}-\d{2}-\d{2}\s*$/i, "").trim();
+	const descTag = html.match(/<meta[^>]+name=["']description["'][^>]*>/i)?.[0] ?? "";
+	const ownDescription = descTag.match(/content=["']([^"']*)["']/i)?.[1]?.trim() ?? "";
+	const urlPath = new URL(canonical, site).pathname;
+	const description = ownDescription || entrySummaries().get(urlPath) || siteConfig.subtitle || "";
+	const image = new URL("/images/default-thumbnail.webp", site).href;
+	const og = (k: string, v: string) => `<meta property="${k}" content="${esc(v)}">`;
+	const tw = (k: string, v: string) => `<meta name="twitter:${k}" content="${esc(v)}">`;
+	return [
+		og("og:type", "website"),
+		og("og:site_name", siteConfig.title),
+		og("og:title", title),
+		og("og:description", description),
+		og("og:url", canonical),
+		og("og:image", image),
+		tw("card", "summary_large_image"),
+		tw("title", title),
+		tw("description", description),
+		tw("image", image),
+	].join("");
+}
+
 // Exported pages often lose these tags. Without a doctype the page renders in quirks mode (BackCompat);
 // without a charset, "·" renders as "Â·"; without a viewport, phones show a zoomed-out desktop page; without
 // lang, screen readers guess the language. Prepend whichever is missing (valid at the very start of the file).
-function ensureHead(html: string, canonical: string): string {
+function ensureHead(html: string, canonical: string, site: string): string {
 	const head = html.slice(0, 4096);
 	const doctype = html.match(/^\s*<!doctype[^>]*>/i)?.[0];
-	// charset and viewport must stay the first two head elements, so they go in front; icon and canonical go
-	// before </head>, after whatever the page already declares (a page's own charset is never pushed back).
+	// charset and viewport must stay the first two head elements, so they go in front; icon, canonical and the
+	// social cards go before </head>, after whatever the page already declares (a page's own charset is never pushed back).
 	const early: string[] = [];
 	const late: string[] = [];
 	if (!/<meta[^>]+charset=/i.test(head)) early.push('<meta charset="utf-8">');
@@ -127,6 +175,7 @@ function ensureHead(html: string, canonical: string): string {
 	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) late.push(`<link rel="canonical" href="${esc(canonical)}">`);
 	// Machine-readable AI/TDM opt-out (W3C TDMRep), same as the shared head layout.
 	if (!/<meta[^>]+name=["']tdm-reservation["']/i.test(html)) late.push(`<meta name="tdm-reservation" content="1"><meta name="tdm-policy" content="${esc(new URL("/license/", canonical).href)}">`);
+	late.push(buildSocialMeta(html, canonical, site));
 	let rest = withHtmlLang(doctype ? html.slice(doctype.length) : html);
 	const headEnd = rest.search(/<\/head>/i);
 	if (headEnd !== -1) rest = rest.slice(0, headEnd) + late.join("") + rest.slice(headEnd);
@@ -346,3 +395,57 @@ function buildLicenseScript(base: string, hue: number): string {
 		`d.appendChild(h)})()</script>`
 	);
 }
+
+const COMMENTS_CSS = [
+	".rd-comments{box-sizing:border-box;width:100%;max-width:var(--rd-content-width,54.5rem);margin:0 auto;padding:var(--rd-gap-section,2rem) var(--rd-space-4,1rem);font:var(--rd-fs-base,.875rem)/var(--rd-lh,1.5) var(--rd-font,Roboto,system-ui,sans-serif);color:var(--rd-text)}",
+	".rd-comments__head{display:flex;align-items:center;gap:var(--rd-space-3,.75rem);margin-bottom:var(--rd-gap-block,.75rem)}",
+	".rd-comments .rd-icon{display:inline-block;flex:none;width:1.25em;height:1.25em;font-size:var(--rd-fs-h2,1.2rem);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--rd-accent)}",
+	".rd-comments h2{margin:0;font-size:var(--rd-fs-h2,1.2rem);line-height:1.3;color:var(--rd-text-strong)}",
+	".rd-comments h2::before{content:none}", // the page's own section-heading accent bar (h2::before) is not for this heading
+	".rd-comments__slot{box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:var(--rd-space-3,.75rem);min-height:7.5rem;padding:var(--rd-space-5,1.25rem);border-radius:var(--rd-radius,1rem);background:var(--rd-card-bg);box-shadow:inset 0 0 0 1px var(--rd-line)}",
+	".rd-comments__slot:focus{outline:none}",
+	".rd-comments__slot:focus-visible,.rd-comments__load:focus-visible{outline:2px solid var(--rd-accent);outline-offset:2px}",
+	".rd-comments__note{margin:0;color:var(--rd-text-muted);font-size:var(--rd-fs-sm,.8125rem)}",
+	".rd-comments__load{display:inline-flex;align-items:center;min-height:2.5rem;padding:0 var(--rd-space-4,1rem);border:0;border-radius:var(--rd-radius-sm,.5rem);background:var(--rd-btn-bg);color:var(--rd-accent);font:500 var(--rd-fs-base,.875rem) var(--rd-font,Roboto,system-ui,sans-serif);cursor:pointer}",
+	".rd-comments__load:hover{background:var(--rd-btn-bg-hover)}",
+	// No animation here, so nothing needs a reduced-motion rule.
+].join("");
+
+// Comments for reports, live experiments and ideas: the same giscus repo and category as the posts (src/config.ts).
+// Nothing reaches giscus.app until the reader presses "Load comments"; then the client script is added, like the posts' one.
+function commentsFor(html: string, urlPath: string): string {
+	if (!COMMENTS_PAGE.test(urlPath) || html.includes(COMMENTS_MARKER) || COMMENTS_OPT_OUT.test(html)) return "";
+	return COMMENTS;
+}
+
+function buildComments(): string {
+	const { enable, repo, repoId, category, categoryId } = commentConfig;
+	if (!enable || !repo || !repoId || !categoryId) return "";
+	const cfg = JSON.stringify({ repo, repoId, category, categoryId }).replace(/</g, "\\u003c");
+	// Lucide message-square (ISC). Its own symbol, so the sprite check finds it in the page itself.
+	const icon =
+		'<svg style="display:none" aria-hidden="true"><symbol id="i-message-square" viewBox="0 0 24 24">' +
+		'<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></symbol></svg>';
+	const script =
+		`(function(){var C=${cfg};var slot=document.getElementById("rd-comments-slot");var btn=slot&&slot.querySelector(".rd-comments__load");if(!btn)return;` +
+		`function theme(){return document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light"}` +
+		`function sync(){var f=slot.querySelector("iframe.giscus-frame");if(f&&f.contentWindow)f.contentWindow.postMessage({giscus:{setConfig:{theme:theme()}}},"https://giscus.app")}` +
+		`new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});` +
+		`btn.addEventListener("click",function(){var s=document.createElement("script");s.src="https://giscus.app/client.js";s.async=true;s.crossOrigin="anonymous";` +
+		`s.setAttribute("data-repo",C.repo);s.setAttribute("data-repo-id",C.repoId);s.setAttribute("data-category",C.category);s.setAttribute("data-category-id",C.categoryId);` +
+		`s.setAttribute("data-mapping","pathname");s.setAttribute("data-strict","0");s.setAttribute("data-reactions-enabled","1");s.setAttribute("data-emit-metadata","0");` +
+		`s.setAttribute("data-input-position","top");s.setAttribute("data-theme",theme());s.setAttribute("data-lang","en");` +
+		`btn.remove();slot.appendChild(s);slot.focus()})})();`;
+	// Own copy of the styles, scoped to .rd-comments, with rd-* tokens only: self-contained exports inline research.css
+	// verbatim (css-canonical), so a rule added there would not reach them. Dimensions fall back to the token values.
+	return (
+		`<style>${COMMENTS_CSS}</style>${icon}<section class="rd-comments" ${COMMENTS_MARKER} data-pagefind-ignore aria-labelledby="rd-comments-title">` +
+		`<div class="rd-comments__head"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-square"/></svg><h2 id="rd-comments-title">Comments</h2></div>` +
+		`<div class="rd-comments__slot" id="rd-comments-slot" tabindex="-1">` +
+		`<p class="rd-comments__note">Comments are GitHub Discussions, shown through giscus. Nothing is loaded from GitHub until you press the button.</p>` +
+		`<button type="button" class="rd-btn rd-comments__load">Load comments</button></div>` +
+		`<script>${script}</script></section>`
+	);
+}
+
+const COMMENTS = buildComments();

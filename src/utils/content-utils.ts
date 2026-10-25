@@ -2,6 +2,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
+import path from "node:path";
 
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts() {
@@ -22,6 +23,23 @@ export const DEFAULT_THUMBNAIL = "/images/default-thumbnail.webp";
 /** Card thumbnail: the post's purpose-made square `thumbnail`, else the site default. Never an auto-cropped cover or body image. */
 export function postThumbnail(entry: CollectionEntry<"posts">): string {
 	return entry.data.thumbnail || DEFAULT_THUMBNAIL;
+}
+
+// Eagerly resolve post images to their built URLs. Thumbnails are hashed into /_astro/ at build time, so there is
+// no predictable URL to guess; this is the same resolution the <Image> component uses, just surfaced for <head>.
+const postImages = import.meta.glob("../content/posts/**/*.{webp,png,jpg,jpeg}", {
+	import: "default",
+	eager: true,
+}) as Record<string, { src: string } | undefined>;
+
+/** Absolute URL of the post's card thumbnail (og:image / JSON-LD), else the site default. */
+export function postThumbnailUrl(entry: CollectionEntry<"posts">, site: string): string {
+	const thumb = entry.data.thumbnail;
+	const key = thumb
+		? path.normalize(path.join("../content/posts/", entry.id, thumb)).replace(/\\/g, "/")
+		: "";
+	const src = thumb ? postImages[key]?.src : undefined;
+	return new URL(src ?? DEFAULT_THUMBNAIL, site).href;
 }
 
 /** Build-time warning: published posts with no `thumbnail`. `pnpm check:thumbnails` fails on the same rule. */

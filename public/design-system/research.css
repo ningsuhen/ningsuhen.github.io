@@ -25,7 +25,8 @@
 	--rd-page-bg: oklch(0.95 0.01 var(--hue));
 	--rd-card-bg: #fff;
 	--rd-primary: oklch(0.7 0.14 var(--hue));
-	--rd-accent: oklch(0.55 0.12 var(--hue)); /* links, buttons text */
+	--rd-accent: oklch(0.55 0.12 var(--hue)); /* links, badges, rules */
+	--rd-accent-ink: oklch(0.5 0.12 var(--hue)); /* text on tab, button and page grounds (4.5:1+ on each) */
 	--rd-title-active: oklch(0.6 0.1 var(--hue));
 	--rd-btn-bg: oklch(0.95 0.025 var(--hue));
 	--rd-btn-bg-hover: oklch(0.9 0.05 var(--hue));
@@ -43,13 +44,13 @@
 
 	/* Code */
 	--rd-code-bg: var(--rd-btn-bg);
-	--rd-code-fg: var(--rd-accent);
+	--rd-code-fg: var(--rd-accent-ink);
 	--rd-codeblock-bg: oklch(0.17 0.015 var(--hue));
 	--rd-codeblock-fg: rgba(255, 255, 255, 0.85);
 
 	/* Semantic (status) */
-	--rd-good: oklch(0.55 0.12 160);
-	--rd-warn: oklch(0.6 0.13 80);
+	--rd-good: oklch(0.48 0.12 160);
+	--rd-warn: oklch(0.52 0.13 80);
 	--rd-bad: oklch(0.55 0.17 25);
 
 	/* Chart palette: sequential follows the hue; categorical is Okabe-Ito (colour-blind safe). */
@@ -165,6 +166,7 @@
 	--rd-card-bg: oklch(0.23 0.015 var(--hue));
 	--rd-primary: oklch(0.75 0.14 var(--hue));
 	--rd-accent: oklch(0.75 0.1 var(--hue));
+	--rd-accent-ink: var(--rd-accent);
 	--rd-btn-bg: oklch(0.33 0.035 var(--hue));
 	--rd-btn-bg-hover: oklch(0.38 0.04 var(--hue));
 	--rd-plain-hover: oklch(0.3 0.035 var(--hue));
@@ -182,7 +184,7 @@
 	--rd-seq-5: oklch(0.85 0.1 var(--hue));
 	--rd-good: oklch(0.72 0.12 160);
 	--rd-warn: oklch(0.78 0.12 80);
-	--rd-bad: oklch(0.7 0.15 25);
+	--rd-bad: oklch(0.72 0.15 25);
 }
 
 /* ---- Page ---- */
@@ -326,13 +328,13 @@
 	display: inline-flex; align-items: center; gap: 0.35rem;
 	min-height: var(--rd-control-h); padding: 0 var(--rd-space-3);
 	border: 0; border-radius: var(--rd-radius-sm);
-	background: var(--rd-btn-bg); color: var(--rd-accent); font: 500 var(--rd-fs-sm) var(--rd-font); cursor: pointer;
+	background: var(--rd-btn-bg); color: var(--rd-accent-ink); font: 500 var(--rd-fs-sm) var(--rd-font); cursor: pointer;
 }
 .rd-btn:hover { background: var(--rd-btn-bg-hover); }
 .rd-chip {
 	display: inline-flex; align-items: center; gap: 0.3rem;
 	padding: var(--rd-pad-chip); border-radius: 999px;
-	background: var(--rd-btn-bg); color: var(--rd-accent);
+	background: var(--rd-btn-bg); color: var(--rd-accent-ink);
 	font-size: var(--rd-fs-xs); font-weight: 500; line-height: 1.6;
 }
 .rd-chip--good { color: var(--rd-good); }
@@ -342,7 +344,7 @@
 .rd-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; border-bottom: 1px solid var(--rd-line); margin: var(--rd-gap-block) 0; }
 .rd-tabs a { display: inline-flex; align-items: center; min-height: var(--rd-control-h); padding: 0 var(--rd-space-3); border-radius: var(--rd-radius-sm) var(--rd-radius-sm) 0 0; color: var(--rd-text); text-decoration: none; }
 .rd-tabs a:hover { background: var(--rd-plain-hover); color: var(--rd-accent); }
-.rd-tabs a[aria-current="page"], .rd-tabs a.is-active { color: var(--rd-accent); box-shadow: inset 0 -2px 0 var(--rd-primary); }
+.rd-tabs a[aria-current="page"], .rd-tabs a.is-active { color: var(--rd-accent-ink); box-shadow: inset 0 -2px 0 var(--rd-primary); }
 
 /* ---- Focus & motion & print ---- */
 .rd-body :focus-visible { outline: 2px solid var(--rd-primary); outline-offset: 2px; }
@@ -494,12 +496,14 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 	transition: color 0.15s ease, box-shadow 0.15s ease;
 }
 .rd-expnav a:hover { color: var(--rd-text-strong); }
-.rd-expnav a.is-active { color: var(--rd-accent); box-shadow: inset 0 -3px 0 var(--rd-accent); }
+.rd-expnav a.is-active { color: var(--rd-accent-ink); box-shadow: inset 0 -3px 0 var(--rd-accent); }
 .rd-expnav a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
 .rd-expnav .rd-icon { color: var(--rd-accent); }
 /* Edge fades: the scroll-spy sets .is-fade-start / .is-fade-end only while links are hidden on that side. The fades are
    sticky pseudo-elements with zero flow width, so the bar's own background stays opaque under them. */
 .rd-expnav::before, .rd-expnav::after { content: none; }
+/* The gap between the navbar card and the section bar is page-coloured, so scrolled content does not show through it. */
+.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
 .rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
 	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
 }
@@ -533,11 +537,13 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem 0 4rem; }
-.rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem var(--rd-space-4) 4rem; }
+.rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
-.rd-tab__body { display: grid; gap: var(--rd-gap-block); min-width: 0; }
-.rd-toc { min-width: 0; }
+.rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
+/* Below 1536px the rail is the disclosure above the content. It sticks under the section bar (like the main TOC), so it stays
+   in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
+.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-3)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-navbar-gap) - var(--rd-expnav-h) - var(--rd-space-4)); overflow-y: auto; background: var(--rd-page-bg); }
 .rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
 .rd-toc summary .rd-icon { color: var(--rd-accent); }

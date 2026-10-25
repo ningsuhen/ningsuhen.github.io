@@ -3,56 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Decentralized email and office tools, instead of Google Workspace · created 2026-10-25 · updated 2026-10-25</title>
+<title>Decentralized email and office tools, instead of Google Workspace · created 2026-10-24 · updated 2026-10-25</title>
 <meta name="description" content="An idea, not a product: email and office tools where your data lives on your own machines, clouds only hold ciphertext, and collaboration still works.">
 <link rel="stylesheet" href="/design-system/research.css">
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
-.idea-fig svg { width: 100%; height: auto; max-width: 100%; color: var(--rd-text-strong); }
-.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; } /* wide diagrams scroll inside their figure, never the page */
-.idea-fig svg text { font-family: var(--rd-font); }
+.idea-fig > svg { width: 100%; height: auto; max-width: 42.5rem; margin-inline: auto; color: var(--rd-text-strong); }
+.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
+.rd-tabbed .rd-tab__body { max-width: var(--rd-measure); } /* wide diagrams scroll inside their figure, never the page */
 .idea-box { fill: var(--rd-card-bg); stroke: currentColor; stroke-width: 1.5; }
 .idea-box--key { stroke: var(--rd-accent); }
 .idea-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
 .idea-tag { fill: var(--rd-btn-bg); stroke: none; }
-.idea-t { font-size: 13px; fill: currentColor; text-anchor: middle; }
-.idea-t--b { font-weight: 700; }
-.idea-t--s { font-size: 12px; fill: var(--rd-text-muted); }
-.idea-t--l { text-anchor: start; }
-.idea-t--accent { fill: var(--rd-accent); }
+.rd-figure.idea-fig svg text.idea-t { font-size: var(--rd-fs-sm); fill: currentColor; text-anchor: middle; }
+.rd-figure.idea-fig svg text.idea-t--b { font-weight: 700; }
+.rd-figure.idea-fig svg text.idea-t--s { font-size: var(--rd-fs-xs); fill: var(--rd-text-muted); }
+.rd-figure.idea-fig svg text.idea-t--l { text-anchor: start; }
+.rd-figure.idea-fig svg text.idea-t--accent { fill: var(--rd-accent); }
 .idea-steps__ctrl { display: none; align-items: center; gap: var(--rd-space-3); flex-wrap: wrap; margin: var(--rd-gap-block) 0; }
-.idea-steps__ctrl button { min-height: 2.25rem; min-width: 2.25rem; display: inline-flex; align-items: center; gap: var(--rd-space-2); padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); color: var(--rd-accent); font: inherit; font-weight: 700; cursor: pointer; }
-.idea-steps__ctrl button:disabled { opacity: 0.45; cursor: default; }
 .idea-steps__ctrl button:focus-visible, .idea-presets label:focus-within, .idea-ask button:focus-visible, .idea-ask input:focus-visible, .idea-quiz input:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
 .idea-steps__count { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+.idea-steps__ctrl .rd-btn:disabled { opacity: 0.45; cursor: default; }
 .idea-steps__list { list-style: none; padding: 0; margin: 0; }
 .idea-steps__list li { margin: var(--rd-space-2) 0; }
 .js .idea-steps__ctrl { display: flex; }
 .js .idea-steps__list li { display: none; }
 .js .idea-steps__list li.is-on { display: block; }
-.js .idea-steps svg [data-s] { opacity: 0.4; transition: opacity 0.2s ease; }
-.js .idea-steps svg [data-s].is-on { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .js .idea-steps svg [data-s] { transition: none; } }
+.js .idea-steps > svg [data-s] { opacity: 0.25; transition: opacity 0.2s ease; }
+.js .idea-steps > svg [data-s].is-on, .js .idea-steps > svg [data-s].is-past { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .js .idea-steps > svg [data-s] { transition: none; } }
 .idea-presets { border: 0; padding: 0; margin: var(--rd-gap-block) 0; display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
 .idea-presets legend { font-weight: 700; color: var(--rd-text-strong); margin-bottom: var(--rd-space-2); }
 .idea-presets label { display: inline-flex; align-items: center; gap: var(--rd-space-2); min-height: 2.25rem; padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); cursor: pointer; }
 .idea-presets label:has(input:checked) { border-color: var(--rd-accent); color: var(--rd-accent); font-weight: 700; }
 .idea-presets input { accent-color: var(--rd-accent); }
-.idea-table td [data-p] { display: none; }
-.idea-table td [data-p].is-on { display: block; }
-.idea-table td [data-p]:not(.is-on) { display: none; }
-.idea-table td [data-p] + [data-p] { margin-top: var(--rd-space-1); }
-.js .idea-table td [data-p] { display: none; }
-.js .idea-table td [data-p].is-on { display: block; }
-.idea-table td [data-p] { display: block; }
-.idea-table td [data-p]:not(.is-on) { display: none; }
-.idea-table td [data-p]:not(.is-on) + [data-p] { margin-top: 0; }
 .idea-chips { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; list-style: none; padding: 0; }
-.idea-chips button { min-height: 2.25rem; padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: 999px; background: var(--rd-btn-bg); color: var(--rd-accent); font: inherit; font-size: var(--rd-fs-sm); cursor: pointer; }
 .idea-ask { display: grid; gap: var(--rd-space-2); }
 .idea-ask form { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
-.idea-ask input[type="text"] { flex: 1 1 14rem; min-height: 2.5rem; padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-card-bg); color: var(--rd-text-strong); font: inherit; }
-.idea-ask form > button { min-height: 2.5rem; padding: 0 var(--rd-space-4); border: 0; border-radius: var(--rd-radius-sm); background: var(--rd-accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.idea-ask form > label { flex-basis: 100%; }
+.idea-ask form > button { align-self: flex-start; }
+.idea-log { scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
+.idea-ask input[type="text"] { flex: 1 1 14rem; min-height: var(--rd-control-h); padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-card-bg); color: var(--rd-text-strong); font: inherit; }
 .idea-log { display: grid; gap: var(--rd-space-3); max-height: 34rem; overflow-y: auto; padding: var(--rd-space-2) 0; }
 .idea-msg { border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); background: var(--rd-btn-bg); }
 .idea-msg--me { justify-self: end; max-width: 90%; background: var(--rd-card-bg); border: 1px solid var(--rd-line); }
@@ -60,14 +51,19 @@
 .idea-cite { display: inline-flex; align-items: center; gap: var(--rd-space-1); min-height: 2rem; padding: 0 var(--rd-space-2); border: 0; background: none; color: var(--rd-accent); font: inherit; font-size: var(--rd-fs-sm); text-decoration: underline; cursor: pointer; }
 .idea-quiz fieldset { border: 0; padding: 0; margin: var(--rd-gap-block) 0; }
 .idea-quiz legend { font-weight: 700; color: var(--rd-text-strong); margin-bottom: var(--rd-space-2); }
-.idea-quiz label { display: flex; align-items: center; gap: var(--rd-space-2); min-height: 2rem; cursor: pointer; }
+.idea-quiz label { display: inline-flex; align-items: center; gap: var(--rd-space-2); min-height: 2rem; cursor: pointer; }
 .idea-quiz input { accent-color: var(--rd-accent); }
-.idea-verdict { min-height: 1.5rem; font-weight: 700; }
+.idea-verdict { min-height: 0; font-weight: 700; }
 .idea-verdict--ok { color: var(--rd-good); }
-.idea-verdict--no { color: var(--rd-warn); }
-.idea-sim { border-left: 3px solid var(--rd-accent); padding: var(--rd-space-2) var(--rd-space-3); background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
-.idea-30s { display: grid; gap: var(--rd-space-2); }
-.idea-30s li { margin: 0; }
+.idea-verdict--no { color: var(--rd-bad); }
+.idea-30s { display: block; }
+.rd-stamp { white-space: nowrap; font-size: var(--rd-fs-sm); color: var(--rd-text-muted); font-weight: 400; }
+.idea-30s li { margin: 0 0 var(--rd-space-1); }
+.idea-table td [data-p] { display: block; }
+.idea-gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--rd-space-2); }
+.idea-gloss > .rd-fold { margin: 0; }
+.idea-table td [data-p] + [data-p] { margin-top: var(--rd-space-1); }
+.js .idea-table td [data-p]:not(.is-on) { display: none; }
 </style>
 </head>
 <body class="rd-body">
@@ -110,10 +106,11 @@
 <a role="tab" id="tab-tradeoffs" href="?tab=tradeoffs" aria-controls="tradeoffs" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg>Trade-offs</a>
 </nav>
 
+<!-- Wide: the tab bar, the content and the "On this page" rail sit at the navbar card width (1168px), as on the report pages. -->
 <main class="rd-tabbed rd-container--wide rd-prose">
 <header class="rd-hero">
-  <p class="rd-eyebrow">Idea · decentralized-office</p>
-  <h1>Decentralized email and office tools, instead of Google Workspace · created 2026-10-25 · updated 2026-10-25</h1>
+  <p class="rd-eyebrow">Idea</p>
+  <h1>Decentralized email and office tools, instead of Google Workspace <span class="rd-stamp">· created 2026-10-24 · updated 2026-10-25</span></h1>
   <p class="rd-hero__lede">Keep the documents, mail and calendar on your own machines. Let the cloud store only ciphertext. Keep collaboration working anyway.</p>
   <p class="rd-hero__meta">
     <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Idea, not a product</span>
@@ -155,7 +152,7 @@
         <defs><marker id="ah-d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="95" y="80">Laptop A</text><text class="idea-t idea-t--s" x="95" y="100">local store and editor</text></g>
         <g data-s="2"><rect class="idea-tag" x="28" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="95" y="143">seals with document key</text></g>
-        <g data-s="3"><path class="idea-line" d="M180 120 H255" style="marker-end:url(#ah-d1)"/><text class="idea-t idea-t--s" x="217" y="104">signed</text><text class="idea-t idea-t--s" x="217" y="116">ops</text></g>
+        <g data-s="3"><path class="idea-line" d="M180 120 H255" style="marker-end:url(#ah-d1)"/><text class="idea-t idea-t--s" x="217" y="92">signed</text><text class="idea-t idea-t--s" x="217" y="104">ops</text></g>
         <g data-s="4"><rect class="idea-box" x="255" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="340" y="80">Sync relay</text><text class="idea-t idea-t--s" x="340" y="100">routes sealed ops</text><rect class="idea-tag" x="273" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="340" y="143">cannot open them</text></g>
         <g data-s="5"><path class="idea-line" d="M425 120 H500" style="marker-end:url(#ah-d1)"/><rect class="idea-box" x="500" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="585" y="80">Laptop B</text><text class="idea-t idea-t--s" x="585" y="100">opens and merges</text><rect class="idea-tag" x="518" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="585" y="143">holds the same key</text></g>
         <rect class="idea-box" x="255" y="220" width="170" height="70" rx="10"/><text class="idea-t idea-t--b" x="340" y="250">Encrypted backup</text><text class="idea-t idea-t--s" x="340" y="270">blobs, no keys</text>
@@ -163,9 +160,9 @@
         <text class="idea-t idea-t--s" x="340" y="320">Keys never leave the laptops.</text>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. A person edits a document on laptop A. The change is made locally first, so it works offline.</li>
@@ -217,7 +214,7 @@
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-key-round"/></svg></span><h2>Keys and sharing</h2></header>
     <p>The key structure has three layers. A person's identity keys open the copies of the document key that were addressed to them. The document key opens the content. When the group changes, the document key is replaced and wrapped again for the members who remain.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of sharing a document key">
-      <svg viewBox="0 0 680 340" role="img" aria-label="Three member key pairs at the top. A document key in the middle sends one wrapped copy up to each member. The document content below is encrypted under the document key. Removing a member creates a new key for the rest.">
+      <svg viewBox="0 0 680 346" role="img" aria-label="Three member key pairs at the top. A document key in the middle sends one wrapped copy up to each member. The document content below is encrypted under the document key. Removing a member creates a new key for the rest.">
         <defs><marker id="ah-d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="105" y="56">Alice</text><text class="idea-t idea-t--s" x="105" y="76">key pair on her device</text><path class="idea-line" d="M105 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="112" y="124">wrapped copy</text></g>
         <g data-s="3"><rect class="idea-box idea-box--key" x="245" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="340" y="56">Bob</text><text class="idea-t idea-t--s" x="340" y="76">key pair on his device</text><path class="idea-line" d="M340 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="124">wrapped copy</text></g>
@@ -226,12 +223,12 @@
         <g data-s="5"><text class="idea-t idea-t--s idea-t--l idea-t--accent" x="420" y="240">new epoch after a removal</text></g>
         <g data-s="1"><path class="idea-line" d="M340 200 V268" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="238">encrypts</text></g>
         <g data-s="5"><rect class="idea-box" x="110" y="270" width="460" height="50" rx="10"/><text class="idea-t idea-t--b" x="340" y="292">Document content</text><text class="idea-t idea-t--s" x="340" y="310">sealed under the current document key</text></g>
-        <text class="idea-t idea-t--s" x="340" y="336">Shown with three members. The same wrapping applies to any number.</text>
+        <text class="idea-t idea-t--s" x="340" y="342">Shown with three members. The same wrapping applies to any number.</text>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. A new document gets a random key. Nothing else holds it yet.</li>
@@ -261,19 +258,19 @@
     <p>Two people edit the same document while they are apart. Neither copy is the master. Each device keeps its own state. Changes are recorded as operations, and the merge rule is built so that the result does not depend on the order the operations arrive in.</p>
     <p>This is the job of a conflict-free replicated data type, or CRDT. For a list of lines, a common approach gives every inserted line a unique id and records which line it was inserted after. Deletes leave a marker instead of removing the line. With those rules, two replicas that have seen the same set of operations show the same list.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of offline edits merging">
-      <svg viewBox="0 0 680 290" role="img" aria-label="Replica A adds a line while offline and replica B changes line 1 while offline. Each sends sealed operations. Both end with the same merged list containing both edits.">
+      <svg viewBox="0 0 680 300" role="img" aria-label="Replica A adds a line while offline and replica B changes line 1 while offline. Each sends sealed operations. Both end with the same merged list containing both edits.">
         <defs><marker id="ah-d3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="30" width="200" height="120" rx="10"/><text class="idea-t idea-t--b" x="110" y="52">Replica A (offline)</text><text class="idea-t idea-t--s" x="110" y="70">added line 3</text><text class="idea-t idea-t--l" x="26" y="98">1  Draft</text><text class="idea-t idea-t--l" x="26" y="116">2  Budget</text><text class="idea-t idea-t--l idea-t--accent" x="26" y="134">3  Ana's note</text></g>
         <g data-s="2"><rect class="idea-box" x="470" y="30" width="200" height="120" rx="10"/><text class="idea-t idea-t--b" x="570" y="52">Replica B (offline)</text><text class="idea-t idea-t--s" x="570" y="70">edited line 1</text><text class="idea-t idea-t--l" x="486" y="98">1  Draft v2</text><text class="idea-t idea-t--l" x="486" y="116">2  Budget</text></g>
         <g data-s="3"><path class="idea-line" d="M110 150 V182 H230 V206" style="marker-end:url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="116" y="174">sealed ops from A</text></g>
         <g data-s="4"><path class="idea-line" d="M570 150 V182 H450 V206" style="marker-end:url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="456" y="174">sealed ops from B</text></g>
-        <g data-s="5"><rect class="idea-box idea-box--key" x="170" y="210" width="340" height="66" rx="10"/><text class="idea-t idea-t--b" x="340" y="234">Merged on both replicas</text><text class="idea-t idea-t--s" x="340" y="256">1 Draft v2   2 Budget   3 Ana's note</text></g>
-        <text class="idea-t idea-t--s" x="340" y="288">Neither edit was lost, and no one had to pick a winner by hand.</text>
+        <g data-s="5"><rect class="idea-box idea-box--key" x="170" y="210" width="340" height="66" rx="10"/><text class="idea-t idea-t--b" x="340" y="234">Merged on both replicas</text><text class="idea-t idea-t--s" x="340" y="256">1 Draft v2&#160;&#160;&#160;2 Budget&#160;&#160;&#160;3 Ana's note</text></g>
+        <text class="idea-t idea-t--s" x="340" y="294">Neither edit was lost, and no one had to pick a winner by hand.</text>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 5</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. Replica A is offline. Alice adds a new line at the end. The change is recorded with a unique id.</li>
@@ -312,18 +309,18 @@
         <defs><marker id="ah-d4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="40" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="90" y="70">Laptop</text><text class="idea-t idea-t--s" x="90" y="92">store snapshot</text></g>
         <g data-s="4"><rect x="10" y="40" width="160" height="80" rx="10" style="fill:none;stroke:var(--rd-warn);stroke-width:2;stroke-dasharray:6 4"/></g>
-        <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="220" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="90" y="250">Recovery key</text><text class="idea-t idea-t--s" x="90" y="272">kept by the person, offline</text><path class="idea-line" d="M90 218 V124" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s idea-t--l" x="98" y="176">derives backup key</text></g>
+        <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="220" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="90" y="250">Recovery key</text><text class="idea-t idea-t--s" x="90" y="272">kept offline</text><path class="idea-line" d="M90 218 V124" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s idea-t--l" x="98" y="176">derives backup key</text></g>
         <g data-s="3"><path class="idea-line" d="M170 80 H270" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s" x="220" y="66">sealed</text><text class="idea-t idea-t--s" x="220" y="98">snapshot</text></g>
         <g data-s="3"><rect class="idea-box" x="270" y="40" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="350" y="70">Cloud store</text><text class="idea-t idea-t--s" x="350" y="92">sealed blobs only</text></g>
         <g data-s="6"><path class="idea-line" d="M430 80 H560 V218" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s" x="495" y="68">download blob</text></g>
         <g data-s="5"><path class="idea-line" d="M170 260 H500" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s" x="335" y="250">recovery key typed in</text></g>
         <g data-s="5"><rect class="idea-box idea-box--key" x="500" y="220" width="170" height="80" rx="10"/><text class="idea-t idea-t--b" x="585" y="250">New laptop</text><text class="idea-t idea-t--s" x="585" y="272">after the loss</text></g>
-        <g data-s="7"><text class="idea-t idea-t--s" x="585" y="326">identity restored, document keys re-fetched</text></g>
+        <g data-s="7"><text class="idea-t idea-t--s" x="670" y="326" style="text-anchor:end">identity restored, document keys re-fetched</text></g>
       </svg>
       <div class="idea-steps__ctrl">
-        <button type="button" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button>
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
         <span class="idea-steps__count" aria-live="polite">Step 1 of 7</span>
-        <button type="button" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </div>
       <ol class="idea-steps__list">
         <li data-s="1">1. The laptop takes a snapshot of its local store, including the identity keys.</li>
@@ -364,6 +361,7 @@
       <label><input type="radio" name="idea-preset" value="sealed" checked> This design, keys intact</label>
       <label><input type="radio" name="idea-preset" value="lost"> This design, laptop lost unlocked</label>
     </fieldset>
+    <p class="rd-source" id="idea-preset-status" aria-live="polite">Showing: This design, keys intact</p>
     <div class="rd-table-wrap">
       <table class="rd-table idea-table">
         <caption>Who can read the content, and who can see the metadata, under each setup.</caption>
@@ -422,6 +420,7 @@
   <section class="rd-tabsec" id="glossary">
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Glossary</h2></header>
     <p>Tap a term to open its definition. Nothing is stored, and nothing is sent anywhere.</p>
+    <div class="idea-gloss">
     <details class="rd-fold"><summary>Ciphertext</summary><p>Data after encryption. Without the key it looks like random bytes. Ciphertext can still reveal its length.</p></details>
     <details class="rd-fold"><summary>End-to-end encryption</summary><p>Only the two ends hold keys, so a server in between passes data it cannot read. The design works only if keys never reach the server.</p></details>
     <details class="rd-fold"><summary>Symmetric key</summary><p>One secret key that both encrypts and decrypts. AES-256 is the common choice. Two parties must already share the key.</p></details>
@@ -437,6 +436,7 @@
     <details class="rd-fold"><summary>Relay</summary><p>A server that stores and forwards messages between devices. In this design it handles ciphertext only.</p></details>
     <details class="rd-fold"><summary>Bridge</summary><p>A gateway between this design and classic email. At the bridge, a message is in plain text or re-sealed, so the bridge is a trusted hop.</p></details>
     <details class="rd-fold"><summary>Recovery key</summary><p>A secret the person keeps, used to open a backup. If it is lost and no device holds the keys, the backup cannot be opened.</p></details>
+      </div>
   </section>
 
   <section class="rd-tabsec" id="concepts">
@@ -538,20 +538,20 @@
 
   <section class="rd-tabsec" id="ask-this-idea">
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg></span><h2>Ask this idea</h2></header>
-    <p class="rd-callout"><strong>Answers come from the written notes on this page, not an AI model.</strong> The chat matches your question against a list of questions and terms written for this page. If nothing matches well, it says so. Messages are kept in this tab only and are not stored or sent anywhere.</p>
+    <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>How answers work</p><p><strong>Answers come from the written notes on this page, not an AI model.</strong> The chat matches your question against a list of questions and terms written for this page. If nothing matches well, it says so. Messages are kept in this tab only and are not stored or sent anywhere.</p></div>
     <ul class="idea-chips" aria-label="Suggested questions">
-      <li><button type="button" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
-      <li><button type="button" data-ask="What happens when someone is removed?">What happens when someone is removed?</button></li>
-      <li><button type="button" data-ask="Can the backup provider read my documents?">Can the backup provider read my documents?</button></li>
-      <li><button type="button" data-ask="How do offline edits merge?">How do offline edits merge?</button></li>
-      <li><button type="button" data-ask="What about email?">What about email?</button></li>
-      <li><button type="button" data-ask="What is not decided?">What is not decided?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What happens when someone is removed?">What happens when someone is removed?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Can the backup provider read my documents?">Can the backup provider read my documents?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="How do offline edits merge?">How do offline edits merge?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What about email?">What about email?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="What is not decided?">What is not decided?</button></li>
     </ul>
     <div class="idea-ask">
-      <form id="idea-ask-form" role="search">
+      <form id="idea-ask-form" role="search" action="#ask-this-idea">
         <label for="idea-ask-input" class="rd-eyebrow">Your question</label>
         <input id="idea-ask-input" type="text" name="q" autocomplete="off" placeholder="Ask about the idea" maxlength="300">
-        <button type="submit">Ask</button>
+        <button type="submit" class="rd-btn">Ask</button>
       </form>
       <div class="idea-log" id="idea-log" role="log" aria-live="polite" aria-label="Conversation"></div>
     </div>
@@ -573,14 +573,14 @@
   <section class="rd-tabsec" id="open-problems">
     <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>Open problems</h2></header>
     <ul class="rd-icon-list rd-icon-list--warn">
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Search.</strong> Full text across a group needs an index on each device, or leaks match patterns on a server.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Onboarding.</strong> A new device must get keys without a central directory that can lie about who it is.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Key loss.</strong> A lost recovery key with no surviving device means lost data. Any recovery scheme moves the risk somewhere else.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Mobile.</strong> Background sync, battery use and OS limits on keys make a phone harder than a laptop.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Spam.</strong> A server cannot filter sealed mail by content. Filtering has to happen on the device, or use metadata.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Legal discovery.</strong> Courts and regulators may want content the organisation cannot read. That pulls against the design.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Rich documents.</strong> Spreadsheet formulas, formatting and comments are harder to merge than lines of text.</span></li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><span><strong>Growth.</strong> Merge histories and tombstones grow. Compaction must not break convergence.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Search.</strong> Full text across a group needs an index on each device, or leaks match patterns on a server.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Onboarding.</strong> A new device must get keys without a central directory that can lie about who it is.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Key loss.</strong> A lost recovery key with no surviving device means lost data. Any recovery scheme moves the risk somewhere else.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Mobile.</strong> Background sync, battery use and OS limits on keys make a phone harder than a laptop.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Spam.</strong> A server cannot filter sealed mail by content. Filtering has to happen on the device, or use metadata.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Legal discovery.</strong> Courts and regulators may want content the organisation cannot read. That pulls against the design.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Rich documents.</strong> Spreadsheet formulas, formatting and comments are harder to merge than lines of text.</span></li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Growth.</strong> Merge histories and tombstones grow. Compaction must not break convergence.</span></li>
     </ul>
   </section>
 
@@ -602,8 +602,8 @@
     <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Read this first</p>
       This is an idea, not a product. Nothing on this page is built, prototyped, measured or security reviewed. The statements about techniques describe what those techniques do in general. They do not describe a working system.</div>
     <ul class="rd-icon-list rd-icon-list--warn">
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The Q&amp;A on the Ask tab is written from this page. It is not a model and can miss things.</li>
-      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The Who can read tables are hand-written for each setup. They are not computed.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>The Q&amp;A on the Ask tab is written from this page. It is not a model and can miss things.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>The Who can read tables are hand-written for each setup. They are not computed.</li>
     </ul>
   </section>
 
@@ -621,6 +621,171 @@
   </div>
 </div>
 </main>
+
+<script id="idea-kb" type="application/json">[
+{"q":"What is the idea in one sentence?","a":"Keep the documents, mail and calendar on your own machines, let the cloud hold only encrypted copies, and still let people collaborate.","k":"idea summary what is it","s":"in-30-seconds","t":"In 30 seconds"},
+{"q":"Is this a product I can use?","a":"No. It is an idea. Nothing on this page is built, prototyped, measured or security reviewed.","k":"product built prototype status idea","s":"caveats","t":"Caveats"},
+{"q":"What is wrong with a central workspace?","a":"The provider can read every document, index it, scan it, hand it over under a legal request, or lose it in a breach. An admin or an account thief may be able to open any file.","k":"central workspace problem provider plaintext","s":"the-problem","t":"The problem with a central workspace"},
+{"q":"Why do central workspaces hold plain text at all?","a":"Collaboration seemed to need a server that sees the text, so it can merge edits and run search. This idea tries to remove that assumption.","k":"plain text server merge search why","s":"the-problem","t":"The problem with a central workspace"},
+{"q":"Who feels this most?","a":"Enterprises, whose contracts and HR files sit in a system a third party can read, and people who care about privacy and give up the tools they like because of the trade.","k":"enterprise privacy who feels it","s":"the-problem","t":"The problem with a central workspace"},
+{"q":"What are the main principles?","a":"Data lives where people work. Servers move and store ciphertext. Each document has its own key. Changes are signed. Merging needs no referee. Removing someone means new keys. The design says what leaks.","k":"principles rules","s":"principles","t":"Principles"},
+{"q":"Where does a change go on its way between laptops?","a":"It is made on one laptop, sealed with the document key, signed, forwarded by a relay that cannot open it, then checked and merged on the other laptop. A sealed snapshot also goes to encrypted backup.","k":"data flow change path laptop relay","s":"idea-in-one-picture","t":"The idea in one picture"},
+{"q":"What does the relay see?","a":"It sees sealed, signed operations. It cannot open the content. It still sees routing, timing and sizes.","k":"relay sees ciphertext metadata","s":"sync-merge","t":"Offline edits and merge"},
+{"q":"What are the parts of the design?","a":"A local-first node on each device, an encrypted local store, identity and signing keys, groups and sharing, a sync relay that forwards ciphertext, and an encrypted cloud backup.","k":"parts components node store identity relay backup","s":"components","t":"The parts"},
+{"q":"What is a local-first node?","a":"The app on a person's device. It keeps the full working copy of every document the person can open and works without a network.","k":"local-first node device offline","s":"components","t":"The parts"},
+{"q":"What is an encrypted store?","a":"The local database. Document content is stored sealed under the document key, so a stolen disk does not give plain text by itself. Protecting the disk and keys in memory is a separate job.","k":"encrypted store local database disk","s":"components","t":"The parts"},
+{"q":"What are identity keys?","a":"Each person has a key pair for receiving keys and another for signing changes. The private halves never leave the devices they were made on.","k":"identity keys signing key pair private","s":"components","t":"The parts"},
+{"q":"What does the sync relay do?","a":"It forwards sealed changes between devices. It can route, queue and store them, but it holds no keys for the content.","k":"relay sync forward ciphertext","s":"components","t":"The parts"},
+{"q":"What is the encrypted backup for?","a":"It protects against a lost laptop. It stores sealed snapshots. A recovery key, kept by the person, is what lets a new device open them.","k":"backup cloud snapshot recovery","s":"backup-recovery","t":"Backup and recovery"},
+{"q":"How are keys organised?","a":"Three layers. A person's identity keys open the copies of the document key addressed to them. The document key opens the content. When the group changes, the document key is replaced and wrapped again for the members who remain.","k":"key hierarchy layers identity document key","s":"keys-sharing","t":"Keys and sharing"},
+{"q":"What is key wrapping?","a":"Encrypting one key under another, so the wrapped key can be stored or sent. The document key is wrapped separately for each member, so each member has their own copy.","k":"wrapping wrapped key copy member","s":"keys-sharing","t":"Keys and sharing"},
+{"q":"How is a new member added?","a":"A member who already holds the document key wraps it for the new member. The group change itself is signed.","k":"add member join new person wrap","s":"keys-sharing","t":"Keys and sharing"},
+{"q":"What happens when someone is removed?","a":"The document key is replaced, and the new key is wrapped only for the people who remain. Later edits use the new key. The removed person keeps whatever they already copied.","k":"remove removed revoke revocation rekey","s":"keys-sharing","t":"Keys and sharing"},
+{"q":"Can a removed person read edits made after removal?","a":"No, if the document key was replaced and wrapped only for the rest. They still read what they copied before.","k":"removed after edits can read ex-employee","s":"who-can-read","t":"Who can read this?"},
+{"q":"Does rekeying cost anything?","a":"Yes. Rekeying a large group takes work for every remaining member, and devices that are offline when it happens need a way to catch up. How often to rekey is a real design choice.","k":"rekey cost large group offline","s":"keys-sharing","t":"Keys and sharing"},
+{"q":"How do offline edits merge?","a":"Each change is recorded as an operation. The merge rule gives the same result for the same set of operations, whatever order they arrive in. Two replicas that have seen the same operations show the same document.","k":"offline merge crdt operations order","s":"sync-merge","t":"Offline edits and merge"},
+{"q":"What is a CRDT?","a":"A conflict-free replicated data type. A data type whose merge rule is commutative, associative and idempotent, so replicas that edit alone converge when they exchange changes.","k":"crdt conflict-free replicated data type merge","s":"glossary","t":"Glossary"},
+{"q":"How could a list of lines merge without a referee?","a":"Give every inserted line a unique id and record which line it was inserted after. Deletes leave a marker instead of removing the line. Then both replicas agree on the order.","k":"list lines insert delete tombstone order","s":"sync-merge","t":"Offline edits and merge"},
+{"q":"Does every kind of document merge cleanly?","a":"No. Free text, spreadsheet formulas and rich formatting each need their own rules. Some results agree between replicas but still look wrong to a person.","k":"rich text spreadsheet formulas merge hard","s":"sync-merge","t":"Offline edits and merge"},
+{"q":"Why are operations signed?","a":"A receiver checks the signature against the member list it trusts. This stops a relay from inventing edits, and stops a removed member from writing into the new epoch with an old key.","k":"signed signature operations forge reject","s":"signed-ops","t":"Signed operations"},
+{"q":"Does signing hide who made a change?","a":"No. The author is visible to the members who open the operation. Signing proves who made a change, not that the change was wise.","k":"signing hide author visible","s":"signed-ops","t":"Signed operations"},
+{"q":"Can the backup provider read my documents?","a":"No. The snapshot is sealed on the device before upload, under a backup key derived from a recovery key the person keeps offline. The provider gets sealed blobs and sizes.","k":"backup provider read documents sealed","s":"backup-recovery","t":"Backup and recovery"},
+{"q":"What if I lose the recovery key?","a":"If no device still holds the keys, the backup cannot be opened. That is the price of the cloud not being able to read it.","k":"lose recovery key lost backup","s":"backup-recovery","t":"Backup and recovery"},
+{"q":"What happens when a laptop is lost?","a":"A locked laptop is protected by its disk and device keys. A laptop lost while unlocked, or with keys in memory, is worse. Until the group revokes it and rekeys the documents, whoever has it can read what it holds.","k":"lost laptop locked unlocked device","s":"device-loss","t":"Losing a device"},
+{"q":"Can a remote revoke take back what was read?","a":"No. A remote revoke can stop the device from getting new keys and new changes. It cannot take back a copy that was already read.","k":"remote revoke read copy take back","s":"device-loss","t":"Losing a device"},
+{"q":"Who can read the content under each setup?","a":"The Who can read tab shows a hosted workspace, this design with keys intact, and this design with a laptop lost unlocked. Each table is written by hand for that setup.","k":"who can read setup table presets","s":"who-can-read","t":"Who can read this?"},
+{"q":"What does an enterprise admin see?","a":"In this design an admin reads only documents where they are a member and hold the key. Admin rights are signed group changes, which can be audited.","k":"admin enterprise see read access","s":"threats","t":"Threat model"},
+{"q":"Is there a threat model?","a":"Yes. The Threat model table lists the cloud breach, the relay operator, a removed person, a lost laptop, a compromised member device, an overreaching admin and the mail bridge, with what limits each one.","k":"threat model table risks","s":"threats","t":"Threat model"},
+{"q":"What does the metadata leak?","a":"A relay still sees which device talks to which, when, and how much. Group size and rekey timing can hint at how a team is organised. Padding and batching reduce this at a cost.","k":"metadata leak relay timing size","s":"metadata","t":"Metadata"},
+{"q":"Does encryption hide who talks to whom?","a":"No. Encryption protects content. Routing, timing and sizes are a separate problem with separate costs to reduce.","k":"who talks to whom encryption hide","s":"metadata","t":"Metadata"},
+{"q":"What is end-to-end encryption?","a":"Only the two ends hold keys, so a server in between passes data it cannot read. The design works only if keys never reach the server.","k":"end-to-end encryption e2ee keys endpoints","s":"glossary","t":"Glossary"},
+{"q":"What is a symmetric key?","a":"One secret key that both encrypts and decrypts, such as an AES-256 key. Two parties must already share it.","k":"symmetric key aes","s":"glossary","t":"Glossary"},
+{"q":"What is key agreement?","a":"Two parties combine their own private key with the other's public key and get the same shared secret, without sending it. ECDH is a common method.","k":"key agreement ecdh shared secret","s":"glossary","t":"Glossary"},
+{"q":"What is HKDF?","a":"A standard way to turn a shared secret into keys of the right form. It is defined in RFC 5869.","k":"hkdf key derivation rfc 5869","s":"sources","t":"Sources"},
+{"q":"What is a digital signature?","a":"A value only the key holder can make, which anyone with the public key can check. It shows who made a change and that the change was not altered.","k":"digital signature signing verify","s":"glossary","t":"Glossary"},
+{"q":"What is an epoch?","a":"A period in which one set of keys is in use for a group. Adding or removing a member starts a new epoch.","k":"epoch period keys group","s":"glossary","t":"Glossary"},
+{"q":"What is forward secrecy?","a":"Old keys cannot be used to read newer messages, because the newer keys were derived from secrets that have since been thrown away.","k":"forward secrecy old keys newer","s":"glossary","t":"Glossary"},
+{"q":"What is MLS?","a":"The Messaging Layer Security protocol, RFC 9420 from 2023. It is a standard for group key agreement that moves through epochs as members join and leave. The design does not choose it yet.","k":"mls messaging layer security rfc 9420 group","s":"concepts","t":"The techniques, with analogies"},
+{"q":"What is X3DH?","a":"A key agreement protocol in the Signal specifications that lets someone send a first message before the recipient is online.","k":"x3dh signal key agreement first message","s":"sources","t":"Sources"},
+{"q":"How does search work over encrypted data?","a":"The simple answer is a full-text index on each device, built from decrypted content and never sent anywhere. Server-side search needs searchable encryption or blind indexes, which leak which items match which searches.","k":"search encrypted data index searchable","s":"concepts","t":"The techniques, with analogies"},
+{"q":"What about email?","a":"Classic email carries the envelope in the clear. OpenPGP (RFC 9580, 2024) and S/MIME can seal the body. A bridge to classic email decrypts or re-seals the message, so the bridge is where plain text exists and must be trusted.","k":"email smtp openpgp bridge sealed","s":"concepts","t":"The techniques, with analogies"},
+{"q":"What is a bridge?","a":"A gateway between this design and classic email. At the bridge a message is in plain text or re-sealed, so it is a trusted hop.","k":"bridge gateway email trusted","s":"glossary","t":"Glossary"},
+{"q":"How does compliance work without plaintext access?","a":"Admins manage membership and policy through signed group changes. Legal discovery and retention need content access, which can mean keys held by the organisation, a custodian, or an export holder. Each choice gives up some privacy.","k":"compliance discovery legal retention admin","s":"concepts","t":"The techniques, with analogies"},
+{"q":"How is key recovery done?","a":"Through a recovery key, a split key, or trusted devices or people. Recovery is only as safe as the place where the recovery material is kept.","k":"recovery key split trusted devices","s":"concepts","t":"The techniques, with analogies"},
+{"q":"What are the open problems?","a":"Search, onboarding a new device, key loss, mobile background sync, spam filtering of sealed mail, legal discovery, rich document merging and the growth of merge history.","k":"open problems challenges unsolved","s":"open-problems","t":"Open problems"},
+{"q":"How does a new device get its keys?","a":"That is an open problem. A new device must receive keys without a central directory that could lie about who it is.","k":"onboarding new device keys directory","s":"open-problems","t":"Open problems"},
+{"q":"How is spam handled for sealed mail?","a":"That is an open problem. A server cannot filter sealed mail by content, so filtering has to happen on the device or use metadata.","k":"spam filter sealed mail","s":"open-problems","t":"Open problems"},
+{"q":"What is not decided?","a":"The group-key protocol, where a relay runs and who runs it, how identities are proved, the default recovery policy, which office features come first, how legal access works, and pricing or any business model.","k":"not decided open choices","s":"not-decided","t":"What is not decided"},
+{"q":"Can I run my own relay?","a":"That is not decided. The design leaves open where a relay runs and whether a person can run their own.","k":"own relay host run self-host","s":"not-decided","t":"What is not decided"},
+{"q":"Are the numbers and results real?","a":"There are none. Nothing here is measured. The Who can read tables are written by hand, and the statements about techniques describe what they do in general.","k":"numbers results measured data","s":"caveats","t":"Caveats"},
+{"q":"Where do the sources come from?","a":"The Sources section lists the MLS RFC 9420, the X3DH specification, OpenPGP RFC 9580 and HKDF RFC 5869. Each was checked on 2026-10-24.","k":"sources references citations checked","s":"sources","t":"Sources"},
+{"q":"Is this safe to use for real secrets?","a":"No. This is an idea page with no implementation. Do not treat any description here as a security guarantee.","k":"safe secrets security guarantee","s":"caveats","t":"Caveats"},
+{"q":"What does Learn more show?","a":"A precise version of the analogy above it. Each technique has an everyday picture first, then the detail.","k":"learn more analogy precise detail","s":"concepts","t":"The techniques, with analogies"},
+{"q":"How do the step-through diagrams work?","a":"Press Next and Back under a diagram. Each step highlights one part of the picture and shows a one-line caption. No history entries are added.","k":"step through diagram next back caption","s":"idea-in-one-picture","t":"The idea in one picture"},
+{"q":"What is the quiz for?","a":"Four questions on the main ideas: backup breaches, removal, offline merge and metadata. Pick an answer and open the explanation.","k":"quiz questions test check yourself","s":"quiz","t":"Check yourself"},
+{"q":"Does this page store anything about me?","a":"No. Nothing you type or click is stored or sent. The chat keeps messages only in this open tab.","k":"store data privacy chat tracking","s":"ask-this-idea","t":"Ask this idea"},
+{"q":"Can I speak to this page or use a microphone?","a":"No. The page takes typed questions only. There is no microphone input and no speech output.","k":"microphone speech voice audio dictation","s":"ask-this-idea","t":"Ask this idea"},
+{"q":"Why does a backup of a lost laptop still need the cloud?","a":"Because the snapshot is kept there sealed, so a new laptop can download it after the old one is gone. The cloud cannot open it on its own.","k":"backup cloud why needed lost laptop","s":"backup-recovery","t":"Backup and recovery"},
+{"q":"What does sealed mean?","a":"Encrypted and authenticated, so a change to the bytes is detected. The page uses sealed for encrypted data throughout.","k":"sealed encrypted authenticated term","s":"glossary","t":"Glossary"}
+]</script>
+<script>
+// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
+// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
+// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
+// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
+(function () {
+  if (window.__rdToc) return;
+  window.__rdToc = true;
+  var wide = window.matchMedia('(min-width: 1536px)');
+  function Rail(nav) {
+    var self = this;
+    this.nav = nav;
+    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+    this.indicator = nav.querySelector('.rd-toc__indicator');
+    this.sections = [];
+    this.index = new Map();
+    this.active = [];
+    this.anchorNavTarget = null;
+    this.links.forEach(function (a, i) {
+      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      self.sections.push(sec);
+      self.active.push(false);
+      if (sec) self.index.set(sec, i);
+    });
+    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
+    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
+    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
+    nav.classList.add('is-live');
+    this.fallback();
+    this.update();
+  }
+  Rail.prototype.onIntersect = function (entries) {
+    var self = this;
+    entries.forEach(function (e) {
+      var i = self.index.get(e.target);
+      if (i !== undefined) self.active[i] = e.isIntersecting;
+      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
+    });
+    if (this.active.indexOf(true) < 0) this.fallback();
+    this.update();
+  };
+  Rail.prototype.fallback = function () {
+    var vh = window.innerHeight;
+    for (var i = 0; i < this.sections.length; i++) {
+      var s = this.sections[i];
+      if (!s) continue;
+      var r = s.getBoundingClientRect();
+      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
+      else if (r.top > vh) break;
+    }
+  };
+  Rail.prototype.update = function () {
+    var self = this;
+    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
+  };
+  Rail.prototype.toggle = function () {
+    var links = this.links, a = this.active;
+    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
+    var i = links.length - 1, min = links.length - 1, max = -1;
+    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
+    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
+    while (i >= 0) { links[i].classList.remove('visible'); i--; }
+    if (!this.indicator) return;
+    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
+    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
+    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
+    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
+    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
+  };
+  Rail.prototype.scroll = function () {
+    if (this.anchorNavTarget || !wide.matches) return;
+    var vis = this.nav.querySelectorAll('a.visible');
+    if (!vis.length) return;
+    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
+    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
+    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
+  };
+  Rail.prototype.onClick = function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+  };
+  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
+  function openForWide() {
+    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
+  }
+  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
+  wide.addEventListener('change', refresh);
+  window.addEventListener('resize', refresh, { passive: true });
+  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
+  var mo = new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
+    });
+  });
+  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+  openForWide();
+})();
+</script>
 
 <script>
 // Tabs and history (design-system "Tabbed pages"). A tab is a ?tab= link. A section jump or a tab change is one
@@ -648,7 +813,8 @@
   }
   // Only for an entry this page wrote (history.state is set): a fresh visit to the same URL starts at the top.
   function recalled() {
-    if (!history.state) return null;
+    var nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+    if (!history.state && !(nav && nav.type === 'reload')) return null;
     try { var v = sessionStorage.getItem('rd-y:' + keyOf()); return v === null ? null : Number(v); } catch (e) { return null; }
   }
   function saveScroll() {
@@ -664,6 +830,12 @@
       t.classList.toggle('is-active', on);
       panels[k].hidden = !on;
     });
+    tabs[i].scrollIntoView({ inline: 'center', block: 'nearest' });
+    edges();
+  }
+  function edges() {
+    bar.classList.toggle('is-fade-start', bar.scrollLeft > 2);
+    bar.classList.toggle('is-fade-end', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 2);
   }
   function reveal(el) {
     el.setAttribute('tabindex', '-1');
@@ -760,6 +932,8 @@
   window.addEventListener('popstate', function () { sync('pop'); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) sync('show'); });
   window.addEventListener('pagehide', saveScroll);
+  bar.addEventListener('scroll', edges, { passive: true });
+  window.addEventListener('resize', edges, { passive: true });
   sync('load');
 })();
 
@@ -773,7 +947,9 @@
     var next = fig.querySelector('[data-next]');
     function render() {
       fig.querySelectorAll('[data-s]').forEach(function (el) {
-        el.classList.toggle('is-on', el.getAttribute('data-s') === String(cur) || (el.tagName === 'li' && false));
+        var sNo = parseInt(el.getAttribute('data-s'), 10);
+        el.classList.toggle('is-on', sNo === cur);
+        el.classList.toggle('is-past', sNo < cur);
       });
       fig.querySelectorAll('.idea-steps__list li').forEach(function (li) {
         li.classList.toggle('is-on', li.getAttribute('data-s') === String(cur));
@@ -781,6 +957,12 @@
       count.textContent = 'Step ' + cur + ' of ' + total;
       prev.disabled = cur <= 1;
       next.disabled = cur >= total;
+      if (cur >= total && document.activeElement === next) prev.focus(); // bug 29: no focus on a disabled button
+      var lit = fig.querySelector('svg [data-s].is-on');
+      if (lit && fig.scrollWidth > fig.clientWidth + 1) {
+        var fr = fig.getBoundingClientRect(), lr = lit.getBoundingClientRect();
+        if (lr.left < fr.left || lr.right > fr.right) fig.scrollTo({ left: fig.scrollLeft + (lr.left - fr.left) - 16, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      }
     }
     prev.addEventListener('click', function () { if (cur > 1) { cur -= 1; render(); } });
     next.addEventListener('click', function () { if (cur < total) { cur += 1; render(); } });
@@ -794,6 +976,9 @@
   if (!table) return;
   function pick(p) {
     table.querySelectorAll('[data-p]').forEach(function (el) { el.classList.toggle('is-on', el.getAttribute('data-p') === p); });
+    var pick1 = document.querySelector('input[name="idea-preset"][value="' + p + '"]');
+    var st = document.getElementById('idea-preset-status');
+    if (pick1 && st) st.textContent = 'Showing: ' + pick1.parentElement.textContent.trim();
   }
   document.querySelectorAll('input[name="idea-preset"]').forEach(function (r) {
     r.addEventListener('change', function () { if (r.checked) pick(r.value); });
@@ -813,6 +998,8 @@
         var ok = r.value === answers[key];
         verdict.textContent = ok ? 'Right.' : 'Not quite. Open the answer.';
         verdict.className = 'idea-verdict ' + (ok ? 'idea-verdict--ok' : 'idea-verdict--no');
+        var det = fs.querySelector('details');
+        if (det) det.open = true;
       });
     });
   });
@@ -860,6 +1047,7 @@
     p.textContent = text;
     div.appendChild(p);
     log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
     return div;
   }
   function chip(label, fn) {
@@ -880,7 +1068,7 @@
     var div;
     if (!top || top.s < threshold) {
       div = bubble('', 'I do not know that from the notes on this page. Here are related topics:');
-      r.slice(0, 3).forEach(function (x) {
+      r.slice(0, 3).filter(function (x) { return x.s > 0; }).forEach(function (x) {
         div.appendChild(chip(x.e.q, function () { ask(x.e.q); }));
       });
       return;
@@ -908,71 +1096,5 @@
   });
 })();
 </script>
-<script id="idea-kb" type="application/json">[
-{"q":"What is the idea in one sentence?","a":"Keep the documents, mail and calendar on your own machines, let the cloud hold only encrypted copies, and still let people collaborate.","k":"idea summary what is it","s":"in-30-seconds","t":"In 30 seconds"},
-{"q":"Is this a product I can use?","a":"No. It is an idea. Nothing on this page is built, prototyped, measured or security reviewed.","k":"product built prototype status idea","s":"caveats","t":"Caveats"},
-{"q":"What is wrong with a central workspace?","a":"The provider can read every document, index it, scan it, hand it over under a legal request, or lose it in a breach. An admin or an account thief may be able to open any file.","k":"central workspace problem provider plaintext","s":"the-problem","t":"The problem with a central workspace"},
-{"q":"Why do central workspaces hold plain text at all?","a":"Collaboration seemed to need a server that sees the text, so it can merge edits and run search. This idea tries to remove that assumption.","k":"plain text server merge search why","s":"the-problem","t":"The problem with a central workspace"},
-{"q":"Who feels this most?","a":"Enterprises, whose contracts and HR files sit in a system a third party can read, and people who care about privacy and give up the tools they like because of the trade.","k":"enterprise privacy who feels it","s":"the-problem","t":"The problem with a central workspace"},
-{"q":"What are the main principles?","a":"Data lives where people work. Servers move and store ciphertext. Each document has its own key. Changes are signed. Merging needs no referee. Removing someone means new keys. The design says what leaks.","k":"principles rules","s":"principles","t":"Principles"},
-{"q":"Where does a change go on its way between laptops?","a":"It is made on one laptop, sealed with the document key, signed, forwarded by a relay that cannot open it, then checked and merged on the other laptop. A sealed snapshot also goes to encrypted backup.","k":"data flow change path laptop relay","s":"idea-in-one-picture","t":"The idea in one picture"},
-{"q":"What does the relay see?","a":"It sees sealed, signed operations. It cannot open the content. It still sees routing, timing and sizes.","k":"relay sees ciphertext metadata","s":"sync-merge","t":"Offline edits and merge"},
-{"q":"What are the parts of the design?","a":"A local-first node on each device, an encrypted local store, identity and signing keys, groups and sharing, a sync relay that forwards ciphertext, and an encrypted cloud backup.","k":"parts components node store identity relay backup","s":"components","t":"The parts"},
-{"q":"What is a local-first node?","a":"The app on a person's device. It keeps the full working copy of every document the person can open and works without a network.","k":"local-first node device offline","s":"components","t":"The parts"},
-{"q":"What is an encrypted store?","a":"The local database. Document content is stored sealed under the document key, so a stolen disk does not give plain text by itself. Protecting the disk and keys in memory is a separate job.","k":"encrypted store local database disk","s":"components","t":"The parts"},
-{"q":"What are identity keys?","a":"Each person has a key pair for receiving keys and another for signing changes. The private halves never leave the devices they were made on.","k":"identity keys signing key pair private","s":"components","t":"The parts"},
-{"q":"What does the sync relay do?","a":"It forwards sealed changes between devices. It can route, queue and store them, but it holds no keys for the content.","k":"relay sync forward ciphertext","s":"components","t":"The parts"},
-{"q":"What is the encrypted backup for?","a":"It protects against a lost laptop. It stores sealed snapshots. A recovery key, kept by the person, is what lets a new device open them.","k":"backup cloud snapshot recovery","s":"backup-recovery","t":"Backup and recovery"},
-{"q":"How are keys organised?","a":"Three layers. A person's identity keys open the copies of the document key addressed to them. The document key opens the content. When the group changes, the document key is replaced and wrapped again for the members who remain.","k":"key hierarchy layers identity document key","s":"keys-sharing","t":"Keys and sharing"},
-{"q":"What is key wrapping?","a":"Encrypting one key under another, so the wrapped key can be stored or sent. The document key is wrapped separately for each member, so each member has their own copy.","k":"wrapping wrapped key copy member","s":"keys-sharing","t":"Keys and sharing"},
-{"q":"How is a new member added?","a":"A member who already holds the document key wraps it for the new member. The group change itself is signed.","k":"add member join new person wrap","s":"keys-sharing","t":"Keys and sharing"},
-{"q":"What happens when someone is removed?","a":"The document key is replaced, and the new key is wrapped only for the people who remain. Later edits use the new key. The removed person keeps whatever they already copied.","k":"remove removed revoke revocation rekey","s":"keys-sharing","t":"Keys and sharing"},
-{"q":"Can a removed person read edits made after removal?","a":"No, if the document key was replaced and wrapped only for the rest. They still read what they copied before.","k":"removed after edits can read ex-employee","s":"who-can-read","t":"Who can read this?"},
-{"q":"Does rekeying cost anything?","a":"Yes. Rekeying a large group takes work for every remaining member, and devices that are offline when it happens need a way to catch up. How often to rekey is a real design choice.","k":"rekey cost large group offline","s":"keys-sharing","t":"Keys and sharing"},
-{"q":"How do offline edits merge?","a":"Each change is recorded as an operation. The merge rule gives the same result for the same set of operations, whatever order they arrive in. Two replicas that have seen the same operations show the same document.","k":"offline merge crdt operations order","s":"sync-merge","t":"Offline edits and merge"},
-{"q":"What is a CRDT?","a":"A conflict-free replicated data type. A data type whose merge rule is commutative, associative and idempotent, so replicas that edit alone converge when they exchange changes.","k":"crdt conflict-free replicated data type merge","s":"glossary","t":"Glossary"},
-{"q":"How could a list of lines merge without a referee?","a":"Give every inserted line a unique id and record which line it was inserted after. Deletes leave a marker instead of removing the line. Then both replicas agree on the order.","k":"list lines insert delete tombstone order","s":"sync-merge","t":"Offline edits and merge"},
-{"q":"Does every kind of document merge cleanly?","a":"No. Free text, spreadsheet formulas and rich formatting each need their own rules. Some results agree between replicas but still look wrong to a person.","k":"rich text spreadsheet formulas merge hard","s":"sync-merge","t":"Offline edits and merge"},
-{"q":"Why are operations signed?","a":"A receiver checks the signature against the member list it trusts. This stops a relay from inventing edits, and stops a removed member from writing into the new epoch with an old key.","k":"signed signature operations forge reject","s":"signed-ops","t":"Signed operations"},
-{"q":"Does signing hide who made a change?","a":"No. The author is visible to the members who open the operation. Signing proves who made a change, not that the change was wise.","k":"signing hide author visible","s":"signed-ops","t":"Signed operations"},
-{"q":"Can the backup provider read my documents?","a":"No. The snapshot is sealed on the device before upload, under a backup key derived from a recovery key the person keeps offline. The provider gets sealed blobs and sizes.","k":"backup provider read documents sealed","s":"backup-recovery","t":"Backup and recovery"},
-{"q":"What if I lose the recovery key?","a":"If no device still holds the keys, the backup cannot be opened. That is the price of the cloud not being able to read it.","k":"lose recovery key lost backup","s":"backup-recovery","t":"Backup and recovery"},
-{"q":"What happens when a laptop is lost?","a":"A locked laptop is protected by its disk and device keys. A laptop lost while unlocked, or with keys in memory, is worse. Until the group revokes it and rekeys the documents, whoever has it can read what it holds.","k":"lost laptop locked unlocked device","s":"device-loss","t":"Losing a device"},
-{"q":"Can a remote revoke take back what was read?","a":"No. A remote revoke can stop the device from getting new keys and new changes. It cannot take back a copy that was already read.","k":"remote revoke read copy take back","s":"device-loss","t":"Losing a device"},
-{"q":"Who can read the content under each setup?","a":"The Who can read tab shows a hosted workspace, this design with keys intact, and this design with a laptop lost unlocked. Each table is written by hand for that setup.","k":"who can read setup table presets","s":"who-can-read","t":"Who can read this?"},
-{"q":"What does an enterprise admin see?","a":"In this design an admin reads only documents where they are a member and hold the key. Admin rights are signed group changes, which can be audited.","k":"admin enterprise see read access","s":"threats","t":"Threat model"},
-{"q":"Is there a threat model?","a":"Yes. The Threat model table lists the cloud breach, the relay operator, a removed person, a lost laptop, a compromised member device, an overreaching admin and the mail bridge, with what limits each one.","k":"threat model table risks","s":"threats","t":"Threat model"},
-{"q":"What does the metadata leak?","a":"A relay still sees which device talks to which, when, and how much. Group size and rekey timing can hint at how a team is organised. Padding and batching reduce this at a cost.","k":"metadata leak relay timing size","s":"metadata","t":"Metadata"},
-{"q":"Does encryption hide who talks to whom?","a":"No. Encryption protects content. Routing, timing and sizes are a separate problem with separate costs to reduce.","k":"who talks to whom encryption hide","s":"metadata","t":"Metadata"},
-{"q":"What is end-to-end encryption?","a":"Only the two ends hold keys, so a server in between passes data it cannot read. The design works only if keys never reach the server.","k":"end-to-end encryption e2ee keys endpoints","s":"glossary","t":"Glossary"},
-{"q":"What is a symmetric key?","a":"One secret key that both encrypts and decrypts, such as an AES-256 key. Two parties must already share it.","k":"symmetric key aes","s":"glossary","t":"Glossary"},
-{"q":"What is key agreement?","a":"Two parties combine their own private key with the other's public key and get the same shared secret, without sending it. ECDH is a common method.","k":"key agreement ecdh shared secret","s":"glossary","t":"Glossary"},
-{"q":"What is HKDF?","a":"A standard way to turn a shared secret into keys of the right form. It is defined in RFC 5869.","k":"hkdf key derivation rfc 5869","s":"sources","t":"Sources"},
-{"q":"What is a digital signature?","a":"A value only the key holder can make, which anyone with the public key can check. It shows who made a change and that the change was not altered.","k":"digital signature signing verify","s":"glossary","t":"Glossary"},
-{"q":"What is an epoch?","a":"A period in which one set of keys is in use for a group. Adding or removing a member starts a new epoch.","k":"epoch period keys group","s":"glossary","t":"Glossary"},
-{"q":"What is forward secrecy?","a":"Old keys cannot be used to read newer messages, because the newer keys were derived from secrets that have since been thrown away.","k":"forward secrecy old keys newer","s":"glossary","t":"Glossary"},
-{"q":"What is MLS?","a":"The Messaging Layer Security protocol, RFC 9420 from 2023. It is a standard for group key agreement that moves through epochs as members join and leave. The design does not choose it yet.","k":"mls messaging layer security rfc 9420 group","s":"concepts","t":"The techniques, with analogies"},
-{"q":"What is X3DH?","a":"A key agreement protocol in the Signal specifications that lets someone send a first message before the recipient is online.","k":"x3dh signal key agreement first message","s":"sources","t":"Sources"},
-{"q":"How does search work over encrypted data?","a":"The simple answer is a full-text index on each device, built from decrypted content and never sent anywhere. Server-side search needs searchable encryption or blind indexes, which leak which items match which searches.","k":"search encrypted data index searchable","s":"concepts","t":"The techniques, with analogies"},
-{"q":"What about email?","a":"Classic email carries the envelope in the clear. OpenPGP (RFC 9580, 2024) and S/MIME can seal the body. A bridge to classic email decrypts or re-seals the message, so the bridge is where plain text exists and must be trusted.","k":"email smtp openpgp bridge sealed","s":"concepts","t":"The techniques, with analogies"},
-{"q":"What is a bridge?","a":"A gateway between this design and classic email. At the bridge a message is in plain text or re-sealed, so it is a trusted hop.","k":"bridge gateway email trusted","s":"glossary","t":"Glossary"},
-{"q":"How does compliance work without plaintext access?","a":"Admins manage membership and policy through signed group changes. Legal discovery and retention need content access, which can mean keys held by the organisation, a custodian, or an export holder. Each choice gives up some privacy.","k":"compliance discovery legal retention admin","s":"concepts","t":"The techniques, with analogies"},
-{"q":"How is key recovery done?","a":"Through a recovery key, a split key, or trusted devices or people. Recovery is only as safe as the place where the recovery material is kept.","k":"recovery key split trusted devices","s":"concepts","t":"The techniques, with analogies"},
-{"q":"What are the open problems?","a":"Search, onboarding a new device, key loss, mobile background sync, spam filtering of sealed mail, legal discovery, rich document merging and the growth of merge history.","k":"open problems challenges unsolved","s":"open-problems","t":"Open problems"},
-{"q":"How does a new device get its keys?","a":"That is an open problem. A new device must receive keys without a central directory that could lie about who it is.","k":"onboarding new device keys directory","s":"open-problems","t":"Open problems"},
-{"q":"How is spam handled for sealed mail?","a":"That is an open problem. A server cannot filter sealed mail by content, so filtering has to happen on the device or use metadata.","k":"spam filter sealed mail","s":"open-problems","t":"Open problems"},
-{"q":"What is not decided?","a":"The group-key protocol, where a relay runs and who runs it, how identities are proved, the default recovery policy, which office features come first, how legal access works, and pricing or any business model.","k":"not decided open choices","s":"not-decided","t":"What is not decided"},
-{"q":"Can I run my own relay?","a":"That is not decided. The design leaves open where a relay runs and whether a person can run their own.","k":"own relay host run self-host","s":"not-decided","t":"What is not decided"},
-{"q":"Are the numbers and results real?","a":"There are none. Nothing here is measured. The Who can read tables are written by hand, and the statements about techniques describe what they do in general.","k":"numbers results measured data","s":"caveats","t":"Caveats"},
-{"q":"Where do the sources come from?","a":"The Sources section lists the MLS RFC 9420, the X3DH specification, OpenPGP RFC 9580 and HKDF RFC 5869. Each was checked on 2026-10-24.","k":"sources references citations checked","s":"sources","t":"Sources"},
-{"q":"Is this safe to use for real secrets?","a":"No. This is an idea page with no implementation. Do not treat any description here as a security guarantee.","k":"safe secrets security guarantee","s":"caveats","t":"Caveats"},
-{"q":"What does Learn more show?","a":"A precise version of the analogy above it. Each technique has an everyday picture first, then the detail.","k":"learn more analogy precise detail","s":"concepts","t":"The techniques, with analogies"},
-{"q":"How do the step-through diagrams work?","a":"Press Next and Back under a diagram. Each step highlights one part of the picture and shows a one-line caption. No history entries are added.","k":"step through diagram next back caption","s":"idea-in-one-picture","t":"The idea in one picture"},
-{"q":"What is the quiz for?","a":"Four questions on the main ideas: backup breaches, removal, offline merge and metadata. Pick an answer and open the explanation.","k":"quiz questions test check yourself","s":"quiz","t":"Check yourself"},
-{"q":"Does this page store anything about me?","a":"No. Nothing you type or click is stored or sent. The chat keeps messages only in this open tab.","k":"store data privacy chat tracking","s":"ask-this-idea","t":"Ask this idea"},
-{"q":"Can I speak to this page or use a microphone?","a":"No. The page takes typed questions only. There is no microphone input and no speech output.","k":"microphone speech voice audio dictation","s":"ask-this-idea","t":"Ask this idea"},
-{"q":"Why does a backup of a lost laptop still need the cloud?","a":"Because the snapshot is kept there sealed, so a new laptop can download it after the old one is gone. The cloud cannot open it on its own.","k":"backup cloud why needed lost laptop","s":"backup-recovery","t":"Backup and recovery"},
-{"q":"What does sealed mean?","a":"Encrypted and authenticated, so a change to the bytes is detected. The page uses sealed for encrypted data throughout.","k":"sealed encrypted authenticated term","s":"glossary","t":"Glossary"}
-]</script>
 </body>
 </html>

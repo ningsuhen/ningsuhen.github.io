@@ -23,13 +23,21 @@ const LEXICON_BYTES = 4_592_212;
 const VOICE_BYTES = 522_240;
 
 /**
- * The two exports that work (measured, docs/speak.md). fp16 and q8f16 both fail on the WebGPU
- * EP, so q8f16 always runs on wasm, and fp32 is the only GPU variant.
+ * The exports that work (measured, docs/speak.md). fp16 and q8f16 both fail on the WebGPU EP,
+ * so `accelerator` is where each one runs: fp32 is the only GPU variant, and a `wasm` variant
+ * never touches WebGPU even when it exists.
  */
 export const VARIANTS = {
 	fp32: { file: 'onnx/model.onnx', bytes: 325_532_232, ortBytes: 24_254_953, accelerator: 'webgpu', label: 'Fast: GPU' },
-	q8f16: { file: 'onnx/model_q8f16.onnx', bytes: 86_033_585, ortBytes: 24_254_953, accelerator: 'wasm', label: 'Light: CPU/WASM' },
+	fp16: { file: 'onnx/model_fp16.onnx', bytes: 163_234_740, ortBytes: 24_254_953, accelerator: 'wasm', label: 'Light: CPU/WASM' },
+	q8f16: { file: 'onnx/model_q8f16.onnx', bytes: 86_033_585, ortBytes: 24_254_953, accelerator: 'wasm', label: 'Lightest: CPU/WASM' },
 };
+
+/** What init() picks with a WebGPU adapter, and without one. */
+export const DEFAULT_GPU_VARIANT = 'fp32';
+// fp16 over q8f16 (measured, loaded, 48 sentences each): median RTF 1.52 vs 1.91, NaN retries 16 vs
+// 23. Neither is NaN-free on the wasm EP; synth() recovers both. Costs 77 MB more download.
+export const DEFAULT_CPU_VARIANT = 'fp16';
 
 /** First-visit download per variant, MB: model + ORT runtime + lexicon + one voice. */
 export const DOWNLOAD_MB = Object.fromEntries(
@@ -100,8 +108,8 @@ class KokoroEngine {
 	notice = NOTICE;
 
 	#speaker = null;
-	#variant = 'gpu' in navigator ? 'fp32' : 'q8f16';
-	#accelerator = this.#variant === 'fp32' ? 'webgpu' : 'wasm';
+	#variant = 'gpu' in navigator ? DEFAULT_GPU_VARIANT : DEFAULT_CPU_VARIANT;
+	#accelerator = VARIANTS[this.#variant].accelerator;
 	#base = MODEL_BASE;
 	#generation = 0;
 	#queue = Promise.resolve();
@@ -129,15 +137,15 @@ class KokoroEngine {
 
 	/**
 	 * @param {{ onProgress?: (f: number) => void, baseUrl?: string, ortBase?: string,
-	 *           variant?: 'fp32' | 'q8f16' }} [opts]
+	 *           variant?: keyof typeof VARIANTS }} [opts]
 	 */
 	async init(opts = {}) {
 		const gpu = await hasWebGPU();
-		const variant = opts.variant ?? (gpu ? 'fp32' : 'q8f16');
+		const variant = opts.variant ?? (gpu ? DEFAULT_GPU_VARIANT : DEFAULT_CPU_VARIANT);
 		if (!VARIANTS[variant]) throw new Error(`unknown variant ${variant}`);
 		this.#variant = variant;
 		this.#base = new URL(opts.baseUrl ?? MODEL_BASE, location.href).href;
-		const forceCpu = !(gpu && variant === 'fp32');
+		const forceCpu = !(gpu && VARIANTS[variant].accelerator === 'webgpu');
 		const model = VARIANTS[variant];
 
 		const total = model.bytes + LEXICON_BYTES + VOICE_BYTES;
