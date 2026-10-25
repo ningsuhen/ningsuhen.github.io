@@ -1,13 +1,12 @@
-flowchart LR
+flowchart TB
   C([Client]) --> R[Router]
   R --> S[Scheduler]
-  S <--> G[GPU compute]
-  G <--> K[(KV cache)]
+  S --> G[GPU compute]
   G --> O[Response]
-  R -. cache miss .-> E[Embedding service]
-  S -->|queue full| Q[Reject request]
-  O --> OK[Within latency budget]
-  O --> SLOW[Near the limit]
+  O --> OK[Delivered]
+  R -->|cache miss| E[Embedding service]
+  S -->|queue full| Q[Rejected]
+  G -->|reads| K[(KV cache)]
   class C actor
   class R,S control
   class G compute
@@ -15,5 +14,4 @@ flowchart LR
   class O data
   class E external
   class OK good
-  class SLOW warn
   class Q bad

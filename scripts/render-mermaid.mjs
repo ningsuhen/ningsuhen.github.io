@@ -46,6 +46,13 @@ if (format === "svg") {
 		/(fill|stroke|background-color|background|color|stop-color|flood-color):\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|[a-z]+)(?![a-z(-])\s*(!important)?\s*;?/g,
 		(m, prop, val) => (/^(none|transparent|inherit|currentcolor|context-fill|context-stroke)$/i.test(val) ? m : ""),
 	);
+	// Intrinsic size, never scaled: every diagram shows its text at the configured font size. Wide ones scroll in the figure.
+	const vb = svg.match(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+) ([\d.]+)"/);
+	if (vb) {
+		const w = Math.round(Number(vb[1]));
+		svg = svg.replace(/(<svg[^>]*?) width="[^"]*"/, "$1").replace(/(<svg[^>]*?) height="[^"]*"/, "$1");
+		svg = svg.replace(/(<svg[^>]*?) style="([^"]*)"/, `$1 style="$2;width:${w}px;min-width:0;max-width:none;height:auto;display:block;margin:0 auto"`).replace(";;", ";");
+	}
 	// Classic look only: drop the inert "neo" rules and the gradient/shadow defs they reference.
 	svg = svg.replace(/[^{}]*\[data-look="neo"\][^{}]*\{[^{}]*\}/g, "").replace(/<defs>(?:(?!<\/defs>).)*?(?:feDropShadow|linearGradient)(?:(?!<\/defs>).)*?<\/defs>/gs, "");
 	writeFileSync(resolve(cwd, output), svg);
