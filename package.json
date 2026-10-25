@@ -30,6 +30,8 @@
     "check:leaks": "node scripts/check-public-leaks.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "test:drafts": "node --test scripts/test-draft-pages.mjs",
+    "test:dates": "node --experimental-strip-types --test scripts/date-utils.test.ts",
+    "check:dates": "node scripts/check-dates.mjs",
     "check:listen": "node scripts/check-listen.mjs",
     "check:kokoro": "node scripts/check-kokoro.mjs",
     "new-experiment": "node scripts/new-experiment.mjs",
