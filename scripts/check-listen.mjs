@@ -8,6 +8,7 @@ import {
 	readdirSync,
 	readFileSync,
 	statSync,
+	writeFileSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -595,7 +596,29 @@ const routeKokoro = (ctx, body, status = 200) =>
 	ctx.route("**/tts/kokoro.js", (route) =>
 		route.fulfill({ status, contentType: "text/javascript", body }),
 	);
-const routeModelFiles = async (ctx, counter) => {
+// The pinned ONNX Runtime binary. The real bytes are fetched once (checked by size and SHA-256) into the gitignored
+// .tmp/, then served to the page by route, so the real download, check and cache path runs.
+const ORT_URL = "https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0/resolve/c25145ab811e50c175798b09cd6da3fc272d9411/ort-wasm-simd-threaded.asyncify.wasm";
+const ORT_BYTES = 24254953;
+const ORT_SHA = "7e83cd6cee77e478bc96a7e91b198144fb5e4126287daf1f9b54bb195ebcd55a";
+const ORT_CACHE = path.resolve(".tmp/check-listen/ort-wasm.bin");
+async function realOrtRuntime() {
+	const digest = (b) => createHash("sha256").update(b).digest("hex");
+	if (existsSync(ORT_CACHE)) {
+		const kept = readFileSync(ORT_CACHE);
+		if (kept.length === ORT_BYTES && digest(kept) === ORT_SHA) return kept;
+	}
+	const response = await fetch(ORT_URL).catch(() => null);
+	if (!response?.ok) throw new Error("check:listen needs internet once to fetch the pinned ONNX Runtime binary");
+	const body = Buffer.from(await response.arrayBuffer());
+	if (body.length !== ORT_BYTES || digest(body) !== ORT_SHA) throw new Error("the pinned ONNX Runtime binary does not match its size and hash");
+	mkdirSync(path.dirname(ORT_CACHE), { recursive: true });
+	writeFileSync(ORT_CACHE, body);
+	return body;
+}
+const REAL_ORT = await realOrtRuntime();
+
+const routeModelFiles = async (ctx, counter, runtime = {}) => {
 	await ctx.route("**/tts/manifest.json", (route) =>
 		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FAKE_MANIFEST) }),
 	);
@@ -610,13 +633,23 @@ const routeModelFiles = async (ctx, counter) => {
 			body: body ?? "missing",
 		});
 	});
+	// Registered after the general route, so it matches first.
+	await ctx.route(ORT_URL, (route) => {
+		counter.hf += 1;
+		return route.fulfill({
+			status: runtime.status ?? 200,
+			contentType: "application/wasm",
+			headers: { "access-control-allow-origin": "*" },
+			body: runtime.body ?? REAL_ORT,
+		});
+	});
 };
-const neuralContext = async (browser, { delayMs, initMs, status, body, gpu = true, counter = { hf: 0 } }) => {
+const neuralContext = async (browser, { delayMs, initMs, status, body, gpu = true, counter = { hf: 0 }, runtime = {} }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	ctx.setDefaultTimeout(10000);
 	await ctx.addInitScript(`${SPEECH_STUB}; ${gpu ? GPU_STUB : ""}; window.__KOKORO_READY = true;`);
 	await routeKokoro(ctx, body ?? stubEngine(delayMs ?? 50, initMs ?? 0), status);
-	await routeModelFiles(ctx, counter);
+	await routeModelFiles(ctx, counter, runtime);
 	return ctx;
 };
 const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
@@ -780,7 +813,11 @@ await step("10b. connect once, neural", async () => {
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	// Store the stub files and the consent, as a visitor who downloaded the voice earlier would have them.
-	await page.evaluate(async () => {
+	await page.evaluate(async ({ ortUrl, sha }) => {
+		// The verified runtime is stored under its cache key (ort-runtime.js), with the real bytes.
+		const runtimeBytes = await (await fetch(ortUrl, { mode: "cors" })).arrayBuffer();
+		const runtimeCache = await caches.open("ort-runtime-v1");
+		await runtimeCache.put(new URL(`/ort-wasm@1.27.0/${sha}`, location.origin).href, new Response(runtimeBytes, { headers: { "content-length": String(runtimeBytes.byteLength) } }));
 		const manifest = await (await fetch("/tts/manifest.json")).json();
 		const cache = await caches.open("kokoro-tts-v1");
 		// A stored file counts by its recorded size (kokoro-cache.ts), so each entry carries the manifest size.
@@ -792,7 +829,7 @@ await step("10b. connect once, neural", async () => {
 			await cache.put(url, new Response("stub", { headers: { "content-length": String(bytes) } }));
 		localStorage.setItem("listen-prefs", JSON.stringify({ engine: "kokoro", rate: 1 }));
 		localStorage.setItem("listen-kokoro-consent", JSON.stringify("fp32"));
-	});
+	}, { ortUrl: ORT_URL, sha: ORT_SHA });
 	const errors = [];
 	page.on("pageerror", (e) => errors.push(e.message));
 	for (const label of ["neural, hard load", "neural, after reload"]) {
@@ -917,6 +954,27 @@ await step("10b. connect once, neural", async () => {
 	await third.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await third.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 	expect(await engineValue(third) === "web-speech", "two failed starts: the default was not paused");
+	await ctx.close();
+}
+
+// 13. ONNX Runtime binary: bytes that do not match the pin are never used (integrity error, browser voice for this
+// session); an unreachable host is reported as "host unavailable" after retries, with no automatic second host.
+for (const [label, runtime, expected] of [
+	["integrity", { body: Buffer.alloc(ORT_BYTES, 0) }, /integrity check/],
+	["host", { status: 500 }, /host unavailable/],
+]) {
+	const ctx = await neuralContext(browser, { runtime });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await page.click("[data-action=play]");
+	await page.waitForSelector("[data-consent][open]", { timeout: 4000 })
+		.catch(() => expect(false, `${label}: no consent prompt`));
+	await page.click("[data-variant=fp32]");
+	await page.waitForFunction((source) => new RegExp(source).test(document.querySelector("[data-status]")?.textContent ?? ""), expected.source, { timeout: 20000 })
+		.catch(() => expect(false, `${label}: no runtime error shown`));
+	expect(await engineValue(page) === "web-speech", `${label}: the browser voice did not take over`);
+	expect(!(await page.evaluate(() => /stored/.test(document.querySelector("[data-runtime-state]")?.textContent ?? ""))), `${label}: runtime reported as stored after a failed check`);
 	await ctx.close();
 }
 

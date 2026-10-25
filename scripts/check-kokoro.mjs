@@ -99,6 +99,9 @@ try {
 
 	const result = await page.evaluate(
 		async ({ sentences, mode, modelBase }) => {
+			// The verified ONNX Runtime binary (pinned host, size and SHA-256) must be in place before the engine's init().
+			const runtime = await import("/tts/ort-runtime.js");
+			await runtime.ensureOrtRuntime({});
 			const { createEngine } = await import("/tts/kokoro.js");
 			const engine = await createEngine();
 			const t0 = performance.now();
