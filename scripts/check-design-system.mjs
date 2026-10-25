@@ -341,9 +341,12 @@ const probeStructure = (canon) => {
 		// (tabindex=-1, for wheel-only-after-focus) is added by rd.js at mount, so it is not checked here.
 		fullscreen: [...document.querySelectorAll('[data-rd="fullscreen"]')].map((el) => {
 			const t = el.querySelector("[data-rd-fullscreen-toggle]");
+			return {
 				hasToggle: !!t,
 				isButton: t?.matches("button") || t?.getAttribute("role") === "button",
 				ariaPressed: t?.hasAttribute("aria-pressed"),
+			};
+		}),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
