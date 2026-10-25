@@ -127,7 +127,7 @@ onMount(async () => {
                         <!-- post title -->
                         <div
                                 class="w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
-                     group-hover:translate-x-1 transition-all group-hover:text-[var(--primary)]
+                     group-hover:translate-x-1 transition-all group-hover:text-[var(--btn-content)]
                      text-75 pr-8 whitespace-nowrap overflow-ellipsis overflow-hidden"
                         >
                             {post.data.title}
@@ -146,6 +146,6 @@ onMount(async () => {
         </div>
     {/each}
     {#if loaded && groups.length === 0}
-        <p class="py-10 text-center text-75">No posts match this filter. <a href={url("/archive/")} class="link text-[var(--primary)]">Show all posts</a></p>
+        <p class="py-10 text-center text-75">No posts match this filter. <a href={url("/archive/")} class="link text-[var(--btn-content)]">Show all posts</a></p>
     {/if}
 </div>

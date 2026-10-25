@@ -9,6 +9,10 @@ module.exports = {
       fontFamily: {
         sans: ["Roboto", "sans-serif", ...defaultTheme.fontFamily.sans],
       },
+      // Text floor: the root is 14px below md (Layout.astro), so plain 0.75rem would render 10.5px. 12px at every width.
+      fontSize: {
+        xs: ["max(0.75rem, 12px)", { lineHeight: "1rem" }],
+      },
     },
   },
   plugins: [

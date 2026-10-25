@@ -54,20 +54,20 @@
 .rd-table-wrap { counter-increment: rd-tbl; }
 .rd-table caption { caption-side: top; text-align: left; padding: 0 0 var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
 .rd-table caption::before { content: "Table " counter(rd-tbl) ". "; font-weight: 700; color: var(--rd-text-strong); }
-.rd-ref { color: var(--rd-accent); }
+.rd-ref { color: var(--rd-accent-ink); }
 
 /* Citations and references: <a class="rd-cite" href="#ref-dean">[1]</a>; <ol class="rd-refs"><li id="ref-dean"> */
-.rd-cite { color: var(--rd-accent); text-decoration: none; white-space: nowrap; }
+.rd-cite { color: var(--rd-accent-ink); text-decoration: none; white-space: nowrap; }
 .rd-cite:hover { text-decoration: underline; }
 .rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-sm); }
 .rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: var(--rd-space-2) 0; }
 .rd-refs li::before { content: "[" counter(rd-ref) "]"; position: absolute; left: 0; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
 .rd-refs li:target { background: var(--rd-btn-bg); border-radius: var(--rd-radius-sm); }
-.rd-refs .rd-doi { color: var(--rd-accent); word-break: break-all; }
+.rd-refs .rd-doi { color: var(--rd-accent-ink); word-break: break-all; }
 
 /* Footnotes: <sup class="rd-fn"><a href="#fn1" id="fnref1">1</a></sup> */
 sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
-.rd-fn a { color: var(--rd-accent); text-decoration: none; }
+.rd-fn a { color: var(--rd-accent-ink); text-decoration: none; }
 .rd-footnotes { border-top: 1px solid var(--rd-line); margin-top: var(--rd-gap-section); padding-top: var(--rd-space-2); font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
 .rd-footnotes li:target { background: var(--rd-btn-bg); }
 

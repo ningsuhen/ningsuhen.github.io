@@ -36,11 +36,19 @@ function hidePanel() {
 	const panel = document.querySelector("#light-dark-panel");
 	panel.classList.add("float-panel-closed");
 }
+
+// Keyboard: the panel opens while focus is inside it (Tab from the toggle), and closes when focus leaves.
+function hideOnFocusOut(e: FocusEvent) {
+	const wrap = e.currentTarget as HTMLElement;
+	if (!wrap.contains(e.relatedTarget as Node | null)) hidePanel();
+}
 </script>
 
-<!-- z-50 make the panel higher than other float panels -->
-<div class="relative z-50" role="menu" tabindex="-1" onmouseleave={hidePanel}>
-    <button aria-label="Light/Dark Mode" role="menuitem" class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch" onclick={toggleScheme} onmouseenter={showPanel}>
+<!-- z-50 make the panel higher than other float panels. A plain toggle plus a hover/focus popover of
+     pressed buttons (not role=menu: that would need menuitem children and arrow-key roving focus). -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="relative z-50" onmouseleave={hidePanel} onfocusin={showPanel} onfocusout={hideOnFocusOut}>
+    <button aria-label="Light/Dark Mode" class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch" onclick={toggleScheme} onmouseenter={showPanel}>
         <div class="absolute" class:opacity-0={mode !== LIGHT_MODE}>
             <Icon icon={sun} class="text-[1.25rem]"></Icon>
         </div>
@@ -56,6 +64,7 @@ function hidePanel() {
         <div class="card-base float-panel p-2">
             <button class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
                     class:current-theme-btn={mode === LIGHT_MODE}
+                    aria-pressed={mode === LIGHT_MODE}
                     onclick={() => switchScheme(LIGHT_MODE)}
             >
                 <Icon icon={sun} class="text-[1.25rem] mr-3"></Icon>
@@ -63,6 +72,7 @@ function hidePanel() {
             </button>
             <button class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
                     class:current-theme-btn={mode === DARK_MODE}
+                    aria-pressed={mode === DARK_MODE}
                     onclick={() => switchScheme(DARK_MODE)}
             >
                 <Icon icon={moon} class="text-[1.25rem] mr-3"></Icon>
@@ -70,6 +80,7 @@ function hidePanel() {
             </button>
             <button class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95"
                     class:current-theme-btn={mode === AUTO_MODE}
+                    aria-pressed={mode === AUTO_MODE}
                     onclick={() => switchScheme(AUTO_MODE)}
             >
                 <Icon icon={sunMoon} class="text-[1.25rem] mr-3"></Icon>

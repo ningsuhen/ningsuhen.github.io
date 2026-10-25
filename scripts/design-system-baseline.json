@@ -1,12 +1,6 @@
 {
 	"entries": [
 		{
-			"page": "/experiments/brev-tree-traversal/",
-			"rule": "axe",
-			"owner": "Brev",
-			"reason": "color-contrast (serious) on text in the Brev report (muted or small text on the card background). Fix the source colours."
-		},
-		{
 			"page": "/research/brev-tree-benchmark/",
 			"rule": "axe",
 			"owner": "Brev",
@@ -65,6 +59,12 @@
 			"rule": "rail-presence",
 			"owner": "EcoSimulation",
 			"reason": "The page has an On this page rail at 1920px and the main post does not (or the reverse). Align the breakpoint."
+		},
+		{
+			"page": "/research/ai-economy/",
+			"rule": "rail-type",
+			"owner": "EcoSimulation",
+			"reason": "The export carries its own accent copy (oklch(0.55 0.12 h), 4.18:1 on the page); the site accent ink is now oklch(0.5 0.12 h). Re-export with --rd-accent-ink for rail and link text."
 		},
 		{
 			"page": "/research/ai-economy/",
@@ -215,12 +215,6 @@
 			"rule": "rail-type",
 			"owner": "site",
 			"reason": "Standalone rail text is 13px; the main TOC is 12px."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "axe",
-			"owner": "site",
-			"reason": "rail text 3.8:1 and link 4.18:1 are the main post's own colours; fixed for all pages in the shared token pass, then this entry is deleted"
 		}
 	]
 }
