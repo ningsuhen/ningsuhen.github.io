@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -58,7 +59,8 @@ const base = `http://127.0.0.1:${server.address().port}`;
 // Headless Chrome hides scrollbars by default, which would hide a 15px page scrollbar from this check.
 const browser = await chromium.launch({ executablePath: findChrome(), ignoreDefaultArgs: ["--hide-scrollbars"] });
 const failures = [];
-const pages = htmlPages();
+const drafts = draftHrefs();
+const pages = htmlPages().filter((rel) => !isDraftPage(rel, drafts));
 for (const rel of pages) {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
 	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
@@ -157,16 +159,9 @@ for (const [section, listPath] of [
 	["ideas", "/ideas/"],
 ]) {
 	if (pages.includes(path.join(section, "index.html"))) failures.push(`public/${section}/index.html exists: the Astro page owns /${section}/`);
-	// Draft entries are hidden on purpose (work in progress), so they are exempt.
-	const drafts = new Set(
-		JSON.parse(readFileSync(path.join("src/data", `${section}.json`), "utf8"))
-			.items.filter((i) => i.status.toLowerCase() === "draft")
-			.map((i) => i.href),
-	);
 	const expected = pages
 		.filter((rel) => rel.startsWith(`${section}${path.sep}`) && rel.split(path.sep).length === 3)
-		.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`)
-		.filter((u) => !drafts.has(u));
+		.map((rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`);
 	const ctx = await browser.newContext({ viewport: VIEWPORTS[0] });
 	const page = await ctx.newPage();
 	const resp = await page.goto(base + listPath, { waitUntil: "load" });
