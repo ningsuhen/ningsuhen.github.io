@@ -1,0 +1,12 @@
+{
+	"contract": 1,
+	"kind": "idea",
+	"slug": "edit-blog-in-place",
+	"title": "Editing an Astro blog on GitHub Pages, in place",
+	"created": "2026-10-25",
+	"updated": "2026-10-25",
+	"summary": "Fix your own post on the page where you read it, and let a pull request carry the change back to the Markdown. I'm building a rough version for this site. It isn't finished, and I haven't measured anything.",
+	"eyebrow": "Idea",
+	"width": "wide",
+	"layout": "tabbed"
+}
