@@ -545,9 +545,9 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 /* ======================================================================
    Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
    ====================================================================== */
-/* Section bar (rd-expnav): the navbar-width frame, the breadcrumb band's height (--rd-crumb-h) under the injected navbar card. Its first
-   link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
-   container padding. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
+/* Section bar (rd-expnav): the navbar-width frame, the breadcrumb band's height (--rd-crumb-h) under the injected navbar card. The
+   first link starts flush at the bar's left edge (no left inset); the right keeps a 16px gutter so a scrolled-to-end bar does not
+   butt against the card edge. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
    --rd-navbar-h + --rd-crumb-h (the band's height under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
    link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 @media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
@@ -561,7 +561,7 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	width: 100%;
 	max-width: var(--rd-navbar-width);
 	margin: 0 auto;
-	padding: 0 var(--rd-space-4);
+	padding: 0 var(--rd-space-4) 0 0; /* flush left: the first tab starts at the bar's edge; the right keeps a 16px gutter */
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
 	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
