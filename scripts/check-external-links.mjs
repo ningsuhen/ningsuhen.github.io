@@ -29,6 +29,30 @@ const ATTR = /\s(href|src|srcset|poster)\s*=\s*("([^"]*)"|'([^']*)')/gi;
 // Markup that only looks like links: comments, scripts, styles and code samples (their href="…" is text).
 const INERT = /<!--[\s\S]*?-->|<(script|style|pre|code)\b[\s\S]*?<\/\1>|<link\b[^>]*rel=["']canonical["'][^>]*>/gi;
 
+// Links the check skips, with a reason per entry. None are dead — they are not meant to be probed:
+//   - API endpoints: JSON data, not a browsable page (a HEAD to a data path 404s by design).
+//   - bot-blocked: serve 200 to a browser but 404/503 to a HEAD request.
+//   - network-restricted: unreachable from the CI runner (geo/TLS), not dead.
+// Matched as a prefix of origin+pathname. Add a reason when you add an entry.
+const ALLOWLIST = [
+	{ prefix: "https://api.elections.kalshi.com/", reason: "API endpoint (JSON candlestick data, not a browsable page)" },
+	{ prefix: "https://www.eia.gov/", reason: "bot-blocked (200 to a browser, 503 to HEAD)" },
+	{ prefix: "https://support.google.com/", reason: "bot-blocked (200 to a browser, 404 to HEAD)" },
+	{ prefix: "https://fred.stlouisfed.org/", reason: "network-restricted (unreachable from the CI runner)" },
+	{ prefix: "https://eng.dgbas.gov.tw/", reason: "network-restricted (unreachable from the CI runner)" },
+	// Bot-blocked primary sources: the server answers (403/429 to the checker) but is reachable to readers.
+	{ prefix: "https://www.sec.gov/", reason: "bot-blocked (SEC filings; 403 to the checker)" },
+	{ prefix: "https://www.imf.org/", reason: "bot-blocked (IMF reports; 403 to the checker)" },
+	{ prefix: "https://www.elibrary.imf.org/", reason: "bot-blocked (IMF eLibrary; 403 to the checker)" },
+	{ prefix: "https://www.bloomberg.com/", reason: "bot-blocked (403 to the checker)" },
+	{ prefix: "https://medium.com/", reason: "bot-blocked (403 to the checker)" },
+	{ prefix: "https://www.hashicorp.com/", reason: "bot-blocked (403 to the checker)" },
+	{ prefix: "https://www.datacenterdynamics.com/", reason: "bot-blocked (403 to the checker)" },
+	{ prefix: "https://pr.tsmc.com/", reason: "bot-blocked (403 to the checker)" },
+];
+const allowReason = (key) => ALLOWLIST.find((a) => key.startsWith(a.prefix))?.reason;
+const allowedSkipped = new Set(); // allowlisted links skipped this run (reported, not probed)
+
 function htmlFiles(dir) {
 	return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
 		const full = path.join(dir, e.name);
@@ -109,7 +133,12 @@ function externalTargets(html) {
 			continue;
 		}
 		if (url.origin === SITE_ORIGIN) continue; // internal; check-internal-links covers it
-		out.add(url.origin + url.pathname); // dedupe: the same host+path is one link to check
+		const key = url.origin + url.pathname;
+		if (allowReason(key)) {
+			allowedSkipped.add(key);
+			continue;
+		}
+		out.add(key); // dedupe: the same host+path is one link to check
 	}
 	return [...out];
 }
@@ -168,6 +197,7 @@ if (!NO_NETWORK && !notFound.length) {
 	for (const r of results) r.pages = [...(sources.get(r.url) ?? [])].sort();
 	links = {
 		total: urls.length,
+		allowed: allowedSkipped.size,
 		broken: results.filter((r) => r.kind === "broken"),
 		blocked: results.filter((r) => r.kind === "blocked"),
 		unreachable: results.filter((r) => r.kind === "unreachable"),
@@ -192,7 +222,7 @@ console.log(`rss.xml:  ${rRss.ok ? "ok" : "FAILED"}${rRss.items ? ` (${rRss.item
 for (const p of rRss.problems) console.log(`  - ${p}`);
 if (links) {
 	console.log(
-		`links:    ${links.total} checked — ${links.broken.length} broken, ${links.blocked.length} blocked, ${links.unreachable.length} unreachable`,
+		`links:    ${links.total} checked (${links.allowed} allowlisted) — ${links.broken.length} broken, ${links.blocked.length} blocked, ${links.unreachable.length} unreachable`,
 	);
 	for (const r of [...links.broken, ...links.unreachable])
 		console.log(`  - ${r.kind}: ${r.url} (${r.status ?? r.error}) on ${r.pages.join(", ")}`);
