@@ -15,4 +15,4 @@ export function getStaticPaths() {
 const { slug } = Astro.params;
 const fragment = load("idea", slug!);
 ---
-<StandaloneShell kind={fragment.meta.kind} slug={slug!} fragment={fragment} />
+<StandaloneShell kind={fragment.meta.kind} slug={slug!} segment="ideas" fragment={fragment} />
