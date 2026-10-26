@@ -48,6 +48,12 @@ if [ -z "$dev_wt" ] && [ -z "$(git -C "$primary" status --porcelain)" ]; then
 	echo "switched $primary to dev/next"
 fi
 
+# Dependencies follow the lockfile of the checkout the dev server serves.
+if [ "$(git -C "$primary" rev-parse --abbrev-ref HEAD)" = "dev/next" ]; then
+	. "$(dirname "$0")/lib/ensure-deps.sh"
+	ensure_deps "$primary" || echo "sync: dependency install failed; the dev server will retry on restart" >&2
+fi
+
 deleted=0
 for b in $(git branch --merged "$upstream" --format='%(refname:short)'); do
 	case "$b" in master | dev/next) continue ;; esac
