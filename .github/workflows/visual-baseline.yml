@@ -48,6 +48,10 @@ jobs:
           # goes out unauthenticated. The helper is single-quoted, so only the ${GITHUB_TOKEN} placeholder
           # is stored in .git/config; the value is expanded in the helper's subshell at push time and never
           # lands in the config or the logs.
+          # Diagnostic: is GITHUB_TOKEN set in this step? An empty token gives exactly "Invalid username or
+          # token" for both the tokenized URL and this helper, while a tokenless clone of a public repo works.
+          # Print only whether it is non-empty — never the value.
+          [ -n "$GITHUB_TOKEN" ] && echo "GITHUB_TOKEN: set" || echo "GITHUB_TOKEN: EMPTY"
           clone="$(mktemp -d)"
           git clone --quiet --no-checkout "https://github.com/${{ github.repository }}.git" "$clone"
           cd "$clone"
