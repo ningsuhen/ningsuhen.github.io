@@ -23,7 +23,18 @@ export function applyChrome(html: string, script: string, extra: string, footer:
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	const withCrumbs = addBreadcrumb(body, urlPath, base, site);
-	return withThemeScript(ensureHead(versionedBundle(withCrumbs), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+	return withThemeScript(ensureHead(versionedBundle(withSearchBody(withCrumbs)), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+}
+
+// Index the page's content in the site search: Pagefind indexes elements marked data-pagefind-body.
+// The old standalone pages (public/**/*.html) were never marked, so a search for a report/playground
+// returned the companion post (no kind chip) instead of the page itself. Add the marker to the <main>.
+// The Astro shell already sets it (data-pagefind-body="" or "false"), so this only touches the old pages.
+function withSearchBody(html: string): string {
+	if (html.includes("data-pagefind-body")) return html;
+	const main = html.match(/<main(?=[\s>])[^>]*>/i);
+	if (!main) return html;
+	return html.replace(main[0], main[0].replace(/^<main/i, "<main data-pagefind-body"));
 }
 
 // Cache-bust the design-system bundle: append ?v=<hash> to its <link> and <script> so a new bundle is
