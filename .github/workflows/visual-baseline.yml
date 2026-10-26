@@ -42,9 +42,12 @@ jobs:
       - name: Commit + push to visual-baseline (clean clone, no hooks)
         run: |
           # Fresh clone: no `pnpm install`, so no .githooks pre-commit to fail closed on the runner.
-          # The token is in the remote URL so the push authenticates; GitHub masks GITHUB_TOKEN in logs.
+          # Clone plain (the repo is public); push to an explicit tokenized URL. Pushing to `origin` would
+          # fail — git strips credentials from the stored remote and the fresh clone has no credential
+          # helper, so the push would go out unauthenticated. GitHub masks GITHUB_TOKEN in the logs.
+          push_url="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           clone="$(mktemp -d)"
-          git clone --quiet --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" "$clone"
+          git clone --quiet --no-checkout "https://github.com/${{ github.repository }}.git" "$clone"
           cd "$clone"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -64,5 +67,5 @@ jobs:
             echo "baseline unchanged"
           else
             git commit -m "visual: baseline $(date -u +%Y-%m-%d)"
-            git push --quiet origin HEAD:visual-baseline
+            git push --quiet "$push_url" HEAD:visual-baseline
           fi
