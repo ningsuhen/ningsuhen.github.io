@@ -108,9 +108,19 @@ function maskDataScripts(body) {
 	);
 }
 
+// Pre-rendered Mermaid diagrams (the design system's own output, `id="mmd-…"`) are self-contained
+// inline SVG that carries an internal <style> block and style= presentation attributes. They are a
+// documented exception to the "no <style>, no style= beyond --*" body rules; a hand-rolled <style>
+// or style= anywhere else is still flagged. No nested <svg>, so the non-greedy match is safe.
+function maskMermaid(body) {
+	return body.replace(/<svg\b[^>]*\bid="mmd-[^"]*"[^>]*>[\s\S]*?<\/svg>/gi, (s) =>
+		" ".repeat(s.length),
+	);
+}
+
 function validateBody(body, meta) {
 	const p = [];
-	const masked = maskDataScripts(body);
+	const masked = maskMermaid(maskDataScripts(body));
 	for (const m of masked.matchAll(FORBIDDEN_TAGS))
 		p.push(
 			`forbidden <${m[0].slice(1).toLowerCase()}> in body.html (the shell supplies the document and chrome)`,
@@ -315,8 +325,9 @@ function validateIcons(body, problems) {
 
 // ---- links and assets ----------------------------------------------------------------------
 // Relative refs resolve against the fragment's runtime asset dir (public/<kind>/<slug>/); site-absolute
-// refs (/…) against public/. External http(s)/mailto/tel and in-page #anchors are navigations, not
-// subresources, and are allowed.
+// refs (/…) against public/. External http(s)/mailto/tel, in-page #anchors and same-page ?query
+// navigations (e.g. ?tab=…#… — always the fragment's own URL) are navigations, not subresources, and
+// are allowed.
 function validateLinks(body, kind, slug) {
 	const p = [];
 	const base = path.join(ROOT, "public", kind, slug);
@@ -325,7 +336,7 @@ function validateLinks(body, kind, slug) {
 			(m) => m[1],
 		),
 	)) {
-		if (/^(?:https?:|mailto:|tel:|#)/.test(ref)) continue;
+		if (/^(?:https?:|mailto:|tel:|#|\?)/.test(ref)) continue;
 		let target = ref.startsWith("/")
 			? path.join(ROOT, "public", ref)
 			: path.resolve(base, ref);
@@ -454,6 +465,8 @@ function findFragments(root) {
 function selfTest() {
 	const bad = (fn, input, label) =>
 		fn(input).length === 0 ? `self-test: ${label} missed its canary` : null;
+	const good = (fn, input, label) =>
+		fn(input).length > 0 ? `self-test: ${label} was wrongly flagged` : null;
 	const checks = [
 		bad(
 			(m) => validateMeta(m, "research", "x"),
@@ -477,6 +490,21 @@ function selfTest() {
 			(b) => validateBody(b, { layout: "scroll" }),
 			'<button onclick="f()">x</button>',
 			"on* handler",
+		),
+		good(
+			(b) => validateBody(b, { layout: "scroll" }),
+			'<svg id="mmd-x" style="width:100px"><style>#mmd-x{font-size:14px}</style><rect style="fill:#fff"/></svg>',
+			"pre-rendered Mermaid SVG (internal <style>/style= is its own output)",
+		),
+		bad(
+			(b) => validateBody(b, { layout: "scroll" }),
+			'<div><style>.x{color:#fff}</style></div>',
+			"hand-rolled <style> outside a Mermaid SVG",
+		),
+		good(
+			(b) => validateLinks(b, "research", "x"),
+			'<a href="?tab=pipelines#p-model">Pipelines</a>',
+			"same-page ?query navigation is not a subresource",
 		),
 		bad(
 			(b) => validateBody(b, { layout: "tabbed" }),

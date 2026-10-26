@@ -34,7 +34,7 @@
 		"contentOnly": true,
 		"tabbed": "top-level <section data-rd-tab=\"id\" data-rd-label=\"…\" [data-rd-icon=\"…\"]>; ids equal today's ?tab= values",
 		"scroll": "data-rd-section",
-		"allowed": ["rd-* components", "inline SVG", "<script type=\"application/json\" data-rd-data> up to 100 KB"],
+		"allowed": ["rd-* components", "inline SVG", "pre-rendered Mermaid diagrams (self-contained <svg id=\"mmd-…\"> with an internal <style> and style= presentation attributes — the design system's own output; a documented exception to the no-<style>/no-style= rules)", "<script type=\"application/json\" data-rd-data> up to 100 KB"],
 		"forbidden": [
 			"html/head/body/style/link/iframe tags",
 			"executable scripts",
