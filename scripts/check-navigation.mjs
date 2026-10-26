@@ -256,7 +256,12 @@ async function runSequence(label, plan, vp, burst, strict) {
 			continue;
 		}
 		await page.waitForTimeout(900);
-		await settle(page);
+		// A settle timeout means the navbar/scroll/player state never stabilizes; report the step
+		// instead of letting the uncaught TimeoutError crash the whole check with no context.
+		if (!(await settle(page).then(() => true).catch(() => false))) {
+			failures.push(`${label} step ${i} (${desc}) -> ${page.url().replace(base, "")}: page did not settle within 8s (navbar/scroll/player state never stable across two frames)`);
+			break;
+		}
 		const seq = await page.evaluate(FINGERPRINT).catch(async () => {
 			await page.waitForLoadState("load");
 			return page.evaluate(FINGERPRINT);
@@ -275,7 +280,11 @@ async function runSequence(label, plan, vp, burst, strict) {
 		await fp.waitForFunction((y) => document.documentElement.scrollHeight >= y + innerHeight, seq.scrollY, { timeout: 5000 }).catch(() => {});
 		await fp.evaluate((y) => window.scrollTo(0, y), seq.scrollY);
 		await fp.waitForTimeout(500);
-		await settle(fp);
+		if (!(await settle(fp).then(() => true).catch(() => false))) {
+			await fresh.close();
+			failures.push(`${label} step ${i} (${desc}) -> ${url.pathname}${url.hash}: fresh load did not settle within 8s`);
+			break;
+		}
 		const freshFp = await fp.evaluate(FINGERPRINT);
 		await fresh.close();
 		checks++;
