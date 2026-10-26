@@ -25,6 +25,10 @@ export const metaSchema = z.object({
 	comments: z.boolean().default(true),
 	search: z.boolean().default(true),
 	source: z.object({ project: z.string(), build: z.string() }).optional(),
+	// Lucide icon names the page creates in page.js (not referenced in the body markup), so the shell
+	// can include them in the sprite. The sprite is built from `#i-…` refs in the body; an icon only
+	// ever created in JS would otherwise be missing and render empty.
+	icons: z.array(z.string().regex(/^[a-z0-9-]+$/)).optional(),
 });
 export type Meta = z.infer<typeof metaSchema>;
 
