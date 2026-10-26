@@ -15,6 +15,7 @@
 // Nothing leaves the device. The page shows "runs on your device, nothing is sent".
 
 import * as vc from './voice_chat.js';
+import { fromTokenizerJson } from './bpe.mjs';
 
 // A Silero v5 frame: 512 samples at 16 kHz = 32 ms.
 const FRAME = 512;
@@ -91,48 +92,75 @@ export class Pipeline {
 	}
 
 	/**
+	 * Stream one file into Cache Storage (a verified copy), reading the body once. Returns the
+	 * cached Response. The #231 single-buffer path: no Blob is kept alive after the put.
+	 * @param {string} url  The file URL.
+	 * @param {(f: number) => void} [onProgress]
+	 */
+	async #streamToCache(url, onProgress) {
+		const cache = await caches.open('voice-chat-models-v1');
+		let cached = await cache.match(url).catch(() => undefined);
+		if (cached) return cached;
+		const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+		if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+		const total = Number(res.headers.get('content-length')) || 0;
+		const reader = res.body.getReader();
+		const parts = [];
+		let got = 0;
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			parts.push(value);
+			got += value.length;
+			onProgress?.(total ? got / total : 0);
+		}
+		const blob = new Blob(parts);
+		await cache.put(url, new Response(blob, { headers: { 'content-length': String(blob.size) } }));
+		return cache.match(url);
+	}
+
+	/**
 	 * Load one model: stream it into Cache Storage, create the ORT session from a single buffer,
 	 * and drop the buffer. Never keeps a Blob or a second copy alive. Reports the peak JS heap.
+	 *
+	 * Out-of-line (external-data) models pass `externalData: [{ path, url }]`: each data file is
+	 * streamed through the same single-buffer path and handed to ORT via the `externalData` create
+	 * option (the vendored 1.27 mounts it under `path`), then released after session creation.
+	 *
 	 * @param {string} name  A label for the memory report.
 	 * @param {string} url   The model URL.
-	 * @param {object} [opts] { onProgress?: (f: number) => void }
+	 * @param {object} [opts] { onProgress?: (f: number) => void, externalData?: { path: string, url: string }[] }
 	 * @returns {Promise<object>} The ORT InferenceSession.
 	 */
-	async #loadModel(name, url, { onProgress } = {}) {
+	async #loadModel(name, url, { onProgress, externalData } = {}) {
 		const ort = this.#ortNs;
 		const before = this.#heapMB();
 		let buf = null;
+		const extBufs = [];
 		try {
-			// 1. Stream into Cache Storage (a verified copy), reading the body once.
-			const cache = await caches.open('voice-chat-models-v1');
-			let cached = await cache.match(url).catch(() => undefined);
-			if (!cached) {
-				const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
-				if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
-				const total = Number(res.headers.get('content-length')) || 0;
-				const reader = res.body.getReader();
-				const parts = [];
-				let got = 0;
-				for (;;) {
-					const { done, value } = await reader.read();
-					if (done) break;
-					parts.push(value);
-					got += value.length;
-					onProgress?.(total ? got / total : 0);
+			// 1. One buffer for the main model, handed to ORT, then dropped.
+			buf = await (await this.#streamToCache(url, onProgress)).arrayBuffer();
+			// 2. External-data files (out-of-line weights), if any: one buffer each, mounted under
+			//    the exact path the graph refers to, then dropped.
+			const ext = [];
+			if (externalData) {
+				for (const { path, url: extUrl } of externalData) {
+					const ebuf = new Uint8Array(await (await this.#streamToCache(extUrl, onProgress)).arrayBuffer());
+					extBufs.push(ebuf);
+					ext.push({ path, data: ebuf });
 				}
-				const blob = new Blob(parts);
-				await cache.put(url, new Response(blob, { headers: { 'content-length': String(blob.size) } }));
-				cached = await cache.match(url);
 			}
-			// 2. One buffer, handed to ORT, then dropped.
-			buf = await (await cached).arrayBuffer();
-			// 3. Create the session from that single buffer.
-			const session = await ort.InferenceSession.create(buf, { executionProviders: this.#eps() });
-			this.memory[name] = { beforeMB: before, peakMB: this.#heapMB(), bytes: buf.byteLength };
+			// 3. Create the session from that single buffer (+ external data), then drop the buffers.
+			const session = await ort.InferenceSession.create(buf, {
+				executionProviders: this.#eps(),
+				...(ext.length ? { externalData: ext } : {}),
+			});
+			this.memory[name] = { beforeMB: before, peakMB: this.#heapMB(), bytes: buf.byteLength + extBufs.reduce((n, b) => n + b.byteLength, 0) };
 			return session;
 		} finally {
-			// Drop the buffer reference; the session owns its own copy now.
+			// Drop the buffer references; the session owns its own copies now.
 			buf = null;
+			for (let i = 0; i < extBufs.length; i++) extBufs[i] = null;
 		}
 	}
 
@@ -207,7 +235,15 @@ export class Pipeline {
 		if (this.lowMemory) {
 			throw new Error('This device has limited memory. Use the smaller model stack, or the text box, for replies.');
 		}
-		this.llm = await this.#loadModel('llm', this.deps.llmUrl, { onProgress });
+		// LFM2.5 q4f16 is out-of-line: the main .onnx is a pointer, the weights live in a sibling
+		// `_data` file. Mount it via the `externalData` option (path = the exact name the graph refers
+		// to). Derive the data URL from the main model URL.
+		const main = this.deps.llmUrl;
+		const dataName = main.split('/').pop() + '_data';
+		this.llm = await this.#loadModel('llm', main, {
+			onProgress,
+			externalData: [{ path: dataName, url: main.replace(/\.onnx$/, '.onnx_data') }],
+		});
 		return this.llm;
 	}
 
@@ -322,76 +358,157 @@ export class Pipeline {
 
 	#moonshineTok = null;
 
+	/** Load the Moonshine tokenizer (Whisper-style BPE) from HF, once. */
 	async #moonshineTokenizer() {
 		if (this.#moonshineTok) return this.#moonshineTok;
-		// A minimal BPE decoder: Moonshine's tokenizer.json is a standard Hugging Face BPE. We only
-		// need token -> text, so we load the vocab and piece the tokens together.
 		const url = 'https://huggingface.co/onnx-community/moonshine-base-ONNX/resolve/main/tokenizer.json';
-		const tok = JSON.parse(await (await fetch(url)).text());
-		const vocab = {};
-		for (let i = 0; i < tok.model?.vocab?.length; i++) vocab[tok.model.vocab[i]] = i;
-		// Reverse: id -> piece.
-		const idToPiece = new Array(tok.model?.vocab?.length ?? 0);
-		for (const [piece, id] of Object.entries(vocab)) idToPiece[id] = piece;
-		this.#moonshineTok = { idToPiece, eos: tok.model?.eos_token ?? '<|endoftext|>' };
+		const json = JSON.parse(await (await fetch(url)).text());
+		this.#moonshineTok = fromTokenizerJson(json, { byteLevel: false, byteFallback: true, prepend: '▁' });
 		return this.#moonshineTok;
+	}
+
+	/** Load the LFM2.5 tokenizer (GPT-2/Qwen byte-level BPE) from HF, once. */
+	#lfmTok = null;
+	async #lfmTokenizer() {
+		if (this.#lfmTok) return this.#lfmTok;
+		const url = 'https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/resolve/main/tokenizer.json';
+		const json = JSON.parse(await (await fetch(url)).text());
+		this.#lfmTok = fromTokenizerJson(json, { byteLevel: true, byteFallback: false, prepend: '' });
+		return this.#lfmTok;
+	}
+
+	/**
+	 * Read a tensor's data out, handling both CPU (`data` getter) and WebGPU (`getData()`) outputs,
+	 * and both fp32 and fp16 storage. Returns a `Float32Array`.
+	 */
+	#tensorData(t) {
+		const raw = typeof t.data === 'function' ? t.data() : t.data ?? t.getData();
+		const arr = raw instanceof Uint16Array ? new Float32Array(raw.length) : Float32Array.from(raw);
+		if (raw instanceof Uint16Array) for (let i = 0; i < arr.length; i++) arr[i] = this.#f16(raw[i]);
+		return arr;
+	}
+
+	/** IEEE half → f32, for reading fp16 logits. */
+	#f16(u) {
+		const s = (u & 0x8000) >> 15;
+		const e = (u & 0x7c00) >> 10;
+		const f = u & 0x3ff;
+		let v;
+		if (e === 0) v = f * 2 ** -24;
+		else if (e === 0x1f) v = f ? NaN : Infinity;
+		else v = (f / 1024 + 1) * 2 ** (e - 15);
+		return s ? -v : v;
+	}
+
+	/** The argmax of the last position of a `[1, T, V]` (or `[V]`) logits tensor. */
+	#argmaxLast(logits) {
+		const data = this.#tensorData(logits);
+		const V = logits.dims.length > 1 ? logits.dims[logits.dims.length - 1] : data.length;
+		const base = data.length - V;
+		let best = 0;
+		let bestV = -Infinity;
+		for (let i = 0; i < V; i++) {
+			const v = data[base + i];
+			if (v > bestV) {
+				bestV = v;
+				best = i;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * The KV-cache name map, built from the session's own declared names.
+	 *
+	 * Taken from Brev's verified harness: the naming is not uniform. `present_conv.N` →
+	 * `past_conv.N` (prefix swapped, family kept) while `present.N.key` → `past_key_values.N.key`
+	 * (family dropped). One regex does not cover both.
+	 */
+	#cacheKey(sess) {
+		const byKey = new Map();
+		for (const outName of sess.outputNames) {
+			byKey.set(outName.replace(/^present_(conv|recurrent)\./, 'past_$1.'), outName);
+			byKey.set(outName.replace(/^present\./, 'past_key_values.'), outName);
+		}
+		return (inName) => byKey.get(inName) ?? inName;
+	}
+
+	/**
+	 * One decode step: feed the new ids, carry the KV cache forward. Returns the argmax of the last
+	 * position. The cache tensors are handed straight back to ORT, so a GPU buffer survives the
+	 * round trip untouched.
+	 */
+	#step(sess, ids, cache, cacheKeyFn, extra) {
+		const ort = this.#ortNs;
+		const total = cache.past + ids.length;
+		const feed = {
+			input_ids: new ort.Tensor('int64', BigInt64Array.from(ids.map(BigInt)), [1, ids.length]),
+		};
+		// Only feed attention_mask if the graph declares it (LFM2.5 does; Moonshine's decoder does not).
+		if (sess.inputNames.includes('attention_mask')) {
+			feed.attention_mask = new ort.Tensor('int64', BigInt64Array.from({ length: total }, () => 1n), [1, total]);
+		}
+		Object.assign(feed, extra);
+		if (cache.size === 0) Object.assign(feed, this.#seedCacheInputs(sess));
+		for (const [name, t] of cache) feed[name] = t;
+
+		const out = sess.run(feed, sess.outputNames);
+		const argmax = this.#argmaxLast(out.logits);
+
+		cache.clear();
+		for (const inName of sess.inputNames) {
+			if (inName === 'input_ids' || inName === 'attention_mask') continue;
+			const t = out[cacheKeyFn(inName)];
+			if (t) cache.set(inName, t);
+		}
+		cache.past = total;
+		return argmax;
+	}
+
+	/** The empty-cache inputs the graph declares, once. */
+	#seedCacheInputs(sess) {
+		const ort = this.#ortNs;
+		const feeds = {};
+		for (const name of sess.inputNames) {
+			if (name === 'input_ids' || name === 'attention_mask') continue;
+			if (name.startsWith('past_conv')) feeds[name] = new ort.Tensor('float16', new Uint16Array(8192 * 3), [1, 8192, 3]);
+			else if (name.startsWith('past_recurrent')) feeds[name] = new ort.Tensor('float16', new Uint16Array(32 * 128 * 128), [1, 32, 128, 128]);
+			else if (name.startsWith('past_key_values')) feeds[name] = new ort.Tensor('float16', new Uint16Array(0), [1, 4, 0, 256]);
+		}
+		return feeds;
 	}
 
 	async #moonshineTranscribe(audio16k) {
 		const { encoder, decoder } = await this.loadAsr();
 		const ort = this.#ortNs;
-		// Log-mel features (the same Whisper 80-mel front end the Rust crate provides).
-		const features = this.mel.extract(audio16k);
-		const nFrames = features.length / 80;
-		// Encoder: input_features [1, 80, T] -> last_hidden_state [1, T, D].
+		// Encoder: `input_values` = raw 16 kHz audio [1, T] -> `last_hidden_state` [1, T, D].
+		// (The onnx-community encoder takes the waveform directly, not mel features.)
 		const encIn = encoder.inputNames[0];
 		const encOut = encoder.outputNames[0];
-		const enc = encoder.run({ [encIn]: new ort.Tensor('float32', features, [1, 80, nFrames]) });
+		const enc = encoder.run({ [encIn]: new ort.Tensor('float32', audio16k, [1, audio16k.length]) });
 		const encOuts = enc[encOut];
+
+		// The (non-merged) decoder takes the encoder output by its declared name, if present.
+		const extra = {};
+		for (const name of decoder.inputNames) {
+			if (/encoder|hidden|memory/.test(name)) {
+				extra[name] = new ort.Tensor('float32', Float32Array.from(this.#tensorData(encOuts)), encOuts.dims);
+			}
+		}
 
 		// Decoder: autoregressive, one token at a time, until EOS or a length cap.
 		const tok = await this.#moonshineTokenizer();
-		const decIn = decoder.inputNames;
-		const decOut = decoder.outputNames[0];
+		const cacheKeyFn = this.#cacheKey(decoder);
+		const cache = new Map();
+		cache.past = 0;
 		const maxLen = 200;
 		const ids = [];
-		let logits = null;
 		for (let step = 0; step < maxLen; step++) {
-			// Build the decoder feed. The merged decoder takes input_ids and (optionally) the
-			// encoder outputs; introspect which inputs exist.
-			const feed = {};
-			for (const name of decIn) {
-				if (/input_ids/.test(name)) {
-					feed[name] = new ort.Tensor('int64', new BigInt64Array(ids.map((i) => BigInt(i))), [1, ids.length]);
-				} else if (/attention_mask/.test(name)) {
-					feed[name] = new ort.Tensor('int64', new BigInt64Array(ids.map(() => 1n)), [1, ids.length]);
-				}
-			}
-			// The encoder outputs are fed by their declared name if present.
-			for (const name of decIn) {
-				if (/encoder|hidden|memory/.test(name)) {
-					feed[name] = new ort.Tensor('float32', Float32Array.from(encOuts.data), encOuts.dims);
-				}
-			}
-			const out = decoder.run(feed);
-			logits = out[decOut];
-			// Take the argmax of the last position.
-			const last = logits.dims.length > 1 ? logits.dims[logits.dims.length - 1] : logits.data.length;
-			let best = 0;
-			let bestV = -Infinity;
-			const base = (logits.data.length - last);
-			for (let i = 0; i < last; i++) {
-				const v = logits.data[base + i];
-				if (v > bestV) { bestV = v; best = i; }
-			}
-			ids.push(best);
-			const piece = tok.idToPiece[best] ?? '';
-			if (piece === tok.eos || ids.length >= maxLen) break;
+			const next = this.#step(decoder, ids.length ? [ids[ids.length - 1]] : [1], cache, cacheKeyFn, extra);
+			ids.push(next);
+			if (tok.decode([next]) === '</s>' || ids.length >= maxLen) break;
 		}
-		// Piece the tokens together (BPE pieces may carry a leading space).
-		let text = ids.map((id) => tok.idToPiece[id] ?? '').join('');
-		text = text.replace(/^\s+/, '').trim();
-		return text;
+		return tok.decode(ids).trim();
 	}
 
 	// ---------------------------------------------------------------- LFM2.5 LLM
@@ -401,34 +518,23 @@ export class Pipeline {
 
 	async #llmGenerate(transcript, onToken, signal) {
 		const session = await this.loadLlm();
-		const ort = this.#ortNs;
-		const inName = session.inputNames.find((n) => /input_ids/.test(n)) ?? session.inputNames[0];
-		const outName = session.outputNames[0];
+		const tok = await this.#lfmTokenizer();
+		const cacheKeyFn = this.#cacheKey(session);
+		const cache = new Map();
+		cache.past = 0;
+		// A plain-text prompt. The LFM2.5 chat template's special tokens are not in the byte-level
+		// vocab, so we use the role labels as plain text — the model follows them.
 		const system = 'You are a voice assistant. Answer in one or two short spoken sentences. No lists, no markdown, no emoji.';
-		const prompt = `${system}\nUser: ${transcript}\nAssistant:`;
-		// Tokenise the prompt with a simple whitespace BPE stand-in. A real BPE tokenizer would be
-		// loaded from the LFM2.5 tokenizer.json; this keeps the loop self-contained for the demo.
-		const ids = prompt.split(/\s+/).filter(Boolean).map((w) => (w.charCodeAt(0) % 4000) + 100);
-		const maxTokens = 64;
-		for (let step = 0; step < maxTokens; step++) {
+		const prompt = `system\n${system}\nuser\n${transcript}\nassistant\n`;
+		const ids = tok.encode(prompt);
+		const maxTokens = 96;
+		let cur = this.#step(session, ids, cache, cacheKeyFn, {});
+		for (let i = 0; i < maxTokens; i++) {
 			if (signal?.aborted) throw new Error('aborted');
-			const feed = { [inName]: new ort.Tensor('int64', new BigInt64Array(ids.map((i) => BigInt(i))), [1, ids.length]) };
-			const out = session.run(feed);
-			const logits = out[outName];
-			const last = logits.dims.length > 1 ? logits.dims[logits.dims.length - 1] : logits.data.length;
-			let best = 0;
-			let bestV = -Infinity;
-			const base = logits.data.length - last;
-			for (let i = 0; i < last; i++) {
-				const v = logits.data[base + i];
-				if (v > bestV) { bestV = v; best = i; }
-			}
-			ids.push(best);
-			// Decode the token to text (stand-in: map id back to a char). A real tokenizer decodes
-			// BPE pieces; this is a placeholder until the real tokenizer is wired in.
-			const ch = String.fromCharCode(97 + (best % 26));
-			onToken(step === 0 ? ch : ' ' + ch);
-			if (best === 0) break; // EOS stand-in
+			if (cur === 2 || cur === 7) break; // eos / <|fim_suf|>
+			// Emit the piece this token decodes to, so the sentence splitter sees one token at a time.
+			onToken(tok.decode([cur]));
+			cur = this.#step(session, [cur], cache, cacheKeyFn, {});
 		}
 	}
 
@@ -464,12 +570,15 @@ export class Pipeline {
 			// LLM (LFM2.5-1.2B), token by token, split into sentences for TTS.
 			const tLlm0 = performance.now();
 			let firstToken = null;
-			const onToken = (token) => {
+			let reply = '';
+			const onToken = (piece) => {
 				if (firstToken === null) {
 					firstToken = performance.now() - tLlm0;
 					this.latency.llmFirstToken = firstToken;
 				}
-				const sentence = this.sentence.feed(token);
+				reply += piece;
+				this.#emitEvent({ type: 'llm', text: reply });
+				const sentence = this.sentence.feed(piece);
 				if (sentence) {
 					this.#speakSentence(sentence, tts).catch(() => {});
 				}

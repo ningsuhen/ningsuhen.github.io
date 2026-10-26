@@ -1,7 +1,5 @@
 /* @ts-self-types="./voice_chat.d.ts" */
 
-//#region exports
-
 export class Mel {
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -19,10 +17,8 @@ export class Mel {
      * @returns {Float32Array}
      */
     extract(samples) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ret = wasm.mel_extract(this.__wbg_ptr, samples);
-        return ret;
+        const ret = wasm.mel_extract(this.__wbg_ptr, addHeapObject(samples));
+        return takeObject(ret);
     }
     /**
      * The Whisper 80-mel front end.
@@ -52,8 +48,6 @@ export class Resampler {
      * @param {number} dst_rate
      */
     constructor(src_rate, dst_rate) {
-        _assertNum(src_rate);
-        _assertNum(dst_rate);
         const ret = wasm.resampler_new(src_rate, dst_rate);
         this.__wbg_ptr = ret;
         ResamplerFinalization.register(this, this.__wbg_ptr, this);
@@ -64,10 +58,8 @@ export class Resampler {
      * @returns {Float32Array}
      */
     process(src) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ret = wasm.resampler_process(this.__wbg_ptr, src);
-        return ret;
+        const ret = wasm.resampler_process(this.__wbg_ptr, addHeapObject(src));
+        return takeObject(ret);
     }
 }
 if (Symbol.dispose) Resampler.prototype[Symbol.dispose] = Resampler.prototype.free;
@@ -84,25 +76,18 @@ export class Ring {
         wasm.__wbg_ring_free(ptr, 0);
     }
     clear() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         wasm.ring_clear(this.__wbg_ptr);
     }
     /**
      * @param {number} n
      */
     consume(n) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(n);
         wasm.ring_consume(this.__wbg_ptr, n);
     }
     /**
      * @returns {number}
      */
     len() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.ring_len(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -110,7 +95,6 @@ export class Ring {
      * @param {number} cap
      */
     constructor(cap) {
-        _assertNum(cap);
         const ret = wasm.ring_new(cap);
         this.__wbg_ptr = ret;
         RingFinalization.register(this, this.__wbg_ptr, this);
@@ -122,19 +106,14 @@ export class Ring {
      * @returns {Float32Array}
      */
     peek(n) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(n);
         const ret = wasm.ring_peek(this.__wbg_ptr, n);
-        return ret;
+        return takeObject(ret);
     }
     /**
      * @param {Float32Array} block
      */
     push(block) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        wasm.ring_push(this.__wbg_ptr, block);
+        wasm.ring_push(this.__wbg_ptr, addHeapObject(block));
     }
     /**
      * The most recent `n` samples, oldest first.
@@ -142,11 +121,8 @@ export class Ring {
      * @returns {Float32Array}
      */
     tail(n) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(n);
         const ret = wasm.ring_tail(this.__wbg_ptr, n);
-        return ret;
+        return takeObject(ret);
     }
 }
 if (Symbol.dispose) Ring.prototype[Symbol.dispose] = Ring.prototype.free;
@@ -168,32 +144,42 @@ export class SentenceSplitter {
      * @returns {string | undefined}
      */
     feed(token) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ptr0 = passStringToWasm0(token, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.sentencesplitter_feed(this.__wbg_ptr, ptr0, len0);
-        let v2;
-        if (ret[0] !== 0) {
-            v2 = getStringFromWasm0(ret[0], ret[1]);
-            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            const ptr0 = passStringToWasm0(token, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+            const len0 = WASM_VECTOR_LEN;
+            wasm.sentencesplitter_feed(retptr, this.__wbg_ptr, ptr0, len0);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            let v2;
+            if (r0 !== 0) {
+                v2 = getStringFromWasm0(r0, r1);
+                wasm.__wbindgen_export3(r0, r1 * 1, 1);
+            }
+            return v2;
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
         }
-        return v2;
     }
     /**
      * Flush the remainder as a final sentence, or null.
      * @returns {string | undefined}
      */
     finish() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ret = wasm.sentencesplitter_finish(this.__wbg_ptr);
-        let v1;
-        if (ret[0] !== 0) {
-            v1 = getStringFromWasm0(ret[0], ret[1]);
-            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.sentencesplitter_finish(retptr, this.__wbg_ptr);
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            let v1;
+            if (r0 !== 0) {
+                v1 = getStringFromWasm0(r0, r1);
+                wasm.__wbindgen_export3(r0, r1 * 1, 1);
+            }
+            return v1;
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
         }
-        return v1;
     }
     constructor() {
         const ret = wasm.sentencesplitter_new();
@@ -221,8 +207,6 @@ export class Turn {
      * @returns {boolean}
      */
     feed_turn_prob(prob) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.turn_feed_turn_prob(this.__wbg_ptr, prob);
         return ret !== 0;
     }
@@ -231,8 +215,6 @@ export class Turn {
      * @returns {boolean}
      */
     interrupt() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.turn_interrupt(this.__wbg_ptr);
         return ret !== 0;
     }
@@ -241,7 +223,6 @@ export class Turn {
      * @param {number} timeout
      */
     constructor(complete_threshold, timeout) {
-        _assertNum(timeout);
         const ret = wasm.turn_new(complete_threshold, timeout);
         this.__wbg_ptr = ret;
         TurnFinalization.register(this, this.__wbg_ptr, this);
@@ -252,8 +233,6 @@ export class Turn {
      * @returns {number}
      */
     phase() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.turn_phase(this.__wbg_ptr);
         return ret;
     }
@@ -262,14 +241,10 @@ export class Turn {
      * @returns {boolean}
      */
     speech_ended() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.turn_speech_ended(this.__wbg_ptr);
         return ret !== 0;
     }
     speech_started() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         wasm.turn_speech_started(this.__wbg_ptr);
     }
     /**
@@ -277,8 +252,6 @@ export class Turn {
      * @returns {boolean}
      */
     tick() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.turn_tick(this.__wbg_ptr);
         return ret !== 0;
     }
@@ -304,20 +277,23 @@ export class Vad {
      * @returns {VadEvent[]}
      */
     feed_block(probs, samples) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        const ret = wasm.vad_feed_block(this.__wbg_ptr, probs, samples);
-        var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]);
-        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-        return v1;
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.vad_feed_block(retptr, this.__wbg_ptr, addHeapObject(probs), addHeapObject(samples));
+            var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+            var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+            var v1 = getArrayJsValueFromWasm0(r0, r1);
+            wasm.__wbindgen_export3(r0, r1 * 4, 4);
+            return v1;
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+        }
     }
     /**
      * True when the current speech run is long enough to be real.
      * @returns {boolean}
      */
     is_real_speech() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.vad_is_real_speech(this.__wbg_ptr);
         return ret !== 0;
     }
@@ -330,10 +306,6 @@ export class Vad {
      * @param {number} redemption
      */
     constructor(threshold, pre_roll, min_speech, hangover, redemption) {
-        _assertNum(pre_roll);
-        _assertNum(min_speech);
-        _assertNum(hangover);
-        _assertNum(redemption);
         const ret = wasm.vad_new(threshold, pre_roll, min_speech, hangover, redemption);
         this.__wbg_ptr = ret;
         VadFinalization.register(this, this.__wbg_ptr, this);
@@ -344,8 +316,6 @@ export class Vad {
      * @returns {number}
      */
     phase() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.vad_phase(this.__wbg_ptr);
         return ret;
     }
@@ -354,10 +324,8 @@ export class Vad {
      * @returns {Float32Array}
      */
     pre_roll() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.vad_pre_roll(this.__wbg_ptr);
-        return ret;
+        return takeObject(ret);
     }
 }
 if (Symbol.dispose) Vad.prototype[Symbol.dispose] = Vad.prototype.free;
@@ -366,9 +334,6 @@ if (Symbol.dispose) Vad.prototype[Symbol.dispose] = Vad.prototype.free;
  * A VAD event, as the JS side reads it.
  */
 export class VadEvent {
-    constructor() {
-        throw new Error('cannot invoke `new` directly');
-    }
     static __wrap(ptr) {
         const obj = Object.create(VadEvent.prototype);
         obj.__wbg_ptr = ptr;
@@ -390,8 +355,6 @@ export class VadEvent {
      * @returns {number}
      */
     get frame() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_vadevent_frame(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -400,8 +363,6 @@ export class VadEvent {
      * @returns {number}
      */
     get kind() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.__wbg_get_vadevent_kind(this.__wbg_ptr);
         return ret;
     }
@@ -410,9 +371,6 @@ export class VadEvent {
      * @param {number} arg0
      */
     set frame(arg0) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(arg0);
         wasm.__wbg_set_vadevent_frame(this.__wbg_ptr, arg0);
     }
     /**
@@ -420,17 +378,12 @@ export class VadEvent {
      * @param {number} arg0
      */
     set kind(arg0) {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
-        _assertNum(arg0);
         wasm.__wbg_set_vadevent_kind(this.__wbg_ptr, arg0);
     }
     /**
      * @returns {number}
      */
     frame() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.vadevent_frame(this.__wbg_ptr);
         return ret >>> 0;
     }
@@ -438,47 +391,34 @@ export class VadEvent {
      * @returns {number}
      */
     kind() {
-        if (this.__wbg_ptr == 0) throw new Error('Attempt to use a moved value');
-        _assertNum(this.__wbg_ptr);
         const ret = wasm.vadevent_kind(this.__wbg_ptr);
         return ret;
     }
 }
 if (Symbol.dispose) VadEvent.prototype[Symbol.dispose] = VadEvent.prototype.free;
-
-//#endregion
-
-//#region wasm imports
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
         __wbg___wbindgen_throw_41e9ee4f547fc59a: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_length_58572db4c38f3c3e: function() { return logError(function (arg0) {
-            const ret = arg0.length;
-            _assertNum(ret);
+        __wbg_length_58572db4c38f3c3e: function(arg0) {
+            const ret = getObject(arg0).length;
             return ret;
-        }, arguments); },
-        __wbg_new_from_slice_ca6ad97db1f4779a: function() { return logError(function (arg0, arg1) {
+        },
+        __wbg_new_from_slice_ca6ad97db1f4779a: function(arg0, arg1) {
             const ret = new Float32Array(getArrayF32FromWasm0(arg0, arg1));
-            return ret;
-        }, arguments); },
-        __wbg_prototypesetcall_8b03c01e2c0f8066: function() { return logError(function (arg0, arg1, arg2) {
-            Float32Array.prototype.set.call(getArrayF32FromWasm0(arg0, arg1), arg2);
-        }, arguments); },
-        __wbg_vadevent_new: function() { return logError(function (arg0) {
+            return addHeapObject(ret);
+        },
+        __wbg_prototypesetcall_8b03c01e2c0f8066: function(arg0, arg1, arg2) {
+            Float32Array.prototype.set.call(getArrayF32FromWasm0(arg0, arg1), getObject(arg2));
+        },
+        __wbg_vadevent_new: function(arg0) {
             const ret = VadEvent.__wrap(arg0);
-            return ret;
-        }, arguments); },
-        __wbindgen_init_externref_table: function() {
-            const table = wasm.__wbindgen_externrefs;
-            const offset = table.grow(4);
-            table.set(0, undefined);
-            table.set(offset + 0, undefined);
-            table.set(offset + 1, null);
-            table.set(offset + 2, true);
-            table.set(offset + 3, false);
+            return addHeapObject(ret);
+        },
+        __wbindgen_object_drop_ref: function(arg0) {
+            takeObject(arg0);
         },
     };
     return {
@@ -487,8 +427,6 @@ function __wbg_get_imports() {
     };
 }
 
-
-//#endregion
 const MelFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_mel_free(ptr, 1));
@@ -511,10 +449,19 @@ const VadEventFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_vadevent_free(ptr, 1));
 
+function addHeapObject(obj) {
+    if (heap_next === heap.length) heap.push(heap.length + 1);
+    const idx = heap_next;
+    heap_next = heap[idx];
 
-//#region intrinsics
-function _assertNum(n) {
-    if (typeof(n) !== 'number') throw new Error(`expected a number argument, found ${typeof(n)}`);
+    heap[idx] = obj;
+    return idx;
+}
+
+function dropObject(idx) {
+    if (idx < 1028) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
 }
 
 function getArrayF32FromWasm0(ptr, len) {
@@ -527,9 +474,8 @@ function getArrayJsValueFromWasm0(ptr, len) {
     const mem = getDataViewMemory0();
     const result = [];
     for (let i = ptr; i < ptr + 4 * len; i += 4) {
-        result.push(wasm.__wbindgen_externrefs.get(mem.getUint32(i, true)));
+        result.push(takeObject(mem.getUint32(i, true)));
     }
-    wasm.__externref_drop_slice(ptr, len);
     return result;
 }
 
@@ -561,24 +507,14 @@ function getUint8ArrayMemory0() {
     return cachedUint8ArrayMemory0;
 }
 
-function logError(f, args) {
-    try {
-        return f.apply(this, args);
-    } catch (e) {
-        let error = (function () {
-            try {
-                return e instanceof Error ? `${e.message}\n\nStack:\n${e.stack}` : e.toString();
-            } catch(_) {
-                return "<failed to stringify thrown value>";
-            }
-        }());
-        console.error("wasm-bindgen: imported JS function that was not marked as `catch` threw an error:", error);
-        throw e;
-    }
-}
+function getObject(idx) { return heap[idx]; }
+
+let heap = new Array(1024).fill(undefined);
+heap.push(undefined, null, true, false);
+
+let heap_next = heap.length;
 
 function passStringToWasm0(arg, malloc, realloc) {
-    if (typeof(arg) !== 'string') throw new Error(`expected a string argument, found ${typeof(arg)}`);
     if (realloc === undefined) {
         const buf = cachedTextEncoder.encode(arg);
         const ptr = malloc(buf.length, 1) >>> 0;
@@ -606,13 +542,19 @@ function passStringToWasm0(arg, malloc, realloc) {
         ptr = realloc(ptr, len, len = offset + arg.length * 3, 1) >>> 0;
         const view = getUint8ArrayMemory0().subarray(ptr + offset, ptr + len);
         const ret = cachedTextEncoder.encodeInto(arg, view);
-        if (ret.read !== arg.length) throw new Error('failed to pass whole string');
+
         offset += ret.written;
         ptr = realloc(ptr, len, offset, 1) >>> 0;
     }
 
     WASM_VECTOR_LEN = offset;
     return ptr;
+}
+
+function takeObject(idx) {
+    const ret = getObject(idx);
+    dropObject(idx);
+    return ret;
 }
 
 let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
@@ -644,10 +586,6 @@ if (!('encodeInto' in cachedTextEncoder)) {
 
 let WASM_VECTOR_LEN = 0;
 
-
-//#endregion
-
-//#region wasm loading
 let wasmModule, wasmInstance, wasm;
 function __wbg_finalize_init(instance, module) {
     wasmInstance = instance;
@@ -656,7 +594,6 @@ function __wbg_finalize_init(instance, module) {
     cachedDataViewMemory0 = null;
     cachedFloat32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
-    wasm.__wbindgen_start();
     return wasm;
 }
 
@@ -746,5 +683,3 @@ async function __wbg_init(module_or_path) {
 }
 
 export { initSync, __wbg_init as default };
-//#endregion
-export { wasm as __wasm }

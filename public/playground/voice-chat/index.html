@@ -186,6 +186,13 @@ const wave = $('wave'), wctx = wave.getContext('2d');
 const MODEL_BASE = 'https://huggingface.co/';
 const VAD_URL = MODEL_BASE + 'onnx-community/silero-vad/resolve/main/onnx/model.onnx';
 const TURN_URL = MODEL_BASE + 'pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.2-cpu.onnx';
+const ASR_ENCODER_URL = MODEL_BASE + 'onnx-community/moonshine-base-ONNX/resolve/main/onnx/encoder_model.onnx';
+// The non-merged decoder: it takes `encoder_hidden_states` (the raw encoder output) and computes
+// the cross-attention KV internally, so no encoder-KV precomputation is needed. The merged variant
+// (decoder_model_merged_q4f16.onnx) is rejected by ORT 1.27 at session creation (a graph-structure
+// error), and the with-past variant expects pre-projected encoder KV we can't compute here.
+const ASR_DECODER_URL = MODEL_BASE + 'onnx-community/moonshine-base-ONNX/resolve/main/onnx/decoder_model.onnx';
+const LLM_URL = MODEL_BASE + 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX/resolve/main/onnx/model_q4f16.onnx';
 
 let pipeline = null;
 let kokoro = null;
@@ -251,6 +258,26 @@ async function loadKokoro(onProgress) {
   return kokoro;
 }
 
+// The ONNX Runtime namespace the pipeline drives its sessions with. Wired explicitly, independent of
+// Kokoro: the verified wasm binary from the shared loader, the UMD bundle evaluated for window.ort,
+// and wasmPaths for the .mjs glue. Kokoro sets up its own copy; this one is the pipeline's.
+let ortNs = null;
+async function ensureOrt() {
+  if (ortNs) return ortNs;
+  const wasmBinary = await ensureOrtRuntime();
+  const ortBase = new URL('/tts/vendor/ort/', location.href).href;
+  if (!window.ort) {
+    const s = document.createElement('script');
+    s.src = ortBase + 'ort.webgpu.min.js';
+    document.head.appendChild(s);
+    await new Promise((r, j) => { s.onload = r; s.onerror = () => j(new Error('ONNX Runtime bundle failed to load')); });
+  }
+  window.ort.env.wasm.wasmBinary = wasmBinary;
+  window.ort.env.wasm.wasmPaths = ortBase;
+  ortNs = window.ort;
+  return ortNs;
+}
+
 async function start() {
   startBtn.setAttribute('aria-disabled', 'true');
   gateStatus.hidden = false;
@@ -265,21 +292,21 @@ async function start() {
 
     // Load the shared ORT runtime (pinned binary) and the Kokoro engine.
     gateStatus.textContent = 'Loading ONNX Runtime…';
-    await ensureOrtRuntime();
+    await ensureOrt();
     gateStatus.textContent = 'Loading Kokoro…';
     await loadKokoro((f) => { gateStatus.textContent = `Loading Kokoro… ${Math.round(f * 100)}%`; });
 
-    // ASR + LLM are loaded on demand (the page would need their own loaders; for this demo the
-    // text fallback and the spoken reply use Kokoro, and the LLM/ASR are wired in the pipeline).
-    const ort = () => Promise.resolve(window.ort);
+    // ASR + LLM are loaded on demand by the pipeline (after the VAD and turn are resident).
+    const ort = () => ensureOrt();
     pipeline = new Pipeline(
       {
         ort,
         vadUrl: VAD_URL,
         turnUrl: TURN_URL,
+        asrEncoderUrl: ASR_ENCODER_URL,
+        asrDecoderUrl: ASR_DECODER_URL,
+        llmUrl: LLM_URL,
         tts: kokoro,
-        // asr and llm are optional; without them the voice turn transcribes nothing and answers
-        // nothing, but the VAD/turn/waveform still run. The text fallback uses the LLM directly.
       },
       {
         onState: (s) => {
