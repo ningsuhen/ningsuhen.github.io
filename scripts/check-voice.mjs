@@ -12,6 +12,7 @@
 // Dependency-free (node built-ins only) so it runs in the `static` leg.
 import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { parseOwnerMarkers } from "../src/plugins/owner-markers.mjs";
 
 const ROOT = path.resolve(".");
@@ -53,7 +54,7 @@ function stripFrontMatter(src) {
 // `owner:manual` the block directly under it — the owner's own hand-written words, kept verbatim — is dropped
 // too, so it is never flagged. Reuses the plugin's parser (line/anchorLine are 1-based source lines); the
 // `manual` type lands in #220, so this is a no-op for it until the branch is rebased onto that master.
-function stripOwnerBlocks(src) {
+export function stripOwnerBlocks(src) {
 	const lines = src.split("\n");
 	const skip = new Set();
 	for (const m of parseOwnerMarkers(src)) {
@@ -90,7 +91,7 @@ function voiceAllow(src) {
 }
 
 // ---- per-paragraph analysis ------------------------------------------------------------------------
-function analyze(src) {
+export function analyze(src) {
 	// Strip front matter, owner markers (and the verbatim block under an `owner:manual`), then code.
 	const body = stripCode(stripOwnerBlocks(stripFrontMatter(src)));
 	const blocks = body
@@ -139,60 +140,62 @@ function analyze(src) {
 
 const count = (m) => [...m.entries()].map(([k, n]) => `${k}${n > 1 ? ` ×${n}` : ""}`).join(", ");
 
-// ---- run -------------------------------------------------------------------------------------------
-const posts = readdirSync(POSTS)
-	.map((slug) => ({ slug, file: path.join(POSTS, slug, "index.md") }))
-	.filter((p) => existsSync(p.file))
-	.map((p) => {
-		const src = readFileSync(p.file, "utf8");
-		const allow = voiceAllow(src);
-		return { slug: p.slug, allow, findings: allow ? null : analyze(src) };
-	});
+// ---- run (only when executed directly, not imported by a test) -------------------------------------
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	const posts = readdirSync(POSTS)
+		.map((slug) => ({ slug, file: path.join(POSTS, slug, "index.md") }))
+		.filter((p) => existsSync(p.file))
+		.map((p) => {
+			const src = readFileSync(p.file, "utf8");
+			const allow = voiceAllow(src);
+			return { slug: p.slug, allow, findings: allow ? null : analyze(src) };
+		});
 
-let failed = 0;
-const summary = [];
-for (const p of posts) {
-	if (p.allow) {
-		summary.push(`- ${p.slug}: _opted out (${p.allow})_`);
-		continue;
+	let failed = 0;
+	const summary = [];
+	for (const p of posts) {
+		if (p.allow) {
+			summary.push(`- ${p.slug}: _opted out (${p.allow})_`);
+			continue;
+		}
+		const f = p.findings;
+		const bits = [];
+		if (f.filler.size) bits.push(`filler: ${count(f.filler)}`);
+		if (f.sermon.size) bits.push(`sermon: ${count(f.sermon)}`);
+		if (f.notJustBut) bits.push(`"not just…but" ×${f.notJustBut}`);
+		if (f.emDashParas) bits.push(`em-dash chain ×${f.emDashParas}`);
+		if (f.emoji) bits.push(`emoji ×${f.emoji}`);
+		if (f.dictation.size) bits.push(`dictation: ${count(f.dictation)}`);
+		if (f.longWarn) bits.push(`long paragraph (>${PARA_WARN}w) ×${f.longWarn}`);
+		if (f.longFail) bits.push(`**transcript paragraph (>${PARA_FAIL}w) ×${f.longFail}**`);
+		const clean = bits.length === 0;
+		summary.push(`- ${p.slug}: ${clean ? "_clean_" : bits.join("; ")}`);
+		// Hard failures: emoji in prose, or a paragraph over PARA_FAIL words.
+		if (f.emoji) {
+			failed++;
+			console.error(`check:voice: ${p.slug}: ${f.emoji} emoji in prose`);
+		}
+		if (f.longFail) {
+			failed++;
+			console.error(`check:voice: ${p.slug}: ${f.longFail} paragraph(s) over ${PARA_FAIL} words (max ${f.maxPara})`);
+		}
 	}
-	const f = p.findings;
-	const bits = [];
-	if (f.filler.size) bits.push(`filler: ${count(f.filler)}`);
-	if (f.sermon.size) bits.push(`sermon: ${count(f.sermon)}`);
-	if (f.notJustBut) bits.push(`"not just…but" ×${f.notJustBut}`);
-	if (f.emDashParas) bits.push(`em-dash chain ×${f.emDashParas}`);
-	if (f.emoji) bits.push(`emoji ×${f.emoji}`);
-	if (f.dictation.size) bits.push(`dictation: ${count(f.dictation)}`);
-	if (f.longWarn) bits.push(`long paragraph (>${PARA_WARN}w) ×${f.longWarn}`);
-	if (f.longFail) bits.push(`**transcript paragraph (>${PARA_FAIL}w) ×${f.longFail}**`);
-	const clean = bits.length === 0;
-	summary.push(`- ${p.slug}: ${clean ? "_clean_" : bits.join("; ")}`);
-	// Hard failures: emoji in prose, or a paragraph over PARA_FAIL words.
-	if (f.emoji) {
-		failed++;
-		console.error(`check:voice: ${p.slug}: ${f.emoji} emoji in prose`);
+
+	console.log(`check:voice: ${posts.length} post(s) scanned`);
+	for (const l of summary) console.log(`  ${l}`);
+
+	if (process.env.GITHUB_STEP_SUMMARY) {
+		const dirty = summary.filter((l) => !l.includes("_clean_") && !l.includes("opted out"));
+		appendFileSync(
+			process.env.GITHUB_STEP_SUMMARY,
+			`### Voice check\n\n${dirty.length ? dirty.join("\n") : "_All posts clean._"}\n\n` +
+				`(warn-only; fails on emoji in prose or a paragraph over ${PARA_FAIL} words. Opt out with \`voice-allow: <reason>\`.)\n`,
+		);
 	}
-	if (f.longFail) {
-		failed++;
-		console.error(`check:voice: ${p.slug}: ${f.longFail} paragraph(s) over ${PARA_FAIL} words (max ${f.maxPara})`);
+
+	if (failed) {
+		console.error(`check:voice: FAILED (${failed} post(s) with a hard failure)`);
+		process.exit(1);
 	}
+	console.log("check:voice: ok (no hard failures)");
 }
-
-console.log(`check:voice: ${posts.length} post(s) scanned`);
-for (const l of summary) console.log(`  ${l}`);
-
-if (process.env.GITHUB_STEP_SUMMARY) {
-	const dirty = summary.filter((l) => !l.includes("_clean_") && !l.includes("opted out"));
-	appendFileSync(
-		process.env.GITHUB_STEP_SUMMARY,
-		`### Voice check\n\n${dirty.length ? dirty.join("\n") : "_All posts clean._"}\n\n` +
-			`(warn-only; fails on emoji in prose or a paragraph over ${PARA_FAIL} words. Opt out with \`voice-allow: <reason>\`.)\n`,
-	);
-}
-
-if (failed) {
-	console.error(`check:voice: FAILED (${failed} post(s) with a hard failure)`);
-	process.exit(1);
-}
-console.log("check:voice: ok (no hard failures)");
