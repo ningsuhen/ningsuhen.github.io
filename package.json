@@ -33,6 +33,7 @@
     "check:markers": "node scripts/check-markers.mjs",
     "check:cwv": "node scripts/check-cwv.mjs",
     "check:export": "node scripts/check-export.mjs",
+    "split-fragment": "node scripts/split-fragment.mjs",
     "check:seo": "node scripts/check-seo.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:visual": "node scripts/check-visual.mjs",
@@ -52,6 +53,7 @@
     "test:hooks": "sh scripts/test-pre-push.sh",
     "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs",
     "test:leaks-embedded": "node --test scripts/test-leak-embedded.mjs",
+    "test:split-fragment": "node --test scripts/split-fragment.test.mjs",
     "render:mermaid": "node scripts/render-mermaid.mjs"
   },
   "dependencies": {
@@ -113,6 +115,7 @@
     "@types/sanitize-html": "^2.16.0",
     "axe-core": "4.10.2",
     "esbuild": "0.28.2",
+    "parse5": "7.3.0",
     "pixelmatch": "^8.0.0",
     "playwright-core": "^1.64.1",
     "pngjs": "^7.0.0",
