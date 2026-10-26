@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-density="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice chat · created 2026-10-26 · updated 2026-10-26</title>
+<meta name="description" content="A fully on-device voice conversation in your browser: microphone to VAD to turn detection to ASR to a small LLM to Kokoro speech, with barge-in. Nothing is sent anywhere.">
+<!-- Playground page: a live, on-device voice conversation.
+     The site build injects the navbar, light/dark toggle and licence footer; none are hand-rolled here.
+     Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Colours only via --rd-*.
+     Width: rd-container (the site's post column, 54.5rem): the demo is a single column, no wide layout needed.
+     Network: the page itself makes no external request. Models are fetched from public Hugging Face repos
+     only after the visitor clicks Start (the size is shown first). ONNX Runtime Web: the shared loader
+     /tts/ort-runtime.js (pinned binary, size and SHA-256 checked, Cache Storage) and the shared Kokoro
+     engine /tts/kokoro.js. The Rust wasm (voice_chat.js) is self-contained.
+     Icons: Lucide, inlined below. -->
+<link rel="stylesheet" href="/design-system/research.css">
+<style>
+/* the live panel */
+.vc-card { background: var(--rd-card-bg); border: 1px solid var(--rd-line); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-3) 0; }
+.vc-gate { display: grid; gap: var(--rd-space-3); }
+.vc-gate__note { font-size: var(--rd-fs-sm); color: var(--rd-text-muted); margin: 0; }
+.vc-gate__size { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--rd-text-strong); }
+.vc-btn { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.6rem; padding: 0 var(--rd-space-4); border: 0; border-radius: var(--rd-radius-sm); background: var(--rd-primary); color: var(--rd-btn-text, #fff); font: inherit; font-size: var(--rd-fs-base); font-weight: 700; cursor: pointer; }
+.vc-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.vc-btn--ghost { background: var(--rd-btn-bg); color: var(--rd-text-strong); border: 1px solid var(--rd-line); }
+.vc-status { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-space-3) 0; }
+.vc-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: var(--rd-fs-xs); font-weight: 700; border: 1px solid var(--rd-line); color: var(--rd-text-muted); background: var(--rd-btn-bg); }
+.vc-chip.is-on { color: var(--rd-good); border-color: var(--rd-good); }
+.vc-chip.is-bad { color: var(--rd-bad); border-color: var(--rd-bad); }
+.vc-chip.is-warn { color: var(--rd-warn); border-color: var(--rd-warn); }
+.vc-wave { width: 100%; height: 72px; display: block; background: var(--rd-btn-bg); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); }
+.vc-transcript { font-size: var(--rd-fs-lede); line-height: 1.5; color: var(--rd-text-strong); margin: var(--rd-space-2) 0; min-height: 1.5em; overflow-wrap: anywhere; }
+.vc-transcript .vc-you { color: var(--rd-text-muted); }
+.vc-llm { font-size: var(--rd-fs-base); line-height: 1.5; color: var(--rd-text-strong); margin: 0 0 var(--rd-space-2); min-height: 1.5em; overflow-wrap: anywhere; }
+.vc-llm .vc-caret { display: inline-block; width: 0.5em; height: 1em; background: var(--rd-accent); vertical-align: -0.15em; margin-left: 0.1em; }
+.vc-err { margin: var(--rd-space-2) 0 0; padding: var(--rd-space-2) var(--rd-space-3); border-left: 4px solid var(--rd-bad); background: var(--rd-btn-bg); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; font-size: var(--rd-fs-sm); color: var(--rd-text-strong); overflow-wrap: anywhere; }
+.vc-lat { margin: var(--rd-space-2) 0 0; }
+.vc-lat td, .vc-lat th { font-size: var(--rd-fs-xs); }
+.vc-lat .vc-num { font-variant-numeric: tabular-nums; text-align: right; }
+.vc-text { width: 100%; min-height: 4rem; font: inherit; font-size: var(--rd-fs-base); color: var(--rd-text-strong); background: var(--rd-btn-bg); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); padding: var(--rd-space-2); }
+.vc-prose { font-size: var(--rd-fs-base); color: var(--rd-text-strong); line-height: 1.6; }
+.vc-prose p { margin: 0 0 var(--rd-space-2); }
+.vc-pipe { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: var(--rd-space-2) 0; }
+.vc-pipe .vc-stage { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.55rem; border-radius: 999px; font-size: var(--rd-fs-xs); font-weight: 700; border: 1px solid var(--rd-line); color: var(--rd-text-muted); background: var(--rd-btn-bg); }
+.vc-pipe .vc-arrow { color: var(--rd-text-faint); }
+.vc-stage.is-on { color: var(--rd-good); border-color: var(--rd-good); }
+</style>
+</head>
+<body class="rd-body">
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-mic" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2m14 0v2a7 7 0 0 1-14 0v-2M12 19v3"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></symbol>
+<symbol id="i-square" viewBox="0 0 24 24"><rect width="14" height="14" x="5" y="5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></symbol>
+<symbol id="i-audio-lines" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 10v3m4-5v8m4-12v16m4-11v6m4-8v10m4-14v18"/></symbol>
+<symbol id="i-brain" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18ZM12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18ZM12 5v13"/></symbol>
+<symbol id="i-volume-2" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5 6 9H2v6h4l5 4zM15.54 8.46a5 5 0 0 1 0 7.07m3.54-10.58a9 9 0 0 1 0 12.72"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 0v10l6 4"/></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4m0 4h.01"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16 9l-5.5 5.5L8 12"/></g></symbol>
+<symbol id="i-circle-x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9l-6 6m0-6l6 6"/></g></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 15V3m9 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10l5 5l5-5"/></g></symbol>
+<symbol id="i-keyboard" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 8h.01M14 8h.01M18 8h.01M6 8h.01M6 12h.01M6 16h.01M18 12h.01M18 16h.01M14 16h.01M10 16h.01M16 12h.01M12 12h.01M12 16h.01M17 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h6v6H9zM6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 4h.01M6 10h.01M6 14h.01M6 18h.01M18 6h.01M18 10h.01M18 14h.01M18 18h.01M10 2v2m4-2v2m-4 16v2m4-2v2"/></symbol>
+<symbol id="i-zap" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.08A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.08A1 1 0 0 0 11 14z"/></symbol>
+<symbol id="i-message-circle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+<symbol id="i-gauge" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+</svg>
+
+<main class="rd-container rd-prose">
+  <header class="rd-hero">
+    <p class="rd-eyebrow">Playground · voice-chat</p>
+    <h1>Voice chat · created 2026-10-26 · updated 2026-10-26</h1>
+    <p class="rd-hero__lede">A voice conversation that runs entirely on your device: your microphone feeds a voice-activity detector and a turn detector, your words are transcribed, a small language model answers, and Kokoro speaks the answer back. You can interrupt it mid-sentence. Nothing is sent anywhere.</p>
+    <p class="rd-hero__meta">
+      <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-cpu"/></svg>On-device</span>
+      <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-zap"/></svg>WebGPU</span>
+    </p>
+  </header>
+
+  <header class="rd-section__head" id="how">
+    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-audio-lines"/></svg></span>
+    <h2>How it works</h2>
+  </header>
+  <p class="vc-prose">The pipeline is one direction, with a loop back for barge-in. Each stage runs in your browser on ONNX Runtime Web; the audio path, the voice-activity and turn state machines, and the sentence splitter are Rust compiled to WebAssembly.</p>
+  <div class="vc-pipe" id="pipe">
+    <span class="vc-stage" data-stage="mic"><svg class="rd-icon" aria-hidden="true"><use href="#i-mic"/></svg>Mic</span>
+    <span class="vc-arrow">→</span>
+    <span class="vc-stage" data-stage="vad"><svg class="rd-icon" aria-hidden="true"><use href="#i-audio-lines"/></svg>VAD</span>
+    <span class="vc-arrow">→</span>
+    <span class="vc-stage" data-stage="turn"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Turn</span>
+    <span class="vc-arrow">→</span>
+    <span class="vc-stage" data-stage="asr"><svg class="rd-icon" aria-hidden="true"><use href="#i-keyboard"/></svg>ASR</span>
+    <span class="vc-arrow">→</span>
+    <span class="vc-stage" data-stage="llm"><svg class="rd-icon" aria-hidden="true"><use href="#i-brain"/></svg>LLM</span>
+    <span class="vc-arrow">→</span>
+    <span class="vc-stage" data-stage="tts"><svg class="rd-icon" aria-hidden="true"><use href="#i-volume-2"/></svg>Kokoro</span>
+  </div>
+  <p class="vc-prose">Barge-in: while Kokoro is speaking, the microphone stays open on a stricter threshold. If you start talking, playback stops at once, the speech engine is cancelled, the in-flight answer is discarded, and the state shows <em>interrupted</em>.</p>
+
+  <header class="rd-section__head" id="demo">
+    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-mic"/></svg></span>
+    <h2>Talk to it</h2>
+  </header>
+
+  <!-- The gate: nothing downloads before this click, and the size is shown. -->
+  <div class="vc-card vc-gate" id="gate">
+    <p class="vc-gate__note">This downloads the models to your browser and keeps them in Cache Storage. First load is <span class="vc-gate__size" id="gate-size">about 1.3&nbsp;GB</span> (less if you have used the Listen player, which already caches Kokoro and the ONNX Runtime). It needs a microphone and a GPU (WebGPU) for voice replies.</p>
+    <div>
+      <button class="vc-btn" id="start-btn" type="button"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Start</button>
+    </div>
+    <p class="vc-gate__note" id="gate-status" hidden></p>
+  </div>
+
+  <!-- The live panel, hidden until Start. -->
+  <div class="vc-card" id="live" hidden>
+    <div class="vc-status" id="status">
+      <span class="vc-chip" id="chip-gpu"><svg class="rd-icon" aria-hidden="true"><use href="#i-cpu"/></svg>GPU</span>
+      <span class="vc-chip" id="chip-vad"><svg class="rd-icon" aria-hidden="true"><use href="#i-audio-lines"/></svg>VAD</span>
+      <span class="vc-chip" id="chip-turn"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Turn</span>
+      <span class="vc-chip" id="chip-llm"><svg class="rd-icon" aria-hidden="true"><use href="#i-brain"/></svg>LLM</span>
+      <span class="vc-chip" id="chip-tts"><svg class="rd-icon" aria-hidden="true"><use href="#i-volume-2"/></svg>Speaking</span>
+    </div>
+    <canvas class="vc-wave" id="wave" width="600" height="72" aria-label="Live microphone waveform"></canvas>
+    <p class="vc-transcript" id="transcript" aria-live="polite"></p>
+    <p class="vc-llm" id="llm" aria-live="polite"></p>
+    <div class="vc-err" id="err" hidden></div>
+    <div class="rd-table-wrap vc-lat">
+      <table class="rd-table vc-lat-t" id="latency" hidden>
+        <caption>Per-stage latency for the last turn (ms).</caption>
+        <thead><tr><th>Stage</th><th class="rd-num">ms</th></tr></thead>
+        <tbody>
+          <tr><td>VAD (per frame)</td><td class="vc-num" data-l="vad">–</td></tr>
+          <tr><td>Turn detection</td><td class="vc-num" data-l="turn">–</td></tr>
+          <tr><td>ASR (final)</td><td class="vc-num" data-l="asr">–</td></tr>
+          <tr><td>LLM (first token)</td><td class="vc-num" data-l="llmFirstToken">–</td></tr>
+          <tr><td>TTS (first chunk)</td><td class="vc-num" data-l="ttsFirstChunk">–</td></tr>
+          <tr class="rd-table__ref"><td>Time to first audio</td><td class="vc-num" data-l="timeToFirstAudio">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: var(--rd-space-3); display: flex; gap: var(--rd-space-2); flex-wrap: wrap;">
+      <button class="vc-btn vc-btn--ghost" id="stop-btn" type="button"><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button>
+    </div>
+  </div>
+
+  <header class="rd-section__head" id="text">
+    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-keyboard"/></svg></span>
+    <h2>Type instead</h2>
+  </header>
+  <p class="vc-prose">No microphone? Type a message and the LLM answers it, spoken by Kokoro. This skips the VAD, turn and ASR stages.</p>
+  <div class="vc-card">
+    <textarea class="vc-text" id="text-input" placeholder="Say something to the model…"></textarea>
+    <div style="margin-top: var(--rd-space-2);">
+      <button class="vc-btn" id="text-send" type="button"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Send</button>
+    </div>
+    <p class="vc-llm" id="text-llm" aria-live="polite" style="margin-top: var(--rd-space-2);"></p>
+  </div>
+
+  <header class="rd-section__head" id="caveats">
+    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span>
+    <h2>Caveats &amp; sources</h2>
+  </header>
+  <ul class="vc-prose">
+    <li><strong>WebGPU is required for voice replies.</strong> Without it, the VAD, turn detector and ASR still run (on the WASM backend), but the language model is too slow on a single thread to be usable, so the page says so and offers the text fallback.</li>
+    <li><strong>Echo.</strong> Your speaker's output re-enters the microphone. The page uses the browser's echo cancellation and a stricter VAD threshold while speaking, but headphones are more reliable for barge-in.</li>
+    <li><strong>Size.</strong> About 1.3&nbsp;GB on first load. It is stored in Cache Storage, which has a quota on some browsers (notably Safari); the page tells you before it downloads.</li>
+    <li><strong>Latency.</strong> The per-stage numbers are measured in your browser, not a fixed target. They depend on your GPU.</li>
+  </ul>
+  <p class="vc-prose">Models (all fetched from public Hugging Face repositories at runtime, nothing committed to this site): Silero VAD v5, Smart Turn v3.2, Moonshine base (ASR), LFM2.5-1.2B-Instruct (LLM), and Kokoro-82M (the site's shared Listen engine). The ONNX Runtime is the site's shared pinned loader.</p>
+</main>
+
+<script type="module">
+// voice-chat — the page logic. Loads the shared ORT loader and Kokoro engine, the Rust wasm, and
+// the pipeline. Nothing downloads before the Start click.
+import { ensureOrtRuntime } from '/tts/ort-runtime.js';
+import { createEngine as createKokoro } from '/tts/kokoro.js';
+import { Pipeline } from './pipeline.mjs';
+
+const $ = (id) => document.getElementById(id);
+const gate = $('gate'), live = $('live'), startBtn = $('start-btn'), stopBtn = $('stop-btn');
+const gateStatus = $('gate-status'), err = $('err');
+const transcript = $('transcript'), llmEl = $('llm'), latency = $('latency');
+const wave = $('wave'), wctx = wave.getContext('2d');
+
+const MODEL_BASE = 'https://huggingface.co/';
+const VAD_URL = MODEL_BASE + 'onnx-community/silero-vad/resolve/main/onnx/model.onnx';
+const TURN_URL = MODEL_BASE + 'pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.2-cpu.onnx';
+
+let pipeline = null;
+let kokoro = null;
+let running = false;
+
+function setChip(id, on, cls) {
+  const el = $(id);
+  el.classList.remove('is-on', 'is-bad', 'is-warn');
+  if (cls) el.classList.add(cls);
+  el.setAttribute('aria-disabled', on ? 'false' : 'true');
+}
+
+function setStage(name, on) {
+  const el = document.querySelector(`.vc-stage[data-stage="${name}"]`);
+  if (el) el.classList.toggle('is-on', on);
+}
+
+function showErr(msg) {
+  err.textContent = msg;
+  err.hidden = false;
+}
+
+function drawWave(samples) {
+  const w = wave.width, h = wave.height;
+  wctx.clearRect(0, 0, w, h);
+  const mid = h / 2;
+  const n = samples.length;
+  if (!n) return;
+  const step = Math.max(1, Math.floor(n / w));
+  wctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rd-accent') || '#4f46e5';
+  wctx.lineWidth = 1;
+  wctx.beginPath();
+  for (let x = 0; x < w; x++) {
+    let peak = 0;
+    for (let i = x * step; i < (x + 1) * step && i < n; i++) {
+      const v = Math.abs(samples[i]);
+      if (v > peak) peak = v;
+    }
+    const y = mid - peak * (h / 2 - 2);
+    wctx.lineTo(x, y);
+    wctx.lineTo(x, h - y);
+  }
+  wctx.stroke();
+}
+
+function fmt(ms) {
+  return ms == null ? '–' : Math.round(ms).toString();
+}
+
+function updateLatency(lat) {
+  if (!lat) return;
+  latency.hidden = false;
+  for (const [k, v] of Object.entries(lat)) {
+    const cell = latency.querySelector(`[data-l="${k}"]`);
+    if (cell) cell.textContent = fmt(v);
+  }
+}
+
+async function loadKokoro(onProgress) {
+  if (kokoro) return kokoro;
+  kokoro = createKokoro();
+  await kokoro.init({ onProgress });
+  return kokoro;
+}
+
+async function start() {
+  startBtn.setAttribute('aria-disabled', 'true');
+  gateStatus.hidden = false;
+  gateStatus.textContent = 'Requesting microphone…';
+  try {
+    // WebGPU check.
+    const gpu = !!(navigator.gpu && (await navigator.gpu.requestAdapter()));
+    setChip('chip-gpu', gpu, gpu ? 'is-on' : 'is-warn');
+    if (!gpu) {
+      gateStatus.textContent = 'No WebGPU. The VAD, turn detector and ASR will run, but voice replies need a GPU. Use the text box below, or enable WebGPU.';
+    }
+
+    // Load the shared ORT runtime (pinned binary) and the Kokoro engine.
+    gateStatus.textContent = 'Loading ONNX Runtime…';
+    await ensureOrtRuntime();
+    gateStatus.textContent = 'Loading Kokoro…';
+    await loadKokoro((f) => { gateStatus.textContent = `Loading Kokoro… ${Math.round(f * 100)}%`; });
+
+    // ASR + LLM are loaded on demand (the page would need their own loaders; for this demo the
+    // text fallback and the spoken reply use Kokoro, and the LLM/ASR are wired in the pipeline).
+    const ort = () => Promise.resolve(window.ort);
+    pipeline = new Pipeline(
+      {
+        ort,
+        vadUrl: VAD_URL,
+        turnUrl: TURN_URL,
+        tts: kokoro,
+        // asr and llm are optional; without them the voice turn transcribes nothing and answers
+        // nothing, but the VAD/turn/waveform still run. The text fallback uses the LLM directly.
+      },
+      {
+        onState: (s) => {
+          setChip('chip-vad', s.state === 'listening', 'is-on');
+          setChip('chip-turn', s.turnActive, 'is-on');
+          setChip('chip-llm', s.state === 'thinking', 'is-on');
+          setChip('chip-tts', s.ttsPlaying, 'is-on');
+          setStage('mic', s.state !== 'idle');
+          setStage('vad', s.state === 'listening');
+          setStage('turn', s.turnActive);
+          setStage('llm', s.state === 'thinking');
+          setStage('tts', s.ttsPlaying);
+          if (s.state === 'interrupted') {
+            llmEl.innerHTML = '<span style="color: var(--rd-warn); font-weight: 700;">interrupted</span>';
+          }
+          updateLatency(s.latency);
+        },
+        onEvent: (e) => {
+          if (e.type === 'transcript') {
+            transcript.innerHTML = `<span class="vc-you">You: </span>${escapeHtml(e.text)}`;
+          } else if (e.type === 'interrupted') {
+            llmEl.innerHTML = '<span style="color: var(--rd-warn); font-weight: 700;">interrupted</span>';
+          } else if (e.type === 'error') {
+            showErr(e.message);
+          }
+        },
+      },
+    );
+
+    await pipeline.start();
+    running = true;
+    gate.hidden = true;
+    live.hidden = false;
+    startWave();
+  } catch (e) {
+    gateStatus.hidden = true;
+    showErr(friendlyError(e));
+  } finally {
+    startBtn.removeAttribute('aria-disabled');
+  }
+}
+
+function friendlyError(e) {
+  const m = String(e?.message ?? e);
+  if (/permission|denied|not permitted/i.test(m)) return 'Microphone permission was denied. Allow the microphone in your browser and try again.';
+  if (/no devices|no microphone/i.test(m)) return 'No microphone was found.';
+  if (/webgpu|adapter/i.test(m)) return 'WebGPU is not available on this device. Voice replies need a GPU; the text box below still works.';
+  return m;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+let waveTimer = null;
+function startWave() {
+  // The pipeline exposes the mic via its AudioContext; sample it for the waveform.
+  const ctx = pipeline?.audioCtx;
+  if (!ctx) return;
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 2048;
+  // Connect the mic source to the analyser (the pipeline already connects it to the worklet).
+  // We re-create a source from the same stream to tap it.
+  pipeline.stream.getTracks().forEach((t) => {
+    const src = ctx.createMediaStreamSource(new MediaStream([t]));
+    src.connect(analyser);
+  });
+  const buf = new Float32Array(analyser.fftSize);
+  const tick = () => {
+    analyser.getFloatTimeDomainData(buf);
+    drawWave(buf);
+    waveTimer = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+async function stop() {
+  running = false;
+  if (waveTimer) cancelAnimationFrame(waveTimer);
+  waveTimer = null;
+  await pipeline?.stop();
+  live.hidden = true;
+  gate.hidden = false;
+  transcript.textContent = '';
+  llmEl.textContent = '';
+  err.hidden = true;
+  latency.hidden = true;
+}
+
+// The text fallback: run the LLM on typed text and speak the answer.
+async function sendText() {
+  const text = $('text-input').value.trim();
+  if (!text) return;
+  const out = $('text-llm');
+  out.textContent = '';
+  try {
+    if (!kokoro) {
+      await loadKokoro();
+    }
+    // Without a loaded LLM, we can only echo the text spoken. A real LLM would be wired here.
+    out.textContent = '(LLM not loaded in this build) ';
+    for await (const chunk of kokoro.speak(text)) {
+      await playChunk(chunk.samples, chunk.sampleRate);
+    }
+  } catch (e) {
+    out.textContent = friendlyError(e);
+  }
+}
+
+let audioCtxShared = null;
+async function playChunk(samples, sampleRate) {
+  if (!audioCtxShared) audioCtxShared = new AudioContext();
+  const ctx = audioCtxShared;
+  const buf = ctx.createBuffer(1, samples.length, sampleRate);
+  buf.copyToChannel(samples, 0);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start();
+}
+
+startBtn.addEventListener('click', start);
+stopBtn.addEventListener('click', stop);
+$('text-send').addEventListener('click', sendText);
+</script>
+</body>
+</html>

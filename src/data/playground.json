@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "title": "Voice chat",
+      "summary": "A fully on-device voice conversation in your browser: microphone to VAD to turn detection to ASR to a small LLM to Kokoro speech, with barge-in. Nothing is sent anywhere.",
+      "href": "/playground/voice-chat/",
+      "started": "2026-10-26",
+      "updated": "2026-10-26",
+      "status": "Draft",
+      "tags": [
+        "Playground"
+      ]
+    },
+    {
       "title": "EcoSimulation",
       "summary": "Condition a stock-flow-consistent AI-economy model on a driver state and watch six macro and financial series re-fan across five years.",
       "href": "/playground/ecosimulation/",
