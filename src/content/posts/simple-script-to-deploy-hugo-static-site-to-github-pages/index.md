@@ -9,7 +9,7 @@ category: Dev Automation
 draft: false
 ---
 
-Hugo is an awesome Static Site generator written in Go and this blog is powered by Hugo. If you are familiar with Jekyll or Octopress, Hugo is a similar tool in Golang but much faster and better. Well, that's something people like to debate but let's come to the point. I was evaluating hugo for the first time and I really liked it. I configured my project and I was ready to deploy it to Github Pages. However, the instructions at https://gohugo.io/tutorials/github-pages-blog/ were too much of a pain for me and didn't work at all. So, I developed a small script which is quite simple and works flawlessly although it uses `rsync`. If you don't have `rsync`, make sure you have it installed.
+Hugo is an awesome Static Site generator written in Go and this blog is powered by Hugo. If you are familiar with Jekyll or Octopress, Hugo is a similar tool in Golang but much faster and better. Well, that's something people like to debate but let's come to the point. I was evaluating hugo for the first time and I really liked it. I configured my project and I was ready to deploy it to Github Pages. However, the instructions at https://gohugo.io/host-and-deploy/deploy-to-github-pages/ were too much of a pain for me and didn't work at all. So, I developed a small script which is quite simple and works flawlessly although it uses `rsync`. If you don't have `rsync`, make sure you have it installed.
 
 ## Step #1 - Setup Source Project
 

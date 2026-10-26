@@ -72,7 +72,8 @@ svg{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-wi
 .res p{margin:0;padding:.5em .75em;color:var(--muted);font-size:.875em}
 .panel{width:20em;padding:1em}
 .panel label{display:flex;justify-content:space-between;margin-bottom:.75em;font-size:.875em}
-.panel input{width:100%;accent-color:var(--prime)}
+/* 24px min-height (px, not em: the bar's font is 14px on phones, so the native track would be < 24px) keeps the slider a tap target. */
+.panel input{width:100%;height:24px;accent-color:var(--prime)}
 .menu-panel{display:flex;flex-direction:column;padding:.5em}
 .menu-panel a{justify-content:space-between;gap:2em;padding:.5em .25em .5em .75em;font-weight:700;line-height:1.5}
 .menu-panel .chev{width:1.25em;height:1.25em;color:var(--prime)}

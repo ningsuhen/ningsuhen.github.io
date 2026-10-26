@@ -68,6 +68,10 @@ jobs:
         run: pnpm check:markers
       - name: internal links
         run: pnpm check:links
+      - name: 404 page + rss.xml (no network)
+        run: node scripts/check-external-links.mjs --no-network
+      - name: seo (noindex, canonical, sitemap, robots)
+        run: pnpm check:seo
       - name: fragment contract
         run: pnpm check:export
       - name: leaks (incl. embedded payloads)

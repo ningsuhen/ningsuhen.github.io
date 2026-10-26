@@ -8,9 +8,10 @@ import { MARKER } from "./navbar";
 import { LICENSE_MARKER } from "./license";
 import { commentsFor } from "./comments";
 import { addBreadcrumb } from "./breadcrumb";
-import { buildSocialMeta } from "./social";
+import { buildSocialMeta, pageDescription } from "./social";
 import { withThemeScript } from "./theme";
 import { esc } from "./util";
+import { siteConfig } from "../config";
 import { A11Y_MARKER, buildA11yScript } from "./a11y";
 
 const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
@@ -22,7 +23,18 @@ export function applyChrome(html: string, script: string, extra: string, footer:
 	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, extra].join("");
 	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	const withCrumbs = addBreadcrumb(body, urlPath, base, site);
-	return withThemeScript(ensureHead(versionedBundle(withCrumbs), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+	return withThemeScript(ensureHead(versionedBundle(withSearchBody(withCrumbs)), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+}
+
+// Index the page's content in the site search: Pagefind indexes elements marked data-pagefind-body.
+// The old standalone pages (public/**/*.html) were never marked, so a search for a report/playground
+// returned the companion post (no kind chip) instead of the page itself. Add the marker to the <main>.
+// The Astro shell already sets it (data-pagefind-body="" or "false"), so this only touches the old pages.
+function withSearchBody(html: string): string {
+	if (html.includes("data-pagefind-body")) return html;
+	const main = html.match(/<main(?=[\s>])[^>]*>/i);
+	if (!main) return html;
+	return html.replace(main[0], main[0].replace(/^<main/i, "<main data-pagefind-body"));
 }
 
 // Cache-bust the design-system bundle: append ?v=<hash> to its <link> and <script> so a new bundle is
@@ -63,6 +75,15 @@ function ensureHead(html: string, canonical: string, site: string): string {
 	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) early.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
 	if (!/<link[^>]+rel=["']icon["']/i.test(html)) late.push(FAVICONS);
 	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) late.push(`<link rel="canonical" href="${esc(canonical)}">`);
+	// A plain <meta name="description">: some exports only declare og:description, which a search engine may not
+	// use as the snippet. Add the same text the social cards use, when the page has no description of its own.
+	if (!/<meta[^>]+name=["']description["']/i.test(html)) {
+		const d = pageDescription(html, canonical, site);
+		if (d) late.push(`<meta name="description" content="${esc(d)}">`);
+	}
+	// Google Search Console site-verification, same as the shared head layout; emitted only when the token is set.
+	if (siteConfig.googleSiteVerification && !/<meta[^>]+name=["']google-site-verification["']/i.test(html))
+		late.push(`<meta name="google-site-verification" content="${esc(siteConfig.googleSiteVerification)}">`);
 	// Machine-readable AI/TDM opt-out (W3C TDMRep), same as the shared head layout.
 	if (!/<meta[^>]+name=["']tdm-reservation["']/i.test(html)) late.push(`<meta name="tdm-reservation" content="1"><meta name="tdm-policy" content="${esc(new URL("/license/", canonical).href)}">`);
 	late.push(buildSocialMeta(html, canonical, site));

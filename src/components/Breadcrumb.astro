@@ -36,7 +36,7 @@ const last = items.length - 1;
                     <span aria-current="page" title={item.name} class="block min-w-0 truncate text-black/75 dark:text-white/75">{item.name}</span>
                 ) : (
                     <>
-                        <a href={item.url} class="inline-flex min-h-6 items-center whitespace-nowrap rounded-md transition hover:text-[var(--primary)]">{item.name}</a>
+                        <a href={item.url} class="inline-flex min-h-[24px] items-center whitespace-nowrap rounded-md transition hover:text-[var(--primary)]">{item.name}</a>
                         <Icon name="lucide:chevron-right" class="mx-1 flex-none text-black/30 dark:text-white/30" />
                     </>
                 )}

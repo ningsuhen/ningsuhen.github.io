@@ -10,7 +10,7 @@
 //
 // `--measure` prints the values without enforcing the budget (for setting or reviewing baselines).
 // Browser: CHROME_PATH, or the playwright-core chromium. CWV_DIST overrides the build dir.
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { appendFileSync, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -135,6 +135,16 @@ console.log(`CWV budget (${RUNS} runs, ${THROTTLE}x CPU, ${SETTLE_MS}ms settle, 
 for (const r of rows) {
 	const mark = r.ok ? "ok " : "FAIL";
 	console.log(`  [${mark}] ${r.view.padEnd(7)} ${r.name.padEnd(11)} LCP ${String(r.lcp).padStart(5)}ms  CLS ${String(r.cls).padStart(7)}  TBT ${String(r.tbt).padStart(4)}ms`);
+}
+
+// Surface the result in the CI job summary so the numbers are visible without expanding the step log.
+// (The check is Playwright/CDP only — there is no Lighthouse run to compare against.)
+const summary = process.env.GITHUB_STEP_SUMMARY;
+if (summary) {
+	const head = `### CWV budget (${RUNS} runs, ${THROTTLE}x CPU, ${SETTLE_MS}ms settle, median)\n\n`;
+	const table = `| page | view | LCP (ms) | CLS | TBT (ms) | budget |\n| --- | --- | --- | --- | --- | --- |\n` +
+		rows.map((r) => `| ${r.name} | ${r.view} | ${r.lcp} | ${r.cls} | ${r.tbt} | ${r.ok ? "ok" : "FAIL"} |`).join("\n") + "\n";
+	appendFileSync(summary, head + table);
 }
 
 if (MEASURE) {

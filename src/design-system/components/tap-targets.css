@@ -1,0 +1,7 @@
+/* Tap targets (T3+): 24px minimum on the tiny inline controls, so they are tappable on phones.
+   Shipped in rd.css only (not the frozen research.css core) — it is a new concern, not part of the
+   original research.css bytes. */
+
+/* Citation links ([n] → #ref-…) are 15px inline anchors; give them a 24px tap target. a[href^="#ref"]
+   covers the bare anchors some pages use (no .rd-cite class). */
+.rd-cite, a[href^="#ref"] { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }

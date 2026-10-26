@@ -90,6 +90,7 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 		<meta charset="UTF-8" />
 		<meta name="description" content={description || pageTitle}>
 		<meta name="author" content={profileConfig.name}>
+		{siteConfig.googleSiteVerification && <meta name="google-site-verification" content={siteConfig.googleSiteVerification} />}
 		<meta name="tdm-reservation" content="1">
 		<meta name="tdm-policy" content={new URL("license/", Astro.site).href}>
 
@@ -113,6 +114,15 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
+		{isHomePage && (
+			<script is:inline type="application/ld+json" set:html={JSON.stringify({
+				"@context": "https://schema.org",
+				"@type": "WebSite",
+				name: siteConfig.title,
+				url: new URL("/", Astro.site).href,
+				description: siteConfig.subtitle,
+			})} />
+		)}
 		{favicons.map(favicon => (
 			<link rel="icon"
 				  href={favicon.src.startsWith('/') ? url(favicon.src) : favicon.src}
