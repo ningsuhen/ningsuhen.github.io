@@ -1,5 +1,5 @@
 ---
-title: What I learned rewriting Python programs in Rust, and what got faster
+title: Rewriting python code with Rust, here's what I learned
 published: 2026-10-24
 description: "What I learned rewriting several Python programs in Rust this year: the startup win, the FFI tax, which bugs moved and which did not, whether coding agents changed the answer, and a checklist for deciding."
 thumbnail: ./thumb.webp
@@ -8,15 +8,9 @@ category: Thoughts
 draft: false
 ---
 
-<!-- owner:scene Why did you start rewriting in Rust? The post never says. A one-line reason (packaging pain, the 7.5 s import, curiosity?) only if it is true. -->
+Python was the primary choice for a lot of tools I created when I first started using claude code. But as the code base became larger , it became slower and slower, and it was easy to break something when there's a change in another. There were periods of frustration feeling like the codebase is a complete bust of AI Slop. 
 
-This year I rewrote several of my Python programs in Rust, some small and some not. I'll keep their names out of it. AI coding agents did a lot of the work, so I also wanted to know if that changed the answer.
-
-<!-- owner:question Want a harder cut toward one third of the words? That would mean dropping some data, for example the CI failure tally or the second table. -->
-
-<!-- owner:voice Is "Short version:" OK, or do you prefer the original bullet TL;DR? -->
-
-Short version: the clearest speed win was startup, and most other gains came from algorithm changes, not the language. The FFI boundary can take back most of a numeric gain. Some bugs moved to compile time, but hangs and design-level memory growth did not move at all. There is a checklist at the end if you are weighing the same move.
+At the same time, claude code was doing a very good job of generating code. This reminded me Rust - how it has so many checks and safety features during compilation to the extent that compilation is so slow and slow enough to put me off. But with agentic coding, this is a different game. I was starting to have a system where I could just prompt the instructions and the agent will do their work until completion. This was a good time to try rewriting some Python programs in Rust and here are the learnings from it.
 
 ## What I did not measure
 
