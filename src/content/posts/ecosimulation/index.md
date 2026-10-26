@@ -5,7 +5,7 @@ description: "A stock-flow-consistent model of the AI economy, run 50,000 times.
 tags: [Playground, AI, Simulation]
 category: Playground
 thumbnail: ./thumb.webp
-draft: false
+draft: true
 ---
 
 <!-- owner:scene Why did you build the model? The post opens with "I built a model of the AI economy and let it run" and no reason. -->

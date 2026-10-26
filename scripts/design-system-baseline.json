@@ -109,78 +109,6 @@
 			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
 		},
 		{
-			"page": "/experiments/ecosimulation/",
-			"rule": "footer-box",
-			"owner": "site",
-			"reason": "License card is centred on the page (design-system container) while the main post column sits beside the sidebar. Align the container with the post column."
-		},
-		{
-			"page": "/experiments/ecosimulation/",
-			"rule": "footer-gap",
-			"owner": "site",
-			"reason": "Gap above the license card differs from the main post footer spacing. Decide one spacing for both."
-		},
-		{
-			"page": "/experiments/ecosimulation/",
-			"rule": "footer-type",
-			"owner": "site",
-			"reason": "License card text is 14px and muted differently from the main site footer text. One footer style for both."
-		},
-		{
-			"page": "/experiments/ecosimulation/",
-			"rule": "prose-type",
-			"owner": "site",
-			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main posts 24px. Accepted until the guide changes."
-		},
-		{
-			"page": "/experiments/ecosimulation/",
-			"rule": "rail-presence",
-			"owner": "site",
-			"reason": "Standalone contents rail shows from 1100px; the main post TOC shows only from 1536px. Decide one breakpoint."
-		},
-		{
-			"page": "/experiments/ecosimulation/",
-			"rule": "rail-type",
-			"owner": "site",
-			"reason": "Standalone rail text is 14px; the main TOC is 12px."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "footer-box",
-			"owner": "site",
-			"reason": "License card is centred on the page (design-system container) while the main post column sits beside the sidebar. Align the container with the post column."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "footer-gap",
-			"owner": "site",
-			"reason": "Gap above the license card differs from the main post's footer spacing. Decide one spacing for both."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "footer-type",
-			"owner": "site",
-			"reason": "License card text is 15px and muted differently from the main site footer text (14px). One footer style for both."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "prose-type",
-			"owner": "site",
-			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "rail-presence",
-			"owner": "site",
-			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
-		},
-		{
-			"page": "/ideas/decentralized-office/",
-			"rule": "rail-type",
-			"owner": "site",
-			"reason": "Standalone rail text is 13px; the main TOC is 12px."
-		},
-		{
 			"page": "/research/ai-economy/",
 			"rule": "footer-gap",
 			"owner": "site",
@@ -227,6 +155,42 @@
 			"rule": "typography-scale",
 			"owner": "site",
 			"reason": "Compact density is intentional (guide: Density): the template's compact sizes are the reference here."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "footer-box",
+			"owner": "site",
+			"reason": "License card is centred on the page (design-system container) while the main post column sits beside the sidebar. Align the container with the post column."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "footer-gap",
+			"owner": "site",
+			"reason": "Gap above the license card differs from the main post's footer spacing. Decide one spacing for both."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "footer-type",
+			"owner": "site",
+			"reason": "License card text is 15px and muted differently from the main site footer text (14px). One footer style for both."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "prose-type",
+			"owner": "site",
+			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "rail-presence",
+			"owner": "site",
+			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
+		},
+		{
+			"page": "/ideas/decentralized-office/",
+			"rule": "rail-type",
+			"owner": "site",
+			"reason": "Standalone rail text is 13px; the main TOC is 12px."
 		}
 	]
 }
