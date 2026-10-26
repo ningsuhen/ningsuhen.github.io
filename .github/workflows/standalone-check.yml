@@ -37,6 +37,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:tts
       - run: pnpm test:drafts
+      - run: pnpm test:markers
       - run: pnpm test:dates
       - run: pnpm build
       - uses: actions/upload-artifact@v4
@@ -66,6 +67,8 @@ jobs:
         run: pnpm check:source-map
       - name: owner markers
         run: pnpm check:markers
+      - name: owner voice
+        run: pnpm check:voice
       - name: internal links
         run: pnpm check:links
       - name: 404 page + rss.xml (no network)

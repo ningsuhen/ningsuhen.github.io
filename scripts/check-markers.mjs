@@ -1,12 +1,13 @@
 // Owner markers (src/plugins/owner-markers.mjs) are hidden notes for the owner. This check fails if any
 // marker text, or the marker syntax itself, reaches the built site (HTML, RSS, sitemap, Pagefind index),
-// and lists the unresolved markers per post. Unresolved markers are a warning, not a failure, but a
+// and lists the unresolved markers per post (`manual` markers lock owner-written text and are not a to-do,
+// so they are never listed). Unresolved markers are a warning, not a failure, but a
 // published post with markers still waits on the owner, so they also go to the CI job summary.
 // Run after a build: pnpm check:markers
 import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
-import { parseOwnerMarkers } from "../src/plugins/owner-markers.mjs";
+import { isOpenMarker, MARKER_TYPES, parseOwnerMarkers } from "../src/plugins/owner-markers.mjs";
 
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
@@ -86,7 +87,7 @@ for (const p of posts) {
 	if (p.malformed !== p.markers.length) {
 		failed++;
 		console.error(
-			`check:markers: ${p.slug}: ${p.malformed - p.markers.length} marker(s) with an unknown type (use question, confirm, scene, voice or fact)`,
+			`check:markers: ${p.slug}: ${p.malformed - p.markers.length} marker(s) with an unknown type (use ${MARKER_TYPES.join(", ")})`,
 		);
 	}
 	for (const m of p.markers)
@@ -122,7 +123,9 @@ for (const file of walk(DIST)) {
 	}
 }
 
-const open = posts.filter((p) => p.markers.length);
+const open = posts
+	.map((p) => ({ ...p, markers: p.markers.filter(isOpenMarker) }))
+	.filter((p) => p.markers.length);
 const total = open.reduce((n, p) => n + p.markers.length, 0);
 const lines = open.map((p) => {
 	const byType = Object.entries(

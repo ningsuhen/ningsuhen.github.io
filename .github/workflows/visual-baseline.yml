@@ -3,6 +3,11 @@ name: Visual baseline
 # Regenerates the visual regression baseline on every master push. The PNGs live on the `visual-baseline`
 # branch (master itself carries no binaries). The branch is master + the baseline folder, kept current by
 # merging master into it and regenerating — a plain push, no force-push.
+#
+# The commit + push happen in a SEPARATE clean clone, not the main checkout. The main checkout runs
+# `pnpm install`, whose `prepare` step installs our `.githooks` pre-commit into its `.git/hooks`; that hook
+# fails closed when `gitleaks` is absent on the runner, so a `git commit` there aborts (run 40268345713).
+# A fresh clone never ran `pnpm install`, so it has no hooks — no `--no-verify`, no hooksPath tricks.
 on:
   push:
     branches: [master]
@@ -20,17 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      # Always check out master (the new code); switch to the baseline branch if it already exists.
+      # Check out master (the new code) and build it; the baseline PNGs are written to ./visual-baseline.
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Switch to the baseline branch (if it exists)
-        run: |
-          if git ls-remote --exit-code --heads origin visual-baseline >/dev/null 2>&1; then
-            git fetch origin visual-baseline
-            git checkout -B visual-baseline origin/visual-baseline
-            git merge --no-edit origin/master
-          fi
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -41,14 +39,30 @@ jobs:
       - uses: ./.github/actions/playwright-env
       - name: Regenerate the baseline
         run: pnpm check:visual --generate visual-baseline
-      - name: Commit + push to visual-baseline
+      - name: Commit + push to visual-baseline (clean clone, no hooks)
         run: |
+          # Fresh clone: no `pnpm install`, so no .githooks pre-commit to fail closed on the runner.
+          # The token is in the remote URL so the push authenticates; GitHub masks GITHUB_TOKEN in logs.
+          clone="$(mktemp -d)"
+          git clone --quiet --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" "$clone"
+          cd "$clone"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # The branch is master + the baseline folder. Keep it current by merging master, then add the PNGs.
+          if git show-ref --verify --quiet refs/remotes/origin/visual-baseline; then
+            git checkout -B visual-baseline origin/visual-baseline
+            git merge --no-edit origin/master
+          else
+            git checkout -b visual-baseline origin/master
+          fi
+          # Copy the freshly generated PNGs from the main checkout (overwrite; stale files are harmless —
+          # check:visual compares candidates against the baseline, never the reverse).
+          mkdir -p ./visual-baseline
+          cp -R "${GITHUB_WORKSPACE}/visual-baseline/." ./visual-baseline/
           git add -A visual-baseline
           if git diff --staged --quiet; then
             echo "baseline unchanged"
           else
             git commit -m "visual: baseline $(date -u +%Y-%m-%d)"
-            git push origin HEAD:visual-baseline
+            git push --quiet origin HEAD:visual-baseline
           fi
