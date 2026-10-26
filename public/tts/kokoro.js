@@ -78,8 +78,47 @@ async function fetchCached(url, onBytes) {
 	} catch {
 		cache = null; // private window, blocked storage: just download
 	}
+	const r = await get(url);
+	if (cache) {
+		try {
+			// Streamed straight into the Cache API and read back from storage: no chunk list in
+			// JS memory while the ~325 MB model arrives.
+			const counted = r.body.pipeThrough(counting(onBytes));
+			await cache.put(url, new Response(counted, { headers: { 'content-type': type(r) } }));
+			const stored = await cache.match(url);
+			if (stored) return await stored.blob();
+		} catch {
+			// Quota or storage error: the body is spent, so download once more without the cache.
+		}
+		return collect(await get(url), onBytes);
+	}
+	return collect(r, onBytes);
+}
+
+async function get(url) {
 	const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
 	if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+	return r;
+}
+
+function type(r) {
+	return r.headers.get('content-type') ?? 'application/octet-stream';
+}
+
+/** A pass-through stream that reports the running byte count. */
+function counting(onBytes) {
+	let got = 0;
+	return new TransformStream({
+		transform(chunk, controller) {
+			got += chunk.length;
+			onBytes(got);
+			controller.enqueue(chunk);
+		},
+	});
+}
+
+/** Read a response into a Blob (used when the Cache API is unavailable). */
+async function collect(r, onBytes) {
 	const reader = r.body.getReader();
 	const parts = [];
 	let got = 0;
@@ -90,13 +129,7 @@ async function fetchCached(url, onBytes) {
 		got += value.length;
 		onBytes(got);
 	}
-	const blob = new Blob(parts, { type: r.headers.get('content-type') ?? 'application/octet-stream' });
-	try {
-		await cache?.put(url, new Response(blob, { headers: { 'content-type': blob.type } }));
-	} catch {
-		// Quota: keep going uncached.
-	}
-	return blob;
+	return new Blob(parts, { type: type(r) });
 }
 
 class KokoroEngine {
@@ -115,6 +148,7 @@ class KokoroEngine {
 	#queue = Promise.resolve();
 	#voiceLoads = new Map();
 	#retries = 0;
+	#normalize = true;
 
 	/** Extra passes spent recovering NaN chunks (a wasm int8 quirk), since init. */
 	get retries() {
@@ -137,9 +171,12 @@ class KokoroEngine {
 
 	/**
 	 * @param {{ onProgress?: (f: number) => void, baseUrl?: string, ortBase?: string,
-	 *           variant?: keyof typeof VARIANTS }} [opts]
+	 *           variant?: keyof typeof VARIANTS, normalize?: boolean }} [opts]
+	 *   normalize: false skips the Rust normaliser in speak(), for text the site already
+	 *   normalised (it is a no-op on that text either way; this just saves the pass).
 	 */
 	async init(opts = {}) {
+		this.#normalize = opts.normalize !== false;
 		const gpu = await hasWebGPU();
 		const variant = opts.variant ?? (gpu ? DEFAULT_GPU_VARIANT : DEFAULT_CPU_VARIANT);
 		if (!VARIANTS[variant]) throw new Error(`unknown variant ${variant}`);
@@ -185,7 +222,7 @@ class KokoroEngine {
 
 	/** Text to phonemes, for checking a pronunciation. */
 	phonemize(text) {
-		return this.#speaker?.phonemize(text) ?? '';
+		return this.#speaker?.phonemize(text, this.#normalize) ?? '';
 	}
 
 	/**
@@ -205,7 +242,7 @@ class KokoroEngine {
 		await this.#voice(id);
 		// Kokoro's own speed control, so pitch is kept. Its range is 0.5-2.
 		const speed = Math.min(2, Math.max(0.5, Number(rate) || 1));
-		const chunks = await this.#serial(() => this.#speaker.plan(text));
+		const chunks = await this.#serial(() => this.#speaker.plan(text, this.#normalize));
 		for (const [i, phonemes] of chunks.entries()) {
 			if (stopped()) return;
 			const samples = await this.#serial(async () => {

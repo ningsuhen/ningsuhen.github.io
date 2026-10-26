@@ -506,6 +506,8 @@ class ListenPlayer extends HTMLElement {
 				variant,
 				baseUrl: manifest.base,
 				ortBase: new URL(this.dataset.kokoroOrt ?? "/tts/vendor/ort/", location.href).href,
+				// extract.ts already normalises for speech; the engine must not do it a second time.
+				normalize: false,
 			});
 		})().then(
 			() => {
