@@ -392,40 +392,61 @@ for (const rel of barPages) {
 
 // Drift: the report rail against the main post TOC, at 1536 and 1920 (both shown there).
 const mainTocPage = "/posts/rust-learnings/";
+// Known rail-style drifts on third-party exports, baselined with an owner (mirrors design-system-baseline.json).
+// A site-owned page must not be baselined here — fix it. An entry that stops firing fails (delete it in the PR).
+const TOC_DRIFT_BASELINE = [
+	{ page: "/research/ai-economy/", owner: "EcoSimulation", reason: "Own palette: the rail badge and text colours differ from the design system. Re-export on the design system." },
+];
 if (tabbed.length && existsSync(path.join(DIST, "posts/rust-learnings/index.html"))) {
+	const urlOf = (p) => "/" + p.replace(/index\.html$/, "").split(path.sep).join("/");
+	const grab = async (width, urlPath, sel) => {
+		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+		const page = await ctx.newPage();
+		await page.goto(base + urlPath, { waitUntil: "load" });
+		await page.waitForTimeout(400);
+		const r = await page.evaluate((s) => {
+			const q = (x) => document.querySelector(x);
+			const rail = q(s.rail), first = rail?.querySelector("a");
+			const b = (el) => el && el.getBoundingClientRect();
+			const cs = (el, p) => el && getComputedStyle(el).getPropertyValue(p);
+			const badge = first?.children[0], text = first?.children[1];
+			return {
+				railX: b(rail)?.left, railW: b(rail)?.width, railTop: b(rail)?.top,
+				firstTop: b(first) && b(first).top - b(rail).top, firstH: b(first)?.height,
+				badgeW: b(badge)?.width, badgeH: b(badge)?.height, badgeBg: cs(badge, "background-color"),
+				badgeFg: cs(badge, "color"), badgeFont: cs(badge, "font-size"), badgeWeight: cs(badge, "font-weight"),
+				textFont: cs(text, "font-size"), textLh: cs(text, "line-height"), textColor: cs(text, "color"),
+				radius: cs(first, "border-radius"), minH: cs(first, "min-height"), padL: cs(first, "padding-left"), gap: cs(first, "column-gap"),
+			};
+		}, sel);
+		await ctx.close();
+		return r;
+	};
+	// Compare EVERY tabbed page's rail against the main post page's TOC. A page whose rail is not measurable at
+	// load (the catalog has no real rail; some exports restructure their tabs) is skipped, not failed — the old
+	// single-"representative" comparison masked drift by only ever checking the first page in order.
+	const exact = ["badgeBg", "badgeFg", "badgeFont", "badgeWeight", "textFont", "textLh", "textColor", "radius", "minH", "padL", "gap"];
+	const approx = ["railX", "railW", "railTop", "firstTop", "badgeW", "badgeH"];
+	const firedBaseline = new Set();
 	for (const width of [1536, 1920]) {
-		const grab = async (urlPath, sel) => {
-			const ctx = await browser.newContext({ viewport: { width, height: 900 } });
-			const page = await ctx.newPage();
-			await page.goto(base + urlPath, { waitUntil: "load" });
-			await page.waitForTimeout(400);
-			const r = await page.evaluate((s) => {
-				const q = (x) => document.querySelector(x);
-				const rail = q(s.rail), first = rail?.querySelector("a");
-				const b = (el) => el && el.getBoundingClientRect();
-				const cs = (el, p) => el && getComputedStyle(el).getPropertyValue(p);
-				const badge = first?.children[0], text = first?.children[1];
-				return {
-					railX: b(rail)?.left, railW: b(rail)?.width, railTop: b(rail)?.top,
-					firstTop: b(first) && b(first).top - b(rail).top, firstH: b(first)?.height,
-					badgeW: b(badge)?.width, badgeH: b(badge)?.height, badgeBg: cs(badge, "background-color"),
-					badgeFg: cs(badge, "color"), badgeFont: cs(badge, "font-size"), badgeWeight: cs(badge, "font-weight"),
-					textFont: cs(text, "font-size"), textLh: cs(text, "line-height"), textColor: cs(text, "color"),
-					radius: cs(first, "border-radius"), minH: cs(first, "min-height"), padL: cs(first, "padding-left"), gap: cs(first, "column-gap"),
-				};
-			}, sel);
-			await ctx.close();
-			return r;
-		};
-		const mainR = await grab(mainTocPage, { rail: "#toc-inner-wrapper" });
-		const repR = await grab(`/${pages.find((p) => tabbed.includes(p)).replace(/index\.html$/, "").split(path.sep).join("/")}`, { rail: ".rd-tabpanel:not([hidden]) .rd-toc" });
-		const exact = ["badgeBg", "badgeFg", "badgeFont", "badgeWeight", "textFont", "textLh", "textColor", "radius", "minH", "padL", "gap"];
-		for (const k of exact) if (mainR[k] !== repR[k]) failures.push(`TOC drift @${width}: ${k} main=${mainR[k]} report=${repR[k]}`);
-		for (const k of ["railX", "railW", "railTop", "firstTop", "badgeW", "badgeH"]) {
-			if (mainR[k] == null || repR[k] == null) { if (width >= 1536) failures.push(`TOC drift @${width}: ${k} missing`); continue; }
-			if (Math.abs(mainR[k] - repR[k]) > 1) failures.push(`TOC drift @${width}: ${k} main=${mainR[k]} report=${repR[k]}`);
+		const mainR = await grab(width, mainTocPage, { rail: "#toc-inner-wrapper" });
+		for (const p of tabbed) {
+			const tag = urlOf(p);
+			const repR = await grab(width, tag, { rail: ".rd-tabpanel:not([hidden]) .rd-toc" });
+			if (repR.textColor == null) continue; // no measurable rail
+			for (const k of exact) {
+				if (mainR[k] === repR[k]) continue;
+				const b = TOC_DRIFT_BASELINE.find((x) => x.page === tag);
+				if (b) { firedBaseline.add(b.page); continue; }
+				failures.push(`TOC drift @${width} ${tag}: ${k} main=${mainR[k]} report=${repR[k]}`);
+			}
+			for (const k of approx) {
+				if (mainR[k] == null || repR[k] == null) { if (width >= 1536) failures.push(`TOC drift @${width} ${tag}: ${k} missing`); continue; }
+				if (Math.abs(mainR[k] - repR[k]) > 1) failures.push(`TOC drift @${width} ${tag}: ${k} main=${mainR[k]} report=${repR[k]}`);
+			}
 		}
 	}
+	for (const b of TOC_DRIFT_BASELINE) if (!firedBaseline.has(b.page)) failures.push(`TOC baseline no longer fires, remove it: ${b.page} (${b.owner})`);
 	// Highlight rule: the entries marked .visible must be exactly the headings whose section meets the viewport.
 	// Main TOC: links in #toc, the section is each heading's parent. Report: the visible panel's rail, its sections.
 	const SCROLLS = [0, 500, 1100, 1700];
@@ -455,10 +476,12 @@ if (tabbed.length && existsSync(path.join(DIST, "posts/rust-learnings/index.html
 		return out;
 	};
 	const mainRule = await rule(mainTocPage, "#toc table-of-contents a", "parent");
-	const repPage = `/${pages.find((p) => tabbed.includes(p)).replace(/index\.html$/, "").split(path.sep).join("/")}`;
-	const repRule = await rule(repPage, ".rd-tabpanel:not([hidden]) .rd-toc a", "self");
 	mainRule.forEach((r, i) => { if (r.expected !== r.marked) failures.push(`TOC highlight @scroll${SCROLLS[i]} main: marked ${r.marked} != intersecting ${r.expected}`); });
-	repRule.forEach((r, i) => { if (r.expected !== r.marked) failures.push(`TOC highlight @scroll${SCROLLS[i]} report: marked ${r.marked} != intersecting ${r.expected}`); });
+	for (const p of tabbed) {
+		const tag = urlOf(p);
+		const repRule = await rule(tag, ".rd-tabpanel:not([hidden]) .rd-toc a", "self");
+		repRule.forEach((r, i) => { if (r.n && r.expected !== r.marked) failures.push(`TOC highlight @scroll${SCROLLS[i]} ${tag}: marked ${r.marked} != intersecting ${r.expected}`); });
+	}
 }
 
 // Footer, every page at these widths: the license card is never wider than the navbar card (edges within 0.5px), the
