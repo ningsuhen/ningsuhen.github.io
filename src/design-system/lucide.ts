@@ -7,9 +7,10 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const ICONS = path.resolve("node_modules/@iconify-json/lucide/icons.json");
-let cache: { icons: Record<string, any>; aliases?: Record<string, any>; width?: number; height?: number } | null = null;
-function lucide() {
-	if (!cache) cache = JSON.parse(readFileSync(ICONS, "utf8"));
+type LucideSet = { icons: Record<string, any>; aliases?: Record<string, any>; width?: number; height?: number };
+let cache: LucideSet | null = null;
+function lucide(): LucideSet {
+	if (!cache) cache = JSON.parse(readFileSync(ICONS, "utf8")) as LucideSet;
 	return cache;
 }
 
