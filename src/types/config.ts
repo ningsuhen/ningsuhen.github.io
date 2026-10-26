@@ -36,6 +36,10 @@ export type SiteConfig = {
 	};
 
 	favicon: Favicon[];
+
+	// Google Search Console site-verification token. Empty by default: the <meta name="google-site-verification">
+	// is emitted only when this is set, so the repo carries no real token (the owner supplies it).
+	googleSiteVerification: string;
 };
 
 export type Favicon = {

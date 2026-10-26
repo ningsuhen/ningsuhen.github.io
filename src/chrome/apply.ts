@@ -8,9 +8,10 @@ import { MARKER } from "./navbar";
 import { LICENSE_MARKER } from "./license";
 import { commentsFor } from "./comments";
 import { addBreadcrumb } from "./breadcrumb";
-import { buildSocialMeta } from "./social";
+import { buildSocialMeta, pageDescription } from "./social";
 import { withThemeScript } from "./theme";
 import { esc } from "./util";
+import { siteConfig } from "../config";
 import { A11Y_MARKER, buildA11yScript } from "./a11y";
 
 const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
@@ -63,6 +64,15 @@ function ensureHead(html: string, canonical: string, site: string): string {
 	if (!/<meta[^>]+name=["']viewport["']/i.test(html)) early.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
 	if (!/<link[^>]+rel=["']icon["']/i.test(html)) late.push(FAVICONS);
 	if (!/<link[^>]+rel=["']canonical["']/i.test(html)) late.push(`<link rel="canonical" href="${esc(canonical)}">`);
+	// A plain <meta name="description">: some exports only declare og:description, which a search engine may not
+	// use as the snippet. Add the same text the social cards use, when the page has no description of its own.
+	if (!/<meta[^>]+name=["']description["']/i.test(html)) {
+		const d = pageDescription(html, canonical, site);
+		if (d) late.push(`<meta name="description" content="${esc(d)}">`);
+	}
+	// Google Search Console site-verification, same as the shared head layout; emitted only when the token is set.
+	if (siteConfig.googleSiteVerification && !/<meta[^>]+name=["']google-site-verification["']/i.test(html))
+		late.push(`<meta name="google-site-verification" content="${esc(siteConfig.googleSiteVerification)}">`);
 	// Machine-readable AI/TDM opt-out (W3C TDMRep), same as the shared head layout.
 	if (!/<meta[^>]+name=["']tdm-reservation["']/i.test(html)) late.push(`<meta name="tdm-reservation" content="1"><meta name="tdm-policy" content="${esc(new URL("/license/", canonical).href)}">`);
 	late.push(buildSocialMeta(html, canonical, site));
