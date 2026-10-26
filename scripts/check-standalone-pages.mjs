@@ -291,9 +291,9 @@ for (const rel of tabbed) {
 }
 // Section bar (rd-expnav) block for scripts/check-standalone-pages.mjs. Inserted before the "Drift" comment.
 // Section bar (rd-expnav) on every standalone page with one: directly under the breadcrumb band, which sits directly under
-// the navbar card (--rd-crumb-h, 40px; 16px when the page has no trail), the first link on the navbar's brand edge from 1200px
-// up (the container padding below). Once scrolled 800px the navbar stays on top (sticky, like the main site), the band
-// sticks under it and the bar under the band. Jump targets land below all three: scroll-margin-top clears them.
+// the navbar card (--rd-crumb-h, 40px; 16px when the page has no trail), the first link flush at the bar's left edge. Once
+// scrolled 800px the navbar stays on top (sticky, like the main site), the band sticks under it and the bar under the band.
+// Jump targets land below all three: scroll-margin-top clears them.
 const BAR_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
 const barPages = pages.filter((p) => /<nav\b[^>]*class=["'][^"']*\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
 const CRUMB_BAND_PX = 40; // --rd-crumb-h (2.5rem): the breadcrumb band under the navbar card
@@ -309,8 +309,8 @@ for (const rel of barPages) {
 			const host = document.querySelector("div[data-site-navbar]");
 			const bar = document.querySelector(".rd-expnav");
 			return {
-				navb: R(host?.shadowRoot?.querySelector("header")), brandL: R(host?.shadowRoot?.querySelector(".brand"))?.l,
-				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l, padL: bar ? parseFloat(getComputedStyle(bar).paddingLeft) : null,
+				navb: R(host?.shadowRoot?.querySelector("header")),
+				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l,
 				band: R(document.querySelector(".rd-crumb-band")), bandEmpty: !!document.querySelector(".rd-crumb-band--empty"),
 				bandBg: getComputedStyle(document.querySelector(".rd-crumb-band") ?? document.body, "::before").backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
 			};
@@ -328,8 +328,9 @@ for (const rel of barPages) {
 				if (m.bandBg !== m.bodyBg) failures.push(`${tag}: band background ${m.bandBg} is not the page background ${m.bodyBg} (must be opaque)`);
 				if (width >= 768 && Math.abs(m.bar.t - m.band.b) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.band.b).toFixed(1)}px below the band, expected 0`);
 			} else if (width >= 768 && Math.abs(m.bar.t - m.navb.b - gap) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.navb.b).toFixed(1)}px below the navbar card, expected ${gap}px (the main site rhythm)`);
-			const edge = width >= 1200 ? m.brandL : m.bar.l + m.padL;
-			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (${width >= 1200 ? "navbar brand edge" : "container padding"})`);
+			// Flush left: the first tab starts at the bar's left edge (no left inset) at every width.
+			const edge = m.bar.l;
+			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (flush at the bar's left edge)`);
 		}
 		await page.evaluate(() => window.scrollTo({ top: 800, behavior: "instant" }));
 		// Wait for the scroll to land (or the page's end when shorter), then two frames for the sticky layout to settle.

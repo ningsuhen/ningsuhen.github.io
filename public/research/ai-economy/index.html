@@ -572,7 +572,7 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	width: 100%;
 	max-width: var(--rd-navbar-width);
 	margin: 0 auto;
-	padding: 0 var(--rd-space-4);
+	padding: 0 var(--rd-space-4) 0 0; /* flush left: the first tab starts at the bar's edge; the right keeps a 16px gutter */
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
 	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
