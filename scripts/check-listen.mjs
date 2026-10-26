@@ -1206,6 +1206,9 @@ await step("12. comments: giscus error", async () => {
 			};
 		});
 	const before = await below();
+	// The giscus bootstrap is deferred until the block scrolls into view; trigger it the way a
+	// reader would (scroll to the comments) before expecting the widget's error to settle.
+	await page.evaluate(() => document.getElementById("giscus-comments").scrollIntoView({ block: "center" }));
 	await page
 		.waitForFunction(() => document.getElementById("giscus-comments")?.hasAttribute("data-failed"), null, { timeout: 5000 })
 		.catch(() => expect(false, "comments: a giscus error did not show the failure notice"));
