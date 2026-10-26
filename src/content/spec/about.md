@@ -1,6 +1,4 @@
-Ex-Google, Ex-Adobe. Focus: AI | ML | Rust | Python | TypeScript. My path ran from telecommunications to Adobe, to co-founding a startup and building indie full-stack & mobile apps, to Google, and now to AI/ML.
-
-## Favorite Quote
+Favorite Quote
 
 > I skate to where the puck is going to be, not where it has been.
 >
@@ -12,8 +10,6 @@ Ex-Google, Ex-Adobe. Focus: AI | ML | Rust | Python | TypeScript. My path ran fr
 - 🦀 **Rust** — systems programming.
 - 🐍 **Python** — backend and data.
 - ⌨️ **TypeScript** — web and full-stack.
-
-Manhattan, New York
 
 ## Disclaimer
 
