@@ -81,6 +81,10 @@ function validateMeta(meta, kind, slug) {
 		p.push("meta.search must be a boolean");
 	if (meta.eyebrow !== undefined && typeof meta.eyebrow !== "string")
 		p.push("meta.eyebrow must be a string");
+	if (meta.icons !== undefined) {
+		if (!Array.isArray(meta.icons) || meta.icons.some((n) => typeof n !== "string" || !SLUG_RE.test(n)))
+			p.push('meta.icons must be an array of kebab-case Lucide names (icons the page creates in page.js)');
+	}
 	if (meta.source !== undefined) {
 		if (typeof meta.source !== "object" || meta.source === null)
 			p.push("meta.source must be an object");

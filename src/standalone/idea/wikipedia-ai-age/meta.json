@@ -1,0 +1,13 @@
+{
+	"contract": 1,
+	"kind": "idea",
+	"slug": "wikipedia-ai-age",
+	"title": "Wikipedia, but in the age of AI",
+	"created": "2026-10-24",
+	"updated": "2026-10-25",
+	"summary": "What an encyclopedia could look like when AI writes and reads a lot of the text. This is an idea. Nothing is built, and nothing is measured.",
+	"eyebrow": "Idea",
+	"width": "wide",
+	"layout": "tabbed",
+	"icons": ["circle-x"]
+}

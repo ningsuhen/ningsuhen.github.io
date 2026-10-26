@@ -12,7 +12,7 @@
 	},
 	"meta": {
 		"required": ["contract", "kind", "slug", "title", "created", "updated", "summary"],
-		"optional": ["eyebrow", "width", "layout", "comments", "search", "source"],
+		"optional": ["eyebrow", "width", "layout", "comments", "search", "source", "icons"],
 		"types": {
 			"contract": "literal 1",
 			"kind": "string, must equal the folder kind",
@@ -26,7 +26,8 @@
 			"layout": "tabbed | scroll (default scroll)",
 			"comments": "boolean (default true)",
 			"search": "boolean (default true)",
-			"source": "{ project: string, build: string } (the build hash)"
+			"source": "{ project: string, build: string } (the build hash)",
+			"icons": "string[] — Lucide names the page creates in page.js (not in the body markup); the shell adds them to the sprite"
 		}
 	},
 	"body": {
