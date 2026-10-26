@@ -39,6 +39,7 @@
 import initWasm, {
   device_lost,
   device_name,
+  max_prompt_tokens,
   decide_prefill,
   decide_text,
   lpm1_begin,
@@ -48,8 +49,12 @@ import initWasm, {
 import { streamLpm1 } from "./lpm-loader.js";
 import { Qwen3Tokenizer } from "./tokenizer.js";
 
-/** Model context length (Qwen3-0.6B config max_len). */
-const MAX_LEN = 512;
+/**
+ * Prompt window in tokens (static prefix + the dynamic part), read from the
+ * engine after init(). Prompts over it throw PROMPT_TOO_LONG; never truncated.
+ */
+export let maxPromptTokens = 0;
+let MAX_LEN = 0;
 const READBACK_BYTES = 16;
 const LPM1_HEADER = 64;
 const LPM1_FOOTER = 36;
@@ -112,6 +117,7 @@ export async function init({ wasmUrl, tokenizerBase = new URL("./tok/", import.m
   adapterName =
     [info?.vendor, info?.architecture, info?.description || info?.device].filter(Boolean).join(" ") ||
     "unknown GPU adapter";
+  MAX_LEN = maxPromptTokens = max_prompt_tokens("qwen3-0.6b");
   tokenizer = await Qwen3Tokenizer.load(tokenizerBase);
   return { adapter: adapterName };
 }

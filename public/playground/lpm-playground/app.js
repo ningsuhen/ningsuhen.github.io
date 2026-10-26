@@ -94,7 +94,7 @@ function plainError(e) {
     case "MODEL_NOT_LOADED":
       return "Load the model first (the card at the top of the page).";
     case "PROMPT_TOO_LONG":
-      return `This text is too long for the model's small 512-token window together with the demo's fixed examples. Shorten it. Detail: ${detail}`;
+      return `This text is too long for the model's prompt window (${lpm.maxPromptTokens || 2048} tokens) together with the demo's fixed examples. Shorten it. Detail: ${detail}`;
     case "BAD_INPUT":
       return `The settings are not valid: ${detail}`;
     default:
@@ -288,7 +288,7 @@ class Demo {
     q("trace").hidden = false;
     if (this.hasEval) {
       const total = this.items.filter((i) => i.split === "fewshot").length;
-      q("promptinfo").textContent = `The model reads the instruction, the ${this.plan.style === "definition" ? "label definitions" : "label names"} and ${this.plan.fewshotIds.length} of the ${total} solved examples in the dataset (the rest do not fit its 512-token window).`;
+      q("promptinfo").textContent = `The model reads the instruction, the ${{ definition: "label definitions", name: "label names", both: "label names with their definitions" }[this.plan.style]} and ${this.plan.fewshotIds.length} of the ${total} solved examples in the dataset.`;
     }
     this.renderTrace(null);
     this.renderProof(null);
@@ -349,7 +349,7 @@ class Demo {
     S.busy = true;
     syncButtons();
     this.q("go").setAttribute("aria-busy", "true");
-    if (S.prefixKey !== JSON.stringify(this.spec())) this.q("hint").textContent = "First call for this demo: reading its fixed examples through the model once. This can take tens of seconds.";
+    if (S.prefixKey !== JSON.stringify(this.spec())) this.q("hint").textContent = "First call for this demo: reading its fixed examples through the model once.";
     try {
       call = await this.classifyText(text);
     } catch (e) {
@@ -458,15 +458,15 @@ class Demo {
         cell(`${r.bytesReadBack} bytes`, "Read back from the GPU", "Just the winner and the margin."),
         cell(String(reqs.length), "Network requests during this call", reqs.length ? reqs.map((e) => e.name.split("?")[0]).slice(0, 3).join(", ") : "Measured with the browser's resource timing."),
         cell(S.adapter || S.gpu.adapter, "Graphics card"),
-        cell(String(r.promptTokens), "Prompt size", "tokens the model read, out of 512."),
+        cell(String(r.promptTokens), "Prompt size", `tokens the model read, out of ${lpm.maxPromptTokens || 2048}.`),
       );
     }
     const note = this.q("proof-note");
     note.textContent = call
       ? call.first
-        ? "This was the first call with this demo's instructions and examples. The engine first reads those fixed examples through the model once and keeps the result on the GPU (the prefix prefill). That is why this call took much longer than the next one will. Calls after this one only process your text, until you switch to another demo or change the prompt."
+        ? "This was the first call with this demo's instructions and examples. The engine first reads those fixed examples through the model once and keeps the result on the GPU (the prefix prefill). That is why this call takes longer than the ones after it. Calls after this one only process your text, until you switch to another demo or change the prompt."
         : "The fixed instructions and examples were already on the GPU from an earlier call, so this call only processed your text."
-      : "The first call for each demo is much slower: the engine reads the demo's fixed instructions and examples through the model once and keeps the result on the GPU (the prefix prefill). Later calls only process your text.";
+      : "The first call for each demo takes longer: the engine reads the demo's fixed instructions and examples through the model once and keeps the result on the GPU (the prefix prefill). Later calls only process your text.";
   }
 
   // ---- examples
@@ -516,7 +516,7 @@ class Demo {
       for (let at = 0; at < todo.length; at += CHUNK) {
         if (S.stop) throw Object.assign(new Error("stopped"), { stopped: true });
         const slice = todo.slice(at, at + CHUNK);
-        q("eval-status").textContent = `Running ${Math.min(at + CHUNK, todo.length)} of ${todo.length} (${at < dev.length ? "dev" : "test"} split)...${wasFirst && at === 0 ? " The first call reads this demo's fixed examples through the model once; that can take tens of seconds." : ""}`;
+        q("eval-status").textContent = `Running ${Math.min(at + CHUNK, todo.length)} of ${todo.length} (${at < dev.length ? "dev" : "test"} split)...${wasFirst && at === 0 ? " The first call reads this demo's fixed examples through the model once." : ""}`;
         q("eval-fill").style.width = `${(at / todo.length) * 100}%`;
         q("eval-meter").setAttribute("aria-valuenow", String(Math.round((at / todo.length) * 100)));
         const { results: rs } = await lpm.classifyBatch(slice.map((s) => s.i.text), spec);
@@ -861,7 +861,7 @@ return sendToCloudAssistant(text);`,
 
 function buildSpec(ds, plan) {
   const style = plan.style;
-  const labels = ds.labels.map((l) => ({ id: l.id, description: style === "definition" ? l.definition : l.name }));
+  const labels = ds.labels.map((l) => ({ id: l.id, description: style === "definition" ? l.definition : style === "both" ? `${l.name}: ${l.definition}` : l.name }));
   const byId = new Map(ds.items.map((i) => [i.id, i]));
   const fewshots = plan.fewshotIds.map((id) => ({ text: byId.get(id).text, label: byId.get(id).label }));
   return { instruction: ds.instruction, labels, fewshots };

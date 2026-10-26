@@ -148,6 +148,22 @@ export function lpm1_finish() {
 }
 
 /**
+ * The longest prompt (static prefix + dynamic tokens) the model's KV cache
+ * holds, in tokens. The client exposes it as `maxPromptTokens`.
+ * @param {string} model
+ * @returns {number}
+ */
+export function max_prompt_tokens(model) {
+    const ptr0 = passStringToWasm0(model, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.max_prompt_tokens(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0] >>> 0;
+}
+
+/**
  * Measure the T_trans / null-kernel floor on the model stored by
  * [`load_model`], using the SAME definition the native Metal test uses (M1,
  * item 3): `floor = (c - b) / (count - 1)` (marginal per-dispatch cost) and
@@ -741,7 +757,7 @@ function __wbg_get_imports() {
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
             // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("GPUUncapturedErrorEvent")], shim_idx: 95, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true__17);
+            const ret = makeMutClosure(arg0, arg1, wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true__18);
             return ret;
         },
         __wbindgen_generic_0000000000000004: function(arg0) {
@@ -779,8 +795,8 @@ function wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bin
     wasm.wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true_(arg0, arg1, arg2);
 }
 
-function wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true__17(arg0, arg1, arg2) {
-    wasm.wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true__17(arg0, arg1, arg2);
+function wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true__18(arg0, arg1, arg2) {
+    wasm.wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue______true__18(arg0, arg1, arg2);
 }
 
 function wasm_bindgen_6ba427884de55462___convert__closures_____invoke___wasm_bindgen_6ba427884de55462___JsValue__core_9b3796e30d99ddb7___result__Result_____wasm_bindgen_6ba427884de55462___JsError___true_(arg0, arg1, arg2) {
