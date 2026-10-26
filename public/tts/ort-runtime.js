@@ -46,21 +46,20 @@ async function fetchPinned(onProgress, signal) {
 		try {
 			const response = await fetch(ORT_WASM_URL, { mode: "cors", credentials: "omit", cache: "no-store", signal });
 			if (!response.ok || response.type === "opaque" || !response.body) throw new Error(`HTTP ${response.status}`);
+			// Chunks go straight into one buffer of the pinned size: no list of parts plus a second copy.
 			const reader = response.body.getReader();
-			const parts = [];
+			const buffer = new Uint8Array(ORT_WASM_BYTES);
 			let received = 0;
 			for (;;) {
 				const { done, value } = await reader.read();
 				if (done) break;
-				parts.push(value);
+				if (received + value.byteLength > ORT_WASM_BYTES) {
+					await reader.cancel();
+					throw Object.assign(new Error("ONNX Runtime failed its integrity check; the file was not used"), { name: "OrtIntegrityError" });
+				}
+				buffer.set(value, received);
 				received += value.byteLength;
 				onProgress?.(received / ORT_WASM_BYTES);
-			}
-			const buffer = new Uint8Array(received);
-			let at = 0;
-			for (const part of parts) {
-				buffer.set(part, at);
-				at += part.byteLength;
 			}
 			if (!(await matchesPin(buffer.buffer))) {
 				throw Object.assign(new Error("ONNX Runtime failed its integrity check; the file was not used"), { name: "OrtIntegrityError" });
@@ -91,7 +90,8 @@ async function load(onProgress, signal) {
 	const buffer = await fetchPinned(onProgress, signal);
 	if (cache) {
 		await cache
-			.put(cacheKey(), new Response(buffer.slice(0), { headers: { "content-length": String(ORT_WASM_BYTES) } }))
+			// Response copies the bytes itself; no extra slice.
+			.put(cacheKey(), new Response(buffer, { headers: { "content-length": String(ORT_WASM_BYTES) } }))
 			.catch(() => undefined);
 	}
 	onProgress?.(1);
@@ -118,12 +118,18 @@ export async function ensureOrtRuntime({ onProgress, signal } = {}) {
 	return loading;
 }
 
-/** True when a verified copy is stored (checked by size and SHA-256). Does not download anything. */
+/**
+ * True when a copy of the pinned size is stored. Reads only the stored content-length, never the 24 MB body: the
+ * player calls this on every progress update, and reading and hashing the body each time (thousands of 24 MB
+ * buffers in flight during the model download) took a tab past 10 GB and crashed it. The full size and SHA-256
+ * check runs once, before use, in ensureOrtRuntime().
+ */
 export async function ortRuntimeCached() {
+	if (wasmBinary) return true;
 	const cache = await openCache();
 	if (!cache) return false;
 	const hit = await cache.match(cacheKey()).catch(() => undefined);
-	return hit ? matchesPin(await hit.arrayBuffer()) : false;
+	return Number(hit?.headers.get("content-length")) === ORT_WASM_BYTES;
 }
 
 /** Removes the stored binary and forgets the loaded copy. */

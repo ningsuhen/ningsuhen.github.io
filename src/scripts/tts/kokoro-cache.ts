@@ -3,6 +3,7 @@
  * kokoro.js reads, so a file stored here is the file the engine uses. A file counts as stored only when its
  * size matches the pinned manifest; every download is checked for size and SHA-256 before it is stored.
  */
+import { Sha256 } from "./sha256";
 
 export const CACHE_NAME = "kokoro-tts-v1";
 
@@ -85,12 +86,15 @@ export async function isCached(specs: FileSpec[]): Promise<boolean> {
 	return true;
 }
 
-const hex = (buffer: ArrayBuffer): string =>
-	Array.from(new Uint8Array(buffer), (b) => b.toString(16).padStart(2, "0")).join("");
+/** Query key of a download that is not verified yet. Never read by the engine; removed after every download. */
+const STAGING = "kokoro-staging";
 
 /**
- * Downloads every file that is not stored yet. Nothing is stored unless its size and SHA-256 match the
- * manifest. Partial downloads are discarded and restarted; the stored files are kept.
+ * Downloads every file that is not stored yet. Nothing is stored under its real key unless its size and SHA-256
+ * match the manifest. Each file streams from the network into Cache Storage under a staging key while it is
+ * hashed chunk by chunk, so no download is ever held in memory whole (the fp32 model is 325 MB; holding it plus
+ * a buffer for crypto.subtle.digest was the larger part of a multi-GB tab). Once verified, the stored copy is
+ * moved to the real key (disk to disk). Partial downloads are discarded and restarted; stored files are kept.
  */
 export async function download(
 	specs: FileSpec[],
@@ -99,6 +103,10 @@ export async function download(
 ): Promise<void> {
 	const cache = await openCache();
 	if (!cache) throw new Error("Cache Storage is not available in this browser");
+	// Leftovers of an interrupted download (a closed tab) take quota and are never used.
+	for (const request of await cache.keys()) {
+		if (new URL(request.url).searchParams.has(STAGING)) await cache.delete(request);
+	}
 	const missing: FileSpec[] = [];
 	for (const spec of specs) {
 		if ((await storedSize(cache, spec.url)) !== spec.bytes) missing.push(spec);
@@ -110,20 +118,36 @@ export async function download(
 		const response = await fetch(spec.url, { signal, mode: "cors", credentials: "omit" });
 		if (!response.ok || !response.body) throw new Error(`${spec.key}: HTTP ${response.status}`);
 		const reader = response.body.getReader();
-		const parts: Uint8Array<ArrayBuffer>[] = [];
+		const hash = new Sha256();
 		let got = 0;
-		for (;;) {
-			const { done: finished, value } = await reader.read();
-			if (finished) break;
-			parts.push(value as Uint8Array<ArrayBuffer>);
-			got += value.byteLength;
-			onProgress(done + got, total);
+		// Pull-driven: Cache Storage asks for the next chunk only when it has written the last one.
+		const body = new ReadableStream<Uint8Array>({
+			async pull(controller) {
+				const { done: finished, value } = await reader.read();
+				if (finished) return controller.close();
+				got += value.byteLength;
+				if (got > spec.bytes) {
+					await reader.cancel();
+					return controller.error(new Error(`${spec.key}: more than the expected ${spec.bytes} bytes`));
+				}
+				hash.update(value);
+				onProgress(done + got, total);
+				controller.enqueue(value);
+			},
+			cancel: (reason) => reader.cancel(reason),
+		});
+		const staging = new URL(spec.url);
+		staging.searchParams.set(STAGING, crypto.randomUUID?.() ?? String(Math.random()));
+		try {
+			await cache.put(staging.href, new Response(body, { headers: { "content-length": String(spec.bytes) } }));
+			if (got !== spec.bytes) throw new Error(`${spec.key}: ${got} bytes, expected ${spec.bytes}`);
+			if (hash.hex() !== spec.sha256) throw new Error(`${spec.key}: checksum does not match the pinned revision`);
+			const verified = await cache.match(staging.href);
+			if (!verified) throw new Error(`${spec.key}: the browser dropped the stored copy`);
+			await cache.put(spec.url, verified);
+		} finally {
+			await cache.delete(staging.href).catch(() => false);
 		}
-		if (got !== spec.bytes) throw new Error(`${spec.key}: ${got} bytes, expected ${spec.bytes}`);
-		const blob = new Blob(parts, { type: "application/octet-stream" });
-		const digest = await crypto.subtle.digest("SHA-256", await blob.arrayBuffer());
-		if (hex(digest) !== spec.sha256) throw new Error(`${spec.key}: checksum does not match the pinned revision`);
-		await cache.put(spec.url, new Response(blob, { headers: { "content-length": String(spec.bytes) } }));
 		done += spec.bytes;
 	}
 	onProgress(total, total);

@@ -242,6 +242,9 @@ class ListenPlayer extends HTMLElement {
 	/** Set when the listener dismisses the slow notice and keeps the neural voice. */
 	private slowAcknowledged = false;
 	private downloadAbort: AbortController | null = null;
+	/** The download block paint in flight, and whether another is due after it (see renderDownload). */
+	private painting: Promise<void> | null = null;
+	private repaint = false;
 	private abort: AbortController | null = null;
 	private activeBlock: HTMLElement | null = null;
 	private lastUserScroll = 0;
@@ -586,8 +589,30 @@ class ListenPlayer extends HTMLElement {
 		this.renderDownload();
 	}
 
+	/**
+	 * Repaints the download block. Coalesced: progress fires per network chunk (thousands of times for the model), so
+	 * at most one paint runs and one more follows it, never one async storage probe per chunk.
+	 */
+	private renderDownload(): Promise<void> {
+		if (this.painting) {
+			this.repaint = true;
+			return this.painting;
+		}
+		this.painting = (async () => {
+			try {
+				do {
+					this.repaint = false;
+					await this.paintDownload();
+				} while (this.repaint);
+			} finally {
+				this.painting = null;
+			}
+		})();
+		return this.painting;
+	}
+
 	/** Shows what is stored, the size, the storage used, and the progress or the remove action. */
-	private async renderDownload(): Promise<void> {
+	private async paintDownload(): Promise<void> {
 		const block = this.querySelector<HTMLElement>("[data-download]");
 		if (!block) return;
 		const variant = await neuralVariant();

@@ -40,7 +40,7 @@
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:visual": "node scripts/check-visual.mjs",
     "check:mobile": "node scripts/check-mobile.mjs",
-    "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
+    "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts scripts/tts-sha256.test.ts",
     "test:drafts": "node --test scripts/test-draft-pages.mjs",
     "test:markers": "node --test scripts/owner-markers.test.mjs",
     "test:voice": "node --test scripts/check-voice.test.mjs",
