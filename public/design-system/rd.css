@@ -415,11 +415,8 @@
 .rd-ref { color: var(--rd-accent-ink); }
 
 /* Citations and references: <a class="rd-cite" href="#ref-dean">[1]</a>; <ol class="rd-refs"><li id="ref-dean"> */
-/* inline-flex + 24px min-height/width keeps the tiny [n] links a tap target on phones (the text is 15px, so the box was 15px). */
-.rd-cite { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; color: var(--rd-accent-ink); text-decoration: none; white-space: nowrap; }
+.rd-cite { color: var(--rd-accent-ink); text-decoration: none; white-space: nowrap; }
 .rd-cite:hover { text-decoration: underline; }
-/* a[href^="#ref"] covers the bare citation anchors some pages use (no .rd-cite class) — tap target only, no colour change. */
-a[href^="#ref"] { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }
 .rd-refs { list-style: none; counter-reset: rd-ref; padding: 0; margin: var(--rd-gap-block) 0; font-size: var(--rd-fs-sm); }
 .rd-refs li { counter-increment: rd-ref; position: relative; padding-left: 2.25rem; margin: var(--rd-space-2) 0; }
 .rd-refs li::before { content: "[" counter(rd-ref) "]"; position: absolute; left: 0; color: var(--rd-text-muted); font-variant-numeric: tabular-nums; }
@@ -1051,3 +1048,10 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	border-radius: 999px;
 	background: var(--rd-accent);
 }
+/* Tap targets (T3+): 24px minimum on the tiny inline controls, so they are tappable on phones.
+   Shipped in rd.css only (not the frozen research.css core) — it is a new concern, not part of the
+   original research.css bytes. */
+
+/* Citation links ([n] → #ref-…) are 15px inline anchors; give them a 24px tap target. a[href^="#ref"]
+   covers the bare anchors some pages use (no .rd-cite class). */
+.rd-cite, a[href^="#ref"] { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }
