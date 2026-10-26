@@ -37,6 +37,7 @@
     "check:seo": "node scripts/check-seo.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:visual": "node scripts/check-visual.mjs",
+    "check:mobile": "node scripts/check-mobile.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "test:drafts": "node --test scripts/test-draft-pages.mjs",
     "test:dates": "node --experimental-strip-types --test scripts/date-utils.test.ts",
