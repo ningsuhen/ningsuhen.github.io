@@ -1,0 +1,37 @@
+/* Idea-page layout. Colours/sizes from design-system tokens; raw lengths live in custom properties.
+   Every selector is prefixed with the page scope; no rd-* component is restyled. */
+[data-page="decentralized-office"]{
+	--idea-fig-max:42.5rem;
+	--idea-preset-h:2.25rem;
+	--idea-log-max:34rem;
+	--idea-border:var(--rd-expnav-line) solid var(--rd-line);
+}
+[data-page="decentralized-office"] .idea-fig>svg{width:100%;height:auto;max-width:var(--idea-fig-max);color:var(--rd-text-strong)}
+[data-page="decentralized-office"] .idea-box{fill:var(--rd-card-bg);stroke:currentColor;stroke-width:1.5}
+[data-page="decentralized-office"] .idea-box--key{stroke:var(--rd-accent)}
+[data-page="decentralized-office"] .idea-line{fill:none;stroke:currentColor;stroke-width:1.5}
+[data-page="decentralized-office"] .idea-tag{fill:var(--rd-btn-bg);stroke:none}
+[data-page="decentralized-office"] .idea-fig svg text.idea-t{font-size:var(--rd-fs-sm);fill:currentColor;text-anchor:middle}
+[data-page="decentralized-office"] .idea-fig svg text.idea-t--s{font-size:var(--rd-fs-xs);fill:var(--rd-text-muted)}
+[data-page="decentralized-office"] .idea-fig svg text.idea-t--l{text-anchor:start}
+[data-page="decentralized-office"] .idea-steps__ctrl{display:none;align-items:center;gap:var(--rd-space-3);flex-wrap:wrap;margin:var(--rd-gap-block) 0}
+[data-page="decentralized-office"] .idea-steps__count{color:var(--rd-text-muted);font-size:var(--rd-fs-sm)}
+[data-page="decentralized-office"] .idea-steps__list{list-style:none;padding:0;margin:0}
+[data-page="decentralized-office"] .idea-steps.is-js .idea-steps__ctrl{display:flex}
+[data-page="decentralized-office"] .idea-steps.is-js .idea-steps__list li{display:none}
+[data-page="decentralized-office"] .idea-steps.is-js .idea-steps__list li.is-on{display:block}
+[data-page="decentralized-office"] .idea-steps.is-js>svg [data-s]{opacity:.25;transition:opacity .2s ease}
+[data-page="decentralized-office"] .idea-steps.is-js>svg [data-s].is-on,[data-page="decentralized-office"] .idea-steps.is-js>svg [data-s].is-past{opacity:1}
+[data-page="decentralized-office"] .idea-presets{border:0;padding:0;margin:var(--rd-gap-block) 0;display:flex;flex-wrap:wrap;gap:var(--rd-space-2)}
+[data-page="decentralized-office"] .idea-presets label{display:inline-flex;align-items:center;gap:var(--rd-space-2);min-height:var(--idea-preset-h);padding:0 var(--rd-space-3);border:var(--idea-border);border-radius:var(--rd-radius-sm);background:var(--rd-btn-bg);cursor:pointer}
+[data-page="decentralized-office"] .idea-presets label:has(input:checked){border-color:var(--rd-accent);color:var(--rd-accent);font-weight:700}
+[data-page="decentralized-office"] .idea-ask{display:grid;gap:var(--rd-space-2)}
+[data-page="decentralized-office"] .idea-ask form{display:flex;flex-wrap:wrap;gap:var(--rd-space-2)}
+[data-page="decentralized-office"] .idea-chips{display:flex;flex-wrap:wrap;gap:var(--rd-space-2);margin:var(--rd-gap-block) 0;list-style:none;padding:0}
+[data-page="decentralized-office"] .idea-log{display:grid;gap:var(--rd-space-3);max-height:var(--idea-log-max);overflow-y:auto;padding:var(--rd-space-2) 0}
+[data-page="decentralized-office"] .idea-msg{border-radius:var(--rd-radius-sm);padding:var(--rd-space-3);background:var(--rd-btn-bg)}
+[data-page="decentralized-office"] .idea-msg--me{justify-self:end;max-width:90%;background:var(--rd-card-bg);border:var(--idea-border)}
+[data-page="decentralized-office"] .idea-cite{display:inline-flex;align-items:center;gap:var(--rd-space-1);padding:0 var(--rd-space-2);border:0;background:none;color:var(--rd-accent);font:inherit;font-size:var(--rd-fs-sm);text-decoration:underline;cursor:pointer}
+[data-page="decentralized-office"] .idea-table td [data-p]{display:block}
+[data-page="decentralized-office"] .idea-table td [data-p]+[data-p]{margin-top:var(--rd-space-1)}
+[data-page="decentralized-office"] .idea-table.is-js td [data-p]:not(.is-on){display:none}

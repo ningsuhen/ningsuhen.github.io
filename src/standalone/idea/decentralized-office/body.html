@@ -1,134 +1,12 @@
-<!doctype html>
-<html lang="en" data-theme="light" data-density="compact">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Decentralized email and office tools, instead of Google Workspace · created 2026-10-24 · updated 2026-10-25</title>
-<meta name="description" content="An idea, not a product: email and office tools where your data lives on your own machines, clouds only hold ciphertext, and collaboration still works.">
-<link rel="stylesheet" href="/design-system/research.css">
-<script type="module" src="/design-system/rd.js"></script>
-<style>
-/* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
-.idea-fig > svg { width: 100%; height: auto; max-width: 42.5rem; margin-inline: auto; color: var(--rd-text-strong); }
-.rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
-.idea-box { fill: var(--rd-card-bg); stroke: currentColor; stroke-width: 1.5; }
-.idea-box--key { stroke: var(--rd-accent); }
-.idea-line { fill: none; stroke: currentColor; stroke-width: 1.5; }
-.idea-tag { fill: var(--rd-btn-bg); stroke: none; }
-.rd-figure.idea-fig svg text.idea-t { font-size: var(--rd-fs-sm); fill: currentColor; text-anchor: middle; }
-.rd-figure.idea-fig svg text.idea-t--b { font-weight: 700; }
-.rd-figure.idea-fig svg text.idea-t--s { font-size: var(--rd-fs-xs); fill: var(--rd-text-muted); }
-.rd-figure.idea-fig svg text.idea-t--l { text-anchor: start; }
-.rd-figure.idea-fig svg text.idea-t--accent { fill: var(--rd-accent); }
-.idea-steps__ctrl { display: none; align-items: center; gap: var(--rd-space-3); flex-wrap: wrap; margin: var(--rd-gap-block) 0; }
-.idea-steps__ctrl button:focus-visible, .idea-presets label:focus-within, .idea-ask button:focus-visible, .idea-ask input:focus-visible, .idea-quiz input:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
-.idea-steps__count { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
-.idea-steps__ctrl .rd-btn:disabled { opacity: 0.45; cursor: default; }
-.idea-steps__list { list-style: none; padding: 0; margin: 0; }
-.idea-steps__list li { margin: var(--rd-space-2) 0; }
-.js .idea-steps__ctrl { display: flex; }
-.js .idea-steps__list li { display: none; }
-.js .idea-steps__list li.is-on { display: block; }
-.js .idea-steps > svg [data-s] { opacity: 0.25; transition: opacity 0.2s ease; }
-.js .idea-steps > svg [data-s].is-on, .js .idea-steps > svg [data-s].is-past { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .js .idea-steps > svg [data-s] { transition: none; } }
-.idea-presets { border: 0; padding: 0; margin: var(--rd-gap-block) 0; display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
-.idea-presets legend { font-weight: 700; color: var(--rd-text-strong); margin-bottom: var(--rd-space-2); }
-.idea-presets label { display: inline-flex; align-items: center; gap: var(--rd-space-2); min-height: 2.25rem; padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-btn-bg); cursor: pointer; }
-.idea-presets label:has(input:checked) { border-color: var(--rd-accent); color: var(--rd-accent); font-weight: 700; }
-.idea-presets input { accent-color: var(--rd-accent); }
-.idea-chips { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-gap-block) 0; list-style: none; padding: 0; }
-.idea-ask { display: grid; gap: var(--rd-space-2); }
-.idea-ask form { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
-.idea-ask form > label { flex-basis: 100%; }
-.idea-ask form > button { align-self: flex-start; }
-.idea-log { scrollbar-width: thin; scrollbar-color: var(--rd-text-faint) transparent; }
-.idea-ask input[type="text"] { flex: 1 1 14rem; min-height: var(--rd-control-h); padding: 0 var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); background: var(--rd-card-bg); color: var(--rd-text-strong); font: inherit; }
-.idea-log { display: grid; gap: var(--rd-space-3); max-height: 34rem; overflow-y: auto; padding: var(--rd-space-2) 0; }
-.idea-msg { border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); background: var(--rd-btn-bg); }
-.idea-msg--me { justify-self: end; max-width: 90%; background: var(--rd-card-bg); border: 1px solid var(--rd-line); }
-.idea-msg p { margin: 0 0 var(--rd-space-2); }
-.idea-cite { display: inline-flex; align-items: center; gap: var(--rd-space-1); min-height: 2rem; padding: 0 var(--rd-space-2); border: 0; background: none; color: var(--rd-accent); font: inherit; font-size: var(--rd-fs-sm); text-decoration: underline; cursor: pointer; }
-.idea-quiz fieldset { border: 0; padding: 0; margin: var(--rd-gap-block) 0; }
-.idea-quiz legend { font-weight: 700; color: var(--rd-text-strong); margin-bottom: var(--rd-space-2); }
-.idea-quiz label { display: inline-flex; align-items: center; gap: var(--rd-space-2); min-height: 2rem; cursor: pointer; }
-.idea-quiz input { accent-color: var(--rd-accent); }
-.idea-verdict { min-height: 0; font-weight: 700; }
-.idea-verdict--ok { color: var(--rd-good); }
-.idea-verdict--no { color: var(--rd-bad); }
-.idea-30s { display: block; }
-.rd-stamp { white-space: nowrap; font-size: var(--rd-fs-sm); color: var(--rd-text-muted); font-weight: 400; }
-.idea-30s li { margin: 0 0 var(--rd-space-1); }
-.idea-table td [data-p] { display: block; }
-.idea-gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: var(--rd-space-2); }
-.idea-gloss > .rd-fold { margin: 0; }
-.idea-table td [data-p] + [data-p] { margin-top: var(--rd-space-1); }
-.js .idea-table td [data-p]:not(.is-on) { display: none; }
-</style>
-</head>
-<body class="rd-body">
-<!-- lucide-sprite:start -->
-<svg style="display:none" aria-hidden="true">
-<symbol id="i-book-open" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v16m8.001-2A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2a5 5 0 0 1 4-2z"/></symbol>
-<symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M8 2v3m8-3v3"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></g></symbol>
-<symbol id="i-chevron-left" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18l-6-6l6-6"/></symbol>
-<symbol id="i-chevron-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18l6-6l-6-6"/></symbol>
-<symbol id="i-circle-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16 9l-5.5 5.5L8 12"/></g></symbol>
-<symbol id="i-circle-x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9l-6 6m0-6l6 6"/></g></symbol>
-<symbol id="i-cloud" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9"/></symbol>
-<symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696a10.75 10.75 0 0 1 19.876 0a1 1 0 0 1 0 .696a10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></g></symbol>
-<symbol id="i-file-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 9H8m8 4H8m8 4H8"/></g></symbol>
-<symbol id="i-git-merge" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></g></symbol>
-<symbol id="i-graduation-cap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0zM22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></g></symbol>
-<symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
-<symbol id="i-key-round" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></g></symbol>
-<symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></g></symbol>
-<symbol id="i-lightbulb" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 14c.2-1 .7-1.7 1.5-2.5c1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5c.7.7 1.3 1.5 1.5 2.5m0 4h6m-5 4h4"/></symbol>
-<symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
-<symbol id="i-list-checks" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4"/></symbol>
-<symbol id="i-message-circle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092a10 10 0 1 0-4.777-4.719"/></symbol>
-<symbol id="i-scale" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3v18m7-13l3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2a17 17 0 0 0 8 2h1M5 8l3 8a5 5 0 0 1-6 0zV7m2 14h10"/></g></symbol>
-<symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
-<symbol id="i-shield-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12l2 2l4-4"/></g></symbol>
-<symbol id="i-smartphone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></g></symbol>
-<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4m0 4h.01"/></symbol>
-</svg>
-<!-- lucide-sprite:end -->
-
-<nav class="rd-expnav" role="tablist" aria-label="Sections" data-rd="tabs">
-<a role="tab" id="tab-summary" href="?tab=summary" aria-controls="summary" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
-<a role="tab" id="tab-architecture" href="?tab=architecture" aria-controls="architecture" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg>Architecture</a>
-<a role="tab" id="tab-sync" href="?tab=sync" aria-controls="sync" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg>Sync</a>
-<a role="tab" id="tab-backup" href="?tab=backup" aria-controls="backup" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-cloud"/></svg>Backup</a>
-<a role="tab" id="tab-access" href="?tab=access" aria-controls="access" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-eye"/></svg>Who can read</a>
-<a role="tab" id="tab-learn" href="?tab=learn" aria-controls="learn" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-graduation-cap"/></svg>Learn</a>
-<a role="tab" id="tab-ask" href="?tab=ask" aria-controls="ask" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Ask this idea</a>
-<a role="tab" id="tab-tradeoffs" href="?tab=tradeoffs" aria-controls="tradeoffs" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg>Trade-offs</a>
-</nav>
-
-<!-- Wide: the tab bar, the content and the "On this page" rail sit at the navbar card width (1168px), as on the report pages. -->
-<main class="rd-tabbed rd-container--wide rd-prose">
-<header class="rd-hero">
-  <p class="rd-eyebrow">Idea</p>
-  <h1>Decentralized email and office tools, instead of Google Workspace <span class="rd-stamp">· created 2026-10-24 · updated 2026-10-25</span></h1>
-  <p class="rd-hero__lede">Keep the documents, mail and calendar on your own machines. Let the cloud store only ciphertext. Keep collaboration working anyway.</p>
-  <p class="rd-hero__meta">
+<section class="rd-tabpanel rd-with-toc" id="summary" data-rd-tab="summary" data-rd-label="Summary" data-rd-icon="file-text">
+  <div class="rd-tab__body">
+  <p class="idea-hero-chips">
     <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Idea, not a product</span>
     <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Nothing is built, prototyped or measured</span>
   </p>
-</header>
 
-<div class="rd-tabpanel rd-with-toc" id="summary" role="tabpanel" aria-labelledby="tab-summary">
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#in-30-seconds"><span class="rd-toc__badge">1</span><span class="rd-toc__text">In 30 seconds</span></a></li>
-    <li><a href="#the-problem"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The problem</span></a></li>
-    <li><a href="#idea-in-one-picture"><span class="rd-toc__badge">3</span><span class="rd-toc__text">The idea in one picture</span></a></li>
-    <li><a href="#principles"><span class="rd-toc__badge">4</span><span class="rd-toc__text">Principles</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
-  <div class="rd-tab__body">
-
-  <section class="rd-tabsec" id="in-30-seconds">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg></span><h2>In 30 seconds</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg></span><h2 id="in-30-seconds">In 30 seconds</h2></header>
     <ul class="idea-30s">
       <li>Today a hosted office suite keeps your documents, mail and calendar as readable data on the provider's servers.</li>
       <li>The idea: the data stays on your devices. Every document gets its own key. The keys go only to the people who should read it.</li>
@@ -137,26 +15,26 @@
     </ul>
   </section>
 
-  <section class="rd-tabsec" id="the-problem">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>The problem with a central workspace</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="the-problem">The problem with a central workspace</h2></header>
     <p>A central workspace works because one company holds everything. That same fact is the problem. The provider can read every document, index it, scan it, hand it to a court or lose it in a breach. An administrator with the right role can open any file. Someone who takes over an account can read all of it.</p>
     <p>Most people accept this because the alternative looked hard. Collaboration seemed to need a server that sees the text, so that it can merge edits and run search. That assumption is what this idea tries to remove.</p>
     <p>Enterprises feel it most. Their contracts, pricing sheets and HR files sit in a system that a third party can read. Privacy-minded people feel it too, and they often give up the tools they like because the trade is so one-sided.</p>
   </section>
 
-  <section class="rd-tabsec" id="idea-in-one-picture">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg></span><h2>The idea in one picture</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg></span><h2 id="idea-in-one-picture">The idea in one picture</h2></header>
     <p>A change starts on one laptop, is sealed there, travels through a relay that cannot open it, and is opened and merged on another laptop. The backup is sealed too. Press Next to follow one change through the picture.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of one change">
       <svg viewBox="0 0 680 330" role="img" aria-label="One change: it is made on laptop A, sealed with the document key, sent through a relay that forwards without reading, and opened and merged on laptop B. A sealed snapshot also goes to encrypted backup, which holds no keys.">
-        <defs><marker id="ah-d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <defs><marker id="ah-d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="95" y="80">Laptop A</text><text class="idea-t idea-t--s" x="95" y="100">local store and editor</text></g>
         <g data-s="2"><rect class="idea-tag" x="28" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="95" y="143">seals with document key</text></g>
-        <g data-s="3"><path class="idea-line" d="M180 120 H255" style="marker-end:url(#ah-d1)"/><text class="idea-t idea-t--s" x="217" y="92">signed</text><text class="idea-t idea-t--s" x="217" y="104">ops</text></g>
+        <g data-s="3"><path class="idea-line" d="M180 120 H255" marker-end="url(#ah-d1)"/><text class="idea-t idea-t--s" x="217" y="92">signed</text><text class="idea-t idea-t--s" x="217" y="104">ops</text></g>
         <g data-s="4"><rect class="idea-box" x="255" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="340" y="80">Sync relay</text><text class="idea-t idea-t--s" x="340" y="100">routes sealed ops</text><rect class="idea-tag" x="273" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="340" y="143">cannot open them</text></g>
-        <g data-s="5"><path class="idea-line" d="M425 120 H500" style="marker-end:url(#ah-d1)"/><rect class="idea-box" x="500" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="585" y="80">Laptop B</text><text class="idea-t idea-t--s" x="585" y="100">opens and merges</text><rect class="idea-tag" x="518" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="585" y="143">holds the same key</text></g>
+        <g data-s="5"><path class="idea-line" d="M425 120 H500" marker-end="url(#ah-d1)"/><rect class="idea-box" x="500" y="50" width="170" height="110" rx="10"/><text class="idea-t idea-t--b" x="585" y="80">Laptop B</text><text class="idea-t idea-t--s" x="585" y="100">opens and merges</text><rect class="idea-tag" x="518" y="128" width="134" height="22" rx="5"/><text class="idea-t" x="585" y="143">holds the same key</text></g>
         <rect class="idea-box" x="255" y="220" width="170" height="70" rx="10"/><text class="idea-t idea-t--b" x="340" y="250">Encrypted backup</text><text class="idea-t idea-t--s" x="340" y="270">blobs, no keys</text>
-        <path class="idea-line" d="M95 160 V245 H255" style="marker-end:url(#ah-d1)"/><text class="idea-t idea-t--s idea-t--l" x="104" y="236">sealed snapshot</text>
+        <path class="idea-line" d="M95 160 V245 H255" marker-end="url(#ah-d1)"/><text class="idea-t idea-t--s idea-t--l" x="104" y="236">sealed snapshot</text>
         <text class="idea-t idea-t--s" x="340" y="320">Keys never leave the laptops.</text>
       </svg>
       <div class="idea-steps__ctrl">
@@ -175,8 +53,8 @@
     </figure>
   </section>
 
-  <section class="rd-tabsec" id="principles">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Principles</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2 id="principles">Principles</h2></header>
     <ol>
       <li><strong>The data lives where the people work.</strong> Each device keeps a full local copy, so reading and editing do not need a server.</li>
       <li><strong>Servers move and store ciphertext.</strong> A relay, a sync host or a backup provider should be unable to read content, even if it wants to.</li>
@@ -189,17 +67,13 @@
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="architecture" role="tabpanel" aria-labelledby="tab-architecture" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#components"><span class="rd-toc__badge">1</span><span class="rd-toc__text">The parts</span></a></li>
-    <li><a href="#keys-sharing"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Keys and sharing</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="architecture" data-rd-tab="architecture" data-rd-label="Architecture" data-rd-icon="layers">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="components">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2>The parts</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2 id="components">The parts</h2></header>
     <dl class="rd-defs">
       <dt>Local-first node</dt><dd>The app on a person's device. It holds the full working copy of every document the person can open, and it works without a network.</dd>
       <dt>Encrypted store</dt><dd>The local database. Document content is stored sealed under the document key, so a stolen disk does not give plain text by itself. Protecting the disk and the keys in memory is a separate job.</dd>
@@ -210,18 +84,18 @@
     </dl>
   </section>
 
-  <section class="rd-tabsec" id="keys-sharing">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-key-round"/></svg></span><h2>Keys and sharing</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-key-round"/></svg></span><h2 id="keys-sharing">Keys and sharing</h2></header>
     <p>The key structure has three layers. A person's identity keys open the copies of the document key that were addressed to them. The document key opens the content. When the group changes, the document key is replaced and wrapped again for the members who remain.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of sharing a document key">
       <svg viewBox="0 0 680 346" role="img" aria-label="Three member key pairs at the top. A document key in the middle sends one wrapped copy up to each member. The document content below is encrypted under the document key. Removing a member creates a new key for the rest.">
-        <defs><marker id="ah-d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
-        <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="105" y="56">Alice</text><text class="idea-t idea-t--s" x="105" y="76">key pair on her device</text><path class="idea-line" d="M105 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="112" y="124">wrapped copy</text></g>
-        <g data-s="3"><rect class="idea-box idea-box--key" x="245" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="340" y="56">Bob</text><text class="idea-t idea-t--s" x="340" y="76">key pair on his device</text><path class="idea-line" d="M340 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="124">wrapped copy</text></g>
-        <g data-s="4"><rect class="idea-box idea-box--key" x="480" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="575" y="56">Priya</text><text class="idea-t idea-t--s" x="575" y="76">added later by a member</text><path class="idea-line" d="M575 150 V94" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="582" y="124">wrapped copy</text></g>
+        <defs><marker id="ah-d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="105" y="56">Alice</text><text class="idea-t idea-t--s" x="105" y="76">key pair on her device</text><path class="idea-line" d="M105 150 V94" marker-end="url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="112" y="124">wrapped copy</text></g>
+        <g data-s="3"><rect class="idea-box idea-box--key" x="245" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="340" y="56">Bob</text><text class="idea-t idea-t--s" x="340" y="76">key pair on his device</text><path class="idea-line" d="M340 150 V94" marker-end="url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="124">wrapped copy</text></g>
+        <g data-s="4"><rect class="idea-box idea-box--key" x="480" y="30" width="190" height="60" rx="10"/><text class="idea-t idea-t--b" x="575" y="56">Priya</text><text class="idea-t idea-t--s" x="575" y="76">added later by a member</text><path class="idea-line" d="M575 150 V94" marker-end="url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="582" y="124">wrapped copy</text></g>
         <g data-s="1"><rect class="idea-box" x="110" y="150" width="460" height="50" rx="10"/><text class="idea-t idea-t--b" x="340" y="172">Document key</text><text class="idea-t idea-t--s" x="340" y="190">random 256-bit key, one per epoch</text></g>
         <g data-s="5"><text class="idea-t idea-t--s idea-t--l idea-t--accent" x="420" y="240">new epoch after a removal</text></g>
-        <g data-s="1"><path class="idea-line" d="M340 200 V268" style="marker-end:url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="238">encrypts</text></g>
+        <g data-s="1"><path class="idea-line" d="M340 200 V268" marker-end="url(#ah-d2)"/><text class="idea-t idea-t--s idea-t--l" x="347" y="238">encrypts</text></g>
         <g data-s="5"><rect class="idea-box" x="110" y="270" width="460" height="50" rx="10"/><text class="idea-t idea-t--b" x="340" y="292">Document content</text><text class="idea-t idea-t--s" x="340" y="310">sealed under the current document key</text></g>
         <text class="idea-t idea-t--s" x="340" y="342">Shown with three members. The same wrapping applies to any number.</text>
       </svg>
@@ -244,26 +118,22 @@
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="sync" role="tabpanel" aria-labelledby="tab-sync" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#sync-merge"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Offline edits and merge</span></a></li>
-    <li><a href="#signed-ops"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Signed operations</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="sync" data-rd-tab="sync" data-rd-label="Sync" data-rd-icon="git-merge">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="sync-merge">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg></span><h2>Offline edits and merge</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg></span><h2 id="sync-merge">Offline edits and merge</h2></header>
     <p>Two people edit the same document while they are apart. Neither copy is the master. Each device keeps its own state. Changes are recorded as operations, and the merge rule is built so that the result does not depend on the order the operations arrive in.</p>
     <p>This is the job of a conflict-free replicated data type, or CRDT. For a list of lines, a common approach gives every inserted line a unique id and records which line it was inserted after. Deletes leave a marker instead of removing the line. With those rules, two replicas that have seen the same set of operations show the same list.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="5" aria-label="Step-through of offline edits merging">
       <svg viewBox="0 0 680 300" role="img" aria-label="Replica A adds a line while offline and replica B changes line 1 while offline. Each sends sealed operations. Both end with the same merged list containing both edits.">
-        <defs><marker id="ah-d3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <defs><marker id="ah-d3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="30" width="200" height="120" rx="10"/><text class="idea-t idea-t--b" x="110" y="52">Replica A (offline)</text><text class="idea-t idea-t--s" x="110" y="70">added line 3</text><text class="idea-t idea-t--l" x="26" y="98">1  Draft</text><text class="idea-t idea-t--l" x="26" y="116">2  Budget</text><text class="idea-t idea-t--l idea-t--accent" x="26" y="134">3  Ana's note</text></g>
         <g data-s="2"><rect class="idea-box" x="470" y="30" width="200" height="120" rx="10"/><text class="idea-t idea-t--b" x="570" y="52">Replica B (offline)</text><text class="idea-t idea-t--s" x="570" y="70">edited line 1</text><text class="idea-t idea-t--l" x="486" y="98">1  Draft v2</text><text class="idea-t idea-t--l" x="486" y="116">2  Budget</text></g>
-        <g data-s="3"><path class="idea-line" d="M110 150 V182 H230 V206" style="marker-end:url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="116" y="174">sealed ops from A</text></g>
-        <g data-s="4"><path class="idea-line" d="M570 150 V182 H450 V206" style="marker-end:url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="456" y="174">sealed ops from B</text></g>
+        <g data-s="3"><path class="idea-line" d="M110 150 V182 H230 V206" marker-end="url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="116" y="174">sealed ops from A</text></g>
+        <g data-s="4"><path class="idea-line" d="M570 150 V182 H450 V206" marker-end="url(#ah-d3)"/><text class="idea-t idea-t--s idea-t--l" x="456" y="174">sealed ops from B</text></g>
         <g data-s="5"><rect class="idea-box idea-box--key" x="170" y="210" width="340" height="66" rx="10"/><text class="idea-t idea-t--b" x="340" y="234">Merged on both replicas</text><text class="idea-t idea-t--s" x="340" y="256">1 Draft v2&#160;&#160;&#160;2 Budget&#160;&#160;&#160;3 Ana's note</text></g>
         <text class="idea-t idea-t--s" x="340" y="294">Neither edit was lost, and no one had to pick a winner by hand.</text>
       </svg>
@@ -284,38 +154,34 @@
     <p>Not every kind of document merges this cleanly. Free-text paragraphs, spreadsheet formulas and rich formatting each need their own rules. Some combinations give results that a person would call wrong, even when the replicas agree. That is one of the open problems on the Trade-offs tab.</p>
   </section>
 
-  <section class="rd-tabsec" id="signed-ops">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg></span><h2>Signed operations</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg></span><h2 id="signed-ops">Signed operations</h2></header>
     <p>Every operation is signed by its author's signing key before it is sealed. A receiver checks the signature against the member list it already trusts. An operation that fails the check is dropped. This stops a relay from inventing edits, and it stops a removed member from writing into the new epoch with an old key.</p>
     <p>Signing does not hide anything. The author is still visible to the members who open the operation. It proves who made a change. It does not prove that the change was wise.</p>
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="backup" role="tabpanel" aria-labelledby="tab-backup" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#backup-recovery"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Backup and recovery</span></a></li>
-    <li><a href="#device-loss"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Losing a device</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="backup" data-rd-tab="backup" data-rd-label="Backup" data-rd-icon="cloud">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="backup-recovery">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-cloud"/></svg></span><h2>Backup and recovery</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-cloud"/></svg></span><h2 id="backup-recovery">Backup and recovery</h2></header>
     <p>A cloud copy protects against a lost laptop. It should not be able to read the copy. The snapshot is sealed on the device before it is uploaded, under a backup key. That backup key comes from a recovery key the person keeps, offline, in a place they choose.</p>
     <p>The trade is plain. If the recovery key is lost and no device still holds the keys, the backup cannot be opened. That is the price of the cloud not being able to read it.</p>
     <figure class="rd-figure idea-fig idea-steps" data-steps="7" aria-label="Step-through of backup and recovery">
       <svg viewBox="0 0 680 350" role="img" aria-label="A laptop seals a snapshot with a backup key derived from a recovery key kept offline. The sealed snapshot sits in cloud storage. After the laptop is lost, a new laptop uses the recovery key to open the downloaded blob and restore its identity keys.">
-        <defs><marker id="ah-d4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:currentColor"/></marker></defs>
+        <defs><marker id="ah-d4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
         <g data-s="1"><rect class="idea-box" x="10" y="40" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="90" y="70">Laptop</text><text class="idea-t idea-t--s" x="90" y="92">store snapshot</text></g>
-        <g data-s="4"><rect x="10" y="40" width="160" height="80" rx="10" style="fill:none;stroke:var(--rd-warn);stroke-width:2;stroke-dasharray:6 4"/></g>
-        <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="220" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="90" y="250">Recovery key</text><text class="idea-t idea-t--s" x="90" y="272">kept offline</text><path class="idea-line" d="M90 218 V124" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s idea-t--l" x="98" y="176">derives backup key</text></g>
-        <g data-s="3"><path class="idea-line" d="M170 80 H270" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s" x="220" y="66">sealed</text><text class="idea-t idea-t--s" x="220" y="98">snapshot</text></g>
+        <g data-s="4"><rect x="10" y="40" width="160" height="80" rx="10" fill="none" stroke="var(--rd-warn)" stroke-width="2" stroke-dasharray="6 4"/></g>
+        <g data-s="2"><rect class="idea-box idea-box--key" x="10" y="220" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="90" y="250">Recovery key</text><text class="idea-t idea-t--s" x="90" y="272">kept offline</text><path class="idea-line" d="M90 218 V124" marker-end="url(#ah-d4)"/><text class="idea-t idea-t--s idea-t--l" x="98" y="176">derives backup key</text></g>
+        <g data-s="3"><path class="idea-line" d="M170 80 H270" marker-end="url(#ah-d4)"/><text class="idea-t idea-t--s" x="220" y="66">sealed</text><text class="idea-t idea-t--s" x="220" y="98">snapshot</text></g>
         <g data-s="3"><rect class="idea-box" x="270" y="40" width="160" height="80" rx="10"/><text class="idea-t idea-t--b" x="350" y="70">Cloud store</text><text class="idea-t idea-t--s" x="350" y="92">sealed blobs only</text></g>
-        <g data-s="6"><path class="idea-line" d="M430 80 H560 V218" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s" x="495" y="68">download blob</text></g>
-        <g data-s="5"><path class="idea-line" d="M170 260 H500" style="marker-end:url(#ah-d4)"/><text class="idea-t idea-t--s" x="335" y="250">recovery key typed in</text></g>
+        <g data-s="6"><path class="idea-line" d="M430 80 H560 V218" marker-end="url(#ah-d4)"/><text class="idea-t idea-t--s" x="495" y="68">download blob</text></g>
+        <g data-s="5"><path class="idea-line" d="M170 260 H500" marker-end="url(#ah-d4)"/><text class="idea-t idea-t--s" x="335" y="250">recovery key typed in</text></g>
         <g data-s="5"><rect class="idea-box idea-box--key" x="500" y="220" width="170" height="80" rx="10"/><text class="idea-t idea-t--b" x="585" y="250">New laptop</text><text class="idea-t idea-t--s" x="585" y="272">after the loss</text></g>
-        <g data-s="7"><text class="idea-t idea-t--s" x="670" y="326" style="text-anchor:end">identity restored, document keys re-fetched</text></g>
+        <g data-s="7"><text class="idea-t idea-t--s" x="670" y="326" text-anchor="end">identity restored, document keys re-fetched</text></g>
       </svg>
       <div class="idea-steps__ctrl">
         <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
@@ -335,25 +201,20 @@
     </figure>
   </section>
 
-  <section class="rd-tabsec" id="device-loss">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-smartphone"/></svg></span><h2>Losing a device</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-smartphone"/></svg></span><h2 id="device-loss">Losing a device</h2></header>
     <p>Two cases are different. A locked, encrypted laptop that is lost is a bad day, but its content is protected by the disk and device keys. A laptop that is lost while it is unlocked, or while its keys sit in memory, is a worse case. Until the rest of the group revokes that device and rekeys the documents, whoever has the laptop can read what it holds.</p>
     <p>The design has to say what a remote revoke can and cannot do. It can stop the device from receiving new keys and new changes. It cannot take back a copy that was already read.</p>
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="access" role="tabpanel" aria-labelledby="tab-access" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#who-can-read"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Who can read this?</span></a></li>
-    <li><a href="#threats"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Threat model</span></a></li>
-    <li><a href="#metadata"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Metadata</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="access" data-rd-tab="access" data-rd-label="Who can read" data-rd-icon="eye">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="who-can-read">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-eye"/></svg></span><h2>Who can read this?</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-eye"/></svg></span><h2 id="who-can-read">Who can read this?</h2></header>
     <p>Pick a setup. The table below shows the answer for that setup. These answers are written out by hand from the design, not computed from a running system, because nothing here is running.</p>
     <fieldset class="idea-presets">
       <legend>Setup</legend>
@@ -378,8 +239,8 @@
     <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Hosted rows describe a typical central workspace in general terms, not any one product.</p>
   </section>
 
-  <section class="rd-tabsec" id="threats">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><h2>Threat model</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield"/></svg></span><h2 id="threats">Threat model</h2></header>
     <p>Each row is a party the design should stop, or a case it should make visible. The last column is what limits the damage. It is a design goal, not a measured result.</p>
     <div class="rd-table-wrap">
       <table class="rd-table">
@@ -399,26 +260,21 @@
     </div>
   </section>
 
-  <section class="rd-tabsec" id="metadata">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg></span><h2>Metadata</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg></span><h2 id="metadata">Metadata</h2></header>
     <p>Encryption hides content, not everything else. A relay still sees that two devices talk, how often, and how big the sealed blobs are. Group size and rekey timing can hint at how a team is organised. Padding and batching reduce some of this. They cost time and bandwidth, and they do not remove it.</p>
     <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Stated plainly</p>
       The design makes the content private. It does not make the activity invisible to whoever runs the relay.</div>
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#glossary"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Glossary</span></a></li>
-    <li><a href="#concepts"><span class="rd-toc__badge">2</span><span class="rd-toc__text">The techniques</span></a></li>
-    <li><a href="#quiz"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Check yourself</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="learn" data-rd-tab="learn" data-rd-label="Learn" data-rd-icon="graduation-cap">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="glossary">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Glossary</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2 id="glossary">Glossary</h2></header>
     <p>Tap a term to open its definition. Nothing is stored, and nothing is sent anywhere.</p>
     <div class="idea-gloss">
     <details class="rd-fold"><summary>Ciphertext</summary><p>Data after encryption. Without the key it looks like random bytes. Ciphertext can still reveal its length.</p></details>
@@ -439,8 +295,8 @@
       </div>
   </section>
 
-  <section class="rd-tabsec" id="concepts">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg></span><h2>The techniques, with analogies</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg></span><h2 id="concepts">The techniques, with analogies</h2></header>
     <p>Each technique starts with an everyday picture. Open "Learn more" for the precise version.</p>
 
     <h3>End-to-end encryption</h3>
@@ -488,8 +344,8 @@
     <details class="rd-fold"><summary>Learn more</summary><p>Recovery uses a recovery key, a split key, or a set of trusted devices or people. Revocation adds a new epoch and rewraps the document key for the remaining members. It cannot undo a copy that was already read.</p></details>
   </section>
 
-  <section class="rd-tabsec" id="quiz">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Check yourself</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2 id="quiz">Check yourself</h2></header>
     <p>Four questions. Pick an answer. The explanation opens after you pick, or open it at any time.</p>
     <div class="idea-quiz">
       <fieldset data-q="1">
@@ -528,16 +384,13 @@
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="ask" role="tabpanel" aria-labelledby="tab-ask" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#ask-this-idea"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Ask this idea</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="ask" data-rd-tab="ask" data-rd-label="Ask this idea" data-rd-icon="message-circle">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="ask-this-idea">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg></span><h2>Ask this idea</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg></span><h2 id="ask-this-idea">Ask this idea</h2></header>
     <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>How answers work</p><p><strong>Answers come from the written notes on this page, not an AI model.</strong> The chat matches your question against a list of questions and terms written for this page. If nothing matches well, it says so. Messages are kept in this tab only and are not stored or sent anywhere.</p></div>
     <ul class="idea-chips" aria-label="Suggested questions">
       <li><button type="button" class="rd-btn" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
@@ -550,7 +403,7 @@
     <div class="idea-ask">
       <form id="idea-ask-form" role="search" action="#ask-this-idea">
         <label for="idea-ask-input" class="rd-eyebrow">Your question</label>
-        <input id="idea-ask-input" type="text" name="q" autocomplete="off" placeholder="Ask about the idea" maxlength="300">
+        <input id="idea-ask-input" class="rd-input" type="text" name="q" autocomplete="off" placeholder="Ask about the idea" maxlength="300">
         <button type="submit" class="rd-btn">Ask</button>
       </form>
       <div class="idea-log" id="idea-log" role="log" aria-live="polite" aria-label="Conversation"></div>
@@ -559,19 +412,13 @@
   </section>
 
   </div>
-</div>
+</section>
 
-<div class="rd-tabpanel rd-with-toc" id="tradeoffs" role="tabpanel" aria-labelledby="tab-tradeoffs" hidden>
-  <nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>
-    <li><a href="#open-problems"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Open problems</span></a></li>
-    <li><a href="#not-decided"><span class="rd-toc__badge">2</span><span class="rd-toc__text">What is not decided</span></a></li>
-    <li><a href="#caveats"><span class="rd-toc__badge">3</span><span class="rd-toc__text">Caveats</span></a></li>
-    <li><a href="#sources"><span class="rd-toc__badge">4</span><span class="rd-toc__text">Sources</span></a></li>
-  </ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>
+<section class="rd-tabpanel rd-with-toc" id="tradeoffs" data-rd-tab="tradeoffs" data-rd-label="Trade-offs" data-rd-icon="scale">
   <div class="rd-tab__body">
 
-  <section class="rd-tabsec" id="open-problems">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>Open problems</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="open-problems">Open problems</h2></header>
     <ul class="rd-icon-list rd-icon-list--warn">
       <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Search.</strong> Full text across a group needs an index on each device, or leaks match patterns on a server.</span></li>
       <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span><strong>Onboarding.</strong> A new device must get keys without a central directory that can lie about who it is.</span></li>
@@ -584,8 +431,8 @@
     </ul>
   </section>
 
-  <section class="rd-tabsec" id="not-decided">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-x"/></svg></span><h2>What is not decided</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-x"/></svg></span><h2 id="not-decided">What is not decided</h2></header>
     <ul>
       <li>Which group-key protocol to use, or whether to build on MLS.</li>
       <li>Where a relay runs, who runs it, and whether a person can run their own.</li>
@@ -597,8 +444,8 @@
     </ul>
   </section>
 
-  <section class="rd-tabsec" id="caveats">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>Caveats</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="caveats">Caveats</h2></header>
     <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Read this first</p>
       This is an idea, not a product. Nothing on this page is built, prototyped, measured or security reviewed. The statements about techniques describe what those techniques do in general. They do not describe a working system.</div>
     <ul class="rd-icon-list rd-icon-list--warn">
@@ -607,8 +454,8 @@
     </ul>
   </section>
 
-  <section class="rd-tabsec" id="sources">
-    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Sources</h2></header>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2 id="sources">Sources</h2></header>
     <ol class="rd-refs">
       <li id="ref-1">Barnes, R., Beurdouche, B., Robert, R., Millican, J., Omara, E., Cohn-Gordon, K. <em>The Messaging Layer Security (MLS) Protocol</em>. RFC 9420, IETF, 2023.</li>
       <li id="ref-2">Marlinspike, M., Perrin, T. (eds.) <em>The X3DH Key Agreement Protocol</em>. Signal specification, revision 1, 2016-11-04.</li>
@@ -619,10 +466,9 @@
   </section>
 
   </div>
-</div>
-</main>
+</section>
 
-<script id="idea-kb" type="application/json">[
+<script type="application/json" data-rd-data id="idea-kb">[
 {"q":"What is the idea in one sentence?","a":"Keep the documents, mail and calendar on your own machines, let the cloud hold only encrypted copies, and still let people collaborate.","k":"idea summary what is it","s":"in-30-seconds","t":"In 30 seconds"},
 {"q":"Is this a product I can use?","a":"No. It is an idea. Nothing on this page is built, prototyped, measured or security reviewed.","k":"product built prototype status idea","s":"caveats","t":"Caveats"},
 {"q":"What is wrong with a central workspace?","a":"The provider can read every document, index it, scan it, hand it over under a legal request, or lose it in a breach. An admin or an account thief may be able to open any file.","k":"central workspace problem provider plaintext","s":"the-problem","t":"The problem with a central workspace"},
@@ -688,167 +534,3 @@
 {"q":"Why does a backup of a lost laptop still need the cloud?","a":"Because the snapshot is kept there sealed, so a new laptop can download it after the old one is gone. The cloud cannot open it on its own.","k":"backup cloud why needed lost laptop","s":"backup-recovery","t":"Backup and recovery"},
 {"q":"What does sealed mean?","a":"Encrypted and authenticated, so a change to the bytes is detected. The page uses sealed for encrypted data throughout.","k":"sealed encrypted authenticated term","s":"glossary","t":"Glossary"}
 ]</script>
-
-<script>
-
-// Step-through figures: Next and Back move the highlight and the caption. No history entries.
-(function () {
-  document.querySelectorAll('.idea-steps').forEach(function (fig) {
-    var total = parseInt(fig.getAttribute('data-steps'), 10) || 1;
-    var cur = 1;
-    var count = fig.querySelector('.idea-steps__count');
-    var prev = fig.querySelector('[data-prev]');
-    var next = fig.querySelector('[data-next]');
-    function render() {
-      fig.querySelectorAll('[data-s]').forEach(function (el) {
-        var sNo = parseInt(el.getAttribute('data-s'), 10);
-        el.classList.toggle('is-on', sNo === cur);
-        el.classList.toggle('is-past', sNo < cur);
-      });
-      fig.querySelectorAll('.idea-steps__list li').forEach(function (li) {
-        li.classList.toggle('is-on', li.getAttribute('data-s') === String(cur));
-      });
-      count.textContent = 'Step ' + cur + ' of ' + total;
-      prev.disabled = cur <= 1;
-      next.disabled = cur >= total;
-      if (cur >= total && document.activeElement === next) prev.focus(); // bug 29: no focus on a disabled button
-      var lit = fig.querySelector('svg [data-s].is-on');
-      if (lit && fig.scrollWidth > fig.clientWidth + 1) {
-        var fr = fig.getBoundingClientRect(), lr = lit.getBoundingClientRect();
-        if (lr.left < fr.left || lr.right > fr.right) fig.scrollTo({ left: fig.scrollLeft + (lr.left - fr.left) - 16, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-      }
-    }
-    prev.addEventListener('click', function () { if (cur > 1) { cur -= 1; render(); } });
-    next.addEventListener('click', function () { if (cur < total) { cur += 1; render(); } });
-    render();
-  });
-})();
-
-// Who can read: pick a pre-written setup. The table text is written out by hand, nothing is computed.
-(function () {
-  var table = document.querySelector('.idea-table');
-  if (!table) return;
-  function pick(p) {
-    table.querySelectorAll('[data-p]').forEach(function (el) { el.classList.toggle('is-on', el.getAttribute('data-p') === p); });
-    var pick1 = document.querySelector('input[name="idea-preset"][value="' + p + '"]');
-    var st = document.getElementById('idea-preset-status');
-    if (pick1 && st) st.textContent = 'Showing: ' + pick1.parentElement.textContent.trim();
-  }
-  document.querySelectorAll('input[name="idea-preset"]').forEach(function (r) {
-    r.addEventListener('change', function () { if (r.checked) pick(r.value); });
-  });
-  var checked = document.querySelector('input[name="idea-preset"]:checked');
-  pick(checked ? checked.value : 'sealed');
-})();
-
-// Quiz: a choice shows right or not quite; the explanation is always one tap away.
-(function () {
-  var answers = { q1: 'b', q2: 'b', q3: 'b', q4: 'b' };
-  document.querySelectorAll('.idea-quiz fieldset').forEach(function (fs) {
-    var key = 'q' + fs.getAttribute('data-q');
-    var verdict = fs.querySelector('.idea-verdict');
-    fs.querySelectorAll('input[type="radio"]').forEach(function (r) {
-      r.addEventListener('change', function () {
-        var ok = r.value === answers[key];
-        verdict.textContent = ok ? 'Right.' : 'Not quite. Open the answer.';
-        verdict.className = 'idea-verdict ' + (ok ? 'idea-verdict--ok' : 'idea-verdict--no');
-        var det = fs.querySelector('details');
-        if (det) det.open = true;
-      });
-    });
-  });
-})();
-
-// Ask this idea: local retrieval over the notes below. BM25 over the entries, top match, related chips, honest fallback.
-(function () {
-  var kbEl = document.getElementById('idea-kb');
-  var form = document.getElementById('idea-ask-form');
-  var input = document.getElementById('idea-ask-input');
-  var log = document.getElementById('idea-log');
-  if (!kbEl || !form || !input || !log) return;
-  var KB = JSON.parse(kbEl.textContent || '[]');
-  var STOP = { a: 1, an: 1, the: 1, is: 1, are: 1, of: 1, to: 1, in: 1, on: 1, and: 1, or: 1, it: 1, this: 1, that: 1, do: 1, does: 1, for: 1, be: 1, with: 1, my: 1, i: 1, what: 1, how: 1, can: 1, if: 1, so: 1, at: 1, by: 1, as: 1, from: 1, about: 1, me: 1, you: 1, your: 1, we: 1, they: 1, their: 1, not: 1 };
-  function tok(s) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(function (w) { return w && !STOP[w]; });
-  }
-  var docs = KB.map(function (e) { return tok(e.q + ' ' + e.q + ' ' + (e.k || '') + ' ' + e.a); });
-  var N = docs.length;
-  var avg = docs.reduce(function (s, d) { return s + d.length; }, 0) / Math.max(N, 1);
-  var df = {};
-  docs.forEach(function (d) {
-    var seen = {};
-    d.forEach(function (w) { if (!seen[w]) { seen[w] = 1; df[w] = (df[w] || 0) + 1; } });
-  });
-  function score(q, d) {
-    var tf = {};
-    d.forEach(function (w) { tf[w] = (tf[w] || 0) + 1; });
-    var s = 0;
-    q.forEach(function (w) {
-      var f = tf[w] || 0;
-      if (!f) return;
-      var idf = Math.log(1 + (N - (df[w] || 0) + 0.5) / ((df[w] || 0) + 0.5));
-      s += idf * (f * 2.2) / (f + 1.2 * (0.25 + 0.75 * d.length / avg));
-    });
-    return s;
-  }
-  function rank(q) {
-    return KB.map(function (e, i) { return { e: e, s: score(q, docs[i]) }; }).sort(function (a, b) { return b.s - a.s; });
-  }
-  function bubble(cls, text) {
-    var div = document.createElement('div');
-    div.className = 'idea-msg' + (cls ? ' ' + cls : '');
-    var p = document.createElement('p');
-    p.textContent = text;
-    div.appendChild(p);
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-    return div;
-  }
-  function chip(label, fn) {
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'idea-cite';
-    b.textContent = label;
-    b.addEventListener('click', fn);
-    return b;
-  }
-  function ask(text) {
-    var q = tok(text);
-    if (!q.length) return;
-    bubble('idea-msg--me', text);
-    var r = rank(q);
-    var top = r[0];
-    var threshold = 2.2;
-    var div;
-    if (!top || top.s < threshold) {
-      div = bubble('', 'I do not know that from the notes on this page. Here are related topics:');
-      r.slice(0, 3).filter(function (x) { return x.s > 0; }).forEach(function (x) {
-        div.appendChild(chip(x.e.q, function () { ask(x.e.q); }));
-      });
-      return;
-    }
-    div = bubble('', top.e.a);
-    var cite = document.createElement('p');
-    cite.appendChild(chip('Show the section: ' + top.e.t, function () { ideaGo(top.e.s); }));
-    div.appendChild(cite);
-    var related = r.slice(1, 4).filter(function (x) { return x.s >= threshold; });
-    if (related.length) {
-      var rel = document.createElement('p');
-      related.forEach(function (x) { rel.appendChild(chip(x.e.q, function () { ask(x.e.q); })); });
-      div.appendChild(rel);
-    }
-    log.scrollTop = log.scrollHeight;
-  }
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var v = input.value.trim();
-    input.value = '';
-    if (v) ask(v);
-  });
-  document.querySelectorAll('[data-ask]').forEach(function (b) {
-    b.addEventListener('click', function () { ask(b.getAttribute('data-ask')); });
-  });
-})();
-</script>
-</body>
-</html>

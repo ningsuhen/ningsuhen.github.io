@@ -1,0 +1,12 @@
+{
+	"contract": 1,
+	"kind": "idea",
+	"slug": "decentralized-office",
+	"title": "Decentralized email and office tools, instead of Google Workspace",
+	"created": "2026-10-24",
+	"updated": "2026-10-25",
+	"summary": "Keep the documents, mail and calendar on your own machines. Let the cloud store only ciphertext. Keep collaboration working anyway.",
+	"eyebrow": "Idea",
+	"width": "wide",
+	"layout": "tabbed"
+}
