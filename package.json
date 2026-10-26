@@ -55,6 +55,7 @@
     "sync": "sh scripts/sync-dev-next.sh",
     "merge-pr": "sh scripts/merge-pr.sh",
     "test:hooks": "sh scripts/test-pre-push.sh",
+    "test:merge-guard": "sh scripts/test-merge-guard.sh",
     "test:pr-conflicts": "node --test scripts/test-pr-conflicts.mjs",
     "test:leaks-embedded": "node --test scripts/test-leak-embedded.mjs",
     "test:split-fragment": "node --test scripts/split-fragment.test.mjs",
