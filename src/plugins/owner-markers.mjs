@@ -12,6 +12,12 @@
  * The anchor is the first block that starts after the marker (its `data-src` start line); a marker
  * before a heading is about that section. `draft:` is an optional suggested wording, never published.
  *
+ * `manual` is different: not a to-do but a lock. `<!-- owner:manual -->` (any text after the type is
+ * ignored, no `draft:`) sits above one block the owner wrote or edited by hand, and covers that block
+ * only (a heading too means just the heading line; several manual blocks get one marker each). Keep
+ * that block verbatim: fix only grammar and punctuation; rephrase only on the owner's instruction or
+ * for an unavoidable reason stated in the PR. It is never counted as unresolved (`isOpenMarker`).
+ *
  * Markers never reach readers: `remarkOwnerMarkers` drops them from the tree (so no HTML, excerpt,
  * reading time or search index), the RSS feed strips them from the raw body (`stripOwnerMarkers`),
  * and `pnpm check:markers` fails if any marker text shows up in dist/. The editor reads them from
@@ -24,10 +30,13 @@ export const MARKER_TYPES = /** @type {const} */ ([
 	"scene",
 	"voice",
 	"fact",
+	"manual",
 ]);
 
-const MARKER_RE =
-	/<!--\s*owner:(question|confirm|scene|voice|fact)\b([\s\S]*?)-->/g;
+const MARKER_RE = new RegExp(
+	`<!--\\s*owner:(${MARKER_TYPES.join("|")})\\b([\\s\\S]*?)-->`,
+	"g",
+);
 /** Any comment that starts like a marker, valid or not (a typo must not slip through to readers). */
 const ANY_MARKER_RE = /<!--\s*owner:[\s\S]*?-->/g;
 
@@ -59,7 +68,8 @@ export function parseOwnerMarkers(src) {
 	);
 	return spans.map(({ m, line, endLine }) => {
 		const [, type, body] = m;
-		const [text, ...rest] = body.split(/^\s*draft:\s*/m);
+		const [text, ...rest] =
+			type === "manual" ? [""] : body.split(/^\s*draft:\s*/m);
 		let anchorLine;
 		for (let n = endLine + 1; n <= lines.length; n++) {
 			if (lines[n - 1].trim() && !markerLines.has(n)) {
@@ -78,6 +88,9 @@ export function parseOwnerMarkers(src) {
 		};
 	});
 }
+
+/** A marker that waits on the owner (every type but `manual`, which only locks its block). */
+export const isOpenMarker = (m) => m.type !== "manual";
 
 /** The Markdown with every marker comment removed (for outputs built from the raw body, like RSS). */
 export const stripOwnerMarkers = (src) => src.replace(ANY_MARKER_RE, "");

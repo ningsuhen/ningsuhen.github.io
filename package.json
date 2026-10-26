@@ -40,6 +40,7 @@
     "check:mobile": "node scripts/check-mobile.mjs",
     "test:tts": "node --experimental-strip-types --test scripts/tts-normalize.test.ts",
     "test:drafts": "node --test scripts/test-draft-pages.mjs",
+    "test:markers": "node --test scripts/owner-markers.test.mjs",
     "test:dates": "node --experimental-strip-types --test scripts/date-utils.test.ts",
     "check:dates": "node scripts/check-dates.mjs",
     "test:design-system": "node --test scripts/design-system.test.mjs",
