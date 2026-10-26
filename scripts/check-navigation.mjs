@@ -13,17 +13,22 @@ const VIEWPORTS = [
 	{ width: 1440, height: 900 },
 	{ width: 375, height: 800 },
 ];
-const SITE = ["/", "/archive/", "/about/", "/research/", "/playground/", "/posts/ai-boom-trajectories/"];
-// Standalone pages that a list page links to: public/<section>/<slug>/index.html with a Live (or Coming soon-free) entry.
-// Found from the data files, so a new report is covered without editing this script.
-const STANDALONE = ["research", "playground"].flatMap((section) => {
+const SITE = ["/", "/archive/", "/about/", "/research/", "/playground/", "/ideas/", "/posts/ai-boom-trajectories/"];
+// Standalone pages that a list page links to: shipped <section>/<slug>/index.html (from public/ or the Astro shell)
+// with a Live (or Coming soon-free) entry. Found from the data files, so a new report is covered without editing this
+// script. Filtered on dist/ (what the check's server serves), so shell-rendered fragment routes are included and Draft
+// pages (removed from dist/ at build) are excluded.
+const STANDALONE = ["research", "playground", "ideas"].flatMap((section) => {
 	const entries = JSON.parse(readFileSync(path.resolve("src/data", `${section}.json`), "utf8")).items;
 	return entries
 		.filter((e) => !["draft", "coming soon"].includes(e.status.toLowerCase()))
 		.map((e) => e.href)
-		.filter((href) => existsSync(path.resolve("public", href.replace(/^\/|\/$/g, ""), "index.html")));
+		.filter((href) => existsSync(path.resolve("dist", href.replace(/^\/|\/$/g, ""), "index.html")));
 });
-const LIST_OF = (page) => (page.startsWith("/research/") ? "/research/" : "/playground/");
+const LIST_OF = (page) => {
+	const m = page.match(/^\/(research|playground|ideas)\//);
+	return m ? `/${m[1]}/` : "/research/";
+};
 const NAV = ["/", "/archive/", "/about/", "/research/", "/playground/"];
 const STEPS = 14;
 const IGNORE = /giscus|Failed to load resource|pagefind\.js/; // third-party embeds and the Pagefind search import (aborted on leave)
