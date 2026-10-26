@@ -19,9 +19,6 @@
 <script type="module" src="/design-system/rd.js"></script>
 <style>
 /* Idea-page layout only. Colours, sizes and spacing come from the design-system tokens. */
-/* Contrast on this page's own grounds, until the shared pass on rail text and links lands: rail entries at 4.5:1+ in
-   light (the shared value is 3.8:1), and links in the tab body in the ink accent (the shared link colour is 4.18:1). */
-:root:not([data-theme="dark"]) { --rd-toc-text: rgba(0, 0, 0, 0.62); }
 .rd-tab__body a:not(.rd-btn) { color: var(--rd-accent-ink); }
 .rd-tab__body, .rd-tabsec, .idea-fig { min-width: 0; max-width: 100%; }
 /* Diagrams render at 1:1 (680 units = 42.5rem). On a phone they scroll inside their figure, never the page. */
