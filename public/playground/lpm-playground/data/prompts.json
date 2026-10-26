@@ -1,0 +1,68 @@
+{
+ "_about": "Prompt per demo: label text style (name or definition) and the dataset's solved examples that fit the 512-token window (chosen by length, round-robin over labels). Style chosen by dev-split accuracy (name vs definition; dev only, test never used): email 72.3 vs 44.7, tickets 49.0 vs 51.0, documents 33.3 vs 33.3 (tie, name has more examples), leads 44.7 vs 51.1, sensitive 46.4 vs 57.1 (percent, name vs definition).",
+ "email-triage": {
+  "style": "name",
+  "fewshotIds": [
+   "email-triage-007",
+   "email-triage-027",
+   "email-triage-002",
+   "email-triage-028",
+   "email-triage-030",
+   "email-triage-074",
+   "email-triage-062",
+   "email-triage-071"
+  ]
+ },
+ "ticket-routing": {
+  "style": "definition",
+  "fewshotIds": [
+   "ticket-routing-019",
+   "ticket-routing-076",
+   "ticket-routing-037",
+   "ticket-routing-065",
+   "ticket-routing-059",
+   "ticket-routing-072",
+   "ticket-routing-081",
+   "ticket-routing-080",
+   "ticket-routing-055",
+   "ticket-routing-084",
+   "ticket-routing-092",
+   "ticket-routing-091"
+  ]
+ },
+ "document-type": {
+  "style": "name",
+  "fewshotIds": [
+   "document-type-019",
+   "document-type-076",
+   "document-type-037",
+   "document-type-065",
+   "document-type-059"
+  ]
+ },
+ "lead-intent": {
+  "style": "definition",
+  "fewshotIds": [
+   "lead-intent-007",
+   "lead-intent-027",
+   "lead-intent-002",
+   "lead-intent-028",
+   "lead-intent-030",
+   "lead-intent-074",
+   "lead-intent-062",
+   "lead-intent-071",
+   "lead-intent-085"
+  ]
+ },
+ "sensitive-text-gate": {
+  "style": "definition",
+  "fewshotIds": [
+   "sensitive-text-gate-021",
+   "sensitive-text-gate-035",
+   "sensitive-text-gate-007",
+   "sensitive-text-gate-083",
+   "sensitive-text-gate-073",
+   "sensitive-text-gate-091"
+  ]
+ }
+}

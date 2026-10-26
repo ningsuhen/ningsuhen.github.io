@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-density="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LPM playground · created 2026-10-26 · updated 2026-10-26</title>
+<meta name="description" content="Run practical business classification demos (email triage, support tickets, document sorting, sales leads, a sensitive-text check, and your own) with a small language model on your own graphics card, in the browser. Nothing you type is sent anywhere.">
+<!-- Engine files in lpm/ come from the LPM engine build: pkg/lpm_web.js sha256 e307ee084027dd6fb300cfb991595a54b294f2135dab23fde484223964db6e9e; pkg/lpm_web_bg.wasm sha256 7ad2546b9478705f56897093da179c70b460efaa64672c1353462c6bf4ffd8a1 as built (the shipped wasm differs only by same-length neutral build-path strings).
+     Playground page with six tabs: five business demos and a tab for the visitor's own decision. The model card sits above the tabs and is shared.
+     The site build injects the navbar, light/dark toggle and licence footer; none are hand-rolled here.
+     Theme: light by default, dark via <html data-theme="dark"> (set by the injected toggle). Colours only via --rd-*.
+     Width: rd-tabbed + rd-container--wide (the navbar's width, 73rem): the live trace, the confusion matrix and the method
+     comparison tables need the room; prose keeps --rd-measure.
+     Tabs, sections and history: the model of /research/brev-tree-benchmark/ (scripts copied from it, without its hypothesis filter).
+     Network: opening the page makes no external request. The model (1.5 GB) is fetched from its public host only after the
+     visitor presses the button, or read from the browser's private storage, or from a file the visitor picks. The engine and the
+     tokenizer word list are this site's own files and load on the same button press. Icons: Lucide, inlined below. -->
+<link rel="stylesheet" href="/design-system/rd.css">
+<style>
+.lp-card [hidden], .rd-tabsec [hidden] { display: none !important; }
+.rd-tabsec { min-width: 0; }
+.rd-tabsec li, .rd-tabsec p, .lp-card p, .lp-card dd { overflow-wrap: anywhere; }
+.rd-prose .rd-hero h1 .lp-stamp { display: block; font-size: var(--rd-fs-sm); font-weight: 400; letter-spacing: 0; line-height: 1.4; color: var(--rd-text-muted); margin-top: var(--rd-space-1); }
+.lp-card { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-4) 0; min-width: 0; }
+.lp-card > :first-child { margin-top: 0; }
+.lp-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--rd-space-1) var(--rd-space-4); margin: var(--rd-space-3) 0; font-size: var(--rd-fs-sm); }
+.lp-facts dt { color: var(--rd-text-muted); }
+.lp-facts dd { margin: 0; color: var(--rd-text-strong); }
+.lp-facts code { overflow-wrap: anywhere; word-break: break-all; }
+.lp-actions { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); align-items: center; margin: var(--rd-space-3) 0; }
+.lp-actions .rd-btn { display: inline-flex; align-items: center; gap: 0.35rem; }
+.lp-filebtn { position: relative; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.lp-filebtn input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.lp-filebtn:focus-within { outline: 2px solid var(--rd-accent); outline-offset: 2px; }
+.lp-filebtn.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.lp-filebtn.is-disabled input { cursor: not-allowed; }
+.lp-muted { color: var(--rd-text-muted); }
+.lp-stage { min-height: 3.2rem; }
+.lp-bad { color: var(--rd-bad); }
+.lp-explain { font-size: var(--rd-fs-sm); margin: var(--rd-space-1) 0; }
+.lp-lead { font-weight: 600; color: var(--rd-text-strong); }
+.lp-msg { margin: var(--rd-space-3) 0 0; }
+.lp-ta { display: block; min-height: 6rem; padding: var(--rd-space-2) var(--rd-space-3); resize: vertical; line-height: 1.5; font-family: var(--rd-font); }
+.lp-examples { display: flex; flex-wrap: wrap; gap: var(--rd-space-2); margin: var(--rd-space-2) 0; }
+.lp-ex { display: inline-flex; align-items: center; gap: 0.4rem; max-width: 100%; height: auto; min-height: 2rem; text-align: left; }
+.lp-ex__t { overflow-wrap: anywhere; }
+.lp-trace { list-style: none; padding: 0; margin: var(--rd-space-4) 0 0; display: grid; gap: var(--rd-space-2); }
+.lp-step { background: var(--rd-page-bg); border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); margin: 0; min-width: 0; max-width: none; }
+.lp-step__t { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--rd-text-strong); font-size: var(--rd-fs-sm); }
+.lp-step__b { margin-top: var(--rd-space-2); min-width: 0; }
+.lp-step__b > p { margin: var(--rd-space-1) 0; }
+.lp-quote { margin: 0; padding: var(--rd-space-2) var(--rd-space-3); border-left: 4px solid var(--rd-primary); background: var(--rd-btn-bg); border-radius: 0 var(--rd-radius-sm) var(--rd-radius-sm) 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--rd-text); font-size: var(--rd-fs-sm); }
+.lp-choices { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--rd-space-2); }
+.lp-choices li { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; padding: var(--rd-space-1) var(--rd-space-3); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-sm); max-width: none; }
+.lp-choices li.is-win { border-color: var(--rd-good); }
+.lp-choices li.is-second { border-color: var(--rd-text-faint); }
+.lp-choice__name { font-weight: 600; color: var(--rd-text-strong); }
+.lp-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--rd-space-3); margin-top: var(--rd-space-2); }
+.lp-compare > div { background: var(--rd-card-bg); border-radius: var(--rd-radius-sm); padding: var(--rd-space-3); min-width: 0; }
+.lp-compare p { margin: 0; }
+.lp-win { font-size: var(--rd-fs-lede); font-weight: 700; color: var(--rd-text-strong); margin: 0; }
+.lp-big { font-size: var(--rd-fs-lede); font-weight: 700; color: var(--rd-text-strong); display: flex; flex-wrap: wrap; gap: var(--rd-space-2); align-items: center; }
+.lp-meter { position: relative; padding: 0.25rem 0; }
+.lp-tick { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1px; background: var(--rd-text-strong); border-radius: 2px; }
+.lp-outcome { margin: 0; }
+.lp-code { margin: 0; padding: var(--rd-space-3); background: var(--rd-codeblock-bg); color: var(--rd-codeblock-fg); border-radius: var(--rd-radius-sm); overflow-x: auto; font: var(--rd-fs-sm) var(--rd-font-mono); line-height: 1.5; white-space: pre; }
+.lp-code code { background: none; color: inherit; padding: 0; font: inherit; }
+.lp-statnote { font-size: var(--rd-fs-xs); color: var(--rd-text-muted); margin-top: var(--rd-space-1); overflow-wrap: anywhere; }
+.lp-proof .rd-stat__value { overflow-wrap: anywhere; }
+.lp-progress { margin: var(--rd-space-2) 0; display: grid; gap: var(--rd-space-1); }
+.lp-range { width: 100%; accent-color: var(--rd-accent); min-height: 1.75rem; }
+.lp-chart { width: 100%; height: auto; display: block; }
+.lp-axis { fill: var(--rd-text-muted); font-size: 11px; font-family: var(--rd-font); }
+.lp-cm { margin-top: var(--rd-space-4); }
+.lp-cm h3 { margin: 0 0 var(--rd-space-2); }
+.lp-diag { background: var(--rd-btn-bg); font-weight: 700; }
+.lp-off { color: var(--rd-bad); font-weight: 700; }
+.lp-wronglist { list-style: none; padding: 0; margin: var(--rd-space-3) 0; display: grid; gap: var(--rd-space-3); }
+.lp-wrong { margin: 0; max-width: none; padding: var(--rd-space-3); border-radius: var(--rd-radius-sm); background: var(--rd-page-bg); border-left: 4px solid var(--rd-good); display: grid; gap: var(--rd-space-2); }
+.lp-wrong.is-wrong { border-left-color: var(--rd-bad); }
+.lp-wrong__meta { margin: 0; display: flex; flex-wrap: wrap; gap: var(--rd-space-1) var(--rd-space-2); align-items: center; font-size: var(--rd-fs-sm); }
+.lp-wrong .rd-btn { justify-self: start; }
+.lp-rows { display: grid; gap: var(--rd-space-2); }
+.lp-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; gap: var(--rd-space-2); align-items: center; }
+.lp-row--shot { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; }
+.lp-thr-own { max-width: 20rem; margin: var(--rd-space-3) 0; }
+.rd-tabsec h3 { margin: var(--rd-space-4) 0 var(--rd-space-1); }
+.rd-table-wrap { max-width: 100%; }
+@media (max-width: 40rem) {
+  .lp-facts { grid-template-columns: 1fr; }
+  .lp-facts dd { margin-bottom: var(--rd-space-2); }
+  .lp-row, .lp-row--shot { grid-template-columns: minmax(0, 1fr) auto; }
+  .lp-row > :first-child, .lp-row--shot > :first-child { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body class="rd-body">
+<nav class="rd-expnav" role="tablist" aria-label="Demos">
+<a role="tab" id="tab-email" href="?tab=email" aria-controls="email" aria-selected="true" tabindex="0" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-mail"/></svg>Email triage</a>
+<a role="tab" id="tab-ticket" href="?tab=ticket" aria-controls="ticket" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-life-buoy"/></svg>Support tickets</a>
+<a role="tab" id="tab-doc" href="?tab=doc" aria-controls="doc" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Document sorting</a>
+<a role="tab" id="tab-lead" href="?tab=lead" aria-controls="lead" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-users"/></svg>Sales leads</a>
+<a role="tab" id="tab-sens" href="?tab=sens" aria-controls="sens" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-alert"/></svg>Sensitive-text check</a>
+<a role="tab" id="tab-own" href="?tab=own" aria-controls="own" aria-selected="false" tabindex="-1"><svg class="rd-icon" aria-hidden="true"><use href="#i-wand-sparkles"/></svg>Your own</a>
+</nav>
+<!-- lucide-sprite:start -->
+<svg style="display:none" aria-hidden="true">
+<symbol id="i-chart-column" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v16a2 2 0 0 0 2 2h16m-3-4V9m-5 8V5M8 17v-3"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16 9l-5.5 5.5L8 12"/></g></symbol>
+<symbol id="i-circle-x" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9l-6 6m0-6l6 6"/></g></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16 18l6-6l-6-6M8 6l-6 6l6 6"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 20v2m0-20v2m5 16v2m0-20v2M2 12h2m-2 5h2M2 7h2m16 5h2m-2 5h2M20 7h2M7 20v2M7 2v2"/><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="8" height="8" x="8" y="8" rx="1"/></g></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 15V3m9 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10l5 5l5-5"/></g></symbol>
+<symbol id="i-file-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 9H8m8 4H8m8 4H8"/></g></symbol>
+<symbol id="i-flask-conical" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/></symbol>
+<symbol id="i-gauge" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+<symbol id="i-hard-drive" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 16h.01m-7.798-4.423a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zm19.734.436H2.054M6 16h.01"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
+<symbol id="i-life-buoy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93l4.24 4.24m5.66 0l4.24-4.24m-4.24 9.9l4.24 4.24m-9.9-4.24l-4.24 4.24"/><circle cx="12" cy="12" r="4"/></g></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497zM15 5l4 4"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-7-7v14"/></symbol>
+<symbol id="i-quote" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1a6 6 0 0 0 6-6V5a2 2 0 0 0-2-2zM5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1a6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/></symbol>
+<symbol id="i-replace" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14 4a1 1 0 0 1 1-1m0 7a1 1 0 0 1-1-1m7-5a1 1 0 0 0-1-1m1 6a1 1 0 0 1-1 1M3 7l3 3l3-3"/><path d="M6 10V5a2 2 0 0 1 2-2h2"/><rect width="7" height="7" x="3" y="14" rx="1"/></g></symbol>
+<symbol id="i-route" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></g></symbol>
+<symbol id="i-shield-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zm-8-5v4m0 4h.01"/></symbol>
+<symbol id="i-shield-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12l2 2l4-4"/></g></symbol>
+<symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 5H3m9 14H3M14 3v4m2 10v4m5-9h-9m9 7h-5m5-14h-7m-6 5v4m0-2H3"/></symbol>
+<symbol id="i-square" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" rx="2"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11v6m4-6v6m5-11v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4m0 4h.01"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 14.66V17a1 1 0 0 1-1 1a2 2 0 0 0-2 2v2m7-7.34V17a1 1 0 0 0 1 1a2 2 0 0 1 2 2v2m.916-12H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3"/></g></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3.128a4 4 0 0 1 0 7.744M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></g></symbol>
+<symbol id="i-wand-sparkles" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21.64 3.64l-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72M14 7l3 3M5 6v4m14 4v4M10 2v2M7 8H3m18 8h-4M11 3H9"/></symbol>
+</svg>
+<!-- lucide-sprite:end -->
+<!-- icons drawn by app.js: #i-quote #i-list #i-trophy #i-gauge #i-route #i-code #i-circle-check #i-circle-x #i-triangle-alert #i-trash #i-plus -->
+
+<!-- rd-tabbed + rd-container--wide: the live trace, the confusion matrix and the comparison tables need the navbar's width; prose keeps --rd-measure. -->
+<main class="rd-tabbed rd-container--wide rd-prose">
+  <header class="rd-hero">
+    <p class="rd-eyebrow">Playground · lpm-playground</p>
+    <h1>LPM playground<span class="lp-stamp"> · created 2026-10-26 · updated 2026-10-26</span></h1>
+    <p class="rd-hero__lede">A small language model that runs on your own graphics card and makes one closed-choice decision per call. A program branches on the answer. Your text is not sent anywhere.</p>
+    <p class="rd-hero__meta">
+      <span class="rd-chip rd-chip--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg>Runs in this tab, on your GPU</span>
+      <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Fictional example data</span>
+    </p>
+  </header>
+  <div class="lp-card" id="model" role="region" aria-labelledby="model-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-cpu"/></svg></span><h2 id="model-t">Load the model once, use it in every tab</h2></header>
+    <p>Qwen3-0.6B (Apache-2.0), 1.5 GB. Nothing downloads until you press the button. Your browser then keeps a copy, so the next visit does not download it again. <span id="lp-gpu-status"><span class="rd-chip rd-chip--neutral">checking...</span></span> <span id="lp-adapter" class="lp-muted"></span></p>
+    <div class="lp-actions">
+      <button type="button" class="rd-btn rd-btn--primary" id="lp-load-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-download"/></svg><span class="lp-btn-text">Download and load model</span></button>
+      <button type="button" class="rd-btn" id="lp-load-file-btn" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-hard-drive"/></svg>Use a file I already have</button><input type="file" id="lp-load-file" accept=".lpm1,application/octet-stream" hidden aria-hidden="true" tabindex="-1">
+      <button type="button" class="rd-btn" id="lp-load-cancel" hidden><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Cancel download</button>
+    </div>
+    <p class="lp-muted lp-stage" id="lp-stage" role="status">Checking your graphics card...</p>
+    <div class="rd-meter" id="lp-load-meter" role="progressbar" aria-label="Model load progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><span class="rd-meter__fill" id="lp-load-fill" style="width:0%"></span></div>
+    <dl class="lp-facts" id="lp-load-facts" hidden></dl>
+    <div class="rd-callout rd-callout--bad lp-msg" id="lp-load-msg" role="alert" hidden></div>
+    <p class="lp-explain"><strong>Your text is never sent anywhere.</strong> The model download is the only large request, and only when you press the button. Each tab counts the network requests made during a call so you can check.</p>
+    <p class="lp-explain"><strong>A 0.6-billion-parameter model makes mistakes.</strong> Each tab's accuracy card says how many, on test items it was not shown. The example texts are fictional, written by an AI model.</p>
+    <details class="rd-fold">
+      <summary>Details: size, source, network, how this page works</summary>
+      <dl class="lp-facts">
+        <dt>Model</dt><dd>Qwen3-0.6B, 16-bit, about 600 million parameters</dd>
+        <dt>Size</dt><dd>1,503,264,868 bytes (1.5 GB)</dd>
+        <dt>Comes from</dt><dd>huggingface.co, the model's public host</dd>
+        <dt>SHA-256</dt><dd><code>21fc4c8985fadea4adf9c32d6f55686562fadb8d951cc088fe8bddbc2577119d</code></dd>
+        <dt>Licence</dt><dd>Apache-2.0 (<a href="./lpm/tok/QWEN3-LICENSE">licence text</a>)</dd>
+      </dl>
+      <ul class="rd-icon-list">
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Pressing the button first fetches the engine (about 0.3 MB) and a word list for the tokenizer (about 4.4 MB) from this site, then the model from huggingface.co, unless your browser already has it or you pick a file.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The engine is LPM, compiled to WebAssembly. It runs the model on your graphics card through WebGPU. There is no server and no fallback to software: without a real GPU you get a message, not a result.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Each call asks the model one closed question: given the instruction, the options and a few solved examples, which option letter comes next? Only the winner and the runner-up leave the GPU.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Margin is how far ahead the winner is over the runner-up, in the model's own units (a logit gap). Bigger means surer. It is not a percentage.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The model's window is 512 tokens. The fixed examples in each prompt are the ones from the dataset that fit, chosen by length only, never by whether the model got them right. Whether the prompt uses label names or definitions was picked per demo by accuracy on the dev split.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Dev and test are two separate sets of labelled items. The dev set picks the threshold. The test set is only used to report.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The keyword and regex baselines are hand-written rules, written from the label definitions before the dev and test texts were read. They run in your browser, like the model.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The test sets are small and the items are fictional. Treat the numbers as a demonstration, not a guarantee.</li>
+      </ul>
+    </details>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="email" role="tabpanel" aria-labelledby="tab-email">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#email-what"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What this replaces</span></a></li>
+          <li><a href="#email-try"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Try it</span></a></li>
+          <li><a href="#email-seen"><span class="rd-toc__badge">3</span><span class="rd-toc__text">What happened on your machine</span></a></li>
+          <li><a href="#email-accuracy"><span class="rd-toc__badge">4</span><span class="rd-toc__text">How often is it right?</span></a></li>
+          <li><a href="#email-bar"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Choose how careful to be</span></a></li>
+          <li><a href="#email-wrong"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Where it goes wrong</span></a></li>
+          <li><a href="#email-use"><span class="rd-toc__badge">7</span><span class="rd-toc__text">Use it in a program</span></a></li>
+        </ol>
+      </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="email-what" aria-labelledby="email-what-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"/></svg></span><h2 id="email-what-t">What this replaces</h2></header>
+    <p>Today a person, or a pile of fixed mail rules, opens each incoming email and drags it to a folder: reply needed, meeting request, invoice or receipt, promo or newsletter, or FYI. Here the model picks the folder and three lines of code move the email.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The model only sorts into folders. Code never deletes, archives or auto-replies to any email, whatever the label.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Low-confidence predictions go to a 'Needs a look' folder for a human instead of a label folder.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="email-try" aria-labelledby="email-try-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg></span><h2 id="email-try-t">Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own email. Then press Classify. </p>
+    <div class="lp-examples" id="email-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="email-text">Email to sort</label>
+    <textarea class="rd-input lp-ta" id="email-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="email-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Classify</button><span class="lp-muted" id="email-hint" role="status"></span></div>
+    <p class="rd-field__error" id="email-msg" hidden role="alert"></p>
+    <p class="lp-muted lp-explain" id="email-promptinfo"></p>
+    <ol class="lp-trace" id="email-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="email-seen" aria-labelledby="email-seen-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2 id="email-seen-t">What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="email-proof"></div>
+    <p class="lp-muted lp-explain" id="email-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="email-accuracy" aria-labelledby="email-accuracy-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span><h2 id="email-accuracy-t">How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 95 labelled emails on your GPU. The 47 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 48 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="email-eval" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Run evaluation</button><button type="button" class="rd-btn" id="email-stop" hidden><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button></div>
+    <div class="lp-progress" id="email-eval-progress" hidden><span class="lp-muted" id="email-eval-status" role="status"></span><div class="rd-meter" id="email-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill" id="email-eval-fill" style="width:0%"></span></div></div>
+    <p class="rd-field__error" id="email-eval-msg" hidden role="alert"></p>
+    <div id="email-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="email-bar" aria-labelledby="email-bar-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg></span><h2 id="email-bar-t">Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="email-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="email-thr-box" hidden>
+      <label class="rd-field__label" for="email-thr">Margin threshold: <output id="email-thr-readout">2.0</output> <span class="lp-muted" id="email-thr-src"></span></label>
+      <input type="range" class="lp-range" id="email-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="email-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="email-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="email-wrong" aria-labelledby="email-wrong-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="email-wrong-t">Where it goes wrong</h2></header>
+    <p class="lp-muted" id="email-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="email-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="email-use" aria-labelledby="email-use-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"/></svg></span><h2 id="email-use-t">Use it in a program</h2></header>
+    <p>Call the model when an email arrives. It gives back one label and a margin. If the margin reaches your threshold, file the email in that label's folder. If not, put it in a "Needs a look" folder for a person.</p>
+    <p>Email is private. The text stays on the machine that runs the model, there is no fee per email, and the time shown in the proof strip is the whole delay.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>What it must not be used for</p>Never let the label delete, archive or answer an email: code only files it. Do not rely on it for mail where a miss is costly, such as legal notices or payment disputes, without a person. It was tested on fictional English emails only.</div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="ticket" role="tabpanel" aria-labelledby="tab-ticket">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#ticket-what"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What this replaces</span></a></li>
+          <li><a href="#ticket-try"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Try it</span></a></li>
+          <li><a href="#ticket-seen"><span class="rd-toc__badge">3</span><span class="rd-toc__text">What happened on your machine</span></a></li>
+          <li><a href="#ticket-accuracy"><span class="rd-toc__badge">4</span><span class="rd-toc__text">How often is it right?</span></a></li>
+          <li><a href="#ticket-bar"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Choose how careful to be</span></a></li>
+          <li><a href="#ticket-wrong"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Where it goes wrong</span></a></li>
+          <li><a href="#ticket-use"><span class="rd-toc__badge">7</span><span class="rd-toc__text">Use it in a program</span></a></li>
+        </ol>
+      </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="ticket-what" aria-labelledby="ticket-what-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"/></svg></span><h2 id="ticket-what-t">What this replaces</h2></header>
+    <p>Today a support lead or a first-line agent reads each new ticket and sends it to billing, bug reports, account access, how-to, feature requests or cancellations. Here the model suggests the queue. Cancellations always go to a person.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Any message labelled cancellation always goes to a human retention agent, whatever the model's confidence.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Low-confidence predictions go to the general queue instead of a team queue.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="ticket-try" aria-labelledby="ticket-try-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg></span><h2 id="ticket-try-t">Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own ticket. Then press Classify. </p>
+    <div class="lp-examples" id="ticket-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="ticket-text">Customer message to route</label>
+    <textarea class="rd-input lp-ta" id="ticket-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="ticket-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Classify</button><span class="lp-muted" id="ticket-hint" role="status"></span></div>
+    <p class="rd-field__error" id="ticket-msg" hidden role="alert"></p>
+    <p class="lp-muted lp-explain" id="ticket-promptinfo"></p>
+    <ol class="lp-trace" id="ticket-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="ticket-seen" aria-labelledby="ticket-seen-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2 id="ticket-seen-t">What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="ticket-proof"></div>
+    <p class="lp-muted lp-explain" id="ticket-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="ticket-accuracy" aria-labelledby="ticket-accuracy-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span><h2 id="ticket-accuracy-t">How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 102 labelled tickets on your GPU. The 51 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 51 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="ticket-eval" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Run evaluation</button><button type="button" class="rd-btn" id="ticket-stop" hidden><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button></div>
+    <div class="lp-progress" id="ticket-eval-progress" hidden><span class="lp-muted" id="ticket-eval-status" role="status"></span><div class="rd-meter" id="ticket-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill" id="ticket-eval-fill" style="width:0%"></span></div></div>
+    <p class="rd-field__error" id="ticket-eval-msg" hidden role="alert"></p>
+    <div id="ticket-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="ticket-bar" aria-labelledby="ticket-bar-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg></span><h2 id="ticket-bar-t">Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="ticket-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="ticket-thr-box" hidden>
+      <label class="rd-field__label" for="ticket-thr">Margin threshold: <output id="ticket-thr-readout">2.0</output> <span class="lp-muted" id="ticket-thr-src"></span></label>
+      <input type="range" class="lp-range" id="ticket-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="ticket-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="ticket-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="ticket-wrong" aria-labelledby="ticket-wrong-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="ticket-wrong-t">Where it goes wrong</h2></header>
+    <p class="lp-muted" id="ticket-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="ticket-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="ticket-use" aria-labelledby="ticket-use-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"/></svg></span><h2 id="ticket-use-t">Use it in a program</h2></header>
+    <p>Run the model on each new ticket. A cancellation skips the margin test: a human retention agent always gets it. For the rest, if the margin reaches your threshold, assign the team queue for that label; otherwise use the general queue.</p>
+    <p>Tickets hold names, order numbers and complaints. The text stays on the machine that runs the model, there is no fee per ticket, and the time shown in the proof strip is the whole delay.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>What it must not be used for</p>Do not use it to refuse, auto-answer or refund anything: it routes, a person resolves. Do not treat the cancellation label as a churn detector. It reads the words of one ticket and nothing else.</div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="doc" role="tabpanel" aria-labelledby="tab-doc">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#doc-what"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What this replaces</span></a></li>
+          <li><a href="#doc-try"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Try it</span></a></li>
+          <li><a href="#doc-seen"><span class="rd-toc__badge">3</span><span class="rd-toc__text">What happened on your machine</span></a></li>
+          <li><a href="#doc-accuracy"><span class="rd-toc__badge">4</span><span class="rd-toc__text">How often is it right?</span></a></li>
+          <li><a href="#doc-bar"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Choose how careful to be</span></a></li>
+          <li><a href="#doc-wrong"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Where it goes wrong</span></a></li>
+          <li><a href="#doc-use"><span class="rd-toc__badge">7</span><span class="rd-toc__text">Use it in a program</span></a></li>
+        </ol>
+      </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="doc-what" aria-labelledby="doc-what-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"/></svg></span><h2 id="doc-what-t">What this replaces</h2></header>
+    <p>Today a clerk opens each scanned or pasted document and files it as an invoice, receipt, purchase order, quote, shipping notice or other, before anyone reads the details. Here the model picks the type. It never reads an amount, date or total.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The model only picks the document type. It never reads, extracts or checks any amount, date or total in the text.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Low-confidence predictions go to a manual-sort pile instead of a type folder.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="doc-try" aria-labelledby="doc-try-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg></span><h2 id="doc-try-t">Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own document. Then press Classify. </p>
+    <div class="lp-examples" id="doc-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="doc-text">Document text to sort</label>
+    <textarea class="rd-input lp-ta" id="doc-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="doc-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Classify</button><span class="lp-muted" id="doc-hint" role="status"></span></div>
+    <p class="rd-field__error" id="doc-msg" hidden role="alert"></p>
+    <p class="lp-muted lp-explain" id="doc-promptinfo"></p>
+    <ol class="lp-trace" id="doc-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="doc-seen" aria-labelledby="doc-seen-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2 id="doc-seen-t">What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="doc-proof"></div>
+    <p class="lp-muted lp-explain" id="doc-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="doc-accuracy" aria-labelledby="doc-accuracy-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span><h2 id="doc-accuracy-t">How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 102 labelled documents on your GPU. The 51 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 51 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="doc-eval" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Run evaluation</button><button type="button" class="rd-btn" id="doc-stop" hidden><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button></div>
+    <div class="lp-progress" id="doc-eval-progress" hidden><span class="lp-muted" id="doc-eval-status" role="status"></span><div class="rd-meter" id="doc-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill" id="doc-eval-fill" style="width:0%"></span></div></div>
+    <p class="rd-field__error" id="doc-eval-msg" hidden role="alert"></p>
+    <div id="doc-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="doc-bar" aria-labelledby="doc-bar-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg></span><h2 id="doc-bar-t">Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="doc-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="doc-thr-box" hidden>
+      <label class="rd-field__label" for="doc-thr">Margin threshold: <output id="doc-thr-readout">2.0</output> <span class="lp-muted" id="doc-thr-src"></span></label>
+      <input type="range" class="lp-range" id="doc-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="doc-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="doc-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="doc-wrong" aria-labelledby="doc-wrong-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="doc-wrong-t">Where it goes wrong</h2></header>
+    <p class="lp-muted" id="doc-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="doc-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="doc-use" aria-labelledby="doc-use-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"/></svg></span><h2 id="doc-use-t">Use it in a program</h2></header>
+    <p>Run the model on the document's text (the first lines are enough). If the margin reaches your threshold, file it under that type; otherwise put it on a manual-sort pile. Amounts, dates and totals still need their own checks: the model only says what kind of document it is.</p>
+    <p>Documents hold prices, names and addresses. The text stays on the machine that runs the model, and there is no fee per page.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>What it must not be used for</p>Do not use the type to approve a payment. Do not send long documents: the model's window is 512 tokens including the fixed examples, so a long text is refused rather than cut silently.</div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="lead" role="tabpanel" aria-labelledby="tab-lead">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#lead-what"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What this replaces</span></a></li>
+          <li><a href="#lead-try"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Try it</span></a></li>
+          <li><a href="#lead-seen"><span class="rd-toc__badge">3</span><span class="rd-toc__text">What happened on your machine</span></a></li>
+          <li><a href="#lead-accuracy"><span class="rd-toc__badge">4</span><span class="rd-toc__text">How often is it right?</span></a></li>
+          <li><a href="#lead-bar"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Choose how careful to be</span></a></li>
+          <li><a href="#lead-wrong"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Where it goes wrong</span></a></li>
+          <li><a href="#lead-use"><span class="rd-toc__badge">7</span><span class="rd-toc__text">Use it in a program</span></a></li>
+        </ol>
+      </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="lead-what" aria-labelledby="lead-what-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"/></svg></span><h2 id="lead-what-t">What this replaces</h2></header>
+    <p>Today a sales assistant reads each website contact-form message and decides what the sender wants: to buy, to look around, to get support, to partner, or to sell something or find a job. Here the model tags the lead and sets the queue order. A person decides what to do.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Low confidence reorders the human review queue (uncertain leads move up for a person to look at). Code never rejects, deletes or auto-replies to a lead.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>The label only sets queue order and routing; a person decides what to do with every lead.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="lead-try" aria-labelledby="lead-try-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg></span><h2 id="lead-try-t">Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own lead. Then press Classify. </p>
+    <div class="lp-examples" id="lead-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="lead-text">Contact-form message</label>
+    <textarea class="rd-input lp-ta" id="lead-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="lead-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Classify</button><span class="lp-muted" id="lead-hint" role="status"></span></div>
+    <p class="rd-field__error" id="lead-msg" hidden role="alert"></p>
+    <p class="lp-muted lp-explain" id="lead-promptinfo"></p>
+    <ol class="lp-trace" id="lead-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="lead-seen" aria-labelledby="lead-seen-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2 id="lead-seen-t">What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="lead-proof"></div>
+    <p class="lp-muted lp-explain" id="lead-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="lead-accuracy" aria-labelledby="lead-accuracy-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span><h2 id="lead-accuracy-t">How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 95 labelled leads on your GPU. The 47 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 48 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="lead-eval" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Run evaluation</button><button type="button" class="rd-btn" id="lead-stop" hidden><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button></div>
+    <div class="lp-progress" id="lead-eval-progress" hidden><span class="lp-muted" id="lead-eval-status" role="status"></span><div class="rd-meter" id="lead-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill" id="lead-eval-fill" style="width:0%"></span></div></div>
+    <p class="rd-field__error" id="lead-eval-msg" hidden role="alert"></p>
+    <div id="lead-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="lead-bar" aria-labelledby="lead-bar-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg></span><h2 id="lead-bar-t">Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="lead-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="lead-thr-box" hidden>
+      <label class="rd-field__label" for="lead-thr">Margin threshold: <output id="lead-thr-readout">2.0</output> <span class="lp-muted" id="lead-thr-src"></span></label>
+      <input type="range" class="lp-range" id="lead-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="lead-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="lead-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="lead-wrong" aria-labelledby="lead-wrong-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="lead-wrong-t">Where it goes wrong</h2></header>
+    <p class="lp-muted" id="lead-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="lead-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="lead-use" aria-labelledby="lead-use-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"/></svg></span><h2 id="lead-use-t">Use it in a program</h2></header>
+    <p>Run the model on each message. The label tags the lead and routes it. The margin sets the order: uncertain leads move to the front of the review queue so a person looks at them first. Code never rejects, deletes or answers a lead.</p>
+    <p>Contact-form messages hold names, emails and company details. The text stays on the machine that runs the model, and there is no fee per message.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>What it must not be used for</p>Do not drop leads the model calls vendor or job seeker without a person looking: a miss can cost a sale. Do not use it to score a person. It reads one message and nothing else.</div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="sens" role="tabpanel" aria-labelledby="tab-sens">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#sens-what"><span class="rd-toc__badge">1</span><span class="rd-toc__text">What this replaces</span></a></li>
+          <li><a href="#sens-try"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Try it</span></a></li>
+          <li><a href="#sens-seen"><span class="rd-toc__badge">3</span><span class="rd-toc__text">What happened on your machine</span></a></li>
+          <li><a href="#sens-accuracy"><span class="rd-toc__badge">4</span><span class="rd-toc__text">How often is it right?</span></a></li>
+          <li><a href="#sens-bar"><span class="rd-toc__badge">5</span><span class="rd-toc__text">Choose how careful to be</span></a></li>
+          <li><a href="#sens-wrong"><span class="rd-toc__badge">6</span><span class="rd-toc__text">Where it goes wrong</span></a></li>
+          <li><a href="#sens-use"><span class="rd-toc__badge">7</span><span class="rd-toc__text">Use it in a program</span></a></li>
+        </ol>
+      </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="sens-what" aria-labelledby="sens-what-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"/></svg></span><h2 id="sens-what-t">What this replaces</h2></header>
+    <p>Today, often nobody checks: people paste emails, customer records and keys into a cloud chatbot and hope. Here a check runs first on your own machine, a plain regex check and the model, and the text may be pasted only if both say it is clean.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Fail closed: the text is sent to the cloud assistant only when the model says clean with high confidence; anything else (personal-data, secret-or-credential, or low confidence) is blocked and the user is told why.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>This is a speed bump to catch accidents, not a compliance control, and it must never be described as one.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="sens-try" aria-labelledby="sens-try-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg></span><h2 id="sens-try-t">Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own text. Then press Classify. Both checks run: the plain regex check and the model.</p>
+    <div class="lp-examples" id="sens-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="sens-text">Text you are about to paste into a cloud assistant</label>
+    <textarea class="rd-input lp-ta" id="sens-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="sens-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Classify</button><span class="lp-muted" id="sens-hint" role="status"></span></div>
+    <p class="rd-field__error" id="sens-msg" hidden role="alert"></p>
+    <p class="lp-muted lp-explain" id="sens-promptinfo"></p>
+    <ol class="lp-trace" id="sens-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="sens-seen" aria-labelledby="sens-seen-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2 id="sens-seen-t">What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="sens-proof"></div>
+    <p class="lp-muted lp-explain" id="sens-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="sens-accuracy" aria-labelledby="sens-accuracy-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span><h2 id="sens-accuracy-t">How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 108 labelled texts on your GPU. The 54 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 54 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="sens-eval" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Run evaluation</button><button type="button" class="rd-btn" id="sens-stop" hidden><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button></div>
+    <div class="lp-progress" id="sens-eval-progress" hidden><span class="lp-muted" id="sens-eval-status" role="status"></span><div class="rd-meter" id="sens-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill" id="sens-eval-fill" style="width:0%"></span></div></div>
+    <p class="rd-field__error" id="sens-eval-msg" hidden role="alert"></p>
+    <div id="sens-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="sens-bar" aria-labelledby="sens-bar-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg></span><h2 id="sens-bar-t">Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="sens-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="sens-thr-box" hidden>
+      <label class="rd-field__label" for="sens-thr">Margin threshold: <output id="sens-thr-readout">2.0</output> <span class="lp-muted" id="sens-thr-src"></span></label>
+      <input type="range" class="lp-range" id="sens-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="sens-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="sens-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="sens-wrong" aria-labelledby="sens-wrong-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="sens-wrong-t">Where it goes wrong</h2></header>
+    <p class="lp-muted" id="sens-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="sens-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="sens-use" aria-labelledby="sens-use-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"/></svg></span><h2 id="sens-use-t">Use it in a program</h2></header>
+    <p>Run both checks. Block the text when either finds personal data or a secret, or when the model's margin is low. That is failing closed: doubt means no. Regular expressions are good at exact formats such as card numbers and keys. The model can read meaning. The table in the accuracy card shows what each one caught on the test split.</p>
+    <p>The text being checked is the sensitive thing, so the check cannot send it anywhere. Running on the same machine is what makes it possible to check the text before it leaves.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>What it must not be used for</p>This is a speed bump for accidents, not a compliance control. It will miss things. Do not describe it to anyone as data-loss prevention or as proof that a text is safe.</div>
+  </section>
+  </div>
+  </div>
+
+  <div class="rd-tabpanel rd-with-toc" id="own" role="tabpanel" aria-labelledby="tab-own">
+    <nav class="rd-toc" aria-label="On this page">
+      <details open>
+        <summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary>
+        <ol>
+          <li><a href="#own-setup"><span class="rd-toc__badge">1</span><span class="rd-toc__text">Describe your decision</span></a></li>
+          <li><a href="#own-try"><span class="rd-toc__badge">2</span><span class="rd-toc__text">Try it</span></a></li>
+          <li><a href="#own-seen"><span class="rd-toc__badge">3</span><span class="rd-toc__text">What happened on your machine</span></a></li>
+          <li><a href="#own-use"><span class="rd-toc__badge">4</span><span class="rd-toc__text">Use it in a program</span></a></li>
+        </ol>
+      </details>
+      <div class="rd-toc__indicator" aria-hidden="true"></div>
+    </nav>
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="own-setup" aria-labelledby="own-setup-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-pencil"/></svg></span><h2 id="own-setup-t">Describe your decision</h2></header>
+    <p>Describe your own decision: one instruction, the possible answers (two to eight) and a few examples of each. The model reads them once, then picks one answer for every text you give it. It starts with a non-business case, sorting kitchen notes, so you can see the idea before trying your own.</p>
+    <div class="rd-field"><label class="rd-field__label" for="own-instruction">Instruction</label><input class="rd-input" id="own-instruction" type="text" maxlength="200" value="Sort this kitchen note into one pile."></div>
+    <h3>Answers <span class="lp-muted" id="own-label-count">3 of 8 answers</span></h3>
+    <p class="lp-muted lp-explain">Each answer needs its own name. The description is optional but tells the model what the name means.</p>
+    <div id="own-labels" class="lp-rows"><div class="lp-row lp-row--label"><input class="rd-input" type="text" aria-label="Answer name" placeholder="name, e.g. shopping" maxlength="30" value="shopping"><input class="rd-input" type="text" aria-label="What it means (optional)" placeholder="what it means (optional)" value="things to buy at the shop"><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this answer"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--label"><input class="rd-input" type="text" aria-label="Answer name" placeholder="name, e.g. shopping" maxlength="30" value="recipe"><input class="rd-input" type="text" aria-label="What it means (optional)" placeholder="what it means (optional)" value="cooking steps or ingredients for a dish"><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this answer"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--label"><input class="rd-input" type="text" aria-label="Answer name" placeholder="name, e.g. shopping" maxlength="30" value="reminder"><input class="rd-input" type="text" aria-label="What it means (optional)" placeholder="what it means (optional)" value="something to remember to do at a certain time"><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this answer"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div></div>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="own-add-label"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg>Add an answer</button></div>
+    <h3>Examples <span class="lp-muted" id="own-shot-count">6 of 12 examples</span></h3>
+    <p class="lp-muted lp-explain">Short texts with the right answer. The model's window is small (512 tokens in total), so a few short examples work better than many long ones.</p>
+    <div id="own-shots" class="lp-rows"><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Buy oats, two lemons and a bag of rice"><select class="rd-select" aria-label="Its answer" data-want="shopping"><option value="shopping" selected>shopping</option><option value="recipe">recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="We are out of olive oil again"><select class="rd-select" aria-label="Its answer" data-want="shopping"><option value="shopping" selected>shopping</option><option value="recipe">recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Fry the onions until soft, add the tomatoes and simmer for 20 minutes"><select class="rd-select" aria-label="Its answer" data-want="recipe"><option value="shopping">shopping</option><option value="recipe" selected>recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Pancakes: 200g flour, 2 eggs, 300ml milk, pinch of salt. Whisk, rest, fry."><select class="rd-select" aria-label="Its answer" data-want="recipe"><option value="shopping">shopping</option><option value="recipe" selected>recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Take the bread out of the freezer tonight"><select class="rd-select" aria-label="Its answer" data-want="reminder"><option value="shopping">shopping</option><option value="recipe">recipe</option><option value="reminder" selected>reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Descale the kettle on Sunday"><select class="rd-select" aria-label="Its answer" data-want="reminder"><option value="shopping">shopping</option><option value="recipe">recipe</option><option value="reminder" selected>reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"/></svg></button></div></div>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="own-add-shot"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"/></svg>Add an example</button></div>
+    <p class="rd-field__error" id="own-form-error" hidden role="alert"></p>
+    <details class="rd-fold"><summary>The exact text the model reads</summary><pre class="lp-code"><code id="own-prompt"></code></pre></details>
+    <div class="rd-field lp-thr-own"><label class="rd-field__label" for="own-thr-own">Margin below which a person looks</label><input class="rd-input" id="own-thr-own" type="number" min="0" max="20" step="0.1" value="2"><p class="rd-field__hint">A starter value, not tuned. This tab has no answer key, so it cannot choose one for you.</p></div>
+  </section>
+  <section class="rd-tabsec" id="own-try" aria-labelledby="own-try-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg></span><h2 id="own-try-t">Try it</h2></header>
+    <p>Type a text, or pick one of these, and press Classify.</p>
+    <div class="lp-examples" id="own-examples" role="group" aria-label="Examples"></div>
+    <label class="rd-field__label" for="own-text">Text to sort</label>
+    <textarea class="rd-input lp-ta" id="own-text" rows="4" spellcheck="false" placeholder="Type a text"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="own-go" disabled><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Classify</button><span class="lp-muted" id="own-hint" role="status"></span></div>
+    <p class="rd-field__error" id="own-msg" hidden role="alert"></p>
+    <ol class="lp-trace" id="own-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="own-seen" aria-labelledby="own-seen-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg></span><h2 id="own-seen-t">What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="own-proof"></div>
+    <p class="lp-muted lp-explain" id="own-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="own-use" aria-labelledby="own-use-t">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"/></svg></span><h2 id="own-use-t">Use it in a program</h2></header>
+    <p>The pattern is the same as in the other tabs: call the model, read the label and the margin, and let ordinary code decide. A low margin means a person looks. Changing an answer or an example changes the prompt, so the engine reads it onto the GPU again on the next call (the one-time setup shown in the proof strip).</p>
+    <p>There is no accuracy card here because there is no answer key. To know how often your setup is right you need a few dozen texts you have labelled yourself, set aside and never used as examples. The other tabs do exactly that.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>What it must not be used for</p>A margin from one setup does not carry over to another. Do not act on answers alone for anything that matters until you have measured the setup on labelled texts.</div>
+  </section>
+  </div>
+  </div>
+</main>
+<script>
+// Tabs live in the query string: ?tab=email. A section is the hash (#email-try). Tabs are real links: the browser navigates and keeps its own history.
+// A section jump inside the current tab ("On this page", cross-references, cards) pushes one entry; a section in another
+// tab is a real navigation to ?tab=<tab>#<section>. Legacy hash-only URLs (#results, #h-board) map to the query on load.
+// Keyboard on the tab list: ArrowLeft/Right, Home and End move focus; Enter follows the link, Space follows it too.
+// Progressive: with no JS every panel and every card shows.
+//
+// History rule (spec in public/design-system/index.html, "Tabbed pages"):
+// - One entry per user navigation; none when the view already is that.
+// - replaceState only saves the scroll position into the current entry (state.y) and maps a legacy URL on load. Every
+//   scroll also goes to sessionStorage under the entry's key: a reload reads it, because a write made in pagehide never
+//   reaches the entry a reload restores from.
+// - Back, Forward, popstate, hashchange and bfcache restore re-sync the tab, filter, section and scroll from the URL and
+//   the entry's state. They never write an entry. history.scrollRestoration is 'manual' because this script restores scroll.
+// - A jump to a section moves focus to its heading (tabindex -1). Reduced motion: no smooth scrolling.
+(function () {
+  // Guarded: a bfcache restore reuses this document, so the init must never run twice on it.
+  if (window.__lpTabs) return;
+  window.__lpTabs = true;
+  var bar = document.querySelector('.rd-expnav[role="tablist"]');
+  if (!bar) return;
+  var PAGE = 8;
+  var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
+  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+  var wide = window.matchMedia('(min-width: 1100px)');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var navH = function () { return bar.getBoundingClientRect().bottom; }; // the bar is stuck under the breadcrumb band (navbar + band): content starts below its bottom
+  var saveTimer = 0;
+  var seq = Date.now(); // keys of the entries this document pushes (unique across reloads)
+  var yByKey = {};
+  var ledger = null; // { state, apply, view } when the page has a hypothesis filter
+  var ledgerTab = -1;
+
+  history.scrollRestoration = 'manual';
+
+  function tabOf(id) {
+    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('aria-controls') === id) return i;
+    return -1;
+  }
+  function panelOf(el) {
+    for (var i = 0; i < panels.length; i++) if (panels[i] && panels[i].contains(el)) return i;
+    return -1;
+  }
+  // What a hash names: a tab (a legacy #tab-id, el null); an element (its tab is the panel that holds it, -1 outside the
+  // tabs); or nothing.
+  function locate(id) {
+    if (!id) return null;
+    var t = tabOf(id);
+    if (t >= 0) return { tab: t, el: null };
+    var el = document.getElementById(id);
+    return el ? { tab: panelOf(el), el: el } : null;
+  }
+  function currentTab() {
+    var i = panels.findIndex(function (p) { return p && !p.hidden; });
+    return i < 0 ? 0 : i;
+  }
+  function shownOf(s) {
+    if (s === 'all') return Infinity;
+    var n = parseInt(s || '', 10);
+    return n > 0 ? n : PAGE;
+  }
+  function ledgerNow() { return ledger ? ledger.state() : { filter: 'all', shown: PAGE }; }
+  // The view a URL names: ?tab wins; else the tab that holds the hash's element; else the first tab.
+  function viewFromUrl() {
+    var q = new URLSearchParams(location.search);
+    var loc = locate(decodeURIComponent(location.hash.slice(1)));
+    var t = tabOf(q.get('tab') || '');
+    if (t < 0) t = loc && loc.tab >= 0 ? loc.tab : 0;
+    return { tab: t, el: loc && loc.el ? loc.el : null, filter: q.get('filter') || 'all', shown: shownOf(q.get('shown')) };
+  }
+  // The URL of a view: ?tab, then &filter and &shown when they are not the defaults, then the section.
+  function urlFor(tab, filter, shown, id) {
+    var q = new URLSearchParams();
+    q.set('tab', panels[tab].id);
+    if (filter && filter !== 'all') q.set('filter', filter);
+    if (shown !== PAGE) q.set('shown', shown === Infinity ? 'all' : String(shown));
+    return location.pathname + '?' + q.toString() + (id ? '#' + id : '');
+  }
+  // Section bar: the bar scrolls sideways (not the page). Keep the active tab in view and show an edge fade while tabs are hidden.
+  function barEdges() {
+    bar.classList.toggle('is-fade-start', bar.scrollLeft > 2);
+    bar.classList.toggle('is-fade-end', bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 2);
+  }
+  function revealTab(t) {
+    var pad = 40, l = t.offsetLeft, r = l + t.offsetWidth;
+    if (l < bar.scrollLeft + pad) bar.scrollLeft = l - pad;
+    else if (r > bar.scrollLeft + bar.clientWidth - pad) bar.scrollLeft = r - bar.clientWidth + pad;
+  }
+  bar.addEventListener('scroll', barEdges, { passive: true });
+  window.addEventListener('resize', barEdges);
+  function show(i) {
+    tabs.forEach(function (t, j) {
+      var on = j === i;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.setAttribute('tabindex', on ? '0' : '-1');
+      t.classList.toggle('is-active', on);
+      panels[j].hidden = !on;
+    });
+    revealTab(tabs[i]);
+    barEdges();
+    spy();
+  }
+  function focusTarget(el) {
+    var t = /^H[1-6]$/.test(el.tagName) ? el : el.querySelector('h1,h2,h3,h4,h5,h6') || el;
+    t.setAttribute('tabindex', '-1');
+    t.focus({ preventScroll: true });
+  }
+  // An entry's key: the k of a pushState entry, else its URL. yByKey holds the live scroll of every entry in this document,
+  // so a Back right after a jump still finds the position; state.y is the copy a reload or a bfcache restore reads.
+  function keyOf() {
+    var k = history.state && history.state.k;
+    return k ? String(k) : 'url:' + location.pathname + location.search + location.hash;
+  }
+  // Saves the scroll position into the current entry. replaceState: no entry is added.
+  function saveScroll() {
+    clearTimeout(saveTimer);
+    var y = Math.round(window.scrollY);
+    remember(keyOf(), y);
+    history.replaceState(Object.assign({}, history.state, { y: y }), '');
+  }
+  // The scroll of an entry, in memory (Back and Forward) and in sessionStorage (reload). Synchronous and not rate limited,
+  // so it holds the last scroll even when the reload follows a scroll by less than the saveScroll debounce.
+  function remember(k, y) {
+    yByKey[k] = y;
+    try { sessionStorage.setItem('rd-y:' + k, String(y)); } catch (e) {}
+  }
+  // Only for an entry this page wrote (state is set): a fresh visit to the same URL starts at the top.
+  function recalled(k) {
+    if (!history.state) return undefined;
+    var v = null;
+    try { v = sessionStorage.getItem('rd-y:' + k); } catch (e) {}
+    return v === null ? undefined : Number(v);
+  }
+  // Shows a tab, then the scroll: a saved y wins; else the section; else the tab's start (only when the tab is below the bar).
+  function showLoc(loc, o) {
+    if (loc.tab >= 0) show(loc.tab);
+    if (loc.el && o.focus) focusTarget(loc.el);
+    // 'instant' is explicit: the page's html scroll-behavior is smooth, and a restore must land where it was saved.
+    var behavior = o.smooth && !reduce.matches ? 'smooth' : 'instant';
+    if (typeof o.y === 'number') return window.scrollTo({ top: o.y, behavior: behavior });
+    if (loc.el) return loc.el.scrollIntoView({ block: 'start', behavior: behavior });
+    if (o.tabStart) {
+      var top = panels[loc.tab].getBoundingClientRect().top;
+      if (top < navH()) window.scrollTo({ top: window.scrollY + top - navH() - 8, behavior: behavior });
+    }
+  }
+  // Back, Forward, popstate, hashchange, bfcache restore: re-sync from the URL and the entry. Writes no entry.
+  function resync() {
+    var v = viewFromUrl();
+    var st = history.state || {};
+    var key = keyOf();
+    var saved = yByKey[key] !== undefined ? yByKey[key] : recalled(key);
+    var y = typeof saved === 'number' ? saved : typeof st.y === 'number' ? st.y : null;
+    if (ledger) ledger.apply(ledger.view(v.el, { filter: v.filter, shown: v.shown }));
+    showLoc({ tab: v.tab, el: v.el }, { y: y, focus: !!v.el, smooth: false, tabStart: true });
+    saveScroll();
+  }
+
+  // Every in-page link is handled here: a section in the current tab is one pushState entry; a section in another tab
+  // is a real navigation; ids that are not on this page keep the browser's behaviour.
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null;
+    if (!a || a.target || a.getAttribute('href') === '#') return;
+    var id = decodeURIComponent(a.getAttribute('href').slice(1));
+    var loc = locate(id);
+    if (!loc) return;
+    e.preventDefault();
+    var secId = loc.el ? id : ''; // a legacy tab id (#results) names a tab, not a section
+    var v = ledger && loc.tab === ledgerTab ? ledger.view(loc.el, ledger.state()) : null;
+    if (loc.tab !== currentTab()) {
+      location.assign(urlFor(loc.tab, v ? v.filter : 'all', v ? v.shown : PAGE, secId));
+      return;
+    }
+    var base = location.pathname + location.search + location.hash;
+    var next = v ? urlFor(loc.tab, v.filter, v.shown, secId) : location.pathname + location.search + (secId ? '#' + secId : '');
+    if (next !== base) {
+      saveScroll();
+      seq += 1;
+      var y0 = Math.round(window.scrollY);
+      remember(String(seq), y0);
+      history.pushState({ k: seq, y: y0 }, '', next);
+    }
+    if (v) ledger.apply(v);
+    showLoc({ tab: loc.tab, el: loc.el }, { smooth: true, focus: !!loc.el, tabStart: false });
+  });
+  // A tab is a real link. Following the tab that is already shown adds no entry.
+  bar.addEventListener('click', function (e) {
+    var t = e.target instanceof Element ? e.target.closest('[role="tab"]') : null;
+    if (!t || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    if (t.getAttribute('aria-selected') === 'true') return;
+    // lpm: switch in place with one pushState entry, so the loaded model survives.
+    saveScroll();
+    seq += 1;
+    history.pushState({ k: seq }, '', location.pathname + t.getAttribute('href'));
+    resync();
+  });
+  // Keyboard on the tab list: arrows, Home and End move focus; Space follows the focused tab (a link does not do that itself).
+  bar.addEventListener('keydown', function (e) {
+    var i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    var n = null;
+    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') n = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === 'Home') n = 0;
+    else if (e.key === 'End') n = tabs.length - 1;
+    else if (e.key === ' ') { e.preventDefault(); tabs[i].click(); return; }
+    if (n === null) return;
+    e.preventDefault();
+    tabs[n].focus();
+  });
+  window.addEventListener('popstate', resync);
+  window.addEventListener('hashchange', resync);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) resync(); });
+  window.addEventListener('pagehide', saveScroll);
+  window.addEventListener('scroll', function () {
+    remember(keyOf(), Math.round(window.scrollY));
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveScroll, 150);
+  }, { passive: true });
+
+  // "On this page": the details list is open on wide screens (its summary is hidden there), collapsible on narrow.
+  function openToc() {
+    document.querySelectorAll('.rd-toc details').forEach(function (d) { if (wide.matches) d.open = true; });
+  }
+  wide.addEventListener('change', openToc);
+  openToc();
+
+  // Scroll-spy for the active tab's "On this page" list.
+  var ticking = false;
+  function spy() {
+    ticking = false;
+    var i = panels.findIndex(function (p) { return !p.hidden; });
+    var links = panels[i] ? panels[i].querySelectorAll('.rd-toc a') : [];
+    var cur = links[0];
+    Array.prototype.forEach.call(links, function (a) {
+      var s = document.getElementById(a.getAttribute('href').slice(1));
+      if (s && s.getBoundingClientRect().top <= navH() + 24) cur = a;
+    });
+    Array.prototype.forEach.call(links, function (a) {
+      if (a === cur) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+
+
+  // First paint. A legacy URL (hash only, or a tab id in the hash) is mapped to the query with replaceState: no entry.
+  // A deep link opens its tab and scrolls to its target after layout. A reload restores the saved position.
+  var v0 = viewFromUrl();
+  var restoreY = recalled(keyOf()) !== undefined ? recalled(keyOf()) : typeof (history.state || {}).y === 'number' ? history.state.y : null;
+  var touched = false;
+  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
+    window.addEventListener(ev, function () { touched = true; }, { passive: true, once: true });
+  });
+  if (ledger) ledger.apply(ledger.view(v0.el, { filter: v0.filter, shown: v0.shown }));
+  if (!new URLSearchParams(location.search).has('tab') || tabOf(decodeURIComponent(location.hash.slice(1))) >= 0) {
+    var st0 = ledgerNow();
+    history.replaceState(history.state, '', urlFor(v0.tab, st0.filter, st0.shown, v0.el ? v0.el.id : ''));
+  }
+  resync();
+  function restoreFirst() {
+    if (touched) return;
+    if (v0.el) focusTarget(v0.el);
+    if (restoreY !== null) window.scrollTo({ top: restoreY, behavior: 'instant' });
+    else if (v0.el) v0.el.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
+  // Late fonts can move the page after load: the saved position is put back once more when they are in (unless the reader
+  // has moved). data-history-ready on <html> is set when the restore is done; the check waits for it.
+  window.addEventListener('load', function () {
+    restoreFirst();
+    var mark = function () { document.documentElement.setAttribute('data-history-ready', ''); };
+    var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    fonts.then(function () {
+      if (!touched && restoreY !== null && Math.abs(window.scrollY - restoreY) > 2) window.scrollTo({ top: restoreY, behavior: 'instant' });
+      mark();
+    }, mark);
+  }, { once: true });
+})();
+
+</script>
+<script>
+// "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
+// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
+// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
+// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
+(function () {
+  if (window.__rdToc) return;
+  window.__rdToc = true;
+  var wide = window.matchMedia('(min-width: 1536px)');
+  function Rail(nav) {
+    var self = this;
+    this.nav = nav;
+    this.links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+    this.indicator = nav.querySelector('.rd-toc__indicator');
+    this.sections = [];
+    this.index = new Map();
+    this.active = [];
+    this.anchorNavTarget = null;
+    this.links.forEach(function (a, i) {
+      var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      self.sections.push(sec);
+      self.active.push(false);
+      if (sec) self.index.set(sec, i);
+    });
+    this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
+    this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
+    nav.addEventListener('click', function (e) { self.onClick(e); }, true);
+    nav.classList.add('is-live');
+    this.fallback();
+    this.update();
+  }
+  Rail.prototype.onIntersect = function (entries) {
+    var self = this;
+    entries.forEach(function (e) {
+      var i = self.index.get(e.target);
+      if (i !== undefined) self.active[i] = e.isIntersecting;
+      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
+    });
+    if (this.active.indexOf(true) < 0) this.fallback();
+    this.update();
+  };
+  Rail.prototype.fallback = function () {
+    var vh = window.innerHeight;
+    for (var i = 0; i < this.sections.length; i++) {
+      var s = this.sections[i];
+      if (!s) continue;
+      var r = s.getBoundingClientRect();
+      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
+      else if (r.top > vh) break;
+    }
+  };
+  Rail.prototype.update = function () {
+    var self = this;
+    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
+  };
+  Rail.prototype.toggle = function () {
+    var links = this.links, a = this.active;
+    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
+    var i = links.length - 1, min = links.length - 1, max = -1;
+    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
+    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
+    while (i >= 0) { links[i].classList.remove('visible'); i--; }
+    if (!this.indicator) return;
+    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
+    var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
+    var top = links[min].getBoundingClientRect().top - parentTop + scroll;
+    var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;
+    this.indicator.style.cssText = 'top: ' + top + 'px; height: ' + (bottom - top) + 'px';
+  };
+  Rail.prototype.scroll = function () {
+    if (this.anchorNavTarget || !wide.matches) return;
+    var vis = this.nav.querySelectorAll('a.visible');
+    if (!vis.length) return;
+    var first = vis[0], last = vis[vis.length - 1], h = this.nav.clientHeight;
+    var top = (last.getBoundingClientRect().bottom - first.getBoundingClientRect().top < 0.9 * h) ? first.offsetTop - 32 : last.offsetTop - h * 0.8;
+    this.nav.scrollTo({ top: top, left: 0, behavior: 'smooth' });
+  };
+  Rail.prototype.onClick = function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a) this.anchorNavTarget = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+  };
+  var rails = Array.prototype.slice.call(document.querySelectorAll('.rd-toc')).map(function (nav) { return new Rail(nav); });
+  function openForWide() {
+    if (wide.matches) document.querySelectorAll('.rd-toc details').forEach(function (d) { d.open = true; });
+  }
+  function refresh() { openForWide(); rails.forEach(function (r) { r.update(); }); }
+  wide.addEventListener('change', refresh);
+  window.addEventListener('resize', refresh, { passive: true });
+  // A tab change flips [hidden] on the panels: re-run the rail of the panel that appears.
+  var mo = new MutationObserver(function (muts) {
+    muts.forEach(function (m) {
+      rails.forEach(function (r) { if (r.nav.parentElement === m.target) r.update(); });
+    });
+  });
+  document.querySelectorAll('.rd-tabpanel').forEach(function (p) { mo.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+  openForWide();
+})();
+
+</script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
