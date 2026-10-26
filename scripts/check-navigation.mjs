@@ -13,18 +13,18 @@ const VIEWPORTS = [
 	{ width: 1440, height: 900 },
 	{ width: 375, height: 800 },
 ];
-const SITE = ["/", "/archive/", "/about/", "/research/", "/experiments/", "/posts/ai-boom-trajectories/"];
+const SITE = ["/", "/archive/", "/about/", "/research/", "/playground/", "/posts/ai-boom-trajectories/"];
 // Standalone pages that a list page links to: public/<section>/<slug>/index.html with a Live (or Coming soon-free) entry.
 // Found from the data files, so a new report is covered without editing this script.
-const STANDALONE = ["research", "experiments"].flatMap((section) => {
+const STANDALONE = ["research", "playground"].flatMap((section) => {
 	const entries = JSON.parse(readFileSync(path.resolve("src/data", `${section}.json`), "utf8")).items;
 	return entries
 		.filter((e) => !["draft", "coming soon"].includes(e.status.toLowerCase()))
 		.map((e) => e.href)
 		.filter((href) => existsSync(path.resolve("public", href.replace(/^\/|\/$/g, ""), "index.html")));
 });
-const LIST_OF = (page) => (page.startsWith("/research/") ? "/research/" : "/experiments/");
-const NAV = ["/", "/archive/", "/about/", "/research/", "/experiments/"];
+const LIST_OF = (page) => (page.startsWith("/research/") ? "/research/" : "/playground/");
+const NAV = ["/", "/archive/", "/about/", "/research/", "/playground/"];
 const STEPS = 14;
 const IGNORE = /giscus|Failed to load resource|pagefind\.js/; // third-party embeds and the Pagefind search import (aborted on leave)
 const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".xml": "application/xml", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
@@ -62,6 +62,9 @@ const FINGERPRINT = () => {
 		path: location.pathname,
 		title: document.title,
 		h1: q("h1")?.textContent.trim() ?? null,
+		// Breadcrumb trail(s) and their JSON-LD: after a Swup navigation they must be the new page's, exactly as on a fresh load.
+		crumbs: [...document.querySelectorAll('nav[aria-label="Breadcrumb"]')].map((n) => n.innerText.replace(/\s+/g, " ").trim()).join(" | "),
+		crumbLd: [...document.querySelectorAll('script[type="application/ld+json"]')].filter((s) => s.textContent.includes('"BreadcrumbList"')).map((s) => JSON.parse(s.textContent).itemListElement.map((i) => i.item).join(" ")).join(" | "),
 		navHosts: document.querySelectorAll("div[data-site-navbar]").length,
 		navWrapper: document.querySelectorAll("#navbar-wrapper").length,
 		licHosts: document.querySelectorAll("div[data-site-license]").length,
@@ -94,6 +97,40 @@ const diff = (a, b, ignore = []) =>
 		.filter((k) => !ignore.includes(k) && JSON.stringify(a[k]) !== JSON.stringify(b[k]))
 		.map((k) => `${k}: ${JSON.stringify(a[k])} (sequence) != ${JSON.stringify(b[k])} (fresh)`);
 
+// A navigated page must equal a fresh load of the same URL, so every variable-height element has to be
+// in a settled state on both before fingerprinting. Two things are not: the navbar hide/show (a CSS
+// transition fired by scroll — after a Back/Forward the browser restores scroll, often animated, which
+// re-fires the scroll handler and starts the transition late, so a fixed-timeout read can catch it
+// mid-transition), and the listen player on post pages (it settles from a loading skeleton to the real
+// bar, changing the main content height). Wait until the navbar's opacity/position, the scroll, and the
+// listen player's settled state and height are all stable across two consecutive frames. A real
+// mismatch stays stable on the wrong value and is still caught.
+async function settle(page) {
+	await page.waitForFunction(
+		() => {
+			const wrap = document.querySelector("#navbar-wrapper");
+			const bar = document.querySelector("div[data-site-navbar]");
+			const el = bar ?? wrap;
+			const r = el?.getBoundingClientRect();
+			const player = document.querySelector("listen-player");
+			const pr = player?.getBoundingClientRect();
+			const snap = [
+				wrap?.classList.contains("navbar-hidden") ?? false,
+				wrap ? getComputedStyle(wrap).opacity : null,
+				r ? Math.round(r.top) : null,
+				Math.round(scrollY),
+				player ? player.hasAttribute("data-settled") && !player.hasAttribute("hidden") : null,
+				pr ? Math.round(pr.height) : null,
+			];
+			const prev = window.__navSettle;
+			window.__navSettle = snap;
+			return JSON.stringify(prev) === JSON.stringify(snap);
+		},
+		null,
+		{ timeout: 8000, polling: 50 },
+	);
+}
+
 // Clicks the navbar link (the mobile menu is opened first). Content links are the fallback, for cards on a list page.
 async function clickLink(page, href) {
 	// Site navbar: the bar's links and its mobile menu panel. Standalone reports: the injected bar's links and its menu panel.
@@ -115,13 +152,13 @@ async function clickLink(page, href) {
 	return true;
 }
 
-// Owner report: Experiments and Research from other pages, Back/Forward chains, a standalone report, reloads, hash jumps.
+// Owner report: Playground and Research from other pages, Back/Forward chains, a standalone report, reloads, hash jumps.
 const RESEARCH = STANDALONE.filter((p) => p.startsWith("/research/"));
 const [FIRST_REPORT, LAST_REPORT] = [RESEARCH[0], RESEARCH[RESEARCH.length - 1]]; // both on /research/, reached from its list
 const SCRIPT = [
 	["goto", "/"], ["click", "/research/"], ["scroll", 900], ["click", FIRST_REPORT], ["scroll", 1200],
 	["back"], ["forward"], ["back"], ["click", "/archive/"], ["click", "/about/"], ["click", "/research/"],
-	["click", FIRST_REPORT], ["scroll", 1500], ["click", "/experiments/"], ["back"], ["back"], ["back"],
+	["click", FIRST_REPORT], ["scroll", 1500], ["click", "/playground/"], ["back"], ["back"], ["back"],
 	["reload"], ["scroll", 800], ["hash"], ["click", "/research/"], ["click", LAST_REPORT], ["back"], ["reload"],
 ];
 // Visit every standalone page from its list page, then Back, so none is only reached by a random goto.
@@ -219,6 +256,7 @@ async function runSequence(label, plan, vp, burst, strict) {
 			continue;
 		}
 		await page.waitForTimeout(900);
+		await settle(page);
 		const seq = await page.evaluate(FINGERPRINT).catch(async () => {
 			await page.waitForLoadState("load");
 			return page.evaluate(FINGERPRINT);
@@ -237,6 +275,7 @@ async function runSequence(label, plan, vp, burst, strict) {
 		await fp.waitForFunction((y) => document.documentElement.scrollHeight >= y + innerHeight, seq.scrollY, { timeout: 5000 }).catch(() => {});
 		await fp.evaluate((y) => window.scrollTo(0, y), seq.scrollY);
 		await fp.waitForTimeout(500);
+		await settle(fp);
 		const freshFp = await fp.evaluate(FINGERPRINT);
 		await fresh.close();
 		checks++;

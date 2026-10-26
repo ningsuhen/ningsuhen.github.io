@@ -6,11 +6,12 @@ interface Props {
 	class?: string;
 }
 const className = Astro.props.class;
-const link = "underline underline-offset-2 hover:text-[var(--btn-content)] focus-visible:outline-2 focus-visible:outline-[var(--btn-content)] focus-visible:outline-offset-2 rounded-sm";
+// inline-flex + 24px min-height/width (px, not rem: the root font is 14px) keeps each small link a >= 24px tap target on phones.
+const link = "inline-flex items-center min-h-[24px] min-w-[24px] underline underline-offset-2 hover:text-[var(--btn-content)] focus-visible:outline-2 focus-visible:outline-[var(--btn-content)] focus-visible:outline-offset-2 rounded-sm";
 ---
 <aside class:list={["card-base px-4 py-3 text-[12px] leading-normal text-black/65 dark:text-white/65 border border-black/10 dark:border-white/10", className]} aria-label="Copyright and license">
 	<p class="font-semibold text-black/80 dark:text-white/85">© {new Date().getFullYear()} Ning Waikhom. All rights reserved.</p>
-	<p class="mt-1">Research, experiments and ideas on this site may not be reused, copied, republished or used to train AI models without my written permission.</p>
+	<p class="mt-1">Research, playground demos and ideas on this site may not be reused, copied, republished or used to train AI models without my written permission.</p>
 	<p class="mt-1">Short quotes with attribution and a link are fine.</p>
 	<p class="mt-1">
 		<a href={url("/license/")} class:list={["inline-flex items-center gap-1 font-medium text-black/80 dark:text-white/85", link]}><Icon name="lucide:scale" aria-hidden="true" class="w-3.5 h-3.5" />License</a>

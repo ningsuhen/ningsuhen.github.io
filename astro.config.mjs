@@ -1,6 +1,4 @@
 import sitemap from "@astrojs/sitemap";
-import { readdirSync } from "node:fs";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
@@ -13,6 +11,7 @@ import { unified } from "@astrojs/markdown-remark";
 import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components"; /* Render the custom directive content */
+import { h } from "hastscript";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive"; /* Handle directives */
@@ -26,20 +25,18 @@ import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import standaloneHeader from "./src/integrations/standalone-header.ts";
-import { draftHrefs, isDraftPage } from "./scripts/lib/draft-pages.mjs";
+import { standalonePages } from "./scripts/lib/standalone-pages.mjs";
+import { remarkOwnerMarkers } from "./src/plugins/owner-markers.mjs";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
+import { remarkSourceMap } from "./src/plugins/remark-source-map.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 
 const SITE = "https://ningsuhen.github.io/";
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 
 /** Standalone pages in public/ (reports, apps) are not Astro routes, so the sitemap needs them listed by hand. */
-function standaloneSitemapPages(dir = fileURLToPath(new URL("./public/", import.meta.url)), prefix = "", drafts = draftHrefs()) {
-	return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-		if (e.isDirectory()) return standaloneSitemapPages(path.join(dir, e.name), `${prefix}${e.name}/`, drafts);
-		if (!e.name.endsWith(".html") || e.name === "template.html" || isDraftPage(prefix + e.name, drafts)) return [];
-		return [new URL(e.name === "index.html" ? prefix : prefix + e.name, SITE).href];
-	});
+function standaloneSitemapPages() {
+	return standalonePages({ exclude: ["template.html"] }).map((rel) => new URL(`/${rel.replace(/index\.html$/, "")}`, SITE).href);
 }
 
 // https://astro.build/config
@@ -59,6 +56,10 @@ export default defineConfig({
 	redirects: {
 		"/ai-economy/": "/research/ai-economy/",
 		"/brev-tree-benchmark/": "/research/brev-tree-benchmark/",
+		// Experiments was renamed to Playground. ecosimulation is a Draft (not shipped), so it lands on the list until it goes Live.
+		"/experiments/": "/playground/",
+		"/experiments/brev-tree-traversal/": "/playground/brev-tree-traversal/",
+		"/experiments/ecosimulation/": "/playground/",
 		"/web-development/2015/03/31/project-6/": "/",
 		"/mobile-app-development/2014/12/10/project-5/": "/",
 		"/web-development/mobile-app-development/2014/05/09/project-4/": "/",
@@ -142,6 +143,7 @@ export default defineConfig({
 		// Astro 7 default processor is Satteri; keep the unified (remark/rehype) pipeline the site was built on.
 		processor: unified({
 		remarkPlugins: [
+			remarkOwnerMarkers, // first: hidden owner markers never reach the HTML, excerpt or reading time
 			remarkMath,
 			remarkReadingTime,
 			remarkExcerpt,
@@ -149,6 +151,7 @@ export default defineConfig({
 			remarkDirective,
 			remarkSectionize,
 			parseDirectiveNode,
+			[remarkSourceMap, { root: ROOT }],
 		],
 		rehypePlugins: [
 			rehypeKatex,
@@ -163,6 +166,8 @@ export default defineConfig({
 						important: (x, y) => AdmonitionComponent(x, y, "important"),
 						caution: (x, y) => AdmonitionComponent(x, y, "caution"),
 						warning: (x, y) => AdmonitionComponent(x, y, "warning"),
+						// :say[term]{as="spoken"}: the Listen player says "spoken"; readers see only "term".
+						say: (props, children) => h("span", props?.as ? { "data-say": props.as } : {}, children),
 					},
 				},
 			],

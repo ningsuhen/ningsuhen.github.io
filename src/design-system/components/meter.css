@@ -1,0 +1,19 @@
+/* rd-meter: a progress bar — a track with a fill. The fill width is set inline (style="width: 60%")
+   because it is data-driven; the colours come from the design system. The track is the button
+   ground, the fill is the accent. Ships in rd.css only (the research.css compatibility alias stays
+   the frozen core). */
+
+.rd-meter {
+	display: block;
+	width: 100%;
+	height: 0.5rem;
+	border-radius: 999px;
+	background: var(--rd-btn-bg);
+	overflow: hidden;
+}
+.rd-meter__fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--rd-accent);
+}

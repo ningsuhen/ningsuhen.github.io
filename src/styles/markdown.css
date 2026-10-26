@@ -34,6 +34,14 @@
         }
     }
 
+    /* Citation links ([n] → #ref-…) are tiny inline anchors; give them a 24px tap target on phones. */
+    a[href^="#ref"] {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        min-width: 24px;
+    }
+
     code {
         @apply bg-[var(--inline-code-bg)] text-[var(--inline-code-color)] px-1 py-0.5 rounded-md overflow-hidden;
 

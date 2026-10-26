@@ -1,0 +1,18 @@
+---
+// Standalone report pages rendered by the Astro shell (option E). Coexists with the list page
+// (research.astro, which owns /research/). With zero fragments migrated, getStaticPaths() is empty and
+// this route generates no output — the old public/research/<slug>/index.html pages are untouched.
+//
+// The kind is a literal local to this file (not a shared const, which Astro would hoist out of
+// getStaticPaths's scope): renaming a kind is a folder move of this file plus updating these literals.
+// The shell reads the kind from the fragment's meta (validated to equal the folder kind).
+import StandaloneShell from "../../layouts/StandaloneShell.astro";
+import { load, slugs } from "../../standalone/loader";
+
+export function getStaticPaths() {
+	return slugs("research").map((slug) => ({ params: { slug } }));
+}
+const { slug } = Astro.params;
+const fragment = load("research", slug!);
+---
+<StandaloneShell kind={fragment.meta.kind} slug={slug!} segment="research" fragment={fragment} />

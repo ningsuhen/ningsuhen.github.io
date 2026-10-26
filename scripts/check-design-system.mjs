@@ -1,4 +1,4 @@
-// Design-system conformance for standalone pages (public/research/**, public/experiments/**, public/ideas/**), measured in a real browser
+// Design-system conformance for standalone pages (public/research/**, public/playground/**, public/ideas/**), measured in a real browser
 // over the built dist. Every page is held to the research design system (public/design-system/index.html, "Conformance")
 // and to the main site's post page, which is rendered in the same run at 1280/1440/1920, light and dark.
 // Run after `pnpm build`:  pnpm check:design-system  (CHROME_PATH, or `pnpm exec playwright-core install chromium`).
@@ -11,7 +11,8 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
-import { draftHrefs, isDraftPage } from "./lib/draft-pages.mjs";
+import { checkFresh as spriteFresh } from "./build-lucide-sprite.mjs";
+import { standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -31,6 +32,7 @@ const RULES = {
 	"title-stamp": "title and visible h1 end with · created YYYY-MM-DD · updated YYYY-MM-DD",
 	"css-canonical": "research.css is linked, or inlined verbatim (whitespace-insensitive)",
 	"bundle-fresh": "the shipped design-system bundle (rd.css, research.css alias, manifest.json) equals a fresh build of src/design-system/",
+	"sprite-fresh": "the shipped Lucide sprite (lucide-sprite.svg and each page's inlined block) equals a fresh build of the pages' icon references",
 	"bundle-linked": "the page links the design-system bundle instead of inlining a frozen copy",
 	"body-class": '<body class="rd-body">',
 	"container-class": "main content uses rd-container, rd-container--wide or rd-tabbed",
@@ -49,14 +51,16 @@ const RULES = {
 	overflow: "no horizontal page overflow at 1440 and 375",
 	"tap-target": "interactive controls are at least 24px at 375",
 	"injected-once": "the site navbar and the license card are each present exactly once",
+	breadcrumb: "the injected breadcrumb band is present exactly once and no breadcrumb is hand-written outside it (trail, links, geometry and band opacity: check:standalone)",
 	"forbidden-strings": "no internal hostnames, /Users/ paths or IP addresses in the source",
-	axe: "no axe WCAG 2.0/2.1 A and AA violations at 1440, light and dark",
+	axe: "no axe WCAG 2.0/2.1 A and AA violations at 375 and 1440, light and dark, on every standalone page (research, playground, ideas and the design-system pages)",
 	"scrollbar-gutter": "navbar x does not move when a vertical scrollbar appears or disappears",
 	"tab-aria": "tablist/tab/tabpanel wiring: aria-controls, one aria-selected, rd-tabpanel",
 	"tab-keys": "ArrowRight moves to the next tab",
 	"tab-deeplink": "each tab sets its address (?tab= or a hash) that opens that tab on load",
 	"tab-history": "each tab change adds exactly one history entry; Back restores the previous tab",
 	"tab-rail": "every tab panel has the shared rd-toc",
+	"tab-width": "in every tab from 768px up, the panel, its tab body and their sections span the navbar card's edges; a nested section spans its parent",
 	"typography-scale": "h1/h2/h3/p/td font size, line height and weight match the template (compact)",
 	"nav-card": "navbar card position and size equal the main site's",
 	"nav-links": "navbar link positions equal the main site's",
@@ -73,17 +77,23 @@ const RULES = {
 	"rail-indicator": "active rail indicator has the same style as the main site's",
 	"rail-highlight": "every heading in view is highlighted in the rail, as on the main post",
 	"prose-type": "prose h2/h3/p/a/td size, line height, weight and colour equal the main post's",
+	"button": "every .rd-btn is a keyboard-operable <button> (or role=button), never a div/span",
+	"filter": "every .rd-filter is a keyboard-operable <button> (or role=button) with aria-pressed",
+	"field": "every .rd-input / .rd-select is associated with a label (for=, aria-label, aria-labelledby, or a wrapping <label>)",
+	"choice": "every .rd-choice wraps a native <input> (radio/checkbox), so it is keyboard-operable",
+	"stepper": "every .rd-stepper has a minus and a plus <button> and a value region",
+	"chat": "every .rd-chat__msg has a variant (--me or --them) and every .rd-chat__input input is labelled",
+	"quiz": "every .rd-quiz has a question and at least one option, and its feedback line carries a --good/--bad variant",
+	"meter": "every .rd-meter has a .rd-meter__fill and exposes its value to a screen reader (role=progressbar + aria-valuenow, or an aria-label)",
+	"fullscreen-toggle": "every data-rd=fullscreen container has a [data-rd-fullscreen-toggle] button with aria-pressed and is focusable (wheel-only-after-focus)",
 };
 
-function htmlPages(dir = "") {
-	return readdirSync(path.join(PUBLIC, dir), { withFileTypes: true }).flatMap((e) => {
-		const rel = path.join(dir, e.name);
-		if (e.isDirectory()) return htmlPages(rel);
-		return e.name.endsWith(".html") ? [rel] : [];
-	});
-}
-const drafts = draftHrefs();
-const pages = [...htmlPages("research"), ...htmlPages("experiments"), ...(existsSync(path.join(PUBLIC, "ideas")) ? htmlPages("ideas") : [])].filter((rel) => rel.split(path.sep).length === 3 && !isDraftPage(rel, drafts));
+const pages = standalonePages({ sections: SECTIONS, depth: 3 });
+// Accessibility (axe) runs on every standalone page — reports, playground, ideas and the design-system
+// pages — at 375 and 1440, light and dark. Both sets come from the shared page registry, so a new page is
+// covered without editing this file. template.html is a scaffold source (placeholder content, not a shipped
+// page), so it is excluded.
+const a11yPages = [...pages, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -143,6 +153,9 @@ const add = (page, rule, msg) => {
 // bundle-fresh (repo-level): the committed generated files must equal a fresh build of the sources.
 // A stale bundle means someone edited src/design-system/ without running `pnpm build:design-system`.
 for (const problem of (await checkFresh()).problems) failures.push(`bundle-fresh: ${problem}`);
+// sprite-fresh (repo-level): the committed Lucide sprite must equal a fresh build of the pages' icon
+// references. A stale sprite means a page added an icon reference without running `pnpm build`.
+for (const problem of (await spriteFresh()).problems) failures.push(`sprite-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
 	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
@@ -306,6 +319,108 @@ const probeStructure = (canon) => {
 		lightFooters: document.querySelectorAll("footer").length,
 		navCount: document.querySelectorAll("div[data-site-navbar]").length,
 		licCount: document.querySelectorAll("div[data-site-license]").length,
+		crumbBands: document.querySelectorAll("[data-site-breadcrumb]").length,
+		strayCrumbs: [...document.querySelectorAll('.rd-breadcrumb, nav[aria-label="Breadcrumb"]')].filter((n) => !n.closest("[data-site-breadcrumb]")).length,
+		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
+		// A div/span styled as a button is not focusable and breaks keyboard use.
+		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+		})),
+		// Filters: every .rd-filter is a keyboard-operable toggle with an explicit aria-pressed state.
+		filters: [...document.querySelectorAll(".rd-filter")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+			pressed: el.hasAttribute("aria-pressed"),
+		})),
+		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
+		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
+		// screen readers and most users.
+		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
+			const id = el.id;
+			const labelledBy = el.getAttribute("aria-labelledby");
+			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
+			return {
+				labelled:
+					hasFor ||
+					!!el.getAttribute("aria-label") ||
+					!!labelledBy ||
+					!!el.closest("label"),
+			};
+		}),
+		// Choices: every .rd-choice wraps a native <input> (radio/checkbox). A div styled as a
+		// choice without a real input is not keyboard-operable and breaks screen readers.
+		choices: [...document.querySelectorAll(".rd-choice")].map((el) => ({
+			hasInput: !!el.querySelector("input[type=radio], input[type=checkbox]"),
+		})),
+		// Steppers: every .rd-stepper has a minus and a plus button (two keyboard-operable
+		// controls) and a value region. A stepper missing a button or its value is broken.
+		steppers: [...document.querySelectorAll(".rd-stepper")].map((el) => ({
+			buttons: el.querySelectorAll("button").length,
+			hasValue: !!el.querySelector(".rd-stepper__value"),
+		})),
+		// Chat: every message bubble carries a variant (--me / --them) so it is styled and
+		// aligned, and the input row's field is associated with a label.
+		chats: [...document.querySelectorAll(".rd-chat")].map((el) => ({
+			msgs: [...el.querySelectorAll(".rd-chat__msg")].map((m) => m.classList.contains("rd-chat__msg--me") || m.classList.contains("rd-chat__msg--them")),
+			inputLabelled: [...el.querySelectorAll(".rd-chat__input .rd-input")].every((i) => {
+				const id = i.id;
+				return (id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`)) || !!i.getAttribute("aria-label") || !!i.getAttribute("aria-labelledby") || !!i.closest("label");
+			}),
+		})),
+		// Quiz: every .rd-quiz has a question, at least one option, and a feedback line that
+		// carries a semantic variant (--good / --bad) so the result is announced in colour.
+		quizzes: [...document.querySelectorAll(".rd-quiz")].map((el) => ({
+			hasQuestion: !!el.querySelector(".rd-quiz__q"),
+			hasManyOptions: el.querySelectorAll(".rd-quiz__opts .rd-choice").length > 0,
+			feedbackVariant: [...el.querySelectorAll(".rd-quiz__feedback")].every((f) => f.classList.contains("rd-quiz__feedback--good") || f.classList.contains("rd-quiz__feedback--bad")),
+		})),
+		// Meter: every .rd-meter has a fill and exposes its value to a screen reader — either a
+		// progressbar role with aria-valuenow, or an aria-label. A bare bar with no fill or no
+		// accessible value is broken.
+		meters: [...document.querySelectorAll(".rd-meter")].map((el) => ({
+			hasFill: !!el.querySelector(".rd-meter__fill"),
+			accessible: el.getAttribute("role") === "progressbar" ? el.hasAttribute("aria-valuenow") : !!el.getAttribute("aria-label"),
+		})),
+		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
+		// A div/span styled as a button is not focusable and breaks keyboard use.
+		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+		})),
+		// Filters: every .rd-filter is a keyboard-operable toggle with an explicit aria-pressed state.
+		filters: [...document.querySelectorAll(".rd-filter")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+			pressed: el.hasAttribute("aria-pressed"),
+		})),
+		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
+		// A div/span styled as a button is not focusable and breaks keyboard use.
+		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
+			operable: el.matches("button") || el.getAttribute("role") === "button",
+		})),
+		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
+		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
+		// screen readers and most users.
+		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
+			const id = el.id;
+			const labelledBy = el.getAttribute("aria-labelledby");
+			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
+			return {
+				labelled:
+					hasFor ||
+					!!el.getAttribute("aria-label") ||
+					!!labelledBy ||
+					!!el.closest("label"),
+			};
+		}),
+		// Fullscreen: each data-rd=fullscreen container must carry an operable, accessible toggle
+		// (a [data-rd-fullscreen-toggle] button with aria-pressed). The container's focusability
+		// (tabindex=-1, for wheel-only-after-focus) is added by rd.js at mount, so it is not checked here.
+		fullscreen: [...document.querySelectorAll('[data-rd="fullscreen"]')].map((el) => {
+			const t = el.querySelector("[data-rd-fullscreen-toggle]");
+			return {
+				hasToggle: !!t,
+				isButton: t?.matches("button") || t?.getAttribute("role") === "button",
+				ariaPressed: t?.hasAttribute("aria-pressed"),
+			};
+		}),
 		tpl: { h1: tpl("h1"), h2: tpl("h2"), h3: tpl("h3"), p: tpl("p"), td: tpl("td") },
 	};
 };
@@ -562,13 +677,78 @@ function compareAt(page, w, t, c, r) {
 	if (c.railPresent && r.railPresent && c.hl === null) bad("rail-highlight", "no heading of the contents rail is ever in view, so the highlight could not be checked");
 }
 
+// Tab content edges (tab-width): every tab panel's blocks against the navbar card. Top level (the panel, .rd-tab__body
+// and their direct section children) must sit on the card's edges; a section nested in a stacking parent must span the
+// parent's content box (catches a max-width cap like 72ch on a card). Below 768px the card is full-bleed and the content
+// keeps a gutter, so only 768px and up are measured.
+const TAB_WIDTHS = [1440, 1280, 1024, 768];
+const probeTabEdges = () => {
+	const nav = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
+	const panel = [...document.querySelectorAll(".rd-tabpanel")].find((p) => p.getBoundingClientRect().width > 0);
+	if (!nav || !panel) return { issues: [nav ? "no visible .rd-tabpanel" : "navbar card not found"] };
+	const SEC = "section, .section, .rd-tabsec, .rd-tab__body";
+	const shown = (el) => {
+		const s = getComputedStyle(el);
+		return el.getBoundingClientRect().width > 0 && s.position !== "fixed" && s.position !== "absolute";
+	};
+	const stacking = (el) => {
+		const s = getComputedStyle(el);
+		return s.display === "block" || (s.display.includes("grid") && s.gridTemplateColumns.trim().split(/\s+/).length === 1) || (s.display.includes("flex") && s.flexDirection.startsWith("column"));
+	};
+	const name = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/).join(".")}` : ""}`;
+	const r1 = (v) => Math.round(v * 10) / 10;
+	const issues = [];
+	const top = [panel, ...[...panel.children].filter((k) => k.matches(SEC))];
+	for (const b of panel.querySelectorAll(":scope > .rd-tab__body")) top.push(...[...b.children].filter((k) => k.matches(SEC)));
+	for (const el of top.filter(shown)) {
+		const b = el.getBoundingClientRect();
+		if (Math.abs(b.left - nav.left) > 1 || Math.abs(b.right - nav.right) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, navbar card ${r1(nav.left)}..${r1(nav.right)}`);
+	}
+	for (const el of [...panel.querySelectorAll(SEC)].filter((e) => !top.includes(e) && !e.closest(".rd-toc") && shown(e))) {
+		const par = el.parentElement;
+		if (!stacking(par)) continue;
+		const ps = getComputedStyle(par), pb = par.getBoundingClientRect(), b = el.getBoundingClientRect();
+		const l = pb.left + parseFloat(ps.borderLeftWidth) + parseFloat(ps.paddingLeft);
+		const r = pb.right - parseFloat(ps.borderRightWidth) - parseFloat(ps.paddingRight);
+		if (Math.abs(b.left - l) > 1 || Math.abs(b.right - r) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, its parent ${name(par)} ${r1(l)}..${r1(r)}`);
+	}
+	return { issues };
+};
+async function tabWidthChecks(page, ok) {
+	if (ok.has("tab-width")) return;
+	for (const [w, t] of [...TAB_WIDTHS.map((x) => [x, "light"]), [1440, "dark"]]) {
+		const { ctx } = await newCtx({ width: w, height: DESKTOP_H }, t);
+		const p = await open(ctx, page);
+		const tabs = p.locator("[role=tablist] [role=tab]");
+		const names = await tabs.allTextContents();
+		for (let i = 0; i < names.length; i++) {
+			await tabs.nth(i).click();
+			await p.waitForLoadState("load");
+			await p.waitForTimeout(100);
+			for (const m of (await p.evaluate(probeTabEdges)).issues) add(page, "tab-width", `@${w} ${t} [${names[i].trim()}]: ${m}`);
+		}
+		await ctx.close();
+	}
+}
+
 // ---- Per page -------------------------------------------------------------------------------------------------------------
 async function tabChecks(page, ok) {
 	const { ctx, external } = await newCtx({ width: 1440, height: DESKTOP_H }, "light");
 	const p = await open(ctx, page);
 	const tabs = await p.$$("[role=tablist] [role=tab]");
 	if (tabs.length) {
-		const selected = () => p.$eval("[role=tablist] [role=tab][aria-selected=true]", (el) => el.textContent.trim());
+		// Wait for a selected tab before reading it: the tab is selected pre-paint (statically, and by
+		// rd.js synchronously), but a bare $eval throws on the instant a navigation re-sync has not
+		// settled. Bounded wait + a clear finding, not a crash.
+		const selected = async (what) => {
+			try {
+				await p.waitForSelector('[role=tablist] [role=tab][aria-selected="true"]', { timeout: 3000 });
+				return await p.$eval('[role=tablist] [role=tab][aria-selected="true"]', (el) => el.textContent.trim());
+			} catch {
+				if (!ok.has("tab-aria")) add(page, "tab-aria", `no tab is selected ${what} (bounded 3s wait)`);
+				return null;
+			}
+		};
 		const aria = await p.evaluate(() => {
 			const tabsEl = [...document.querySelectorAll("[role=tablist] [role=tab]")];
 			const issues = [];
@@ -592,7 +772,7 @@ async function tabChecks(page, ok) {
 		// History: click a tab that is not selected: one entry; Back restores the previous tab.
 		const flags = await p.$$eval("[role=tablist] [role=tab]", (els) => els.map((e) => e.getAttribute("aria-selected") === "true"));
 		const k = flags.findIndex((f) => !f);
-		const before = await selected();
+		const before = await selected("after load");
 		const h0 = await p.evaluate(() => history.length);
 		await tabs[k].click();
 		await p.waitForTimeout(150);
@@ -602,7 +782,7 @@ async function tabChecks(page, ok) {
 		if (!/[?&]tab=|#./.test(hash) && !ok.has("tab-deeplink")) add(page, "tab-deeplink", "tab click sets neither ?tab= nor a hash");
 		await p.goBack();
 		await p.waitForTimeout(150);
-		const back = await selected();
+		const back = await selected("after Back");
 		if (back !== before && !ok.has("tab-history")) add(page, "tab-history", `Back did not restore the previous tab ("${back}", expected "${before}")`);
 		if (hash && !ok.has("tab-deeplink")) {
 			const d = await newCtx({ width: 1440, height: DESKTOP_H }, "light");
@@ -620,7 +800,8 @@ async function tabChecks(page, ok) {
 await Promise.all(pages.map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page);
-	// Each width x theme: chrome against the live reference. At 1440 also the structure, typography, axe.
+	// Each width x theme: chrome against the live reference. At 1440 also the structure and typography. (axe runs
+	// separately, on every standalone page, at 375 and 1440 — see the accessibility pass below.)
 	for (const w of WIDTHS) for (const t of THEMES) {
 		const { ctx, external, errors } = await newCtx({ width: w, height: DESKTOP_H }, t);
 		const p = await open(ctx, page);
@@ -655,6 +836,25 @@ await Promise.all(pages.map(async (rel) => {
 				[errors.length > 0, "console-errors", errors.slice(0, 2).join(" | ")],
 				[s.navCount !== 1, "injected-once", `site navbar present ${s.navCount} time(s)`],
 				[s.licCount !== 1, "injected-once", `license card present ${s.licCount} time(s)`],
+				[s.crumbBands !== 1, "breadcrumb", `breadcrumb band present ${s.crumbBands} time(s)`],
+				[s.strayCrumbs > 0, "breadcrumb", `${s.strayCrumbs} hand-written breadcrumb(s) outside the injected band`],
+				[s.btns.some((b) => !b.operable), "button", "a .rd-btn is not a keyboard-operable <button> (or role=button)"],
+				[s.filters.some((f) => !f.operable), "filter", "a .rd-filter is not a keyboard-operable <button> (or role=button)"],
+				[s.filters.some((f) => f.operable && !f.pressed), "filter", "a .rd-filter lacks aria-pressed"],
+				[s.fields.some((f) => !f.labelled), "field", "a .rd-input / .rd-select has no associated label (for=, aria-label, aria-labelledby, or a wrapping <label>)"],
+				[s.choices.some((c) => !c.hasInput), "choice", "a .rd-choice does not wrap a native <input> (radio/checkbox)"],
+				[s.steppers.some((s) => s.buttons < 2), "stepper", "a .rd-stepper has fewer than two <button> controls (minus and plus)"],
+				[s.steppers.some((s) => !s.hasValue), "stepper", "a .rd-stepper has no .rd-stepper__value region"],
+				[s.chats.some((c) => c.msgs.some((v) => !v)), "chat", "a .rd-chat__msg has no variant (must be --me or --them)"],
+				[s.chats.some((c) => !c.inputLabelled), "chat", "a .rd-chat__input input has no associated label"],
+				[s.quizzes.some((q) => !q.hasQuestion), "quiz", "a .rd-quiz has no .rd-quiz__q question"],
+				[s.quizzes.some((q) => !q.hasManyOptions), "quiz", "a .rd-quiz has no options"],
+				[s.quizzes.some((q) => !q.feedbackVariant), "quiz", "a .rd-quiz__feedback line has no --good/--bad variant"],
+				[s.meters.some((m) => !m.hasFill), "meter", "a .rd-meter has no .rd-meter__fill"],
+				[s.meters.some((m) => !m.accessible), "meter", "a .rd-meter exposes no value to a screen reader (role=progressbar + aria-valuenow, or aria-label)"],
+				[s.fullscreen.some((f) => !f.hasToggle), "fullscreen-toggle", `a data-rd=fullscreen container has no [data-rd-fullscreen-toggle]`],
+				[s.fullscreen.some((f) => f.hasToggle && !f.isButton), "fullscreen-toggle", "a fullscreen toggle is not a button (use <button> or role=button)"],
+				[s.fullscreen.some((f) => f.hasToggle && !f.ariaPressed), "fullscreen-toggle", "a fullscreen toggle lacks aria-pressed"],
 			];
 			for (const [hit, rule, msg] of checks) if (hit && !ok.has(rule)) add(page, rule, msg);
 			if (!ok.has("typography-scale")) {
@@ -664,14 +864,6 @@ await Promise.all(pages.map(async (rel) => {
 						add(page, "typography-scale", `@1440 ${t}: ${k} ${b.fs}px/${b.lh}px ${b.fw}, template ${a.fs}px/${a.lh}px ${a.fw}`);
 					}
 				}
-			}
-			if (!ok.has("axe")) {
-				await p.addScriptTag({ path: path.resolve("node_modules/axe-core/axe.min.js") });
-				const v = await p.evaluate(async () => {
-					const r = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] }, resultTypes: ["violations"] });
-					return r.violations.map((x) => ({ id: x.id, impact: x.impact, n: x.nodes.length }));
-				});
-				for (const x of v) add(page, "axe", `@1440 ${t}: ${x.id} (${x.impact}) on ${x.n} node(s)`);
 			}
 		}
 		await ctx.close();
@@ -687,6 +879,29 @@ await Promise.all(pages.map(async (rel) => {
 		await ctx.close();
 	}
 	await tabChecks(page, ok);
+	await tabWidthChecks(page, ok);
+}));
+
+// ---- Accessibility: axe on every standalone page at 375 and 1440, light and dark ------------------------------------
+// The conformance loop above only reaches the report/experiment/idea pages and only ran axe at 1440. This pass
+// closes the two blind spots: it also runs axe at 375, and it covers the design-system guide page too. Pages are
+// discovered from the shared page registry (a11yPages), not a hardcoded list, so a new page is covered without editing this file.
+await Promise.all(a11yPages.map(async (rel) => {
+	const page = urlOf(rel);
+	const ok = allowedBy.get(page) ?? new Set();
+	for (const w of [375, 1440]) for (const t of THEMES) {
+		const { ctx } = await newCtx({ width: w, height: DESKTOP_H }, t);
+		const p = await open(ctx, page);
+		if (!ok.has("axe")) {
+			await p.addScriptTag({ path: path.resolve("node_modules/axe-core/axe.min.js") });
+			const v = await p.evaluate(async () => {
+				const r = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] }, resultTypes: ["violations"] });
+				return r.violations.map((x) => `${x.id} (${x.impact}) on ${x.nodes.length} node(s)`);
+			});
+			for (const x of v) add(page, "axe", `@${w} ${t}: ${x}`);
+		}
+		await ctx.close();
+	}
 }));
 await browser.close();
 server.close();

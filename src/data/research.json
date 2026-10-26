@@ -1,6 +1,20 @@
 {
   "items": [
     {
+      "title": "AI video for technical YouTube: options, quality and cost",
+      "summary": "A comparison of the current talking-head, slide, B-roll and voice tools for technical YouTube videos, with three pipelines and a cost model for a 10-minute video.",
+      "href": "/research/ai-video-for-technical-youtube/",
+      "post": "/posts/ai-video-for-technical-youtube/",
+      "started": "2026-10-25",
+      "updated": "2026-10-25",
+      "status": "Live",
+      "tags": [
+        "Research",
+        "AI",
+        "Video"
+      ]
+    },
+    {
       "title": "Brev Tree Benchmark",
       "summary": "Can a small model plus a tree or router match a 27B LLM on accuracy without losing speed? 77 and 196 intents (Banking77, CLINC150), a ledger of 153 hypotheses, and what survived: a three-stage chain at 93.3% accuracy and a 49 ms mean per query.",
       "href": "/research/brev-tree-benchmark/",

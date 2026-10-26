@@ -6,8 +6,10 @@ import { Icon } from "astro-icon/components";
 
 interface Props {
 	title: string;
+	/** The post's `pronounce:` front matter: term -> spoken form (src/scripts/tts/pronounce.ts). */
+	pronounce?: Record<string, string>;
 }
-const { title } = Astro.props;
+const { title, pronounce } = Astro.props;
 // Where ONNX Runtime Web is served from. Set PUBLIC_KOKORO_ORT_BASE at build time to point at a CDN instead.
 const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor/ort/");
 ---
@@ -22,7 +24,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	// A value set before this script runs wins (check:listen forces it to test the consent path); otherwise the switch decides.
 	if (window.__KOKORO_READY === undefined) window.__KOKORO_READY = KOKORO_ENABLED && typeof WebAssembly === "object" && typeof BigInt64Array === "function" && typeof DecompressionStream === "function";
 </script>
-<listen-player hidden data-target="#post-article" data-title={title} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase} data-kokoro-manifest={url("/tts/manifest.json")}>
+<listen-player hidden data-target="#post-article" data-title={title} data-pronounce={pronounce && Object.keys(pronounce).length ? JSON.stringify(pronounce) : undefined} data-kokoro-src={url("/tts/kokoro.js")} data-kokoro-ort={kokoroOrtBase} data-kokoro-manifest={url("/tts/manifest.json")}>
 	<!-- Shown (via data-loading) while the engine loads, at the bar's exact size, so the post never shifts down. -->
 	<div class="listen-skeleton" aria-hidden="true">
 		<span class="skeleton listen-skeleton-toggle"></span>
@@ -62,11 +64,12 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	</div>
 
 	<p class="listen-status" data-status aria-live="polite"></p>
+	<!-- Floats under the bar (absolute), so showing it never shifts the post. Playback continues while it shows. -->
 	<div class="listen-slow" data-slow hidden role="status">
-			<p>Neural voice is too slow on this device.</p>
-			<button type="button" class="listen-btn listen-primary" data-slow-browser>Switch to browser voice</button>
-			<button type="button" class="listen-btn listen-text" data-slow-wait>Keep waiting</button>
-		</div>
+		<p>The neural voice is slow on this device, so there may be gaps between sentences.</p>
+		<button type="button" class="listen-btn listen-primary" data-slow-browser>Switch to browser voice</button>
+		<button type="button" class="listen-btn listen-text" data-slow-keep>Keep neural voice</button>
+	</div>
 
 	<div id="listen-panel" class="listen-panel">
 		<label class="listen-field" data-voice-wrap>
@@ -91,6 +94,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		</p>
 		<div class="listen-download" data-download hidden>
 			<p class="listen-download-state" data-download-state></p>
+			<p class="listen-download-state" data-runtime-state></p>
 			<progress class="listen-download-bar" data-download-bar max="1" value="0" hidden></progress>
 			<p class="listen-download-actions">
 				<button type="button" class="listen-btn" data-download-cancel hidden>Cancel download</button>
@@ -341,14 +345,19 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 		opacity: 0.75;
 	}
 	.listen-slow {
+		position: absolute;
+		top: calc(100% + 0.375rem);
+		left: 0;
+		right: 0;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
 		align-items: center;
-		margin: 0.5rem 0 0;
 		padding: 0.5rem 0.75rem;
 		border: 1px solid var(--line-divider);
 		border-radius: 0.5rem;
+		background: var(--card-bg);
+		box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.12);
 	}
 	.listen-slow[hidden] {
 		display: none;

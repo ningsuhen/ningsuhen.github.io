@@ -79,31 +79,31 @@
 			"reason": "Headings and body use the page's own type scale, not the compact template scale in the design-system guide."
 		},
 		{
-			"page": "/experiments/brev-tree-traversal/",
+			"page": "/playground/brev-tree-traversal/",
 			"rule": "footer-box",
 			"owner": "site",
 			"reason": "License card is centred on the page (design-system container) while the main post column sits beside the sidebar. Align the container with the post column."
 		},
 		{
-			"page": "/experiments/brev-tree-traversal/",
+			"page": "/playground/brev-tree-traversal/",
 			"rule": "footer-gap",
 			"owner": "site",
 			"reason": "Gap above the license card differs from the main post's footer spacing. Decide one spacing for both."
 		},
 		{
-			"page": "/experiments/brev-tree-traversal/",
+			"page": "/playground/brev-tree-traversal/",
 			"rule": "footer-type",
 			"owner": "site",
 			"reason": "License card text is 15px and muted differently from the main site footer text (14px). One footer style for both."
 		},
 		{
-			"page": "/experiments/brev-tree-traversal/",
+			"page": "/playground/brev-tree-traversal/",
 			"rule": "prose-type",
 			"owner": "site",
 			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
 		},
 		{
-			"page": "/experiments/brev-tree-traversal/",
+			"page": "/playground/brev-tree-traversal/",
 			"rule": "rail-presence",
 			"owner": "site",
 			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."

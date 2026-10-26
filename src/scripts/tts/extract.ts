@@ -8,6 +8,7 @@
  *   images read only when their alt text says something, simple math read as a phrase, the rest "equation";
  * - never read: buttons, nav, share and licence UI, footnote and citation markers, anchors, icons, emoji.
  * Synthetic announcements (code, table) get a Range over their element so the highlight still lands.
+ * Pronunciation fixes (pronounce.ts) change only the spoken text, after the Ranges are fixed, so highlights hold.
  */
 import {
 	admonitionSpeech,
@@ -30,6 +31,7 @@ import {
 } from "./chunk";
 import type { SpeechUnit } from "./engine";
 import { normalizeForSpeech } from "./normalize";
+import { applyPronunciations, type Pronunciations } from "./pronounce";
 
 /** A speech unit plus the pause that follows it (see chunk.ts and pauses.ts). */
 export interface SentenceUnit extends SpeechUnit {
@@ -106,6 +108,12 @@ function gather(parent: Node, out: Piece[]): void {
 			continue;
 		}
 		if (!(child instanceof Element) || child.matches(SKIP)) continue;
+		// Hidden pronunciation (:say[term]{as="..."}): the spoken form replaces the text; the highlight still covers the term.
+		const say = child.getAttribute("data-say")?.trim();
+		if (say) {
+			out.push({ text: say, el: child });
+			continue;
+		}
 		// Nested blocks, tables and code are read as their own sentences.
 		if (child.matches(`${BLOCK}, table, ${CODE}`)) continue;
 		if (child.matches(".katex")) {
@@ -219,8 +227,13 @@ function blockPrefix(block: HTMLElement): string {
 	return "";
 }
 
-/** Builds the sentence list for one article root, in document order. */
-export function extractSentences(root: HTMLElement): Sentence[] {
+/** Builds the sentence list for one article root, in document order. `pronounce`: see pronounce.ts. */
+export function extractSentences(
+	root: HTMLElement,
+	pronounce: Pronunciations = {},
+): Sentence[] {
+	const speakable = (text: string): string =>
+		normalizeForSpeech(applyPronunciations(text, pronounce));
 	const lang =
 		root.closest("[lang]")?.getAttribute("lang") ??
 		document.documentElement.lang;
@@ -287,7 +300,7 @@ export function extractSentences(root: HTMLElement): Sentence[] {
 			if (i === 0 && prefix) raw = `${prefix}${raw.trimStart()}`;
 			// Every block's last sentence lands on a full stop, so headings and items end with falling intonation.
 			if (i === spans.length - 1) raw = withTerminalPunctuation(raw);
-			const normalised = normalizeForSpeech(raw);
+			const normalised = speakable(raw);
 			// A spoken prefix ("One.") or a display equation starts the sentence with a capital.
 			const speech =
 				(i === 0 && prefix) || kind === "math"
@@ -313,7 +326,7 @@ export function extractSentences(root: HTMLElement): Sentence[] {
 		const text =
 			draft.kind === "text" || draft.kind === "image" || draft.kind === "math"
 				? draft.text
-				: normalizeForSpeech(draft.text);
+				: speakable(draft.text);
 		const pieces = i === 0 ? splitFirstSentence(text) : splitSentence(text);
 		const units = withPauses(pieces, final).map((u) => ({
 			sentenceId: id,

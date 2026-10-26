@@ -1,0 +1,18 @@
+---
+// Standalone idea pages rendered by the Astro shell (option E). Coexists with the list page
+// (ideas.astro, which owns /ideas/). With zero fragments migrated, getStaticPaths() is empty and this
+// route generates no output — the old public/ideas/<slug>/index.html pages are untouched.
+//
+// The kind is a literal local to this file (not a shared const, which Astro would hoist out of
+// getStaticPaths's scope): renaming a kind is a folder move of this file plus updating these literals.
+// The shell reads the kind from the fragment's meta (validated to equal the folder kind).
+import StandaloneShell from "../../layouts/StandaloneShell.astro";
+import { load, slugs } from "../../standalone/loader";
+
+export function getStaticPaths() {
+	return slugs("idea").map((slug) => ({ params: { slug } }));
+}
+const { slug } = Astro.params;
+const fragment = load("idea", slug!);
+---
+<StandaloneShell kind={fragment.meta.kind} slug={slug!} segment="ideas" fragment={fragment} />

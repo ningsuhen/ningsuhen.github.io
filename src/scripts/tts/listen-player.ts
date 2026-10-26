@@ -11,8 +11,14 @@ import {
 	type TtsEngine,
 	type Voice,
 } from "./engine";
+import lexicon from "../../data/pronunciations.json";
 import { extractSentences, type Sentence } from "./extract";
-import { loadKokoroEngine } from "./kokoro-engine";
+import {
+	lexiconMap,
+	mergePronunciations,
+	type Pronunciations,
+} from "./pronounce";
+import { loadKokoroEngine, loadOrtRuntime, prepareOrtRuntime } from "./kokoro-engine";
 import {
 	type FileSpec,
 	type KokoroVariant,
@@ -34,7 +40,10 @@ type EngineId = "web-speech" | "kokoro";
 /** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
 type KokoroChoice = KokoroVariant | "web";
 
-/** Neural-voice speed guard. Past these the player pauses and offers the browser voice. */
+/** Words both engines mispronounce (src/data/pronunciations.json). */
+const GLOBAL_PRONUNCIATIONS = lexiconMap(lexicon.entries);
+
+/** Neural-voice speed guard. Past these the player offers the browser voice; playback never pauses for it. */
 const SLOW_FIRST_AUDIO_MS = 8000;
 /** Average generation time over the last chunks, divided by their audio length. Above 1 the voice falls behind. */
 const SLOW_RTF = 1;
@@ -230,7 +239,7 @@ class ListenPlayer extends HTMLElement {
 	private rate = 1;
 	private voice: string | null = null;
 	private runId = 0;
-	/** Set when the listener chooses to keep the neural voice after the too-slow notice. */
+	/** Set when the listener dismisses the slow notice and keeps the neural voice. */
 	private slowAcknowledged = false;
 	private downloadAbort: AbortController | null = null;
 	private abort: AbortController | null = null;
@@ -274,12 +283,23 @@ class ListenPlayer extends HTMLElement {
 		document.documentElement.style.scrollPaddingTop = "";
 	}
 
+	/** Global lexicon, then the post's `pronounce:` front matter (data-pronounce), which wins. */
+	private pronunciations(): Pronunciations {
+		let post: Pronunciations | null = null;
+		try {
+			post = JSON.parse(this.dataset.pronounce ?? "null");
+		} catch {
+			post = null;
+		}
+		return mergePronunciations(GLOBAL_PRONUNCIATIONS, post);
+	}
+
 	private async init(signal: AbortSignal): Promise<void> {
 		const root = document.querySelector<HTMLElement>(this.dataset.target ?? "");
 		const engineOffered =
 			webSpeechAvailable() || window.__KOKORO_READY === true;
 		if (!root || !engineOffered) return this.settle(false);
-		this.sentences = extractSentences(root);
+		this.sentences = extractSentences(root, this.pronunciations());
 		if (this.sentences.length === 0) return this.settle(false);
 
 		const prefs = readStorage<Prefs>(PREFS_KEY, {});
@@ -408,7 +428,8 @@ class ListenPlayer extends HTMLElement {
 		try {
 			let specs = await this.specsFor(variant);
 			// A stored, size-checked copy is used with no prompt and no network. Otherwise the listener agrees first.
-			if (!(await isCached(specs))) {
+			// Both the model and the ONNX Runtime binary must be stored; otherwise the listener agrees first.
+			if (!((await isCached(specs)) && (await this.runtimeCached()))) {
 				if (!askConsent) {
 					// Selected but not downloaded: nothing is fetched here. Play asks first.
 					this.activate(await this.createNeural(), "kokoro");
@@ -475,6 +496,8 @@ class ListenPlayer extends HTMLElement {
 		if (neuralInit) return neuralInit;
 		const run: Promise<void> = (async () => {
 			const engine = await this.createNeural();
+			// Reads the stored binary (no network after the first download) and gives it to ONNX Runtime before init.
+			await prepareOrtRuntime(this.ttsSrc());
 			const manifest = await this.manifest();
 			await engine.init({
 				variant,
@@ -493,6 +516,14 @@ class ListenPlayer extends HTMLElement {
 		);
 		neuralInit = run;
 		return run;
+	}
+
+	private ttsSrc(): string {
+		return new URL(this.dataset.kokoroSrc ?? "/tts/kokoro.js", location.href).href;
+	}
+
+	private async runtimeCached(): Promise<boolean> {
+		return (await loadOrtRuntime(this.ttsSrc())).ortRuntimeCached();
 	}
 
 	private manifest(): Promise<Manifest> {
@@ -518,15 +549,19 @@ class ListenPlayer extends HTMLElement {
 		this.renderDownload();
 		try {
 			await withStallGuard(
-				(touch) =>
-					downloadFiles(
+				async (touch) => {
+					// The runtime is fetched first (pinned host, checked), then the model files.
+					this.status("Downloading the neural voice runtime.");
+					await prepareOrtRuntime(this.ttsSrc(), () => touch(), controller.signal);
+					await downloadFiles(
 						specs,
 						(received, total) => {
 							touch();
 							this.setProgress(received / total);
 						},
 						controller.signal,
-					),
+					);
+				},
 				INIT_STALL_MS,
 				() => {
 					stalled = true;
@@ -562,6 +597,12 @@ class ListenPlayer extends HTMLElement {
 		const megabytes = totalMB(specs);
 		const downloading = this.downloadAbort !== null;
 		const stored = !downloading && (await isCached(specs));
+		const runtime = await this.runtimeCached();
+		const runtimeState = this.querySelector<HTMLElement>("[data-runtime-state]");
+		if (runtimeState)
+			runtimeState.textContent = runtime
+				? "Runtime (ONNX Runtime 1.27.0, 24 MB): stored in this browser."
+				: "Runtime (ONNX Runtime 1.27.0, 24 MB): not downloaded.";
 		const state = this.querySelector<HTMLElement>("[data-download-state]");
 		if (state)
 			state.textContent = downloading
@@ -594,6 +635,7 @@ class ListenPlayer extends HTMLElement {
 		void loading?.then((engine) => engine.dispose(), () => {});
 		neuralReady = false;
 		await removeDownload();
+		await (await loadOrtRuntime(this.ttsSrc())).removeOrtRuntime();
 		writeStorage(CONSENT_KEY, null);
 		this.renderDownload();
 	}
@@ -782,7 +824,6 @@ class ListenPlayer extends HTMLElement {
 			onSentence: (i) => {
 				if (id === this.runId) this.setIndex(i, true);
 			},
-			onBuffering: (waiting) => this.status(waiting ? "Buffering…" : ""),
 			onChunk: (durationS, ahead, first) => monitor.chunk(durationS, ahead < UNDERRUN_S && !first, first),
 		});
 		try {
@@ -1012,7 +1053,7 @@ class ListenPlayer extends HTMLElement {
 		on<HTMLButtonElement>("[data-download-cancel]", "click", () => this.downloadAbort?.abort());
 		on<HTMLButtonElement>("[data-download-remove]", "click", () => void this.removeNeural());
 		on<HTMLButtonElement>("[data-slow-browser]", "click", () => void this.leaveNeural());
-		on<HTMLButtonElement>("[data-slow-wait]", "click", () => this.keepWaiting());
+		on<HTMLButtonElement>("[data-slow-keep]", "click", () => this.keepNeural());
 		on<HTMLSelectElement>(
 			"[data-engine]",
 			"change",
@@ -1044,14 +1085,11 @@ class ListenPlayer extends HTMLElement {
 		this.setState("idle");
 	}
 
-	/** The neural voice fell behind: pause, remember it for this device, and offer the browser voice. */
+	/** The neural voice fell behind: remember it for this device and offer the browser voice. Audio keeps playing. */
 	private neuralTooSlow(runId: number): void {
 		if (runId !== this.runId || this.slowAcknowledged) return;
 		writeStorage(SLOW_KEY, true);
-		this.stopPlayback();
-		this.setState("paused");
 		this.need<HTMLElement>("[data-slow]").hidden = false;
-		this.status("");
 	}
 
 	/** Continues from the current sentence on the browser voice. */
@@ -1061,11 +1099,10 @@ class ListenPlayer extends HTMLElement {
 		this.run(this.index);
 	}
 
-	/** Keeps the neural voice for this sentence list and stops offering the switch. */
-	private keepWaiting(): void {
+	/** Keeps the neural voice and stops offering the switch. Playback is not touched. */
+	private keepNeural(): void {
 		this.need<HTMLElement>("[data-slow]").hidden = true;
 		this.slowAcknowledged = true;
-		this.run(this.index);
 	}
 
 	private async switchEngine(id: EngineId): Promise<void> {

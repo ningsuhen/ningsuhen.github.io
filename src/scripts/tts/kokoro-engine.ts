@@ -4,55 +4,8 @@
  */
 import type { TtsEngine } from "./engine";
 
-/** Counts ONNX Runtime session creations per page, for the check that one init makes one session. */
-interface Diagnostics {
-	sessionCreates: number;
-}
-
-interface OrtLike {
-	env: { logLevel?: string };
-	InferenceSession: { create: (...args: unknown[]) => Promise<unknown> };
-}
-
-declare global {
-	interface Window {
-		__kokoroDiagnostics?: Diagnostics;
-	}
-}
-
-/**
- * ONNX Runtime logs a full wasm stack for every routine "node not assigned to the preferred execution
- * provider" note. Its logLevel is set as soon as its script defines `ort` (the loader assigns it), so only
- * errors reach the console. Session creations are counted for diagnostics.
- */
-let ortTuned = false;
-function tuneOrt(): void {
-	if (ortTuned) return;
-	ortTuned = true;
-	const existing = Object.getOwnPropertyDescriptor(window, "ort");
-	if (existing && !existing.configurable) return;
-	const diagnostics: Diagnostics = (window.__kokoroDiagnostics ??= { sessionCreates: 0 });
-	// Until the real script runs, `window.ort` is an empty object: the loader reads `window.ort[INIT_SYMBOL]`
-	// and would throw on undefined (which surfaced as "reading 'then'" inside the glue).
-	let current: OrtLike | undefined;
-	Object.defineProperty(window, "ort", {
-		configurable: true,
-		get: () => current ?? {},
-		set: (value: OrtLike) => {
-			current = value;
-			value.env.logLevel = "error";
-			const create = value.InferenceSession.create.bind(value.InferenceSession);
-			value.InferenceSession.create = (...args: unknown[]) => {
-				diagnostics.sessionCreates += 1;
-				return create(...args);
-			};
-		},
-	});
-}
-
 /** Loads the neural engine module. Rejects if the module is missing or has no createEngine. */
 export async function loadKokoroEngine(src: string): Promise<TtsEngine> {
-	tuneOrt();
 	const mod: unknown = await import(/* @vite-ignore */ src);
 	if (
 		typeof mod !== "object" ||
@@ -63,4 +16,24 @@ export async function loadKokoroEngine(src: string): Promise<TtsEngine> {
 		throw new Error(`${src} does not export createEngine()`);
 	}
 	return await (mod.createEngine as () => TtsEngine | Promise<TtsEngine>)();
+}
+
+/** The shared ONNX Runtime loader (public/tts/ort-runtime.js), next to kokoro.js. */
+export async function loadOrtRuntime(src: string): Promise<OrtRuntime> {
+	return (await import(/* @vite-ignore */ new URL("ort-runtime.js", src).href)) as OrtRuntime;
+}
+
+/** Makes the verified ONNX Runtime binary available before the engine's init(). Rejects on integrity or host failure. */
+export async function prepareOrtRuntime(
+	src: string,
+	onProgress?: (fraction: number) => void,
+	signal?: AbortSignal,
+): Promise<void> {
+	await (await loadOrtRuntime(src)).ensureOrtRuntime({ onProgress, signal });
+}
+
+export interface OrtRuntime {
+	ensureOrtRuntime(opts?: { onProgress?: (fraction: number) => void; signal?: AbortSignal }): Promise<ArrayBuffer>;
+	ortRuntimeCached(): Promise<boolean>;
+	removeOrtRuntime(): Promise<void>;
 }

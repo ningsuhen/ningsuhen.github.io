@@ -55,6 +55,8 @@ function targetsOf(html) {
 	}
 	const refresh = META_REFRESH.exec(html);
 	if (refresh) out.push(refresh[1].trim());
+	// JSON-LD breadcrumb items (the breadcrumb band's BreadcrumbList) are not links, but they name pages: they must resolve too.
+	for (const m of html.matchAll(/"item":"(https:\/\/ningsuhen\.github\.io\/[^"]*)"/g)) out.push(m[1]);
 	return out;
 }
 

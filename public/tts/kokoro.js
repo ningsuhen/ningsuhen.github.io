@@ -162,7 +162,8 @@ class KokoroEngine {
 		]);
 		// ort-web waits forever on a runtime script that 404s; fail fast and say which.
 		const ortBase = new URL(opts.ortBase ?? ORT_BASE, location.href).href;
-		for (const f of ['ort.webgpu.min.js', 'ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']) {
+		// The wasm itself comes from ort-runtime.js (wasmBinary), not ortBase.
+		for (const f of ['ort.webgpu.min.js', 'ort-wasm-simd-threaded.asyncify.mjs']) {
 			const r = await fetch(ortBase + f, { method: 'HEAD', mode: 'cors', credentials: 'omit' });
 			if (!r.ok) throw new Error(`kokoro: ONNX Runtime file ${ortBase}${f} returned HTTP ${r.status}`);
 		}

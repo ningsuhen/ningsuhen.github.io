@@ -2,29 +2,29 @@
 /* ======================================================================
    Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
    ====================================================================== */
-/* Section bar (rd-expnav): the navbar-width frame, one gap (--rd-navbar-gap) under the injected navbar card. Its first
-   link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
-   container padding. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
-   --rd-navbar-h + --rd-navbar-gap (one gap under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
+/* Section bar (rd-expnav): the navbar-width frame, the breadcrumb band's height (--rd-crumb-h) under the injected navbar card. The
+   first link starts flush at the bar's left edge (no left inset); the right keeps a 16px gutter so a scrolled-to-end bar does not
+   butt against the card edge. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
+   --rd-navbar-h + --rd-crumb-h (the band's height under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
    link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 @media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
 .rd-expnav {
 	position: sticky;
-	top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap));
+	top: calc(var(--rd-navbar-h) + var(--rd-crumb-h));
 	z-index: 20;
 	box-sizing: border-box;
 	display: flex;
 	gap: 0.125rem;
 	width: 100%;
 	max-width: var(--rd-navbar-width);
-	margin: var(--rd-navbar-gap) auto 0;
-	padding: 0 var(--rd-space-4);
+	margin: 0 auto;
+	padding: 0 var(--rd-space-4) 0 0; /* flush left: the first tab starts at the bar's edge; the right keeps a 16px gutter */
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
 	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
 	min-height: var(--rd-expnav-h);
 	background: var(--rd-page-bg);
-	border-bottom: 1px solid var(--rd-line);
+	border-bottom: var(--rd-expnav-line) solid var(--rd-line);
 }
 .rd-expnav::-webkit-scrollbar { display: none; }
 .rd-expnav a {
@@ -49,8 +49,6 @@
 /* Edge fades: the scroll-spy sets .is-fade-start / .is-fade-end only while links are hidden on that side. The fades are
    sticky pseudo-elements with zero flow width, so the bar's own background stays opaque under them. */
 .rd-expnav::before, .rd-expnav::after { content: none; }
-/* The gap between the navbar card and the section bar is page-coloured, so scrolled content does not show through it. */
-.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
 .rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
 	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
 }
@@ -84,13 +82,18 @@
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem var(--rd-space-4) 4rem; }
+/* The content box IS the navbar card from 768px up (the card's own formula: min(100%, 75rem) - 2rem), so every tab's
+   sections, cards and tables span the card's edges, like the main post column. No inline padding there: a gutter inside
+   this box would inset the content 16px from the card. Below 768px the card is full-bleed and the content keeps a 16px gutter. */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: min(100% - 2rem, var(--rd-navbar-width)); margin: 0 auto; padding: 1.5rem 0 4rem; }
+@media (max-width: 767.98px) { .rd-tabbed { max-width: none; padding-inline: var(--rd-space-4); } }
 .rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
 .rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
-/* Below 1536px the rail is the disclosure above the content. It sticks under the section bar (like the main TOC), so it stays
+/* Below 1536px the rail is the disclosure above the content. It sticks flush under the section bar (navbar + band + bar,
+   no gap, so nothing scrolls through between them), so it stays
    in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
-.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-3)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-navbar-gap) - var(--rd-expnav-h) - var(--rd-space-4)); overflow-y: auto; background: var(--rd-page-bg); }
+.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-expnav-line)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-expnav-line)); overflow-y: auto; background: var(--rd-page-bg); }
 .rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
 .rd-toc summary .rd-icon { color: var(--rd-accent); }
@@ -119,7 +122,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
-.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
 .rd-prose .rd-section__head h2::before { content: none; }
 .rd-section__icon {
@@ -134,7 +137,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: var(--rd-accent);
 }
 .rd-section__icon .rd-icon { width: 1em; height: 1em; }
-.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 
 /* Hero: eyebrow, h1, lede, a row of status chips and meta. */
 .rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }

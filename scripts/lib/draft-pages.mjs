@@ -1,13 +1,13 @@
-// Draft standalone pages. A `Draft` entry in src/data/{research,experiments,ideas}.json is work in progress: its page
+// Draft standalone pages. A `Draft` entry in src/data/{research,playground,ideas}.json is work in progress: its page
 // source stays in public/ (check:leaks still scans it), but the build never ships it (the integration drops its folder
 // from dist/, and the sitemap skips it). The browser checks walk only the pages a Draft does not own. The dev server
 // still serves it, for the owner's own review.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const SECTIONS = ["research", "experiments", "ideas"];
+const SECTIONS = ["research", "playground", "ideas"];
 
-/** Hrefs ("/experiments/<slug>/") of every Draft entry in the three data files. */
+/** Hrefs ("/playground/<slug>/") of every Draft entry in the three data files. */
 export function draftHrefs(dataDir = path.resolve("src/data")) {
 	const drafts = new Set();
 	for (const section of SECTIONS) {
@@ -17,7 +17,7 @@ export function draftHrefs(dataDir = path.resolve("src/data")) {
 	return drafts;
 }
 
-/** True when a public-relative page path (e.g. "experiments/<slug>/index.html") belongs to a Draft entry. */
+/** True when a public-relative page path (e.g. "playground/<slug>/index.html") belongs to a Draft entry. */
 export function isDraftPage(relPath, drafts) {
 	const href = `/${relPath.split(path.sep).join("/").replace(/index\.html$/, "")}`;
 	return drafts.has(href);

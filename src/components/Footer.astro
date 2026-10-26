@@ -6,7 +6,7 @@ import { profileConfig } from "../config";
 import { url } from "../utils/url-utils";
 
 interface Props {
-	// Pages that carry the license (reports, experiments, ideas, their posts) show the single license block instead of the copyright line.
+	// Pages that carry the license (reports, playground demos, ideas, their posts) show the single license block instead of the copyright line.
 	license?: boolean;
 }
 const { license = false } = Astro.props;
@@ -18,15 +18,15 @@ const currentYear = new Date().getFullYear();
 	<LicenseNote class="mb-12" />
 ) : (
 	<div class="transition border-dashed border-[oklch(85%_0.01_var(--hue))] dark:border-white/15 rounded-2xl mb-12 flex flex-col items-center justify-center px-6">
-		<!-- Small-print links are inline-flex with a 24px min-height so each keeps a >= 24px tap target on phones. -->
+		<!-- Small-print links are inline-flex with a 24px min-height (px, not rem: the root font is 14px, so min-h-6 would be 21px) so each keeps a >= 24px tap target on phones. -->
 		<!-- text-75 (not text-50): the footer sits on the page background, where 50% drops below 4.5:1. -->
 		<div class="transition text-75 text-sm text-center">
 			&copy; <span class="copyright-year">{currentYear}</span> {profileConfig.name}. All Rights Reserved. /
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href={url('rss.xml')}><Icon name="lucide:rss" class="inline-block align-[-0.15em] text-[0.9em] mr-1" />RSS</a> /
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href={url('sitemap-index.xml')}>Sitemap</a><br>
+			<a class="transition link inline-flex items-center min-h-[24px] text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href={url('rss.xml')}><Icon name="lucide:rss" class="inline-block align-[-0.15em] text-[0.9em] mr-1" />RSS</a> /
+			<a class="transition link inline-flex items-center min-h-[24px] text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href={url('sitemap-index.xml')}>Sitemap</a><br>
 			Powered by
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href="https://astro.build">Astro</a> &
-			<a class="transition link inline-flex items-center min-h-6 text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href="https://github.com/saicaca/fuwari">Fuwari</a>
+			<a class="transition link inline-flex items-center min-h-[24px] text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href="https://astro.build">Astro</a> &
+			<a class="transition link inline-flex items-center min-h-[24px] text-75 hover:text-[var(--btn-content)] dark:hover:text-[var(--btn-content)] font-medium" target="_blank" href="https://github.com/saicaca/fuwari">Fuwari</a>
 		</div>
 	</div>
 )}

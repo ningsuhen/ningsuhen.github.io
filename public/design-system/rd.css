@@ -14,7 +14,10 @@
 	--hue: 250;
 	/* Layout: the navbar's width (73rem = 1168px, standalone-header.ts) and the main-site post column, measured: 872px = 54.5rem at a 1440px viewport. */
 	--rd-navbar-width: 73rem;
-	--rd-navbar-gap: 1rem; /* space between the injected navbar card and the section bar under it (the main site's 16px rhythm) */
+	--rd-navbar-gap: 1rem; /* height of the empty breadcrumb band (pages with no trail): the main site's 16px rhythm under the navbar card */
+	--rd-crumb-h: 2.5rem; /* the breadcrumb band under the navbar card: opaque, holds the trail (standalone-header.ts) */
+	--rd-expnav-line: 1px; /* the section bar's bottom rule: part of its height, so sticky offsets under the bar add it */
+	--rd-crumb-fs: 0.8125rem; /* breadcrumb text: 13px at every density, the same size as the main site's trail */
 	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
@@ -453,31 +456,118 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 .rd-icon-grid .rd-icon { width: 1.5em; height: 1.5em; color: var(--rd-accent); }
 
 /* ======================================================================
+   Breadcrumb band (rd-crumb-band) and trail (rd-breadcrumb). standalone-header.ts injects the band at the top of
+   <body>. It is sticky directly under the navbar card (top: --rd-navbar-h) and --rd-crumb-h tall. Its opaque surface
+   (::before, --rd-page-bg) has the navbar card's frame: full width below 768px, the card's width and left edge from
+   768px up. Content scrolls under it and is hidden; the section bar sticks under it. A page with no trail (opted out,
+   or no title) keeps an empty band one gap tall (--rd-navbar-gap), so the gap under the navbar is never transparent.
+   The band box itself spans the body's content box, so the trail inside uses the same column rules as the page's own
+   container (default, --wide, --tabbed, or --page for a page-owned column) and lines up with its text.
+   Frames are centred and standalone pages have no layout scrollbar, so 100vw is the html width.
+   One line: a long title ends in an ellipsis. The separator is a CSS mask of Lucide chevron-right (no glyph).
+   Pages never write the band by hand.
+   ====================================================================== */
+.rd-crumb-band {
+	--rd-crumb-band-w: 100vw;
+	position: sticky;
+	top: var(--rd-navbar-h);
+	z-index: 999; /* above any page content (it must hide what scrolls under it), below the navbar (1000) */
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	height: var(--rd-crumb-h);
+	margin: 0;
+}
+@media (min-width: 768px) { .rd-crumb-band { --rd-crumb-band-w: min(100vw - 2rem, var(--rd-navbar-width)); } } /* the navbar card: calc(min(100%, 75em) - 2em) */
+.rd-crumb-band::before {
+	content: "";
+	position: absolute;
+	z-index: -1;
+	top: 0;
+	bottom: 0;
+	left: calc(50% - var(--rd-crumb-band-w) / 2);
+	width: var(--rd-crumb-band-w);
+	background: var(--rd-page-bg);
+}
+html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
+.rd-crumb-band .rd-breadcrumb {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	max-width: var(--rd-content-width); /* rd-container */
+	height: 100%;
+	margin: 0 auto;
+	padding: 0 var(--rd-space-4);
+	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
+	color: var(--rd-text-muted);
+}
+.rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: var(--rd-navbar-width); }
+@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-inline: 0; } } /* = .rd-tabbed: the trail starts on the content (navbar card) edge */
+.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); }
+.rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
+.rd-breadcrumb li:last-child { flex: 0 1 auto; }
+.rd-breadcrumb li + li::before {
+	content: "";
+	flex: none;
+	width: 1rem;
+	height: 1rem;
+	margin: 0 0.25rem;
+	background: var(--rd-text-faint);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rd-breadcrumb a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.5rem; /* 24px tap target at every width */
+	border-radius: var(--rd-radius-sm);
+	color: inherit;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color 0.15s ease-out;
+}
+.rd-breadcrumb a:hover { color: var(--rd-accent); }
+.rd-breadcrumb a:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: 1px; }
+.rd-breadcrumb [aria-current="page"] {
+	display: block;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.5rem;
+	color: var(--rd-text);
+}
+@media print { .rd-crumb-band { display: none; } }
+
+/* ======================================================================
    Report layout: hero, experiment navbar, section headers, brief, findings, runs, folds
    ====================================================================== */
-/* Section bar (rd-expnav): the navbar-width frame, one gap (--rd-navbar-gap) under the injected navbar card. Its first
-   link starts at the navbar's own left padding (the brand's box: 152px at 1440px wide), and at narrower widths at the
-   container padding. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
-   --rd-navbar-h + --rd-navbar-gap (one gap under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
+/* Section bar (rd-expnav): the navbar-width frame, the breadcrumb band's height (--rd-crumb-h) under the injected navbar card. The
+   first link starts flush at the bar's left edge (no left inset); the right keeps a 16px gutter so a scrolled-to-end bar does not
+   butt against the card edge. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
+   --rd-navbar-h + --rd-crumb-h (the band's height under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
    link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 @media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
 .rd-expnav {
 	position: sticky;
-	top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap));
+	top: calc(var(--rd-navbar-h) + var(--rd-crumb-h));
 	z-index: 20;
 	box-sizing: border-box;
 	display: flex;
 	gap: 0.125rem;
 	width: 100%;
 	max-width: var(--rd-navbar-width);
-	margin: var(--rd-navbar-gap) auto 0;
-	padding: 0 var(--rd-space-4);
+	margin: 0 auto;
+	padding: 0 var(--rd-space-4) 0 0; /* flush left: the first tab starts at the bar's edge; the right keeps a 16px gutter */
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
 	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
 	min-height: var(--rd-expnav-h);
 	background: var(--rd-page-bg);
-	border-bottom: 1px solid var(--rd-line);
+	border-bottom: var(--rd-expnav-line) solid var(--rd-line);
 }
 .rd-expnav::-webkit-scrollbar { display: none; }
 .rd-expnav a {
@@ -502,8 +592,6 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
 /* Edge fades: the scroll-spy sets .is-fade-start / .is-fade-end only while links are hidden on that side. The fades are
    sticky pseudo-elements with zero flow width, so the bar's own background stays opaque under them. */
 .rd-expnav::before, .rd-expnav::after { content: none; }
-/* The gap between the navbar card and the section bar is page-coloured, so scrolled content does not show through it. */
-.rd-expnav { box-shadow: 0 calc(-1 * var(--rd-navbar-gap)) 0 var(--rd-page-bg); }
 .rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
 	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
 }
@@ -537,13 +625,18 @@ sup.rd-fn { font-size: 0.875em; line-height: 0; vertical-align: super; }
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: 1.5rem var(--rd-space-4) 4rem; }
+/* The content box IS the navbar card from 768px up (the card's own formula: min(100%, 75rem) - 2rem), so every tab's
+   sections, cards and tables span the card's edges, like the main post column. No inline padding there: a gutter inside
+   this box would inset the content 16px from the card. Below 768px the card is full-bleed and the content keeps a 16px gutter. */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: min(100% - 2rem, var(--rd-navbar-width)); margin: 0 auto; padding: 1.5rem 0 4rem; }
+@media (max-width: 767.98px) { .rd-tabbed { max-width: none; padding-inline: var(--rd-space-4); } }
 .rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
 .rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
-/* Below 1536px the rail is the disclosure above the content. It sticks under the section bar (like the main TOC), so it stays
+/* Below 1536px the rail is the disclosure above the content. It sticks flush under the section bar (navbar + band + bar,
+   no gap, so nothing scrolls through between them), so it stays
    in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
-.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-3)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-navbar-gap) - var(--rd-expnav-h) - var(--rd-space-4)); overflow-y: auto; background: var(--rd-page-bg); }
+.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-expnav-line)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-expnav-line)); overflow-y: auto; background: var(--rd-page-bg); }
 .rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
 .rd-toc summary .rd-icon { color: var(--rd-accent); }
@@ -572,7 +665,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
-.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
 .rd-prose .rd-section__head h2::before { content: none; }
 .rd-section__icon {
@@ -587,7 +680,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: var(--rd-accent);
 }
 .rd-section__icon .rd-icon { width: 1em; height: 1em; }
-.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-navbar-gap) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
 
 /* Hero: eyebrow, h1, lede, a row of status chips and meta. */
 .rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }
@@ -690,6 +783,10 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 
 .rd-fullscreen { position: relative; }
 
+/* The container is programmatically focused (tabindex=-1) for wheel-only-after-focus. A focus ring
+   around the whole viewport would be noise — the expansion is the feedback — so suppress it. */
+.rd-fullscreen:focus { outline: none; }
+
 /* Overlay fallback: covers the viewport (including the injected navbar, z-index 20) and scrolls.
    Safe-area insets keep content clear of the notch / home indicator. */
 .rd-fullscreen.is-expanded {
@@ -725,3 +822,236 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 [data-rd-fullscreen-toggle]:hover { background: var(--rd-btn-bg-hover); }
 [data-rd-fullscreen-toggle] .rd-icon { width: 1em; height: 1em; }
+
+/* Inside a fullscreen container the toggle floats top-right (the container is position:relative). */
+.rd-fullscreen [data-rd-fullscreen-toggle] {
+	position: absolute;
+	top: var(--rd-space-3);
+	right: var(--rd-space-3);
+	z-index: 1;
+}
+/* rd-buttons: button variants. The default .rd-btn (the secondary action) lives in the frozen
+   core (base.css); these are the emphasis, ghost, compact, icon and disabled states. Every colour
+   is a --rd-* token. Ships in rd.css only (the research.css compatibility alias stays the frozen
+   core). */
+
+/* Primary: the one main action per view. Filled accent, ink the card ground (white in light mode,
+   dark in dark mode) so it stays 4.5:1+ on the accent in both themes. */
+.rd-btn--primary {
+	background: var(--rd-accent);
+	color: var(--rd-card-bg);
+}
+.rd-btn--primary:hover { background: var(--rd-primary); }
+
+/* Ghost: low emphasis, no fill until hover. For secondary actions next to a primary. */
+.rd-btn--ghost {
+	background: transparent;
+	color: var(--rd-accent-ink);
+}
+.rd-btn--ghost:hover { background: var(--rd-btn-bg); }
+
+/* Compact: one step down in size, for dense toolbars. Never below the 24px tap-target floor. */
+.rd-btn--sm {
+	min-height: max(1.5rem, calc(var(--rd-control-h) - 0.25rem));
+	padding: 0 var(--rd-space-2);
+	font-size: var(--rd-fs-xs);
+}
+
+/* Icon-only: square, for toolbar controls (steppers, toggles). */
+.rd-btn--icon {
+	width: var(--rd-control-h);
+	padding: 0;
+	justify-content: center;
+}
+.rd-btn--icon .rd-icon { width: 1em; height: 1em; }
+
+/* Disabled: muted and inert. A native disabled button is already out of the tab order;
+   [aria-disabled] stays focusable but does nothing on click. */
+.rd-btn:disabled,
+.rd-btn[aria-disabled="true"] {
+	opacity: 0.45;
+	cursor: default;
+	pointer-events: none;
+}
+/* rd-filter: a chip-styled toggle for filtering a set (facet, status, tag). A real <button> with
+   aria-pressed; the pressed state is filled. Distinct from the passive .rd-chip label (frozen core):
+   this one is interactive. min-height floors at the 24px tap target. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+	min-height: 1.5rem;
+	padding: var(--rd-pad-chip);
+	border: 1px solid var(--rd-line);
+	border-radius: 999px;
+	background: var(--rd-card-bg);
+	color: var(--rd-text-muted);
+	font: 500 var(--rd-fs-xs) var(--rd-font);
+	cursor: pointer;
+}
+.rd-filter:hover { background: var(--rd-btn-bg); color: var(--rd-text); }
+.rd-filter .rd-icon { width: 1em; height: 1em; }
+
+/* Pressed: filled accent, ink the card ground (white in light, dark in dark) — 4.5:1+ on the accent. */
+.rd-filter[aria-pressed="true"] {
+	background: var(--rd-accent);
+	border-color: var(--rd-accent);
+	color: var(--rd-card-bg);
+}
+.rd-filter[aria-pressed="true"]:hover { background: var(--rd-primary); }
+/* rd-field: a form field — a label, a control (input or select), and an optional hint or error.
+   The control is full-width, token-compliant, and floors at the tap-target height. Ships in rd.css
+   only (the research.css compatibility alias stays the frozen core). */
+
+.rd-field { display: flex; flex-direction: column; gap: var(--rd-space-1); margin: 0; }
+.rd-field__label { font: 500 var(--rd-fs-sm) var(--rd-font); color: var(--rd-text-strong); }
+.rd-field__hint { margin: 0; font-size: var(--rd-fs-xs); color: var(--rd-text-muted); }
+.rd-field__error { margin: 0; font-size: var(--rd-fs-xs); color: var(--rd-bad); }
+
+.rd-input,
+.rd-select {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: var(--rd-control-h);
+	padding: 0 var(--rd-space-3);
+	border: 1px solid var(--rd-line);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-card-bg);
+	color: var(--rd-text);
+	font: var(--rd-fs-base) var(--rd-font);
+}
+.rd-input::placeholder { color: var(--rd-text-faint); }
+.rd-input:focus,
+.rd-select:focus { border-color: var(--rd-accent); }
+.rd-input:disabled,
+.rd-select:disabled {
+	background: var(--rd-btn-bg);
+	color: var(--rd-text-muted);
+	cursor: default;
+}
+
+/* Error state: a bad border, paired with an .rd-field__error message. */
+.rd-input[aria-invalid="true"],
+.rd-select[aria-invalid="true"] { border-color: var(--rd-bad); }
+/* rd-choice: a selectable option — a radio (single) or checkbox (multi) row. A <label> wrapping a
+   native input and its text, so the input is associated with its label for free. The native control
+   keeps its shape; accent-color tints it with the design-system accent. min-height floors at the
+   24px tap target. Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-choice {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-2);
+	min-height: 1.5rem;
+	padding: var(--rd-space-1) var(--rd-space-2);
+	border-radius: var(--rd-radius-sm);
+	cursor: pointer;
+}
+.rd-choice:hover { background: var(--rd-plain-hover); }
+.rd-choice input {
+	width: 1em;
+	height: 1em;
+	margin: 0;
+	accent-color: var(--rd-accent);
+}
+.rd-choice:has(input:disabled) {
+	color: var(--rd-text-muted);
+	cursor: default;
+}
+/* rd-stepper: a value control — a minus button, a read-only value, and a plus button. The buttons
+   are the compact icon variant (.rd-btn--icon); the value is an aria-live region so a screen reader
+   announces each change. min-height floors at the tap target. Ships in rd.css only (the research.css
+   compatibility alias stays the frozen core). */
+
+.rd-stepper {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+}
+.rd-stepper__value {
+	min-width: 2.5ch;
+	text-align: center;
+	font: 500 var(--rd-fs-sm) var(--rd-font);
+	font-variant-numeric: tabular-nums;
+	color: var(--rd-text-strong);
+}
+.rd-stepper:has([disabled]) .rd-stepper__value { color: var(--rd-text-muted); }
+/* rd-chat: a message thread — user and assistant bubbles, and an input row. The user's messages
+   (--me) are right-aligned and filled; the assistant's (--them) are left-aligned on the card ground.
+   The input row reuses .rd-input and .rd-btn. Ships in rd.css only (the research.css compatibility
+   alias stays the frozen core). */
+
+.rd-chat { display: flex; flex-direction: column; gap: var(--rd-space-2); }
+.rd-chat__msg {
+	max-width: 85%;
+	padding: var(--rd-space-2) var(--rd-space-3);
+	border-radius: var(--rd-radius-md);
+	font-size: var(--rd-fs-base);
+	line-height: var(--rd-lh);
+}
+.rd-chat__msg--me {
+	align-self: flex-end;
+	background: var(--rd-accent);
+	color: var(--rd-card-bg);
+}
+.rd-chat__msg--them {
+	align-self: flex-start;
+	background: var(--rd-btn-bg);
+	color: var(--rd-text);
+}
+.rd-chat__input {
+	display: flex;
+	gap: var(--rd-space-2);
+	margin-top: var(--rd-space-1);
+}
+.rd-chat__input .rd-input { flex: 1; }
+/* rd-quiz: a question with selectable options and a feedback line. The options reuse .rd-choice
+   (a labelled native radio), so they stay keyboard-operable and screen-reader-friendly. The
+   feedback line (--good / --bad) announces the result in the design-system's semantic colours.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-quiz { display: flex; flex-direction: column; gap: var(--rd-space-2); }
+.rd-quiz__q {
+	margin: 0;
+	font: 500 var(--rd-fs-base) var(--rd-font);
+	color: var(--rd-text-strong);
+}
+.rd-quiz__opts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--rd-space-1);
+}
+.rd-quiz__feedback {
+	margin: 0;
+	font-size: var(--rd-fs-sm);
+}
+.rd-quiz__feedback--good { color: var(--rd-good); }
+.rd-quiz__feedback--bad { color: var(--rd-bad); }
+/* rd-meter: a progress bar — a track with a fill. The fill width is set inline (style="width: 60%")
+   because it is data-driven; the colours come from the design system. The track is the button
+   ground, the fill is the accent. Ships in rd.css only (the research.css compatibility alias stays
+   the frozen core). */
+
+.rd-meter {
+	display: block;
+	width: 100%;
+	height: 0.5rem;
+	border-radius: 999px;
+	background: var(--rd-btn-bg);
+	overflow: hidden;
+}
+.rd-meter__fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--rd-accent);
+}
+/* Tap targets (T3+): 24px minimum on the tiny inline controls, so they are tappable on phones.
+   Shipped in rd.css only (not the frozen research.css core) — it is a new concern, not part of the
+   original research.css bytes. */
+
+/* Citation links ([n] → #ref-…) are 15px inline anchors; give them a 24px tap target. a[href^="#ref"]
+   covers the bare anchors some pages use (no .rd-cite class). */
+.rd-cite, a[href^="#ref"] { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }

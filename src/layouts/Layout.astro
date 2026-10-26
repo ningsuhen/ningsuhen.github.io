@@ -90,6 +90,7 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 		<meta charset="UTF-8" />
 		<meta name="description" content={description || pageTitle}>
 		<meta name="author" content={profileConfig.name}>
+		{siteConfig.googleSiteVerification && <meta name="google-site-verification" content={siteConfig.googleSiteVerification} />}
 		<meta name="tdm-reservation" content="1">
 		<meta name="tdm-policy" content={new URL("license/", Astro.site).href}>
 
@@ -113,6 +114,15 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
+		{isHomePage && (
+			<script is:inline type="application/ld+json" set:html={JSON.stringify({
+				"@context": "https://schema.org",
+				"@type": "WebSite",
+				name: siteConfig.title,
+				url: new URL("/", Astro.site).href,
+				description: siteConfig.subtitle,
+			})} />
+		)}
 		{favicons.map(favicon => (
 			<link rel="icon"
 				  href={favicon.src.startsWith('/') ? url(favicon.src) : favicon.src}
@@ -135,7 +145,7 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 			document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
 		</script>
 
-		<!-- Standalone pages (public/**/*.html: reports, experiments) are complete documents, not Fuwari pages.
+		<!-- Standalone pages (public/**/*.html: reports, playground demos) are complete documents, not Fuwari pages.
 		     Swup must never intercept links to them: it fetches the page, fails to find its containers, and leaves the
 		     history/DOM in a broken state (title and layout wrong after Back). Stop the event before Swup sees it and
 		     let the browser do a normal navigation. -->
@@ -442,6 +452,8 @@ const setup = () => {
 		if (heightExtend) {
 			heightExtend.classList.remove('hidden')
 		}
+		// Swup restores the scroll position without firing a scroll event; sync the navbar from it.
+		requestAnimationFrame(syncNavbar)
 	});
 	window.swup.hooks.on('visit:end', (_visit: {to: {url: string}}) => {
 		setTimeout(() => {
@@ -467,6 +479,26 @@ if (window?.swup?.hooks) {
 let backToTopBtn = document.getElementById('back-to-top-btn');
 let toc = document.getElementById('toc-wrapper');
 let navbar = document.getElementById('navbar-wrapper')
+// Derive the navbar's hidden/shown state from the current scroll position. Driven by scroll events,
+// but also called directly after a restored scroll (Back, reload) and after each Swup navigation, where
+// no scroll event fires and the navbar would otherwise stay in its default shown state at a scrolled
+// position.
+function syncNavbar() {
+	if (!bannerEnabled || !navbar) return
+	const NAVBAR_HEIGHT = 72
+	const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16		// The height the main panel overlaps the banner
+	let bannerHeight = BANNER_HEIGHT
+	if (document.body.classList.contains('lg:is-home') && window.innerWidth >= 1024) {
+		bannerHeight = BANNER_HEIGHT_HOME
+	}
+	const threshold = window.innerHeight * (bannerHeight / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT - 16
+	if (document.body.scrollTop >= threshold || document.documentElement.scrollTop >= threshold) {
+		navbar.classList.add('navbar-hidden')
+	} else {
+		navbar.classList.remove('navbar-hidden')
+	}
+}
+
 function scrollFunction() {
 	let bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100)
 
@@ -486,24 +518,23 @@ function scrollFunction() {
 		}
 	}
 
-	if (!bannerEnabled) return
-	if (navbar) {
-		const NAVBAR_HEIGHT = 72
-		const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16			// The height the main panel overlaps the banner
-
-		let bannerHeight = BANNER_HEIGHT
-		if (document.body.classList.contains('lg:is-home') && window.innerWidth >= 1024) {
-			bannerHeight = BANNER_HEIGHT_HOME
-		}
-		let threshold = window.innerHeight * (bannerHeight / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT - 16
-		if (document.body.scrollTop >= threshold || document.documentElement.scrollTop >= threshold) {
-			navbar.classList.add('navbar-hidden')
-		} else {
-			navbar.classList.remove('navbar-hidden')
-		}
-	}
+	syncNavbar()
 }
 window.onscroll = scrollFunction
+// A restored scroll position (Back, reload, bfcache) is set without a scroll event, so the navbar would
+// stay in its default shown state at a scrolled position. Sync it from scrollY on the first frames after
+// load/pageshow, when the restored position settles: hidden/shown is then deterministic, not dependent on
+// whether a scroll event fires. Stops after ~30 frames so it is not a permanent per-frame cost.
+function syncNavbarAfterRestore() {
+	let frames = 0
+	const tick = () => {
+		syncNavbar()
+		if (++frames < 30) requestAnimationFrame(tick)
+	}
+	requestAnimationFrame(tick)
+}
+window.addEventListener('load', syncNavbarAfterRestore)
+window.addEventListener('pageshow', syncNavbarAfterRestore)
 
 window.onresize = () => {
 	// calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text

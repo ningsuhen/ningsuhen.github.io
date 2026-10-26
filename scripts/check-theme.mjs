@@ -11,8 +11,8 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 
 const DIST = path.resolve(process.env.THEME_DIST ?? "dist");
-const MAIN = ["/archive/", "/posts/ai-boom-trajectories/", "/research/", "/experiments/", "/ideas/"];
-const STANDALONE = ["/research/ai-economy/", "/research/brev-tree-benchmark/", "/experiments/brev-tree-traversal/", "/design-system/"];
+const MAIN = ["/archive/", "/posts/ai-boom-trajectories/", "/research/", "/playground/", "/ideas/"];
+const STANDALONE = ["/research/ai-economy/", "/research/brev-tree-benchmark/", "/playground/brev-tree-traversal/", "/design-system/"];
 const SEEDS = [null, "garbage", "light", "dark", "auto"];
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
 
@@ -76,6 +76,29 @@ const readState = (page) =>
 		};
 	});
 
+// The theme change animates (~0.3s); a luminance read mid-transition can land on the wrong side of
+// the threshold. Wait until the shown theme reaches the expected value before asserting on it, so a
+// slow transition is not read as a wrong theme. A real (non-transition) failure never reaches it and
+// times out.
+async function settleShown(page, wantDark) {
+	await page.waitForFunction(
+		(want) => {
+			let bg = "rgba(0, 0, 0, 0)";
+			for (let e = document.body; e && bg === "rgba(0, 0, 0, 0)"; e = e.parentElement) bg = getComputedStyle(e).backgroundColor;
+			const cv = document.createElement("canvas");
+			cv.width = cv.height = 1;
+			const x = cv.getContext("2d");
+			x.fillStyle = bg;
+			x.fillRect(0, 0, 1, 1);
+			const [R, G, B] = x.getImageData(0, 0, 1, 1).data;
+			const shown = (0.2126 * R + 0.7152 * G + 0.0722 * B) / 255 < 0.5;
+			return shown === want;
+		},
+		wantDark,
+		{ timeout: 3000, polling: 50 },
+	);
+}
+
 const failures = [];
 let checks = 0;
 async function check(label, page, storedWant, osDark) {
@@ -138,7 +161,7 @@ for (const os of ["light", "dark"]) {
 		const shownDark = (await readState(page)).shownDark;
 		await page.locator("#scheme-switch").click();
 		stored = shownDark ? "light" : "dark";
-		await page.waitForTimeout(300);
+		await settleShown(page, stored === "dark");
 		await check(`${tag} main toggle`, page, stored, osNow === "dark");
 
 		// Standalone toggle does the same on a report.
@@ -147,7 +170,7 @@ for (const os of ["light", "dark"]) {
 		const shownStandalone = (await readState(page)).shownDark;
 		await page.locator("[data-site-navbar] .theme").click();
 		stored = shownStandalone ? "light" : "dark";
-		await page.waitForTimeout(300);
+		await settleShown(page, stored === "dark");
 		await check(`${tag} standalone toggle`, page, stored, osNow === "dark");
 
 		// Idle: nothing changes on its own.
@@ -176,7 +199,7 @@ for (const os of ["light", "dark"]) {
 		const nowDark = (await readState(page)).shownDark;
 		await page.locator("#scheme-switch").click();
 		stored = nowDark ? "light" : "dark";
-		await page.waitForTimeout(400);
+		await settleShown(page, stored === "dark");
 		await check(`${tag} tab B toggled`, page, stored, osNow === "dark");
 		await check(`${tag} tab A follows`, other, stored, osNow === "dark");
 		await ctx.close();

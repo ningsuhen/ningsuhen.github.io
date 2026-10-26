@@ -38,6 +38,9 @@ export const siteConfig: SiteConfig = {
 		//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
 		// }
 	],
+	// Google Search Console site-verification token. Leave empty until the owner supplies it; the
+	// <meta name="google-site-verification"> is emitted only when this is set (no real token in the repo).
+	googleSiteVerification: "",
 };
 
 export const navBarConfig: NavBarConfig = {
@@ -49,8 +52,8 @@ export const navBarConfig: NavBarConfig = {
 			url: "/research/",
 		},
 		{
-			name: "Experiments",
-			url: "/experiments/",
+			name: "Playground",
+			url: "/playground/",
 		},
 		{
 			name: "Ideas",
@@ -110,3 +113,9 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 	// Please select a dark theme, as this blog theme currently only supports dark background color
 	theme: "github-dark",
 };
+
+// Where post sources live, for the in-place editor (`<meta name="edit-source">` on post pages).
+export const sourceRepo = {
+	repo: "ningsuhen/ningsuhen.github.io",
+	branch: "master",
+} as const;

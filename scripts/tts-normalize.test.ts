@@ -32,6 +32,12 @@ import {
 	ordinal,
 	romanToInt,
 } from "../src/scripts/tts/normalize.ts";
+import {
+	applyPronunciations,
+	type LexiconEntry,
+	lexiconMap,
+	mergePronunciations,
+} from "../src/scripts/tts/pronounce.ts";
 
 /**
  * The original goldens (shared with Brev's Rust port). Three changed on purpose in kokoro-natural:
@@ -587,4 +593,62 @@ test("pauses scale with the playback rate", () => {
 	assert.equal(scaledPause(0.4, 1), 0.4);
 	assert.equal(scaledPause(0.4, 2), 0.2);
 	assert.equal(scaledPause(0.4, 0.5), 0.8);
+});
+
+// Pronunciation fixes (pronounce.ts, src/data/pronunciations.json): applied to the raw sentence, then normalised,
+// exactly as extract.ts does it.
+const LEXICON = lexiconMap(
+	(
+		JSON.parse(
+			readFileSync(new URL("../src/data/pronunciations.json", import.meta.url), "utf8"),
+		) as { entries: LexiconEntry[] }
+	).entries,
+);
+const speak = (text: string, post: Record<string, string> = {}): string =>
+	normalizeForSpeech(applyPronunciations(text, mergePronunciations(LEXICON, post)));
+
+test("pronounce: the country US is spelled, the pronoun us is not", () => {
+	assert.equal(speak("A US recession shows up."), "A U S recession shows up.");
+	assert.equal(speak("Not all of it stays in the US."), "Not all of it stays in the U S.");
+	assert.equal(speak("the U.S. economy"), "the U S economy");
+	assert.equal(speak("Give it to us."), "Give it to us.");
+	assert.equal(speak("Let us see what the US does."), "Let us see what the U S does.");
+});
+
+test("pronounce: Wikipedia is respelled, related words are not", () => {
+	assert.equal(speak("I have been thinking about Wikipedia and AI."), "I have been thinking about wicky pedia and A I.");
+	assert.equal(speak("Wikipedia's rules."), "wicky pedia's rules.");
+	// Whole word and case-sensitive: the Kokoro lexicon already knows "Wikipedians"; lowercase is a URL fragment.
+	assert.equal(speak("Wikipedians argue."), "Wikipedians argue.");
+	assert.equal(applyPronunciations("en.wikipedia.org", LEXICON), "en.wikipedia.org");
+});
+
+test("pronounce: the post's map beats the global lexicon", () => {
+	assert.equal(speak("Wikipedia", { Wikipedia: "wiki pedia" }), "wiki pedia");
+	assert.equal(speak("Qwen runs.", { Qwen: "chwen" }), "chwen runs.");
+	// An empty override is ignored, so a typo in front matter never silences a word.
+	assert.equal(speak("Wikipedia", { Wikipedia: " " }), "wicky pedia");
+	// Longest term first: a phrase entry wins over a word inside it.
+	assert.equal(applyPronunciations("Open Tofu", { Open: "x", "Open Tofu": "open toe foo" }), "open toe foo");
+});
+
+test("pronounce: ordinary text is untouched", () => {
+	const plain = [
+		"The model ran on the GPU in nine seconds.",
+		"Use your redistributable copy; it is fine.",
+		"A wiki is a website people edit together.",
+	];
+	for (const t of plain) assert.equal(speak(t), normalizeForSpeech(t));
+	assert.equal(applyPronunciations("anything", {}), "anything");
+});
+
+test("pronounce: lexicon spoken forms keep sentence and chunk boundaries", () => {
+	// No sentence punctuation, digits or clause marks in a respelling: extract.ts splits sentences and chunk.ts
+	// splits clauses on the written text's punctuation, and the highlight Range comes from the written text.
+	for (const [term, say] of Object.entries(LEXICON)) {
+		assert.match(say, /^[A-Za-z' -]+$/, `${term}: respelling "${say}" has punctuation or digits`);
+		assert.equal(normalizeForSpeech(say), say, `${term}: the normaliser rewrites "${say}"`);
+	}
+	const sentence = "On Wikipedia a citation is a footnote, and SciPy uses Redis.";
+	assert.equal(splitSentence(speak(sentence)).length, splitSentence(normalizeForSpeech(sentence)).length);
 });

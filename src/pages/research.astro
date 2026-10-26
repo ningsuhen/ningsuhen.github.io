@@ -5,7 +5,7 @@ import data from "../data/research.json";
 import type { Entry } from "../types/entry";
 ---
 
-<MainGridLayout license hasOwnHeading title="Research"description="Reports from things I build and study. Every number links back to its source.">
+<MainGridLayout license hasOwnHeading title="Research" breadcrumb={[{ name: "Home", url: "/" }, { name: "Research", url: "/research/" }]}description="Reports from things I build and study. Every number links back to its source.">
     <div class="card-base px-9 py-6 w-full">
         <h1 class="text-3xl font-bold text-90 mb-1">Research</h1>
         <p class="text-50 mb-6">Reports from things I build and study. Every number links back to its source.</p>

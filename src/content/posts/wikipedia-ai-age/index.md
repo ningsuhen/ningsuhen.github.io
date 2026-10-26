@@ -8,24 +8,26 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
-I have been thinking about Wikipedia and AI. On Wikipedia, a citation is a footnote at the end of a sentence. As far as I can tell, it does not record which passage, which version, or which part of the sentence the source backs. That was fine when a person wrote the source and a person might open it. I am less sure now. So I wrote down an idea. I have not built it, and I have not measured anything.
+Recently, I have been thinking about how AI will change or replace many of the existing products on the internet - decentralized office software, open source versions of almost all major proprietary softwares and so on. One of them is how Wikipedia is still like the old simple text based internet. What if AI could make a new version of Wikipedia that is interactive , visual and easy to learn? What if you don't need an expensive book or AI to learn about history or science for free?
 
-The [idea page](/ideas/wikipedia-ai-age/) has the diagrams, a glossary, a short quiz and a question box that answers only from the page's own notes.
+So, I created an [idea page](/ideas/wikipedia-ai-age/)  for a Wikipedia in the age of AI. 
 
 ## The idea
 
-- Store each claim as its own record, with the exact passage and the version of the source that backs it.
-- A named person signs what they checked. The AI can find sources, check quotes and flag gaps. It does not sign.
-- Machine drafts stay labelled, apart from checked text, so a reader can tell them apart.
+Each claim becomes its own record, with the exact passage and the version of the source that backs it. A named person signs what they checked. The AI can find sources, check quotes and flag gaps, but it doesn't sign. Machine drafts stay labelled and separate from checked text, so readers can tell them apart.
 
 ## Something I found while checking
 
-English Wikipedia already has a content guideline on large language models. Its short version says not to use them to generate or rewrite article content. It allows suggested fixes to your own writing, after review, and translation ([guideline](https://en.wikipedia.org/wiki/Wikipedia:Writing_articles_with_large_language_models), read 2026-10-25). The machine-drafted layer in my idea goes further than that. So this is a what-if, not a proposal for Wikipedia as it runs now.
+<!-- owner:scene This section is titled "Something I found while checking" but gives no reaction. Did anything about the existing guideline surprise you? -->
+
+English Wikipedia already has a content guideline on large language models. Its short version says not to use them to generate or rewrite article content. It does allow suggested fixes to your own writing, after review, and translation ([guideline](https://en.wikipedia.org/wiki/Wikipedia:Writing_articles_with_large_language_models)). My machine-drafted layer goes further, so this is a what-if, not a proposal for Wikipedia as it runs now.
 
 ## What I could not settle
 
-- Whether a model trained on CC BY-SA text writes adapted material. I do not know, and this is not legal advice.
+- Whether a model trained on CC BY-SA text writes adapted material. I don't know, and this is not legal advice.
 - Who would run it, how it would be paid for, and whether machine drafts should be allowed at all.
-- How to measure whether a claim is supported. That is a human judgement, and I have not measured it.
+- How to measure whether a claim is supported. That's a human judgement, and I haven't measured it.
 
-The risks table is the part I would most like to be wrong about.
+The risks table is the part I'd most like to be wrong about.
+
+Sources, read 2026-10-25: [Wikipedia: Writing articles with large language models](https://en.wikipedia.org/wiki/Wikipedia:Writing_articles_with_large_language_models).

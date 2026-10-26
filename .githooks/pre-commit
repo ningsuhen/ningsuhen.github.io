@@ -29,3 +29,13 @@ if [ -n "$ds" ]; then
 		exit 1
 	}
 fi
+
+# Lucide sprite: the shipped public/design-system/lucide-sprite.svg and each page's inlined sprite block
+# must equal a fresh build of the pages' icon references. If you added an icon, run `pnpm build` and re-stage.
+sp=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E '^(public/(design-system|research|ideas)/|scripts/build-lucide-sprite\.mjs$)' || true)
+if [ -n "$sp" ]; then
+	node scripts/build-lucide-sprite.mjs --check || {
+		echo "pre-commit: Lucide sprite is stale. Run 'pnpm build' and re-stage the sprite." >&2
+		exit 1
+	}
+fi

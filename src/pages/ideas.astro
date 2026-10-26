@@ -8,10 +8,10 @@ import type { Entry } from "../types/entry";
 const items = (data.items as Entry[]).filter((e) => e.status.toLowerCase() !== "draft");
 ---
 
-<MainGridLayout license hasOwnHeading title="Ideas" description="Short write-ups of ideas I may build or test.">
+<MainGridLayout license hasOwnHeading title="Ideas" breadcrumb={[{ name: "Home", url: "/" }, { name: "Ideas", url: "/ideas/" }]} description="Short write-ups of ideas I may build or test.">
     <div class="card-base px-9 py-6 w-full">
         <h1 class="text-3xl font-bold text-90 mb-1">Ideas</h1>
-        <p class="text-50 mb-6">Short write-ups of ideas I may build or test. Not research yet, not experiments yet.</p>
+        <p class="text-50 mb-6">Short write-ups of ideas I may build or test. Not research yet, not in the playground yet.</p>
         {items.length ? <EntryCards items={items} kind="idea" /> : <p class="text-75">Nothing here yet.</p>}
     </div>
 </MainGridLayout>
