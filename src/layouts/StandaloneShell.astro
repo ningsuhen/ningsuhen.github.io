@@ -14,35 +14,50 @@ import { buildLicenseScript } from "../chrome/license";
 import { applyChrome } from "../chrome/apply";
 import { esc } from "../chrome/util";
 import { themeRuntimeScript } from "../utils/theme-runtime";
+import { iconNames, spriteBlock } from "../design-system/lucide";
 import type { Fragment } from "../standalone/loader";
 
 // Human label for a kind, used as the hero eyebrow when the fragment has no eyebrow of its own.
 const KIND_LABEL: Record<string, string> = { research: "Research", experiment: "Experiment", playground: "Playground", idea: "Idea", "design-system": "Design system" };
 const kindLabel = (kind: string) => KIND_LABEL[kind] ?? kind;
 
-interface Props { kind: string; slug: string; fragment: Fragment }
-const { kind, slug, fragment } = Astro.props;
+interface Props { kind: string; slug: string; segment: string; fragment: Fragment }
+const { kind, slug, segment, fragment } = Astro.props;
 const { meta, body, css, js, tabs } = fragment;
 const site = Astro.site?.href ?? "";
 const base = Astro.site ? Astro.site.pathname : "/";
-const urlPath = `/${kind}/${slug}/`;
+// The URL segment is the route's directory name (ideas, research, playground) — not always the fragment
+// kind (idea is singular, its route is src/pages/ideas/). The route passes its own segment.
+const urlPath = `/${segment}/${slug}/`;
 
 // The "· created · updated" stamp the shell renders from meta (the title carries no stamp of its own).
 const stamp = ` · created ${meta.created} · updated ${meta.updated}`;
 const title = `${meta.title}${stamp}`;
 
-// Tab bar (contract: tabs come from the markup, derived by the loader). ?tab= is owned by rd.js.
+// Tab bar (contract: tabs come from the markup, derived by the loader). ?tab= is owned by rd.js, which
+// mounts it on load via data-rd="tabs" (the fragment's page.js must not call rd.init, or it double-mounts).
 const tabBar =
 	meta.layout === "tabbed" && tabs.length
-		? `<nav class="rd-expnav" role="tablist" aria-label="Sections">` +
+		? `<nav class="rd-expnav" role="tablist" aria-label="Sections" data-rd="tabs">` +
 			tabs.map((t, i) => `<a role="tab" id="tab-${esc(t.id)}" href="?tab=${esc(t.id)}" aria-controls="${esc(t.id)}" aria-selected="${i === 0 ? "true" : "false"}">${t.icon ? `<svg class="rd-icon" aria-hidden="true"><use href="#i-${esc(t.icon)}"/></svg>` : ""}${esc(t.label)}</a>`).join("") +
 			`</nav>`
 		: "";
 
 // The page's own styles, scoped and inlined (contract: page.css is <= 4 KB, every selector prefixed).
 const pageCss = css ? `<style is:inline>${css}</style>` : "";
-// The page's runtime module (contract: export default init({ root, data, rd })).
-const pageJs = js ? `<script type="module" src="/${kind}/${slug}/page.js"></script>` : "";
+
+// The page's Lucide icons, inlined as a self-contained sprite (no request) — the shell-rendered
+// fragment has no public/ page for the sprite builder to rewrite, so the shell supplies its own.
+const sprite = spriteBlock(iconNames(tabBar + body));
+
+// The page's runtime module (contract: export default init({ root, data, rd })). Served as a Vite asset
+// (content-hashed, no public/ duplicate) and invoked by a tiny per-page module that hands it the root,
+// the data and the rd runtime. rd.js (emitted first) has set window.rd by the time this runs.
+const pageModules = import.meta.glob("/src/standalone/*/*/page.js", { query: "?url", import: "default", eager: true });
+const pageJsUrl = pageModules[`/src/standalone/${kind}/${slug}/page.js`];
+const pageJs = js
+	? `<script type="module">import init from ${JSON.stringify(pageJsUrl)};\ninit({ root: document.querySelector('[data-page="${esc(slug)}"]'), data: null, rd: window.rd });</script>`
+	: "";
 
 // A complete standalone document, shaped like a generator's export so applyChrome treats it the same as a
 // public/**/*.html page. The design-system bundle is linked (not inlined) so it stays current.
@@ -58,6 +73,7 @@ const doc =
 	`<script data-site-theme>${themeRuntimeScript(true)}</script>` +
 	`</head>` +
 	`<body class="rd-body">` +
+	`${sprite}` +
 	`<main class="${meta.layout === "tabbed" ? "rd-tabbed " : ""}rd-container${meta.width === "wide" ? "--wide" : ""} rd-prose" data-page="${esc(slug)}" data-pagefind-body="${meta.search ? "" : "false"}">` +
 	`<header class="rd-hero"><p class="rd-eyebrow">${esc(meta.eyebrow ?? kindLabel(kind))}</p><h1>${esc(title)}</h1><p class="rd-hero__lede">${esc(meta.summary)}</p></header>` +
 	`${tabBar}` +
