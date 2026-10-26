@@ -49,7 +49,8 @@ $: if (hue || hue === 0) {
     #display-setting
       input[type="range"]
         -webkit-appearance none
-        height 1.5rem
+        /* 24px (px, not rem: the root font is 14px, so 1.5rem would be 21px) keeps the track a >= 24px tap target on phones. */
+        height 24px
         background-image var(--color-selection-bar)
         transition background-image 0.15s ease-in-out
 
