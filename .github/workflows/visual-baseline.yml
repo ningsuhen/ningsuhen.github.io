@@ -42,15 +42,18 @@ jobs:
       - name: Commit + push to visual-baseline (clean clone, no hooks)
         run: |
           # Fresh clone: no `pnpm install`, so no .githooks pre-commit to fail closed on the runner.
-          # Clone plain (the repo is public); push to an explicit tokenized URL. Pushing to `origin` would
-          # fail — git strips credentials from the stored remote and the fresh clone has no credential
-          # helper, so the push would go out unauthenticated. GitHub masks GITHUB_TOKEN in the logs.
-          push_url="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          # Clone plain (the repo is public). Authenticate the push with a LOCAL credential helper — the
+          # same mechanism actions/checkout uses on this runner. A tokenized URL does not work for the push
+          # (git strips credentials from the stored remote and the fresh clone has no helper), so the push
+          # goes out unauthenticated. The helper is single-quoted, so only the ${GITHUB_TOKEN} placeholder
+          # is stored in .git/config; the value is expanded in the helper's subshell at push time and never
+          # lands in the config or the logs.
           clone="$(mktemp -d)"
           git clone --quiet --no-checkout "https://github.com/${{ github.repository }}.git" "$clone"
           cd "$clone"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config credential.helper '!f() { echo "username=x-access-token"; echo "password=${GITHUB_TOKEN}"; }; f'
           # The branch is master + the baseline folder. Keep it current by merging master, then add the PNGs.
           if git show-ref --verify --quiet refs/remotes/origin/visual-baseline; then
             git checkout -B visual-baseline origin/visual-baseline
@@ -67,5 +70,5 @@ jobs:
             echo "baseline unchanged"
           else
             git commit -m "visual: baseline $(date -u +%Y-%m-%d)"
-            git push --quiet "$push_url" HEAD:visual-baseline
+            git push --quiet origin HEAD:visual-baseline
           fi
