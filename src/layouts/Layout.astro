@@ -145,10 +145,11 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 			document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
 		</script>
 
-		<!-- Standalone pages (public/**/*.html: reports, playground demos) are complete documents, not Fuwari pages.
-		     Swup must never intercept links to them: it fetches the page, fails to find its containers, and leaves the
-		     history/DOM in a broken state (title and layout wrong after Back). Stop the event before Swup sees it and
-		     let the browser do a normal navigation. -->
+		<!-- Standalone pages are complete documents, not Fuwari pages: the reports/playground/ideas pages shipped from
+		     public/ plus the shell-rendered fragment routes (src/standalone/<kind>/<slug>/). Swup must never intercept
+		     links to them: it fetches the page, fails to find its containers (#swup-container/#toc are absent), and
+		     leaves the history/DOM in a broken state (title and layout wrong after Back). Stop the event before Swup
+		     sees it and let the browser do a normal navigation. -->
 		<script is:inline define:vars={{standalonePaths}}>
 			document.addEventListener("click", (e) => {
 				if (e.defaultPrevented || e.button !== 0) return;
