@@ -134,7 +134,9 @@ async function testPage(rel) {
 		const tabs = [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
 		return tabs.map((t) => {
 			const panel = document.getElementById(t.getAttribute("aria-controls"));
-			const target = panel ? [...panel.querySelectorAll("[id]")].find((e) => !/^H[1-6]$/.test(e.tagName) && e.id !== panel.id) : null;
+			// A deep-link target must render and take focus: skip headings, the panel itself, and SVG <defs> content (markers,
+			// gradients) which is reference-only and has no box.
+			const target = panel ? [...panel.querySelectorAll("[id]")].find((e) => !/^H[1-6]$/.test(e.tagName) && e.id !== panel.id && !e.closest("defs")) : null;
 			const toc = panel
 				? [...panel.querySelectorAll('.rd-toc a[href^="#"]')]
 						.map((a) => document.getElementById(a.getAttribute("href").slice(1)))
