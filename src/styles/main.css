@@ -5,6 +5,7 @@
        Accent ink (--btn-content, like LicenseNote): 3:1+ against card and page; --primary is only 2.3-2.7:1 in light. */
     a:focus-visible,
     button:focus-visible,
+    input:focus-visible,
     summary:focus-visible,
     [tabindex]:focus-visible {
         @apply outline-2 outline-[var(--btn-content)] outline-offset-2;
