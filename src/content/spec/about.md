@@ -1,4 +1,4 @@
-Favorite Quote
+## Favorite Quote
 
 > I skate to where the puck is going to be, not where it has been.
 >
