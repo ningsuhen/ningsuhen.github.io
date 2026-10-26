@@ -24,6 +24,9 @@ jobs:
   baseline:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # GITHUB_TOKEN is not always in a step's shell env; map it explicitly so the push authenticates.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       # Check out master (the new code) and build it; the baseline PNGs are written to ./visual-baseline.
       - uses: actions/checkout@v6
@@ -58,12 +61,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config credential.helper '!f() { echo "username=x-access-token"; echo "password=${GITHUB_TOKEN}"; }; f'
-          # The branch is master + the baseline folder. Keep it current by merging master, then add the PNGs.
-          if git show-ref --verify --quiet refs/remotes/origin/visual-baseline; then
+          # Target branch: a master push updates the real baseline; any workflow_dispatch is a test run and
+          # goes to a throwaway branch — never visual-baseline and never master.
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then TARGET="visual-baseline"; else TARGET="visual-baseline-test"; fi
+          # The branch is the current ref + the baseline folder. For the real baseline, keep it current by
+          # merging master; for a test run, base it on the exact dispatched commit (GITHUB_SHA).
+          if [ "$TARGET" = "visual-baseline" ] && git show-ref --verify --quiet refs/remotes/origin/visual-baseline; then
             git checkout -B visual-baseline origin/visual-baseline
             git merge --no-edit origin/master
           else
-            git checkout -b visual-baseline origin/master
+            git checkout -B "$TARGET" "$GITHUB_SHA"
           fi
           # Copy the freshly generated PNGs from the main checkout (overwrite; stale files are harmless —
           # check:visual compares candidates against the baseline, never the reverse).
@@ -74,5 +81,5 @@ jobs:
             echo "baseline unchanged"
           else
             git commit -m "visual: baseline $(date -u +%Y-%m-%d)"
-            git push --quiet origin HEAD:visual-baseline
+            git push --quiet origin HEAD:"$TARGET"
           fi
