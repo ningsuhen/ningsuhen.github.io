@@ -67,6 +67,8 @@ jobs:
         run: pnpm check:source-map
       - name: owner markers
         run: pnpm check:markers
+      - name: owner voice
+        run: pnpm check:voice
       - name: internal links
         run: pnpm check:links
       - name: 404 page + rss.xml (no network)
