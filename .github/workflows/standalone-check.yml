@@ -37,6 +37,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:tts
       - run: pnpm test:drafts
+      - run: pnpm test:markers
       - run: pnpm test:dates
       - run: pnpm build
       - uses: actions/upload-artifact@v4
