@@ -18,6 +18,16 @@ function entrySummaries(): Map<string, string> {
 	return out;
 }
 
+// The description a standalone page should carry: its own <meta name="description"> when it has one, else the
+// research/playground card summary for its URL, else the site subtitle. Shared by the social cards and the
+// plain description meta so the two never disagree.
+export function pageDescription(html: string, canonical: string, site: string): string {
+	const descTag = html.match(/<meta[^>]+name=["']description["'][^>]*>/i)?.[0] ?? "";
+	const ownDescription = descTag.match(/content=["']([^"']*)["']/i)?.[1]?.trim() ?? "";
+	const urlPath = new URL(canonical, site).pathname;
+	return ownDescription || entrySummaries().get(urlPath) || siteConfig.subtitle || "";
+}
+
 // Open Graph / Twitter cards for a standalone page: the visible title (minus the created/updated stamp) and the
 // page's own description when it has one, so a share is not a blank card. Head-only: it lands in the "late" group
 // (after the charset/viewport metas), so the design-system head-order rule — charset then viewport first — holds.
@@ -25,10 +35,7 @@ export function buildSocialMeta(html: string, canonical: string, site: string): 
 	if (/<meta[^>]+property=["']og:title["']/i.test(html)) return ""; // the page already declares OG
 	let title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? siteConfig.title).trim();
 	title = title.replace(/\s*[·•]\s*created \d{4}-\d{2}-\d{2}\s*[·•]\s*updated \d{4}-\d{2}-\d{2}\s*$/i, "").trim();
-	const descTag = html.match(/<meta[^>]+name=["']description["'][^>]*>/i)?.[0] ?? "";
-	const ownDescription = descTag.match(/content=["']([^"']*)["']/i)?.[1]?.trim() ?? "";
-	const urlPath = new URL(canonical, site).pathname;
-	const description = ownDescription || entrySummaries().get(urlPath) || siteConfig.subtitle || "";
+	const description = pageDescription(html, canonical, site);
 	const image = new URL("/images/default-thumbnail.webp", site).href;
 	const og = (k: string, v: string) => `<meta property="${k}" content="${esc(v)}">`;
 	const tw = (k: string, v: string) => `<meta name="twitter:${k}" content="${esc(v)}">`;

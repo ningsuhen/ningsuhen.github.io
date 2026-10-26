@@ -38,6 +38,9 @@ export const siteConfig: SiteConfig = {
 		//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
 		// }
 	],
+	// Google Search Console site-verification token. Leave empty until the owner supplies it; the
+	// <meta name="google-site-verification"> is emitted only when this is set (no real token in the repo).
+	googleSiteVerification: "",
 };
 
 export const navBarConfig: NavBarConfig = {
