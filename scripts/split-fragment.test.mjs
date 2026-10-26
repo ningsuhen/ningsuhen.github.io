@@ -107,7 +107,9 @@ test("a clean page passes check:export", () => {
 		// The fragment files exist and the chrome is gone.
 		assert.ok(existsSync(path.join(fragDir, "meta.json")));
 		const body = readFileSync(path.join(fragDir, "body.html"), "utf8");
-		assert.match(body, /<section data-rd-tab="overview" data-rd-label="Overview"/);
+		// The tab panel is a <section> that keeps its rd-tabpanel/rd-with-toc classes (the hiding
+		// mechanism and the rail anchor) plus the data-rd-tab attrs.
+		assert.match(body, /<section class="rd-tabpanel rd-with-toc" data-rd-tab="overview" data-rd-label="Overview"/);
 		assert.doesNotMatch(body, /rd-hero|rd-expnav|rd-toc|lucide-sprite/);
 		// The real gate passes.
 		const r = spawnCheck(fragDir);

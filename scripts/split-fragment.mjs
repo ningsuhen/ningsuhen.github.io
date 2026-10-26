@@ -223,7 +223,9 @@ function convertBody(doc) {
 		if (n.nodeName === "#comment" && /lucide-sprite/.test(n.data ?? "")) removeNode(n);
 	}
 
-	// 4. Convert each tab panel <div class="rd-tabpanel" id="…"> into a <section data-rd-tab …>.
+	// 4. Convert each tab panel <div class="rd-tabpanel" id="…"> into a <section data-rd-tab …>. The
+	// original classes are kept: .rd-tabpanel is the tab-hiding mechanism (.rd-tabpanel[hidden]) and the
+	// rail script's anchor (closest(".rd-tabpanel")); .rd-with-toc is the grid that holds [rail] + [body].
 	const sections = [];
 	const main = (body.childNodes ?? []).find((n) => n.nodeName === "main");
 	for (const n of [...(main?.childNodes ?? [])]) {
@@ -233,6 +235,7 @@ function convertBody(doc) {
 			n.nodeName = "section";
 			n.tagName = "section";
 			n.attrs = [
+				{ name: "class", value: classOf(n) },
 				{ name: "data-rd-tab", value: id },
 				{ name: "data-rd-label", value: tab.label },
 				...(tab.icon ? [{ name: "data-rd-icon", value: tab.icon }] : []),
