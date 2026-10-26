@@ -609,8 +609,10 @@ function createPhotoSwipe() {
 }
 
 const GALLERY = ".custom-md img, #post-cover img"
-const inGallery = (t: EventTarget | null) =>
-	t instanceof Element ? t.closest(GALLERY) : null
+// The gallery only matches <img> elements, so the closest match is an HTMLElement (which
+// has .click()); closest() is typed Element, hence the narrowing cast.
+const inGallery = (t: EventTarget | null): HTMLElement | null =>
+	t instanceof Element ? (t.closest(GALLERY) as HTMLElement | null) : null
 
 // Start the load a beat early on pointer-down / focus so the fetch is usually done by the
 // click; the click handler below is the guarantee for when it is not.
