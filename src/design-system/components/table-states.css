@@ -1,0 +1,23 @@
+/* rd-table row states and the wrapping column. The frozen core has .rd-num (right align),
+   .rd-table__ref (tinted reference row) and hover, but no "selected row" tint, no dimmed
+   "pending" row, and no column that wraps instead of forcing nowrap.
+   - .rd-row--active: the selected/highlighted row (e.g. click a row to highlight that value in
+     every chart). A stronger accent tint than the hover.
+   - .rd-row--pending: a dimmed row for not-yet-run / unknown data.
+   - .rd-wrap: a column that wraps long text (the table's default is nowrap).
+   Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-table tr.rd-row--active td {
+	background: color-mix(in srgb, var(--rd-accent) 14%, transparent);
+}
+.rd-table tr.rd-row--pending td {
+	color: var(--rd-text-muted);
+}
+.rd-table td.rd-wrap,
+.rd-table th.rd-wrap {
+	white-space: normal;
+	min-width: 12.5rem;
+	max-width: 44ch;
+	overflow-wrap: anywhere;
+}

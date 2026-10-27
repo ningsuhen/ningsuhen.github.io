@@ -1,0 +1,19 @@
+/* rd-tip: a fixed dark tooltip for chart hover (a <div> the page positions on mousemove). The
+   design system had no tooltip; this ships the style only — the positioning JS stays page-local.
+   It is ink-on-card (the page's text colour on the card ground) so it inverts correctly in both
+   themes. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-tip {
+	position: fixed;
+	z-index: 60;
+	pointer-events: none;
+	max-width: 20rem;
+	padding: var(--rd-space-1) var(--rd-space-2);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-text-strong);
+	color: var(--rd-card-bg);
+	font-size: var(--rd-fs-xs);
+	line-height: 1.4;
+	white-space: pre-line;
+}
