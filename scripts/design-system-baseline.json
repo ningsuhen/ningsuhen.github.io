@@ -109,6 +109,36 @@
 			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
 		},
 		{
+			"page": "/playground/lpm-playground/",
+			"rule": "footer-box",
+			"owner": "site",
+			"reason": "License card spans the wide container (rd-container--wide) instead of the main post's 872px column. Align the container with the post column."
+		},
+		{
+			"page": "/playground/lpm-playground/",
+			"rule": "footer-gap",
+			"owner": "site",
+			"reason": "Gap above the license card differs from the main post's footer spacing. Decide one spacing for both."
+		},
+		{
+			"page": "/playground/lpm-playground/",
+			"rule": "footer-type",
+			"owner": "site",
+			"reason": "License card text size and mute differ from the main site footer text. One footer style for both."
+		},
+		{
+			"page": "/playground/lpm-playground/",
+			"rule": "prose-type",
+			"owner": "site",
+			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
+		},
+		{
+			"page": "/playground/lpm-playground/",
+			"rule": "rail-presence",
+			"owner": "site",
+			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
+		},
+		{
 			"page": "/research/ai-economy/",
 			"rule": "footer-gap",
 			"owner": "site",
