@@ -1,0 +1,40 @@
+/* rd-hbar: a labelled horizontal bar row — a label, a track with a fill, and a value. The
+   .rd-meter (frozen core) is a bare bar; this adds the label and value so a row reads as
+   "candidate · [██████████░░] · 1,312". The fill width is set inline (style="width: 60%") because
+   it is data-driven; the track and value come from tokens. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-hbar {
+	display: grid;
+	grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) minmax(0, 5.5rem);
+	gap: var(--rd-space-2);
+	align-items: center;
+	font-size: var(--rd-fs-sm);
+	margin: var(--rd-space-1) 0;
+}
+.rd-hbar__label {
+	color: var(--rd-text);
+	overflow-wrap: anywhere;
+}
+.rd-hbar__track {
+	display: block;
+	height: 0.625rem;
+	border-radius: 999px;
+	background: var(--rd-btn-bg);
+	overflow: hidden;
+}
+.rd-hbar__fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--rd-accent);
+}
+.rd-hbar__value {
+	font-variant-numeric: tabular-nums;
+	color: var(--rd-text-muted);
+	text-align: right;
+}
+@media (max-width: 480px) {
+	.rd-hbar { grid-template-columns: minmax(0, 1fr) minmax(0, 4rem); }
+	.rd-hbar__label { grid-column: 1 / -1; }
+}

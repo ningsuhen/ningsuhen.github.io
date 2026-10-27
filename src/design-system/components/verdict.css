@@ -1,0 +1,60 @@
+/* rd-verdict: the headline conclusion block. A card with a thick left rule and a large h2, for
+   the one-sentence answer a report leads with. Distinct from .rd-callout (thinner rule, smaller,
+   for notes/caveats) and .rd-brief (three fixed columns). --pending uses the warn rule for an
+   open/unsettled conclusion. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-verdict {
+	background: var(--rd-card-bg);
+	border: 1px solid var(--rd-line);
+	border-left: 5px solid var(--rd-accent);
+	border-radius: var(--rd-radius-md);
+	padding: var(--rd-pad-card) var(--rd-space-4);
+	margin: var(--rd-gap-block) 0;
+}
+.rd-verdict--pending { border-left-color: var(--rd-warn); }
+.rd-verdict h2 {
+	font-size: var(--rd-fs-h1);
+	line-height: 1.3;
+	margin: 0 0 var(--rd-space-1);
+}
+.rd-verdict h2::before { content: none; } /* no section accent bar inside the verdict */
+
+/* rd-verdicts: a grid of verdict cards (go / no-go / open / pending), one per decision, coloured
+   by a top rule. Auto-fit so it reflows from a wide dashboard to a phone. The kicker is a small
+   uppercase status line above the card title. Every colour is a --rd-* token. */
+.rd-verdicts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+	gap: var(--rd-space-2);
+	margin: var(--rd-gap-block) 0;
+}
+.rd-verdict-card {
+	background: var(--rd-card-bg);
+	border: 1px solid var(--rd-line);
+	border-top: 4px solid var(--rd-good);
+	border-radius: var(--rd-radius-md);
+	padding: var(--rd-pad-card);
+	min-width: 0;
+}
+.rd-verdict-card--nogo { border-top-color: var(--rd-bad); }
+.rd-verdict-card--open { border-top-color: var(--rd-warn); }
+.rd-verdict-card--pending { border-top-color: var(--rd-line); }
+.rd-verdict-card__kicker {
+	display: flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+	font-size: var(--rd-fs-xs);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--rd-text-muted);
+	font-weight: 600;
+	margin: 0 0 var(--rd-space-1);
+}
+.rd-verdict-card__kicker .rd-icon { width: 1em; height: 1em; }
+.rd-prose .rd-verdict-card h3 {
+	font-size: var(--rd-fs-h3);
+	line-height: 1.3;
+	margin: 0 0 var(--rd-space-1);
+}
+.rd-verdict-card p { margin: 0; font-size: var(--rd-fs-sm); color: var(--rd-text); }

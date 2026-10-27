@@ -1,0 +1,23 @@
+/* rd-toolbar: a flex row that holds a card's filter controls (selects, .rd-filter chips) and a
+   result count. The frozen core has .rd-filter (a single toggle) but no wrapper row for a group
+   of them. __count is the muted "N of M shown" line. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--rd-space-1) var(--rd-space-2);
+	margin: 0 0 var(--rd-gap-block);
+}
+.rd-toolbar label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+	font-size: var(--rd-fs-xs);
+	color: var(--rd-text-muted);
+}
+.rd-toolbar__count {
+	font-size: var(--rd-fs-xs);
+	color: var(--rd-text-muted);
+}
