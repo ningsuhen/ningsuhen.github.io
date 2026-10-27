@@ -4,6 +4,7 @@ published: 2026-10-26
 description: "Measured results from the first three milestones of LPM, a Rust engine that runs a small language model on the GPU through one WGSL source, on native Metal and in Chrome WebGPU, with every number labelled by model, machine, target and load, plus the eight lessons that cost time getting there."
 tags: [Research]
 category: Research
+thumbnail: ./thumb.webp
 draft: false
 ---
 
