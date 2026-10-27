@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "title": "LPM playground",
+      "summary": "Run business classification demos (email triage, support tickets, document sorting, sales leads, a sensitive-text check, and your own) with a small language model on your own GPU, in the browser. Nothing you type is sent anywhere.",
+      "href": "/playground/lpm-playground/",
+      "started": "2026-10-26",
+      "updated": "2026-10-26",
+      "status": "Live",
+      "tags": [
+        "Playground"
+      ]
+    },
+    {
       "title": "Voice chat",
       "summary": "A fully on-device voice conversation in your browser: microphone to VAD to turn detection to ASR to a small LLM to Kokoro speech, with barge-in. Nothing is sent anywhere.",
       "href": "/playground/voice-chat/",

@@ -1,0 +1,794 @@
+{
+  "id": "lead-intent",
+  "title": "Lead intent",
+  "instruction": "Decide what the sender of this website contact-form message wants.",
+  "labels": [
+    {
+      "id": "ready-to-buy",
+      "name": "Ready to buy",
+      "definition": "A prospect who has decided or is close to deciding and asks about price, an order, a contract or how to start paying."
+    },
+    {
+      "id": "researching",
+      "name": "Researching",
+      "definition": "A prospect still gathering information, comparing options or asking pre-sales questions with no decision yet."
+    },
+    {
+      "id": "support-not-sales",
+      "name": "Support, not sales",
+      "definition": "An existing customer or user who needs help, a fix or an account change, and is not shopping."
+    },
+    {
+      "id": "partnership",
+      "name": "Partnership",
+      "definition": "Someone proposing a genuine two-way collaboration such as reselling, integration, co-marketing or joint programs."
+    },
+    {
+      "id": "vendor-or-job-seeker",
+      "name": "Vendor or job seeker",
+      "definition": "Someone selling the company a product or service, or asking for a job, internship or freelance work."
+    }
+  ],
+  "business_rules": [
+    "Low confidence reorders the human review queue (uncertain leads move up for a person to look at). Code never rejects, deletes or auto-replies to a lead.",
+    "The label only sets queue order and routing; a person decides what to do with every lead."
+  ],
+  "items": [
+    {
+      "id": "lead-intent-001",
+      "text": "We'd like to build an integration between our scheduling API and your platform and list it in your marketplace. Who is the right contact for technical partnerships?",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-002",
+      "text": "Hi, I'm already a customer and my dashboard won't load since this morning. Can someone help?",
+      "label": "support-not-sales",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-003",
+      "text": "Please call me about buying, I left a voicemail already. Ng, Harbour Print. 555-0111",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-004",
+      "text": "We need to buy a site license for our school district, 14 schools. Is there an education discount? We have funds that must be spent by end of fiscal year.",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-005",
+      "text": "My company offers cloud cost optimisation. We'd save you 25% on your hosting bill. No risk, you only pay a share of savings.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-006",
+      "text": "Wrong form maybe, but I got locked out of our admin account after the staff change. Need access back.",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-007",
+      "text": "Ready to go with the Team plan. How do I pay by invoice instead of card? Need to get this signed off by Friday.",
+      "label": "ready-to-buy",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-008",
+      "text": "Bundle opportunity: our CRM and your reporting tool. Our partner manager Elisa would like to set up an intro.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-009",
+      "text": "Our consulting firm sends you a lot of clients already. Is there a referral fee or partner tier we can join?",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-010",
+      "text": "We want to put your logo on our site as an official technology partner. In return we'd recommend you to our clients.",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Vague on what each side gives; may be a pitch for a paid listing."
+    },
+    {
+      "id": "lead-intent-011",
+      "text": "Hello, I coordinate a conference for fintech founders. We'd like you as a gold sponsor. Packages attached.",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A sponsorship pitch: the sender is selling a package, so vendor-or-job-seeker is arguable."
+    },
+    {
+      "id": "lead-intent-012",
+      "text": "Could we talk about embedding your chart component in our product? We'd pay a licence fee and credit you in the UI.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Embedding and paying a licence is both a partnership and a purchase."
+    },
+    {
+      "id": "lead-intent-013",
+      "text": "Please sign us up for the annual Pro plan. Do you offer a discount if we pay upfront for 2 years?",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-014",
+      "text": "Does the platform work with our existing Azure setup? If yes, we'd probably want pricing.",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A conditional question that could turn into a purchase."
+    },
+    {
+      "id": "lead-intent-015",
+      "text": "Interested in your affiliate programme. I have a newsletter with 25k subscribers in the construction sector.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-016",
+      "text": "Our nonprofit would love to partner with you on a digital skills program for young people. We can bring 500 participants.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-017",
+      "text": "Quick one: where do I download the previous version of the installer? The new one doesn't work with Windows 7.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-018",
+      "text": "Please send me a copy of our contract, we're customers since 2022 and legal wants it for the audit.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-019",
+      "text": "Quick question before we go any further: where is your data hosted and who audits it?",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-020",
+      "text": "My team is thinking about replacing our spreadsheet process sometime next year. Roughly what does implementation involve and how long?",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-021",
+      "text": "We're a systems integrator in the Nordics and want to become a certified implementation partner. What are the requirements?",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-022",
+      "text": "We want to buy 10 more seats but our current admin portal throws an error when I try to add them.",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A purchase intent blocked by a product error."
+    },
+    {
+      "id": "lead-intent-023",
+      "text": "We are building a directory of climate-tech tools and want to feature you for free. Can we get a partner contact?",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-024",
+      "text": "Is there a free tier or sandbox so I can try things before recommending it to my manager?",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-025",
+      "text": "Hello, I want to cancel my subscription.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": true,
+      "note": "An existing customer leaving; there is no retention label, so it lands in support."
+    },
+    {
+      "id": "lead-intent-026",
+      "text": "How soon can you deploy? We've decided to go with you. Signing this week if the SLA is OK.",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-027",
+      "text": "Does your tool integrate with Salesforce? We're looking at a few options for next year and want to compare features.",
+      "label": "researching",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-028",
+      "text": "We run a network of 300 accounting firms and would like to explore reselling your software as part of our package. Who handles reseller agreements?",
+      "label": "partnership",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-029",
+      "text": "Looking for references from companies with 500+ employees who migrated from legacy systems. Can you connect me?",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-030",
+      "text": "Hi, I'm a Python developer with 6 years of experience and would like to apply for any open engineering roles. My CV is attached.",
+      "label": "vendor-or-job-seeker",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-031",
+      "text": "Hi, do you have any customers in Brazil? We might expand there in 2027 and need a tool that handles Portuguese.",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-032",
+      "text": "I used your contact form because I couldn't find the support email. My login keeps failing.",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-033",
+      "text": "Our two companies share a lot of customers. A joint webinar on interoperability? We can host and handle registrations.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-034",
+      "text": "Greetings, I'm a notary and translator offering certified translations of your documents in 12 languages.",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-035",
+      "text": "We've been customers for 2 years and the new layout is awful. How do I switch back?",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-036",
+      "text": "Hi, just got your renewal reminder and want to double-check the amount before we pay. Can you confirm it's 1,188 for the year?",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A customer about to pay, which looks like buying but concerns an existing account."
+    },
+    {
+      "id": "lead-intent-037",
+      "text": "As a long-time user I'd like to report that the export to Excel has been broken since the update.",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-038",
+      "text": "Please reset my password. The reset email never comes.",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-039",
+      "text": "I need to update our billing address ahead of the next invoice. Where do I do that?",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-040",
+      "text": "Collab request! We're an influencer agency with 2M followers across clients; sponsor a video and we'll promote you.",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A paid promotion offer framed as a collaboration."
+    },
+    {
+      "id": "lead-intent-041",
+      "text": "Does your tool have a keyboard shortcut for bulk archive? I'm on the Business plan and can't find it in the docs.",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-042",
+      "text": "I'm a freelance designer and I'd love to do some work for you. Portfolio at portfolio.example.com/yasmin.",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-043",
+      "text": "Our CTO approved your solution after the security review. Please send the order form and DPA for signature.",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-044",
+      "text": "What's your uptime over the last 12 months? Asking for our vendor shortlist.",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-045",
+      "text": "How does your pricing compare with the competitors? I read your site but couldn't find the per-user rates.",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-046",
+      "text": "I'm writing a blog post comparing project tools. Can you answer a few questions about your roadmap?",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A journalist-style enquiry; not a buyer, not quite a partner."
+    },
+    {
+      "id": "lead-intent-047",
+      "text": "I'm comparing you with 2 others. Could we have a call sometime in the next month to see a demo?",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A demo request is a buying signal, yet no decision is near."
+    },
+    {
+      "id": "lead-intent-048",
+      "text": "We want to buy but need your SOC 2 report first. If it checks out, we'll sign this month.",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A compliance question (researching) attached to a firm purchase plan."
+    },
+    {
+      "id": "lead-intent-049",
+      "text": "Student club here. Looking for a technology partner to sponsor our hackathon with credits for participants.",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-050",
+      "text": "We would like to purchase the on-premise version. Can you share the licensing terms and a price for 200 users?",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-051",
+      "text": "I'm a graduate student researching tools like yours for my thesis on workflow automation. Is there any technical documentation you can share?",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-052",
+      "text": "I'm the owner of a three-location dental practice. Want to buy the scheduling tool for all three clinics starting January. What's the next step?",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-053",
+      "text": "Are you GDPR compliant? Our DPO asked me to gather answers from candidate suppliers.",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-054",
+      "text": "We provide offshore software development at $18/hour. Can I send our company profile and rates?",
+      "label": "vendor-or-job-seeker",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-055",
+      "text": "Hey, how do I add a second admin to our account? we're on the Team plan",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-056",
+      "text": "Hi, we trialled the product for two weeks and the ops team loves it. Budget approved. Who do I talk to about annual pricing and onboarding?",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-057",
+      "text": "I bought a license last week but haven't received the activation key. Order #77412.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-058",
+      "text": "I'd like to renew and expand our license from 20 to 35 users. Please prepare a quote.",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": true,
+      "note": "An existing customer, so support-not-sales is arguable, but the ask is a quote for more seats."
+    },
+    {
+      "id": "lead-intent-059",
+      "text": "Please send brochure.",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-060",
+      "text": "My coworker said you offer discounts for existing customers who refer someone. Is that true?",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A customer asking about a sales incentive."
+    },
+    {
+      "id": "lead-intent-061",
+      "text": "Hi, saw you are hiring a sales rep on LinkedIn. I'd love to bring my network of 100 hospitality contacts. Can we talk about a commission-only role?",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A job application with a partnership flavour."
+    },
+    {
+      "id": "lead-intent-062",
+      "text": "Hi, could you send me some case studies from the logistics industry? Just exploring at the moment, no timeline.",
+      "label": "researching",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-063",
+      "text": "Following the demo last week, we're moving ahead. Please send the contract. Our legal contact is Ines Varga.",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-064",
+      "text": "Is the service down right now? None of my team can connect.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-065",
+      "text": "Hello, I noticed your website could rank much better on Google. Our SEO team can get you to page 1 in 60 days. Interested?",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-066",
+      "text": "Looking for a part-time role, evenings only. I can do customer support or data entry. Resume available.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-067",
+      "text": "As a university lab, we'd like to collaborate on research using your anonymised datasets. Is there a research partnership program?",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-068",
+      "text": "Hello, we noticed your office printers are old. Our leasing plan could cut your costs by 30%. Who is the person responsible for purchasing?",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-069",
+      "text": "Looking to purchase a few seats for a pilot, 3 months only. Is that possible?",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A small, short pilot could be seen as evaluation rather than buying."
+    },
+    {
+      "id": "lead-intent-070",
+      "text": "Regional distributor for Southeast Asia here, 15 years in enterprise software. Seeking exclusive distribution rights for your product.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-071",
+      "text": "Our subscription renewed but the invoice shows the wrong company name. Please fix it, customer ID 33120.",
+      "label": "support-not-sales",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-072",
+      "text": "Our recruiting agency has strong candidates for your open roles. We only charge on a successful hire. Reply for CVs.",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-073",
+      "text": "We're ready to buy from you or from your competitor, whoever can give us the better price by Wednesday.",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Strong buying intent but still comparing vendors."
+    },
+    {
+      "id": "lead-intent-074",
+      "text": "We're a 40-person agency and want to roll out your platform to everyone next month. Can someone send a quote for 40 seats and an order form? — Maya Reinholt, Copperline Studio",
+      "label": "ready-to-buy",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-075",
+      "text": "Partnership proposal: we are a digital marketing agency and would like to be your partner by managing your social accounts at a special rate.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Uses the word partnership, but it is an agency selling its services."
+    },
+    {
+      "id": "lead-intent-076",
+      "text": "We sell business insurance for tech startups. Do you currently have cover for cyber liability? Could I send a quote?",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-077",
+      "text": "Your onboarding call was great. One thing, the Slack integration isn't posting. Who can look at it?",
+      "label": "support-not-sales",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-078",
+      "text": "Exclusive webinar for founders: how we helped 50 startups raise Series A. Register now. Hosted by Vantage Growth Partners.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-079",
+      "text": "Help! Our sync stopped working and the client demo is in an hour.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-080",
+      "text": "I can write blog posts for your company, 5 articles a month for $300. Would you like samples?",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-081",
+      "text": "We're early in the process, collecting information from maybe 5 vendors. What data residency options do you offer?",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-082",
+      "text": "Our company makes hardware sensors and your software would be a natural fit. Could we discuss bundling?",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-083",
+      "text": "Greetings from Guangzhou! We are manufacturer of LED displays, MOQ 100 pcs, factory price. Please check catalogue.",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-084",
+      "text": "Hi, we'd love to swap guest posts between our blogs, ours gets 40k visits/month.",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-085",
+      "text": "Hi, I'm from Brightkey, we build HR tools. A co-marketing partnership could work well for both our audiences. Open to a call?",
+      "label": "partnership",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-086",
+      "text": "Could you tell me what the difference is between your Pro and Business plans? The comparison table is confusing.",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-087",
+      "text": "can the app run offline? and does it support SSO? thanks",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-088",
+      "text": "Are you hiring a data analyst? I have a master's in statistics and 2 years at a bank.",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-089",
+      "text": "I'd like to be your partner for web development in the UK. We offer white-label services at wholesale rates.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Reseller-style language, but the sender wants to sell services to the company."
+    },
+    {
+      "id": "lead-intent-090",
+      "text": "Our procurement department requires a formal quotation and your W-9 before we can raise a PO for the Enterprise tier. Please advise on timing.",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-091",
+      "text": "I am not looking to buy anything, just trying to reach support about my current account. The ticket system won't let me submit.",
+      "label": "support-not-sales",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-092",
+      "text": "I lead partnerships at Tallis Pay. We'd like to be your preferred payment provider. Let's chat about revenue share.",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-093",
+      "text": "Hello, I'd like to order the starter hardware bundle (5 sensors + gateway) to ship to Dunedin. What's the lead time and shipping cost?",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-094",
+      "text": "Looking for a white-label deal. We have a user base of 80k in LatAm and would put your engine behind our brand.",
+      "label": "partnership",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-095",
+      "text": "Dear Sir/Madam, I am a final-year student looking for a summer internship in marketing. Kindly let me know of vacancies.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-096",
+      "text": "Buy now? I want 3 seats, can I just pay by card on the site or do I need to talk to someone",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-097",
+      "text": "We are exploring strategic partnerships for our lead generation service. We would manage your outreach and take a cut of closed deals. Can we set up a call?",
+      "label": "vendor-or-job-seeker",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A cold sales pitch dressed as a strategic partnership."
+    },
+    {
+      "id": "lead-intent-098",
+      "text": "Can I get a price for 5 licenses? Just checking whether it fits our budget before I take it to my boss.",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A price request with no decision yet; it could be early research."
+    },
+    {
+      "id": "lead-intent-099",
+      "text": "Hello, I watched your webinar. Interesting. How many customers have you got in healthcare?",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-100",
+      "text": "Do you have an API? What are the rate limits? Evaluating for a side project.",
+      "label": "researching",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-101",
+      "text": "We are an NGO with a small budget. Do you offer nonprofit pricing, or is it better we look elsewhere?",
+      "label": "researching",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-102",
+      "text": "We are a payroll software provider and would like to schedule a short call with your finance head to present our solution.",
+      "label": "vendor-or-job-seeker",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-103",
+      "text": "need 12 licenses asap. our old tool expires on the 30th. pls call me 555-0132",
+      "label": "ready-to-buy",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-104",
+      "text": "Upgrading from the free tier. We're hitting limits every day. What's the fastest way to switch to paid and add another 10 users?",
+      "label": "ready-to-buy",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "lead-intent-105",
+      "text": "Hi! Podcast host here. Would your CEO come on the show? We promote you and you promote us.",
+      "label": "partnership",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A promotional swap that sits between collaboration and a sales pitch for exposure."
+    }
+  ]
+}

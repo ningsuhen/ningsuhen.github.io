@@ -1,0 +1,221 @@
+{
+ "_about": "Keyword and regex baselines for the demos. Rules were written from the label definitions before the dev and test texts were read. The page runs them in the browser.",
+ "keyword": {
+  "email-triage": {
+   "reply-needed": [
+    "\\?",
+    "let me know",
+    "can you",
+    "could you",
+    "get back to me",
+    "your thoughts",
+    "reply",
+    "respond"
+   ],
+   "meeting-request": [
+    "meeting",
+    "\\bcall\\b",
+    "calendar",
+    "schedul",
+    "available",
+    "zoom",
+    "catch up",
+    "invite"
+   ],
+   "invoice-or-receipt": [
+    "invoice",
+    "receipt",
+    "payment",
+    "amount due",
+    "order #",
+    "\\btotal\\b",
+    "billed",
+    "\\bpaid\\b"
+   ],
+   "promo-or-newsletter": [
+    "unsubscribe",
+    "\\d+% off",
+    "\\bsale\\b",
+    "newsletter",
+    "\\boffer",
+    "this week",
+    "discount"
+   ],
+   "fyi-no-action": [
+    "\\bfyi\\b",
+    "for your information",
+    "no action",
+    "heads up",
+    "just letting you know",
+    "for the record"
+   ]
+  },
+  "ticket-routing": {
+   "billing": [
+    "charge",
+    "refund",
+    "invoice",
+    "billed",
+    "payment",
+    "\\bprice",
+    "credit card"
+   ],
+   "bug-report": [
+    "error",
+    "crash",
+    "broken",
+    "doesn'?t work",
+    "\\bbug\\b",
+    "\\bfails?\\b",
+    "stuck"
+   ],
+   "account-access": [
+    "password",
+    "log ?in",
+    "locked",
+    "2fa",
+    "reset",
+    "verification code"
+   ],
+   "how-to": [
+    "how do i",
+    "how can i",
+    "how to",
+    "where (do|can)",
+    "steps",
+    "\\bset up\\b"
+   ],
+   "feature-request": [
+    "would be great",
+    "\\bfeature",
+    "please add",
+    "\\bwish",
+    "would be nice",
+    "support for",
+    "option to"
+   ],
+   "cancellation": [
+    "cancel",
+    "close my account",
+    "delete my account",
+    "stop (my )?subscription",
+    "unsubscribe me"
+   ]
+  },
+  "document-type": {
+   "invoice": [
+    "invoice",
+    "bill to",
+    "amount due",
+    "due date",
+    "net ?\\d+",
+    "balance due"
+   ],
+   "receipt": [
+    "receipt",
+    "\\bpaid\\b",
+    "thank you for your purchase",
+    "payment received",
+    "card ending",
+    "change due"
+   ],
+   "purchase-order": [
+    "purchase order",
+    "\\bp\\.?o\\.?\\b",
+    "ship to",
+    "buyer",
+    "order number"
+   ],
+   "quote": [
+    "quot(e|ation)",
+    "estimate",
+    "valid (until|for|through)",
+    "proposal"
+   ],
+   "shipping-notice": [
+    "shipped",
+    "tracking",
+    "carrier",
+    "estimated delivery",
+    "dispatch",
+    "waybill",
+    "consignment"
+   ],
+   "other": [
+    "\\bdear\\b",
+    "agreement",
+    "statement",
+    "packing list",
+    "sincerely",
+    "hereby",
+    "regards"
+   ]
+  },
+  "lead-intent": {
+   "ready-to-buy": [
+    "pricing",
+    "\\bquote\\b",
+    "purchase",
+    "\\bbuy\\b",
+    "sign up",
+    "\\bdemo\\b",
+    "licen[cs]es",
+    "\\bseats\\b",
+    "ready to"
+   ],
+   "researching": [
+    "compar",
+    "evaluat",
+    "how does",
+    "considering",
+    "exploring",
+    "does it support",
+    "case study",
+    "looking into"
+   ],
+   "support-not-sales": [
+    "my account",
+    "not working",
+    "\\bissue",
+    "\\berror",
+    "password",
+    "our subscription",
+    "we'?re (already )?customers?",
+    "\\bcustomer since"
+   ],
+   "partnership": [
+    "partner",
+    "reseller",
+    "collaborat",
+    "co-?marketing",
+    "affiliate",
+    "joint"
+   ],
+   "vendor-or-job-seeker": [
+    "our services",
+    "we offer",
+    "hiring",
+    "resume",
+    "\\bcv\\b",
+    "position",
+    "\\bjob\\b",
+    "internship",
+    "\\bseo\\b",
+    "agency"
+   ]
+  }
+ },
+ "fallback": {
+  "email-triage": "fyi-no-action",
+  "ticket-routing": "how-to",
+  "document-type": "other",
+  "lead-intent": "researching"
+ },
+ "sensitive": {
+  "secret": "AKIA[0-9A-Z]{12,}|\\bsk-[A-Za-z0-9_-]{8,}|\\bghp_[A-Za-z0-9]{8,}|\\bxox[bpa]-[A-Za-z0-9-]{8,}|AIza[0-9A-Za-z_-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY|\\bglpat-[A-Za-z0-9_-]{8,}|\\bpk_live_|\\bsk_live_|eyJ[A-Za-z0-9_-]{10,}\\.",
+  "email": "[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+",
+  "phone": "(?<!\\d)(\\+?\\d{1,2}[\\s.-]?)?(\\(?\\d{3}\\)?[\\s.-]?)\\d{3}[\\s.-]?\\d{4}(?!\\d)|(?<!\\d)\\d{3}[\\s.-]\\d{4}(?!\\d)",
+  "ssn": "(?<!\\d)\\d{3}-\\d{2}-\\d{4}(?!\\d)",
+  "card": "(?<!\\d)(?:\\d[ -]?){13,19}(?!\\d)"
+ }
+}

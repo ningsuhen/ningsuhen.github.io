@@ -23,6 +23,11 @@ const FILE_TLDS = new Set(["png", "jpg", "jpeg", "webp", "gif", "svg", "css", "j
 // Vendored Pagefind bundles: contributor credits (emails) and the upstream CI build paths compiled
 // into its gzipped wasm runtime. Neither is the owner's data; the owner's build paths are never exempt.
 const VENDOR_DIR = /[\\/]pagefind[\\/]/;
+// BPE tokenizer data (vocab.json / merges.txt): `~/` is a literal BPE token, not a home path. The
+// home-tilde rule otherwise false-positives because the checker decodes files as latin1 (see below),
+// so the BPE `Ġ` space marker (UTF-8 C4 A0) decodes to a non-breaking space, which the rule's `\s`
+// lookbehind then matches on `Ġ~/`.
+const BPE_TOKENIZER = /\/tok\/(?:vocab\.json|merges\.txt)$/;
 
 /** Masks a value that must not be echoed into CI logs. */
 const redact = (s) => `${s.slice(0, 4)}...(${s.length} chars)`;
@@ -32,7 +37,7 @@ const RULES = [
 	{ id: "home-path", re: /\/Users\/[\w.-]+|\/home\/[a-z][\w.-]*\/|\b[A-Za-z]:\\+(?:Users|Documents)\b|file:\/\/\/?[A-Za-z]/g, docs: true, allow: (m, file) => /^\/(?:Users|home)\/runner\/?$/.test(m) && VENDOR_DIR.test(file), canary: "/Users/alice/git" },
 	// Compiler paths baked into Rust wasm (panic locations, registry sources): they name the builder's home and toolchain.
 	{ id: "build-path", re: /\/rustc\/[0-9a-f]{12,}|\.cargo\/registry|\.rustup\/toolchains/g, docs: true, allow: (_m, file) => VENDOR_DIR.test(file), canary: "/rustc/0123456789abcdef0123456789abcdef01234567/library/core" },
-	{ id: "home-tilde", re: /(?<=[\s"'`(=,>])~\/[\w.-]/g, docs: true, textOnly: true, canary: "open ~/git/app" },
+	{ id: "home-tilde", re: /(?<=[\s"'`(=,>])~\/[\w.-]/g, docs: true, textOnly: true, allow: (_m, file) => BPE_TOKENIZER.test(file), canary: "open ~/git/app" },
 	{ id: "worktree-path", re: /\.worktrees\b|\.claude\/(?:worktrees|projects)\b/g, docs: false, textOnly: true, canary: ".worktrees/task" },
 	{ id: "machine-name", re: /\bmac-?mini[\w-]*|\bmacmini\b/gi, docs: true, canary: "mac-mini" },
 	{ id: "internal-host", re: /\b\w+-[\w-]*\.(?:local|lan|corp|internal|ts\.net)\b(?!\.[a-z])|https?:\/\/[\w.-]+\.(?:local|lan|corp|internal|ts\.net)\b(?!\.[a-z])/gi, docs: true, textOnly: true, canary: "https://box.lan/x" },

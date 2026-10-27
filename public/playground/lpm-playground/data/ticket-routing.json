@@ -1,0 +1,863 @@
+{
+  "id": "ticket-routing",
+  "title": "Support ticket routing",
+  "instruction": "Route this customer support message to the one team that should handle it first.",
+  "labels": [
+    {
+      "id": "billing",
+      "name": "Billing",
+      "definition": "Questions or complaints about charges, invoices, refunds, prices, taxes or payment methods."
+    },
+    {
+      "id": "bug-report",
+      "name": "Bug report",
+      "definition": "Something in the product is broken, behaves wrongly or loses data."
+    },
+    {
+      "id": "account-access",
+      "name": "Account access",
+      "definition": "Trouble signing in, resetting credentials, verifying identity or managing who can access an account."
+    },
+    {
+      "id": "how-to",
+      "name": "How-to",
+      "definition": "The customer asks how to do something with features that already exist."
+    },
+    {
+      "id": "feature-request",
+      "name": "Feature request",
+      "definition": "The customer asks for something the product does not do yet, or suggests an improvement."
+    },
+    {
+      "id": "cancellation",
+      "name": "Cancellation",
+      "definition": "The customer wants to cancel a plan, close an account or stop being charged because they are leaving."
+    }
+  ],
+  "business_rules": [
+    "Any message labelled cancellation always goes to a human retention agent, whatever the model's confidence.",
+    "Low-confidence predictions go to the general queue instead of a team queue."
+  ],
+  "items": [
+    {
+      "id": "ticket-routing-001",
+      "text": "Need to import 300 customers from CSV. What columns does the template need?",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-002",
+      "text": "We'd love an API endpoint to list all users in a workspace. Right now we scrape the admin page.",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-003",
+      "text": "Report totals don't match between the summary page and the CSV export. Summary says 1,204, CSV has 1,198 rows.",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-004",
+      "text": "Wish list: webhooks on task completion, custom statuses, and a read-only share link.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-005",
+      "text": "When I drag a card between columns it jumps back to the original column after a second. Reproducible every time on Firefox.",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-006",
+      "text": "What's the difference between a Viewer and a Commenter role? And which one should I give our interns?",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-007",
+      "text": "My colleague left the company and we need to take over her admin rights. She's unreachable.",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-008",
+      "text": "After the update the dashboard charts are blank. Console says TypeError: cannot read properties of undefined. Chrome 126 on Windows.",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-009",
+      "text": "It would be nice to have email-to-task so I can forward stuff straight into a project.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-010",
+      "text": "I'd like tags to be color coded. Is there a way?",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A question about an existing capability, or a request for one."
+    },
+    {
+      "id": "ticket-routing-011",
+      "text": "I never signed up for the Plus add-on and it's showing up on my statement for $9. Remove it and refund please.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-012",
+      "text": "Support for multiple currencies in invoices would be a big help for our international clients.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-013",
+      "text": "I want to cancel unless you fix this double charge.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A conditional cancellation threat, but the fix asked for is a billing correction."
+    },
+    {
+      "id": "ticket-routing-014",
+      "text": "Hi, the Forgot password button does nothing when I click it.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "The goal is account recovery (account-access) but the stated problem is a dead button."
+    },
+    {
+      "id": "ticket-routing-015",
+      "text": "Getting session expired every time I try to open my account page, in a loop.",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-016",
+      "text": "The calendar view should let us color events by assignee. That would help our scheduling a lot.",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-017",
+      "text": "Hello, I have a new phone number and cannot receive the SMS code on the old one. Need to update it.",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-018",
+      "text": "Any plans to support SAML single sign-on on the Team plan? It's a blocker for our security review.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-019",
+      "text": "Why did my bill go up from $19 to $29 this month? Nobody told me about a price change.",
+      "label": "billing",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-020",
+      "text": "Hello, kindly cancel order and subscription 88213-B. Thank you for your service over the years.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-021",
+      "text": "Can you integrate with Notion? We keep our docs there and copying links is tedious.",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-022",
+      "text": "Your PDF invoice shows the logo overlapping the address block. Looks broken on print.",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-023",
+      "text": "Could the app remember my last used view instead of resetting to List every time?",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Could be read as a bug (state not saved) or a preference feature."
+    },
+    {
+      "id": "ticket-routing-024",
+      "text": "Can you add keyboard shortcuts for moving tasks between columns? I live on my keyboard.",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-025",
+      "text": "Please send me a receipt for last month's payment for my expense claim. Thanks.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-026",
+      "text": "Two accounts with the same email, can you merge them? I can log in to one but all my data is in the other.",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-027",
+      "text": "Is it possible to use the product offline on a flight and sync later?",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "If offline mode exists this is a how-to; if not it is a feature request. The customer cannot tell either."
+    },
+    {
+      "id": "ticket-routing-028",
+      "text": "I can't find where to download the mobile app for my Android tablet. Is it in the Play Store?",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-029",
+      "text": "Is sales tax supposed to be added to the team plan? I'm in Oregon and was charged 6% extra.",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-030",
+      "text": "my login works on laptop but on my phone it says account not found",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-031",
+      "text": "Does the Zapier integration let me create a task from an email? What are the steps?",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-032",
+      "text": "Clicking the date picker in Safari opens it off-screen so I can't select a date.",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-033",
+      "text": "Can't sign in with SSO since our IT changed identity provider yesterday. Error: SAML assertion invalid.",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "An error message makes it look like a bug, but the fix is an access and configuration matter."
+    },
+    {
+      "id": "ticket-routing-034",
+      "text": "Password reset link expired before I could click it. Sent three already and each one dies instantly.",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-035",
+      "text": "How do you restore a deleted page? I removed one by accident.",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-036",
+      "text": "Emails from your system are going out with the wrong date format, showing 31/12/2024 as 12/31/2024 even though my locale is UK.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-037",
+      "text": "I can't log in. It says my password is wrong but I just reset it an hour ago.",
+      "label": "account-access",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-038",
+      "text": "Do you accept purchase orders or bank transfer instead of card? Our finance team doesn't allow cards.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-039",
+      "text": "I keep getting access denied on the reports tab even though I'm an admin. Used to work last week.",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Could be a permissions problem or a regression bug."
+    },
+    {
+      "id": "ticket-routing-040",
+      "text": "Add a confirm dialog before deleting a project. I just wiped one by mistake.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A missing safeguard: feature request, though the customer lost data."
+    },
+    {
+      "id": "ticket-routing-041",
+      "text": "Unsubscribe me from the paid plan, the team doesn't use it any more. Keep the free account open.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-042",
+      "text": "I'm trying to set up recurring tasks that repeat every second Tuesday. Can that be done and how?",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-043",
+      "text": "I updated my credit card yesterday but the system still tries the old one and emails me about failed payment.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-044",
+      "text": "Please remove my access to the Finance workspace, I moved departments.",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-045",
+      "text": "How can I share a report with someone who doesn't have an account?",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-046",
+      "text": "An undo for bulk edits please. I changed 300 items to the wrong status and there's no going back.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-047",
+      "text": "How do I delete my account? I don't want any emails or my data kept.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Phrased as a how-to, but the intent is to leave."
+    },
+    {
+      "id": "ticket-routing-048",
+      "text": "Account locked after too many attempts. Please unlock, I have a client meeting in 20 min!!!",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-049",
+      "text": "Hi, I need a copy of the March invoice with our VAT number on it, the one you sent has the wrong company name. Company is Birchfield Ltd.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-050",
+      "text": "We are not renewing our annual plan next month. Who do I tell and what is the notice period?",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-051",
+      "text": "Quick question: how do I filter by custom fields? The docs seem out of date.",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-052",
+      "text": "Please downgrade me to free. Actually no, just cancel everything.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-053",
+      "text": "It would be nice if the Save button actually saved things. Right now it shows the green tick but nothing is stored.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Phrased as a wish; it is clearly a bug in existing behaviour."
+    },
+    {
+      "id": "ticket-routing-054",
+      "text": "Uploading a file larger than 5MB just hangs at 99%. No error. Tried 3 browsers.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-055",
+      "text": "I lost my phone and can't get the 2FA codes. How do I get back into my account?",
+      "label": "account-access",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-056",
+      "text": "Hi, I need to change the email on my account from jsmith@example.com to john.smith@example.org because I left that company.",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-057",
+      "text": "Would love to see time tracking built in rather than using a separate tool.",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-058",
+      "text": "My card expired and now I can't log in because the account says suspended for non-payment. Help.",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Login is blocked, but the cause and fix are about payment."
+    },
+    {
+      "id": "ticket-routing-059",
+      "text": "Please add dark mode to the mobile app. My eyes hurt at night.",
+      "label": "feature-request",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-060",
+      "text": "How do I bulk delete old tasks? I have like 2000 of them.",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-061",
+      "text": "dark mode makes the text in the table headers invisible, white on white",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-062",
+      "text": "Is there a way to duplicate a project along with its templates? I want to reuse our setup for a new client.",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-063",
+      "text": "can u tell me how to change the language of the interface to Spanish",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-064",
+      "text": "You charged me $49 and the export feature has been broken since Monday. I want the money back for the days it didn't work.",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Billing anger plus a bug; the money is the demand, so billing first, but bug-report is arguable."
+    },
+    {
+      "id": "ticket-routing-065",
+      "text": "Where do I find the setting to turn off email notifications for comments?",
+      "label": "how-to",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-066",
+      "text": "We got an invoice for 25 seats but only 20 people use the product. Can you correct it before our accounts team pays it?",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-067",
+      "text": "Typing in the comment box is super laggy when there are more than 50 comments.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-068",
+      "text": "How do I add a new team member to our workspace and give them view-only access?",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Managing permissions is account-access, but the phrasing is a plain how-to."
+    },
+    {
+      "id": "ticket-routing-069",
+      "text": "I signed up with Google but now it asks me for a password I never set.",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-070",
+      "text": "Charged in euros but my account is set to USD, so my bank added a foreign fee. Can you bill in dollars?",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-071",
+      "text": "I think someone else logged in to my account. I got an alert from a city I've never been to. Please lock it and help me regain control.",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-072",
+      "text": "Please cancel my subscription effective immediately. I no longer need the service.",
+      "label": "cancellation",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-073",
+      "text": "I'd like to stop my membership after this billing period ends, not immediately.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-074",
+      "text": "A bit rude to say but your search is useless. Add filters by date and author or I'm switching to a competitor.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Angry and threatens to leave, but what is actually asked for is a feature."
+    },
+    {
+      "id": "ticket-routing-075",
+      "text": "Our company is shutting down at the end of the month so please stop the subscription and issue a final invoice.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-076",
+      "text": "The app crashes every time I tap Export to PDF. Happens on my iPhone 13, version 4.2.1.",
+      "label": "bug-report",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-077",
+      "text": "Please refund my last payment and close everything down. I was charged after I had already stopped using it.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A refund (billing) and a closure in one message."
+    },
+    {
+      "id": "ticket-routing-078",
+      "text": "the verification email never arrives. checked spam. tried 4 times.",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-079",
+      "text": "cancel it. too expensive. please dont charge me again",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-080",
+      "text": "Search returns no results for anything with an apostrophe in it. Searching O'Brien gives nothing but OBrien works.",
+      "label": "bug-report",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-081",
+      "text": "I was charged twice for my October subscription. Please refund the duplicate payment.",
+      "label": "billing",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-082",
+      "text": "I am cancelling because of repeated outages this quarter. Please process and confirm by email.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-083",
+      "text": "Hi, I signed up for the free trial by mistake. Please make sure it doesn't convert to paid and cancel it.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-084",
+      "text": "How do I export my contacts to a spreadsheet?",
+      "label": "how-to",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-085",
+      "text": "Reading the new terms I don't agree with them. Deactivate my account.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-086",
+      "text": "I don't remember which email I used to register. Could you look up my account by my name, Teresa Quinn?",
+      "label": "account-access",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-087",
+      "text": "I've been trying to find the cancel button for 20 minutes. Why is it hidden? Cancel my plan now.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-088",
+      "text": "I suggest adding a Gantt chart. All your competitors have it and I'd move my team over tomorrow.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-089",
+      "text": "Sync is duplicating my calendar events. Every event now shows up twice since Tuesday.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-090",
+      "text": "Can I schedule a report to land in my inbox every Monday morning? Where is that setting?",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-091",
+      "text": "I want to close my account and delete all my data. Please confirm when it's done.",
+      "label": "cancellation",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-092",
+      "text": "It would be great to have a way to export reports as PDF directly, not just CSV.",
+      "label": "feature-request",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-093",
+      "text": "Hello support, I would like to know the steps to connect the calendar to my Outlook account. Thank you in advance.",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-094",
+      "text": "the mobile app logs me out every few minutes, really annoying",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A broken session could be a bug or an account-access problem; the symptom suggests a bug."
+    },
+    {
+      "id": "ticket-routing-095",
+      "text": "The API returns 500 on POST /v2/orders when the notes field contains an emoji. Works fine without it. Request id req_FAKE9981.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-096",
+      "text": "After 3 years we have decided to move to a different platform. Please terminate our contract and send the data export.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-097",
+      "text": "I'll cancel if the price goes up again. Just letting you know.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A conditional warning, not an actual cancellation request."
+    },
+    {
+      "id": "ticket-routing-098",
+      "text": "Can I switch from monthly to annual billing mid-cycle and get credit for the unused days?",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-099",
+      "text": "The invite link my admin sent says expired. Can you send another one to this address?",
+      "label": "account-access",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-100",
+      "text": "How do I cancel a single scheduled post without cancelling the whole subscription?",
+      "label": "how-to",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Uses the word cancel twice but asks how to use a feature; it keeps the subscription."
+    },
+    {
+      "id": "ticket-routing-101",
+      "text": "Hello. A coupon code SPRING20 was in your email but the checkout says it is invalid. I want the discount applied to my invoice.",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-102",
+      "text": "How do I set my working hours so teammates stop pinging me at night?",
+      "label": "how-to",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-103",
+      "text": "My husband passed away last month and he was the account holder. Please cancel his subscription and stop the payments.",
+      "label": "cancellation",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-104",
+      "text": "Please make the font size adjustable in the editor. Right now it is tiny on my 4K monitor.",
+      "label": "feature-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-105",
+      "text": "THIRD TIME asking about the refund for order 5521. It's been 3 weeks. Where is my money",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-106",
+      "text": "Pause my subscription for 3 months, I'm traveling. If you can't pause, cancel.",
+      "label": "cancellation",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A pause request with a cancellation fallback; the pause is a billing question."
+    },
+    {
+      "id": "ticket-routing-107",
+      "text": "Since upgrading to Pro I can't see my invoices page, it just spins. I need the invoice for my accountant by Friday.",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A broken page (bug) whose purpose is getting an invoice (billing)."
+    },
+    {
+      "id": "ticket-routing-108",
+      "text": "Notifications arrive 3 hours late. Time zone issue? My phone is set to Pacific.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-109",
+      "text": "Autosave overwrote my document with an older version. I lost two hours of work. This is a serious bug.",
+      "label": "bug-report",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-110",
+      "text": "I wish the app would stop freezing when I open large projects. Would be great if it didn't take 40 seconds to load.",
+      "label": "bug-report",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Phrased as a wish, but it describes a defect (freezing), not a new feature."
+    },
+    {
+      "id": "ticket-routing-111",
+      "text": "Does the product have a Slack integration? If not, please consider adding one.",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Starts as a how-to question and ends as a request."
+    },
+    {
+      "id": "ticket-routing-112",
+      "text": "my card was declined but the money still left my account??? two days now. sort this out",
+      "label": "billing",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-113",
+      "text": "Trial ended and I was billed even though I never entered a plan. How?",
+      "label": "billing",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "ticket-routing-114",
+      "text": "feature idea: a way to pin a few projects to the top of the sidebar",
+      "label": "feature-request",
+      "split": "dev",
+      "ambiguous": false
+    }
+  ]
+}
