@@ -1056,11 +1056,13 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
    covers the bare anchors some pages use (no .rd-cite class). */
 .rd-cite, a[href^="#ref"] { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }
 /* rd-chip status variants: a tinted background + a matching border turn the colour-only
-   --good/--warn/--bad/--neutral variants (frozen core) into proper status badges. The tint is a
-   light mix of the status colour over the card ground, so a badge reads as "filled with this
-   status" in both themes; the border uses the same colour at higher alpha. A Lucide .rd-icon in
-   the chip inherits the status colour. Two extra states: --running (accent, in progress) and
-   --pending (dashed, muted, not started or unknown). Every colour is a --rd-* token.
+   --good/--warn/--bad variants (frozen core) into proper status badges. The tint is a light mix
+   of the status colour over the card ground, so a badge reads as "filled with this status" in
+   both themes; the border uses the same colour at higher alpha. A Lucide .rd-icon in the chip
+   inherits the status colour. Two extra states: --running (accent, in progress) and --pending
+   (dashed, muted, not started or unknown). --neutral is deliberately NOT restyled: it is the
+   plain default chip (muted text, no fill), so a page that already uses --neutral renders
+   byte-identical to the frozen core. Every colour is a --rd-* token.
    Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
 
 .rd-chip--good {
@@ -1079,10 +1081,6 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: color-mix(in srgb, var(--rd-bad) 45%, var(--rd-text-strong));
 	background: color-mix(in srgb, var(--rd-bad) 12%, var(--rd-card-bg));
 	border: 1px solid color-mix(in srgb, var(--rd-bad) 40%, transparent);
-}
-.rd-chip--neutral {
-	background: var(--rd-card-bg);
-	border: 1px solid var(--rd-line);
 }
 .rd-chip--running {
 	color: var(--rd-accent-ink);

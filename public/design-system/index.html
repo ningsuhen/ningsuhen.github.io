@@ -355,7 +355,7 @@
 <p>Components for data-heavy reports and live dashboards: a headline conclusion, verdict cards, status badges, a filter toolbar, labelled bar rows, and table row states. All read the density tokens and the <code>--rd-*</code> colours, so they follow the theme and density switches.</p>
 
 <h3>Status chips</h3>
-<p>The status variants of <code>.rd-chip</code> are tinted badges, not just coloured text: a light fill of the status colour plus a matching border. A Lucide icon in the chip takes the status colour. <code>--running</code> is in-progress (accent); <code>--pending</code> is not-started or unknown (dashed, muted).</p>
+<p>The status variants of <code>.rd-chip</code> are tinted badges, not just coloured text: a light fill of the status colour plus a matching border. A Lucide icon in the chip takes the status colour. <code>--running</code> is in-progress (accent); <code>--pending</code> is not-started or unknown (dashed, muted). <code>--neutral</code> stays the plain default chip (muted text, no fill) for "no status / baseline" rows.</p>
 <div class="rd-card">
 <p><span class="rd-chip rd-chip--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg>complete</span> <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>partial</span> <span class="rd-chip rd-chip--bad"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-x"/></svg>failed</span> <span class="rd-chip rd-chip--running"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"/></svg>running</span> <span class="rd-chip rd-chip--pending"><svg class="rd-icon" aria-hidden="true"><use href="#i-clock"/></svg>pending</span> <span class="rd-chip rd-chip--neutral">baseline</span></p>
 </div>
