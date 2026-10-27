@@ -1,0 +1,793 @@
+{
+  "id": "email-triage",
+  "title": "Email triage",
+  "instruction": "Sort this email into the one folder where it belongs.",
+  "labels": [
+    {
+      "id": "reply-needed",
+      "name": "Reply needed",
+      "definition": "The sender asks a question or makes a request that expects an answer or action from the reader."
+    },
+    {
+      "id": "meeting-request",
+      "name": "Meeting request",
+      "definition": "The email proposes, schedules, reschedules or invites the reader to a meeting, call or appointment."
+    },
+    {
+      "id": "invoice-or-receipt",
+      "name": "Invoice or receipt",
+      "definition": "A bill, payment reminder, receipt, order confirmation or other record of money owed or paid."
+    },
+    {
+      "id": "promo-or-newsletter",
+      "name": "Promo or newsletter",
+      "definition": "Bulk marketing, sales offers, cold outreach or a regular newsletter sent to many people."
+    },
+    {
+      "id": "fyi-no-action",
+      "name": "FYI, no action",
+      "definition": "Information, thanks, status or notices that the reader can simply read and leave."
+    }
+  ],
+  "business_rules": [
+    "The model only sorts into folders. Code never deletes, archives or auto-replies to any email, whatever the label.",
+    "Low-confidence predictions go to a 'Needs a look' folder for a human instead of a label folder."
+  ],
+  "items": [
+    {
+      "id": "email-triage-001",
+      "text": "Hi Alex, we noticed you left something in your cart! Complete your order in the next 24 hours and get free shipping.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-002",
+      "text": "Your receipt from Tarn Coffee Roasters\n\nOrder #20931\n2 x Ethiopia Guji 250g  $28.00\nShipping $4.50\nTotal paid $32.50\nPaid with Visa ending 4242 on Oct 3.",
+      "label": "invoice-or-receipt",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-003",
+      "text": "Hi Mei, the vendor needs a PO number before they will ship. Can you send it over today? I'll forward it on once I have it.",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-004",
+      "text": "Hi team, anyone have the login for the shared analytics account? Mine got reset and I can't get in. Thanks in advance!",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-005",
+      "text": "Congrats on the launch!! Great work, everyone. Beer's on me Friday.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-006",
+      "text": "Donation receipt: Thank you for your gift of $50 to Riverside Library Friends. No goods or services were provided in exchange. Tax ID 00-0000000.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-007",
+      "text": "hey are you still ok to take over the onboarding doc? let me know by tmrw, otherwise ill ask Marcus. cheers, Tom",
+      "label": "reply-needed",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-008",
+      "text": "Webinar: Scaling Postgres in 2026, Nov 12 at 11am ET. Register free: events.example.com/pg26. Hosted by Tidewater Data.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A webinar invitation sent to a mailing list; it resembles a meeting invite but is marketing."
+    },
+    {
+      "id": "email-triage-009",
+      "text": "How much is your team losing to manual data entry? Hint: more than you think. Download our free calculator.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-010",
+      "text": "Tonight's recipe of the week: mushroom barley soup. Reply to this email if you try it, we love photos!",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-011",
+      "text": "Hi, I'm Rohan from Zephyrus Analytics. We help mid-size retailers cut returns by 18%. Open to a quick intro?",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A cold outreach with a question; it looks personal and could be treated as reply-needed, but it is unsolicited sales."
+    },
+    {
+      "id": "email-triage-012",
+      "text": "Explore the new Autumn Collection: jackets, knits and boots. Free returns for 60 days.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-013",
+      "text": "Mr. Delacroix,\n\nWe have reviewed your request for a refund of the deposit. To process this, please provide your booking reference and the account the original payment was made from.",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-014",
+      "text": "Your colleague Zane has invited you to a shared calendar event called Offsite prep. Open the invite to respond.",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-015",
+      "text": "Join 12,000 founders reading The Bootstrapper. This week: why your churn number lies to you. Plus a job board and a meme.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-016",
+      "text": "Your October Product Update: new dashboard filters, faster exports and a dark mode that actually works. Details inside.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-017",
+      "text": "Dear customer, your parking fine notice no. 3391 for 60.00 is enclosed. Pay within 14 days to avoid a late fee.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-018",
+      "text": "Your gym membership payment of $39.99 failed. Update your card to keep your access.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": true,
+      "note": "About a payment, but the real purpose is a request for action on the reader's card details."
+    },
+    {
+      "id": "email-triage-019",
+      "text": "hey can u do a call at 5?? need to sort the cabling thing before the site visit",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-020",
+      "text": "Subject: Demo request follow-up\n\nHi Marta, thanks for filling in the form. When would be a good time for a 45-minute walkthrough? Our engineer can join on Mon or Wed.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-021",
+      "text": "Congratulations! You've been selected to win a $500 gift card. Click here to claim before it expires.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-022",
+      "text": "Purchase receipt: app subscription Habitly Pro, 1 year, $29.99, charged to your account on Oct 11.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-023",
+      "text": "New on the blog: 7 mistakes everyone makes when migrating to the cloud. Read the full article.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-024",
+      "text": "We'd like to schedule your final-round interview. Please pick a slot from the link below: cal.example.com/interviews/4412. Slots fill quickly.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-025",
+      "text": "bill for the plumbers work 340 cash paid, receipt pic attached sorry for blurry",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-026",
+      "text": "URGENT!!! WHERE IS THE REPORT?? The client has been waiting since Tuesday. Reply NOW.",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-027",
+      "text": "Hi Carlos,\n\nCould we find 30 minutes next week to go over the roadmap? I'm free Tuesday after 2 or Thursday morning. Let me know what works.\n\nBest,\nAmira",
+      "label": "meeting-request",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-028",
+      "text": "FLASH SALE: 40% off all running shoes until midnight! Use code RUN40 at checkout. Shop now. Unsubscribe | View in browser",
+      "label": "promo-or-newsletter",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-029",
+      "text": "Zoom: Product review. Time: Nov 3, 2:00 PM Pacific. Join: https://zoom.example.com/j/555010199. Passcode: 4821",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-030",
+      "text": "Hi all, FYI the office will be closed Monday for the public holiday. Back to normal on Tuesday. Enjoy the long weekend! — Facilities",
+      "label": "fyi-no-action",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-031",
+      "text": "Please join us for the retirement party for Harold on Dec 5 at 4pm in the atrium. Cake and speeches.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A social event invitation rather than a work meeting; could be filed as fyi-no-action or a promo."
+    },
+    {
+      "id": "email-triage-032",
+      "text": "Thanks for your payment! We've received $79.00 for your annual plan renewal. A copy of the receipt is attached for your records.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-033",
+      "text": "Thanks for attending last month's conference! Slides and recordings are now available. We hope to see you next year.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Reads like a personal thank-you or fyi, but it is a mass mailing to all attendees that promotes next year's event."
+    },
+    {
+      "id": "email-triage-034",
+      "text": "Quarterly all-hands recording is now available at the intranet link. Slides attached.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-035",
+      "text": "Refund issued: $45.00 has been returned to your card ending 0017 for order 88213. Allow 5-10 business days.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-036",
+      "text": "Hi, here's the receipt for the domain renewal: example-hosting.test, 2 years, $24.00 total. Keep this email for your records.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-037",
+      "text": "Hi, attached is invoice #118 for the May website work (24 hours @ €65). Bank details at the bottom. Cheers, Ilse",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-038",
+      "text": "Order confirmation #A-77310. Items: 1 x standing desk frame, 1 x desktop 140cm. Subtotal 389.00 EUR, VAT incl. We'll email when it ships.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-039",
+      "text": "Statement ready: your October electricity bill of $112.37 is due Nov 20. View or pay online at the usual portal.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-040",
+      "text": "Ok thanks, got it.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-041",
+      "text": "Hi, following up on invoice 4471 ($1,280). Not paid yet. Is there an issue with it? Please let me know either way. Invoice attached again.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A payment chase with the invoice attached; it ends with a question, so reply-needed is arguable."
+    },
+    {
+      "id": "email-triage-042",
+      "text": "Heads-up: the build pipeline will be slow tonight while we migrate runners. Nothing to do on your side.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-043",
+      "text": "Hi Anil, I'm putting together the offsite agenda. What topics do you want covered in your slot? Two bullets is fine. Need it by end of day Thursday.",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-044",
+      "text": "Updated invitation: Design crit moved from Thu 3pm to Fri 11am. Same room.",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-045",
+      "text": "hi! would love to hop on a quick call to hear how you're handling vendor onboarding. 15 mins? Thurs or Fri? - Beth from Lumora",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-046",
+      "text": "We should really catch up sometime. It's been ages!",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Suggests a meeting but gives no time, place or ask; a person might read it as small talk needing a reply."
+    },
+    {
+      "id": "email-triage-047",
+      "text": "Agenda attached for Thursday's call. Please bring last month's numbers. Dial-in below. Passcode 5502.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-048",
+      "text": "Are we still doing lunch on Thursday? Or is Lena's meeting going to run over again?",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A social plan phrased as a question; could be read as a meeting request, but no time or invite is proposed."
+    },
+    {
+      "id": "email-triage-049",
+      "text": "WEEKEND ONLY: buy one get one free on all candles. Ends Sunday. Terms apply.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-050",
+      "text": "Dear neighbour, the committee is collecting views on the new parking permits. Do you support the proposed £40 annual fee? Please reply to this email with your preference by the 12th. Regards, Maple Court Residents Association",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-051",
+      "text": "Dear Professor Yildiz,\n\nI would be grateful for an appointment during your office hours to discuss my thesis proposal. I am available any weekday after 1 pm.\n\nSincerely,\nDaniel Ortiz",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-052",
+      "text": "Hi Sam, I've attached the revised statement of work. Please review and send back your signature or comments. We can't start until it's signed. Thx, Giulia",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-053",
+      "text": "Proposal: lunch with the board liaison on the 9th at Café Rosso, 12:30. Does that suit? If not, suggest alternatives.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-054",
+      "text": "Team, the staging server was rebooted at 14:10 and is back up. No action needed unless you see odd behaviour.",
+      "label": "fyi-no-action",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-055",
+      "text": "Your ride with Skyline Cabs. Total: $18.40. Tip: $3.00. Paid by card. Thanks for riding.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-056",
+      "text": "Subject: Quick question on the Q3 deck\n\nHi,\n\nSlide 14 shows revenue of 4.2M but the appendix says 4.6M. Which one is right? Need to fix before the board pre-read goes out at 5.\n\nRajiv",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-057",
+      "text": "Subscription renewal notice: your plan renews on Nov 8 for $12.00/month. No action needed unless you want to change your plan. - Billing team",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A renewal notice records money about to be charged but asks for nothing; it could be filed as fyi-no-action."
+    },
+    {
+      "id": "email-triage-058",
+      "text": "Just checking in on the thing we discussed. No pressure.",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Vague nudge: it implies the sender wants an update but never says what it is about."
+    },
+    {
+      "id": "email-triage-059",
+      "text": "Can we do Monday instead? My flight got moved.",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-060",
+      "text": "Credit note CN-0041 for $120 issued against invoice INV-3310 (returned goods). Balance now $0.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-061",
+      "text": "Weather alert for Saturday: heavy rain expected in the valley. The charity run goes ahead as planned.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-062",
+      "text": "Invitation: Weekly sync @ Wed 10:00-10:30 (CET). Organizer: Jonas Weiss. Join with Meet: meet.example.com/abc-defg. Going? Yes - Maybe - No",
+      "label": "meeting-request",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-063",
+      "text": "Re: Catering for Friday\n\nSounds good but how many vegetarian meals should I order? Last time we ran short. Also is the budget still 300?\n\n> On Mon, Karl wrote:\n> We'll have about 25 people, order whatever's easiest.\n\n— Lena",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-064",
+      "text": "Payment reminder: Invoice 55012 for CAD 3,200.00 is due in 5 days. Pay via the link: pay.example.com/55012",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-065",
+      "text": "Thanks so much for your help with the move. It all went smoothly. Really appreciate it!",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A thank-you note; it implies no reply, but some people would send a short 'glad to help'."
+    },
+    {
+      "id": "email-triage-066",
+      "text": "FYI - Dana has joined the platform team starting today. Say hi!",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-067",
+      "text": "Black Friday starts early at Hartley & Sons. Doorbusters from 7am, free coffee for the first 100 customers. See you in store.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-068",
+      "text": "I'm out of office until Nov 4 with limited email access. For anything urgent please contact Lars at lars@example.com.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-069",
+      "text": "Subject: Re: Re: Re: apartment viewing\n\nthe landlord says saturday is out. do you want to try sunday morning or just skip it?",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-070",
+      "text": "Library news: new opening hours from November, book sale on the 9th, and our author talk series returns. Pick up a copy of the newsletter at the desk.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-071",
+      "text": "Invoice INV-2207 from Kestrel Print Ltd\nAmount due: £540.00\nDue date: 15 November\nPlease find the invoice attached. Payment details are on the PDF.\nThanks, Accounts",
+      "label": "invoice-or-receipt",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-072",
+      "text": "Your package has been delivered and left at the front porch. Photo attached.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-073",
+      "text": "Hi, quick one. Our new hire starts Monday. Do we need to order a laptop through IT or is there a spare one? Please advise. Joy",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-074",
+      "text": "Hi Dana,\n\nCan you confirm whether the Henderson contract needs legal review before Friday? I need a yes or no so I can tell the client.\n\nThanks,\nPriya",
+      "label": "reply-needed",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-075",
+      "text": "The vendor confirmed the delivery is on track for the 12th. Will update only if that changes.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-076",
+      "text": "Forwarding the customer's note below for context. Dealt with already.\n\n> The new filter is great, thanks!\n> — Hannah, Greenfield Co.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-077",
+      "text": "Tax invoice 2024/0173. Supplier: Nordvik Marine AS. Net 8 400 NOK, MVA 25% 2 100, total 10 500 NOK. Ref: Gunnar H.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-078",
+      "text": "sorry, forgot to cc you. see below. no need to do anything just keeping you in the loop\n\n> Can we extend the deadline to the 30th?\n> Sure. Done.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-079",
+      "text": "Hotel folio, Riverbend Inn. Guest: M. Rao. 3 nights @ 140.00, city tax 9.00, total 429.00 USD. Settled by card.",
+      "label": "invoice-or-receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-080",
+      "text": "Security notice: we noticed a login to your account from a new device in Lisbon. If this was you, no action is needed.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Informational unless the login was not the reader's, in which case action is needed."
+    },
+    {
+      "id": "email-triage-081",
+      "text": "Reminder: Dentist appointment tomorrow at 9:15 AM with Dr. Lindgren. Please arrive 10 minutes early. To reschedule call the front desk.",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "An automated appointment reminder; it concerns a meeting but asks for nothing unless the reader wants to change it."
+    },
+    {
+      "id": "email-triage-082",
+      "text": "Dear valued member, as a thank you for your loyalty enjoy double points on all purchases this weekend.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-083",
+      "text": "Meeting cancelled: Budget review (Thu 2pm). Will reschedule once Pooja is back.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A cancellation concerns a meeting but asks nothing of the reader."
+    },
+    {
+      "id": "email-triage-084",
+      "text": "Want to write better emails? Of course you do. This week's issue covers subject lines, tone and the one-line sign-off.",
+      "label": "promo-or-newsletter",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A newsletter built around a rhetorical question and a direct address to the reader."
+    },
+    {
+      "id": "email-triage-085",
+      "text": "The Tidewater Weekly, Issue 212\n\nThis week: a profile of the tide-pool researchers, three recipes for squash, and our reader mailbag. Read on. You're receiving this because you subscribed. Unsubscribe anytime.",
+      "label": "promo-or-newsletter",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-086",
+      "text": "Hey stranger, coffee when you're in town? I'm around 3rd–6th. Free any time that week.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-087",
+      "text": "Can we move tomorrow's 1:1 to 4pm? I have a clash with the dentist.",
+      "label": "meeting-request",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-088",
+      "text": "Looks fine to me. Ship it.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": true,
+      "note": "It is an answer to an earlier request, so it needs no reply, yet a sender may expect an acknowledgement."
+    },
+    {
+      "id": "email-triage-089",
+      "text": "Update to the shared drive structure: the Old projects folder is now read-only. Files are untouched.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-090",
+      "text": "ok so i looked at the logs and its not the cache. do you want me to roll back the release or wait for you? i'll hold off till you reply\n\nSent from my phone",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-091",
+      "text": "FINAL NOTICE: Invoice 3098 from Ashgrove Cleaning is 45 days past due. Total outstanding: $860.00. Pay today to avoid collections.",
+      "label": "invoice-or-receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-092",
+      "text": "Still thinking about a new laptop? Our experts rounded up the best picks under $800. Which one is right for you? Find out.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A bulk promo that asks a rhetorical question; a skimming reader might think it wants an answer."
+    },
+    {
+      "id": "email-triage-093",
+      "text": "Morning! Did you get a chance to look at the draft I sent last week? Not rushing you, but I'd love your notes before I send it to the editor. Even a couple of lines helps.",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-094",
+      "text": "ur free trial ends in 3 days — upgrade to Pro today and save 25% on your first year. dont miss out!!",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-095",
+      "text": "Notes from yesterday's standup are in the wiki. Nothing blocking. - Ravi",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-096",
+      "text": "Hey, saw your note about the broken link on the pricing page. Which browser were you using? Can't reproduce it on my side. - Nadia",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-097",
+      "text": "Reminder (automated): your library book Tidal Mechanics is due Oct 31. Renew online if you need more time.",
+      "label": "fyi-no-action",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "An automated reminder with an optional action; could be filed as reply-needed or invoice-or-receipt (fines)."
+    },
+    {
+      "id": "email-triage-098",
+      "text": "Hi, following up on invoice 4471 from Corvane Supplies. We haven't received payment and I'm not sure why. Can you tell me when to expect it? If there's a problem with the PO, let me know and I'll sort it out.",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A vendor chasing an unpaid invoice; it could be filed as invoice-or-receipt, but it asks direct questions that need an answer."
+    },
+    {
+      "id": "email-triage-099",
+      "text": "All, the quarterly planning workshop is booked for Nov 14, 9-4, Room Cedar. Please accept the invite and block your calendars. Lunch provided.",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-100",
+      "text": "Parent-teacher conferences open for booking. Please reserve a 15-minute slot with Ms. Abara at the link. Booking closes Friday.",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-101",
+      "text": "Hello, I represent Halden Labs. Our CTO would like to set up an introductory conversation with your team about the integration. Could you suggest three time windows in the next fortnight?",
+      "label": "meeting-request",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-102",
+      "text": "Expense report ER-2044 approved. $286.15 will be reimbursed with the next payroll.",
+      "label": "fyi-no-action",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A money-related confirmation; invoice-or-receipt is arguable, but it records a status rather than a bill or receipt."
+    },
+    {
+      "id": "email-triage-103",
+      "text": "Hello Ms. Okafor,\n\nThank you for your application. Before we proceed, could you please send us two references and your earliest start date? We would appreciate a response by Wednesday.\n\nKind regards,\nHelen Marsh\nPeople Team, Brightwater Logistics",
+      "label": "reply-needed",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-104",
+      "text": "From the school office: Please confirm by return email that Oscar will be attending the field trip on the 18th and let us know of any allergies we should be aware of.",
+      "label": "reply-needed",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "email-triage-105",
+      "text": "Reminder: your loyalty points expire at the end of the month. Redeem them on anything in store or online.",
+      "label": "promo-or-newsletter",
+      "split": "test",
+      "ambiguous": false
+    }
+  ]
+}

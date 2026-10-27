@@ -1,0 +1,103 @@
+{
+ "_about": "Prompt per demo: label text style and the dataset's solved examples (all of them). Style chosen by dev-split accuracy only; the test split was never used to choose. See .tmp tuning output; accuracy per style on dev is recorded in `dev`.",
+ "email-triage": {
+  "style": "both",
+  "fewshotIds": [
+   "email-triage-002",
+   "email-triage-007",
+   "email-triage-027",
+   "email-triage-028",
+   "email-triage-030",
+   "email-triage-054",
+   "email-triage-062",
+   "email-triage-071",
+   "email-triage-074",
+   "email-triage-085"
+  ],
+  "dev": {
+   "both": 0.66,
+   "definition": 0.532,
+   "name": 0.489
+  }
+ },
+ "ticket-routing": {
+  "style": "both",
+  "fewshotIds": [
+   "ticket-routing-019",
+   "ticket-routing-037",
+   "ticket-routing-055",
+   "ticket-routing-059",
+   "ticket-routing-065",
+   "ticket-routing-072",
+   "ticket-routing-076",
+   "ticket-routing-080",
+   "ticket-routing-081",
+   "ticket-routing-084",
+   "ticket-routing-091",
+   "ticket-routing-092"
+  ],
+  "dev": {
+   "both": 0.647,
+   "definition": 0.608,
+   "name": 0.608
+  }
+ },
+ "document-type": {
+  "style": "both",
+  "fewshotIds": [
+   "document-type-019",
+   "document-type-037",
+   "document-type-055",
+   "document-type-059",
+   "document-type-065",
+   "document-type-072",
+   "document-type-076",
+   "document-type-080",
+   "document-type-081",
+   "document-type-084",
+   "document-type-091",
+   "document-type-092"
+  ],
+  "dev": {
+   "both": 0.902,
+   "definition": 0.804,
+   "name": 0.725
+  }
+ },
+ "lead-intent": {
+  "style": "definition",
+  "fewshotIds": [
+   "lead-intent-002",
+   "lead-intent-007",
+   "lead-intent-027",
+   "lead-intent-028",
+   "lead-intent-030",
+   "lead-intent-054",
+   "lead-intent-062",
+   "lead-intent-071",
+   "lead-intent-074",
+   "lead-intent-085"
+  ],
+  "dev": {
+   "both": 0.489,
+   "definition": 0.596,
+   "name": 0.447
+  }
+ },
+ "sensitive-text-gate": {
+  "style": "name",
+  "fewshotIds": [
+   "sensitive-text-gate-007",
+   "sensitive-text-gate-021",
+   "sensitive-text-gate-035",
+   "sensitive-text-gate-073",
+   "sensitive-text-gate-083",
+   "sensitive-text-gate-091"
+  ],
+  "dev": {
+   "both": 0.593,
+   "definition": 0.574,
+   "name": 0.611
+  }
+ }
+}

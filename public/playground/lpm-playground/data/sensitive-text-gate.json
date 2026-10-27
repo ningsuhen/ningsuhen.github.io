@@ -1,0 +1,843 @@
+{
+ "id": "sensitive-text-gate",
+ "title": "Sensitive text gate",
+ "instruction": "Check whether this text is safe to paste into a cloud assistant: clean, personal data about a real-looking person, or a secret or credential.",
+ "labels": [
+  {
+   "id": "clean",
+   "name": "Clean",
+   "definition": "Ordinary work text with no personal details about a person and no secrets, even if it contains names of products or companies, ticket or order numbers, versions, dates, prices or example.com placeholders."
+  },
+  {
+   "id": "personal-data",
+   "name": "Personal data",
+   "definition": "Real-looking personal details about an individual, such as names with birth dates, home addresses, personal phone numbers or emails, health or financial account details."
+  },
+  {
+   "id": "secret-or-credential",
+   "name": "Secret or credential",
+   "definition": "API keys, access tokens, passwords, private keys, connection strings with passwords or other values that grant access."
+  }
+ ],
+ "business_rules": [
+  "Fail closed: the text is sent to the cloud assistant only when the model says clean with high confidence; anything else (personal-data, secret-or-credential, or low confidence) is blocked and the user is told why.",
+  "This is a speed bump to catch accidents, not a compliance control, and it must never be described as one."
+ ],
+ "items": [
+  {
+   "id": "sensitive-text-gate-001",
+   "text": "He was arrested last year, his name is Colin Mercer, lives at 40 Beech Rd, and that is why he can't get the job. Write the rejection email.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-002",
+   "text": "Could you check my .npmrc? //registry.example.com/:_authToken=npm_FAKEtokenEXAMPLE0123456789abcdef",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-003",
+   "text": "Lead: Alex Moreno, 34, Manchester, wants a quote for home insurance. Write a short follow-up.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": true,
+   "note": "Name, age and city only; not enough to locate someone, yet more than anonymous."
+  },
+  {
+   "id": "sensitive-text-gate-004",
+   "text": "Customer Priya Raman called, 555-0177, wants to change her delivery address to 9 Orchard Close, Bath BA1 2XX. Draft the confirmation.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-005",
+   "text": "In a public interview the CEO of Fernbrook Holdings said revenue grew 14% to $82 million in FY2025. Summarise the key points for our board pack.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Names a person and figures, but only public statements."
+  },
+  {
+   "id": "sensitive-text-gate-006",
+   "text": "Tracking number 1Z999AA10123456784 shows delivered, but the customer says it never arrived. What should we ask the courier?",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-007",
+   "text": "Why does this fail to connect? postgres://admin:S3cretPassw0rd-FAKE\u0040db.example.com:5432/orders",
+   "label": "secret-or-credential",
+   "split": "fewshot",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-008",
+   "text": "Slack bot token \u0078oxb-EXAMPLE-FAKE-EXAMPLEtokenvalue1234 is in our .env. Can you write a script that posts a daily summary?",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-009",
+   "text": "Mongo: mongodb+srv://svc_reports:EXAMPLEpass123\u0040cluster0.example.net/prod?retryWrites=true. Why is the query slow?",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-010",
+   "text": "Driver's licence D1234-56789-FAKE for Marta Kowalska, DOB 1985-07-30, expires 2029. Check if she can be added as a driver.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-011",
+   "text": "Check this regex for validating emails: ^[\\w.+-]+@example\\.com$. Does it match john\u0040example.com and reject john\u0040other.com?",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-012",
+   "text": "Customer complaint from Hilary Banks, account 5530-1182-77, who says her husband's medication was delayed. Draft a sympathetic reply.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-013",
+   "text": "Release 4.12.0-rc.3 is tagged. Changelog: fixed pagination bug (#2291), bumped lib to 2.8.1-beta. Write the release notes in plain English.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-014",
+   "text": "Here's our Google Maps key AIzaSyEXAMPLE-fake-key, can you tell me how to restrict it?",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-015",
+   "text": "The office Wi-Fi is called Redwood-Guest and the password is on the whiteboard in room 4. Write a welcome sheet for visitors.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Mentions a Wi-Fi password but does not contain it."
+  },
+  {
+   "id": "sensitive-text-gate-016",
+   "text": "Linda Qureshi, credit score 612, two missed payments, address 33 Poplar St. Draft a letter offering a payment plan.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-017",
+   "text": "OPENAI_API_KEY=\u0073k-proj-FAKEexample0123456789ABCDEFGHIJKLMNOP. I keep getting rate limited, help debug.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-018",
+   "text": "DATABASE_URL=mysql://root:hunter2-EXAMPLE@192.0.2.5:3306/app. The migration is failing, any idea?",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-019",
+   "text": "Jira: PROJ-1042 blocked by PROJ-1038. Summarise the dependency chain for the standup.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-020",
+   "text": "The token bucket allows 100 requests per minute with a burst of 20. Explain rate limiting to a non-technical manager.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-021",
+   "text": "Draft a polite email asking the vendor to move the delivery from Tuesday to Thursday because the warehouse is closed for stocktake.",
+   "label": "clean",
+   "split": "fewshot",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-022",
+   "text": "Date of the audit is 03/04/2026 (UK format, 3 April). Write a reminder for the team using an unambiguous date format.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-023",
+   "text": "Our SLA is 99.95% uptime, which is about 22 minutes of downtime per month. Write a customer-friendly explanation.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-024",
+   "text": "Help me write a retrospective for the sprint: we shipped search filters, missed the export feature, and had two production incidents.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-025",
+   "text": "Draft a message thanking Dr. Okafor's team for the workshop. Keep it general, don't mention any patients.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-026",
+   "text": "Quick note: the interviewee, Marcus Hale, mentioned he is going through a divorce and was treated for depression in 2022. Include this in the assessment?",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": true,
+   "note": "Clearly personal, but the writer may be asking whether to include it, which some would treat as neutral HR advice."
+  },
+  {
+   "id": "sensitive-text-gate-027",
+   "text": "Account for Priya Raman: username praman, password Violet-Rain-FAKE-1. Reset it for her and email her the steps.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": true,
+   "note": "Includes a named person and a password; the password is what makes it dangerous."
+  },
+  {
+   "id": "sensitive-text-gate-028",
+   "text": "Ticket SUP-48213 is still open. Customer says the order 7731-4402 arrived damaged. Please draft an apology and offer a replacement.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-029",
+   "text": "From the signup list: kofi.mensah\u0040example.com, ama.boateng\u0040example.com, yaw.owusu\u0040example.org. Send them each a personalised welcome.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-030",
+   "text": "Her account number is 00123456 and sort code 20-00-00. Help me draft a letter disputing the overdraft fee on behalf of Ms. Elena Voss.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-031",
+   "text": "Draft a note to everyone: the supplier contact is Sarah at sarah\u0040acme-supplies.example.com for any delivery questions.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": true,
+   "note": "A named business contact; some would treat any named email as personal data."
+  },
+  {
+   "id": "sensitive-text-gate-032",
+   "text": "Call transcript: 'Hi this is Rebecca Thorne, my date of birth is 3rd of May 1982 and my address is 7 Quarry Hill, Stroud.' Summarise the request.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-033",
+   "text": "Our secret sauce is the onboarding flow, not the tech. Help me write a pitch paragraph that explains this without sounding vague.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-034",
+   "text": "Employee file: Daniel Kessler, SSN 987-65-4321, hired 2019, salary 64,000. Summarise his performance review notes.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-035",
+   "text": "Patient Tomas Whitfield, DOB 02/09/1971, is being treated for type 2 diabetes. Help me write a follow-up letter to him at tomas.whitfield\u0040example.com.",
+   "label": "personal-data",
+   "split": "fewshot",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-036",
+   "text": "Here's my full name Oliver James Fenwick, born 9/9/1990, home 12 Cedar Avenue. Write a cover letter for me.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-037",
+   "text": "Salary bands for L4 are 70-90k and for L5 95-120k per the public careers page. Draft a message explaining the bands to candidates.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-038",
+   "text": "Student record: Jamal Brooks, grade 8, IEP for dyslexia, parents' phone 555-0151. Draft the meeting notes for the support team.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-039",
+   "text": "Insurance claim: policy holder Olusegun Adeyemi, DOB 22/12/1968, knee surgery on 3 Oct at St. Anne's, cost 8,400. Summarise for the adjuster.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-040",
+   "text": "Use this token for the API calls: ghp_EXAMPLE_not_a_real_token_000000. It's the deploy bot's personal access token.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-041",
+   "text": "Lena's diagnosis came back: early-stage breast cancer. She hasn't told her manager. How should I support her at work?",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": true,
+   "note": "Only a first name appears, but it is a sensitive health detail about an identifiable colleague."
+  },
+  {
+   "id": "sensitive-text-gate-042",
+   "text": "SSH into the box with ubuntu / P@ssw0rd!EXAMPLE and restart nginx; I can't do it today.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-043",
+   "text": "Twilio auth token: FAKE0123456789abcdef0123456789ab, SID ACFAKE0123456789abcdef0123456789ab. Write the SMS sending function.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-044",
+   "text": "UUID for the test fixture is 123e4567-e89b-12d3-a456-426614174000 (the standard example). Why does my parser reject it?",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-045",
+   "text": "Brainstorm ten names for an internal hackathon about reducing meeting time.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-046",
+   "text": "Terraform var: client_secret = \"8Q~FAKE.EXAMPLE.secret-value-1234567\". Is it OK to keep it in the repo?",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-047",
+   "text": "Please add to the CRM: Ingrid Solheim, ingrid.solheim\u0040example.com, +47 555 01 62, 14 Fjord Gate, Bergen.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-048",
+   "text": "My neighbour Greg Falconer at 18 Harbour View said his bank account 12345678 was hacked. Help me write him a note.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-049",
+   "text": "export GITHUB_TOKEN=ghp_EXAMPLE_example_EXAMPLE_example_01 && ./release.sh. Paste this into the runbook.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-050",
+   "text": "Card on file ending 4242 is the Stripe-style test card in the sandbox. Write a test case that uses a declined test card instead.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": true,
+   "note": "Contains a card-like number, but it is the well-known test number."
+  },
+  {
+   "id": "sensitive-text-gate-051",
+   "text": "Rewrite this paragraph so it's less formal: 'The committee has resolved to postpone the review pending further consultation.'",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-052",
+   "text": "Signing secret for webhooks: whsec_FAKEexampleSIGNINGsecret0123456789. The signature check keeps failing.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-053",
+   "text": "Birthday list: Ana (12 Jan), Pedro (3 Mar), Luis (18 Jul). Make a reminder calendar.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Names with birth days but no year or surname; low risk, so clean is arguable."
+  },
+  {
+   "id": "sensitive-text-gate-054",
+   "text": "Login for the vendor portal: user ops-team, password Winter2025!FAKE. Pls log in and download the March statements.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-055",
+   "text": "Password policy draft: minimum 12 characters, one number, one symbol, no reuse of the last 5. Review it against common guidance.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-056",
+   "text": "The conference is in Lisbon, 12-14 Nov 2025, booth 22B. Draft a packing checklist for the sales team.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-057",
+   "text": "Tenant list: Flat 1 - R. Banerjee (555-0165), Flat 2 - M. Alvarez (555-0166, on disability benefit), Flat 3 - empty. Write a rent reminder.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-058",
+   "text": "Summarise this GP note: Mrs. Joan Pritchard, 78, history of hypertension and recent fall, lives alone at 3 Mill Lane. Daughter Clare is next of kin, 555-0130.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-059",
+   "text": "Draft an out-of-office reply that says I'm back on 3 Nov and points to the shared inbox support\u0040example.com.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-060",
+   "text": "Support line on the website is 555-0123 (placeholder, the real number goes live in November). Rewrite the contact page to be friendlier.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": true,
+   "note": "A phone number is present, but it is the company's placeholder line, not a person's."
+  },
+  {
+   "id": "sensitive-text-gate-062",
+   "text": "Customer Birchfield Ltd placed order #A-9981 on 2025-10-03 for 120 units at £4.20 each. Summarise this for the weekly sales report.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-063",
+   "text": "Send the results to ahmed.rahman\u0040example.com. He tested positive and is isolating at 21 Canal St, flat 4.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-064",
+   "text": "Our price list: Starter $29/mo, Team $99/mo, Business $249/mo. Compare with a competitor at $0.012 per API call and tell me when ours is cheaper.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-065",
+   "text": "SSN 987-65-4322 for Ravi Patel, please enter it into the tax form on his behalf.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-066",
+   "text": "Server fleet: web-01 through web-12 on 192.0.2.0/24, DB on 192.0.2.50. Suggest a naming scheme for new nodes.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-067",
+   "text": "Draft a reference letter for Hannah Lindqvist (born 1999-04-18, student ID 20-4471). She lives at Kungsgatan 12, Uppsala.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-068",
+   "text": "Translate to Spanish: 'The meeting is moved to 3pm. Please bring the printed reports.'",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-069",
+   "text": "IBAN format example from the docs: GB82 WEST 1234 5698 7654 32. Write a validation function in Python.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-070",
+   "text": "Our internal wiki is at wiki.corp.test and the staging site is staging.corp.test. Write an onboarding paragraph that lists both.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": true,
+   "note": "Internal hostnames may be sensitive to some firms, but they hold no credential or personal data."
+  },
+  {
+   "id": "sensitive-text-gate-071",
+   "text": "Meeting notes: the Berlin office reorganisation will affect around 40 roles. Keep this confidential. Make a short summary.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Confidential business information, but neither personal data about a named person nor a secret."
+  },
+  {
+   "id": "sensitive-text-gate-072",
+   "text": "The invoice reference is INV-2025-000731 and the PO is 4500012345. Draft a reminder asking Accounts Payable for the payment date.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-073",
+   "text": "Please update the HR record for Margaret Oyelaran, born 14 March 1987, living at 52 Larch Street, Springfield. Her new phone is 555-0142.",
+   "label": "personal-data",
+   "split": "fewshot",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-074",
+   "text": "my sendgrid key is SG.FAKEkeyEXAMPLE.abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG, emails are bouncing, check?",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-075",
+   "text": "Our recovery codes for the admin account: 4F2A-9B1C-EXAMPLE, 7D3E-0A5F-FAKE, 1C8B-6E4D-EXAMPLE. Store them somewhere nice.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Recovery codes are not a classic key or password, but they grant account access."
+  },
+  {
+   "id": "sensitive-text-gate-076",
+   "text": "Name: Beatrice Okoye. Phone: 555-0199. Next of kin: Emeka Okoye (husband). Allergies: penicillin. Prepare her admission checklist.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-077",
+   "text": "Okta API token 00FAKE-EXAMPLE-token-abcdefghijklmnopqrstuvwxyz0123. Can you list inactive users using it?",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-078",
+   "text": "git log shows commit 9f2c1ab by the build bot. Explain what the message 'chore: bump deps' means for the release.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-079",
+   "text": "stripe key for prod: sk_live_EXAMPLE_not_a_real_key. Please add it to the checkout service config.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-080",
+   "text": "Here's the sample JWT from the docs: \u0065yJhbGciOiJIUzI1NiJ9.e30.FAKE-SIGNATURE. What do the three parts mean?",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Looks like a live token but it is a documentation sample with an empty payload."
+  },
+  {
+   "id": "sensitive-text-gate-081",
+   "text": "The session cookie: sessionid=FAKE7f3a9c2b1e8d4f6a0b5c3d7e9f1a2b4c; it's my admin session, can you replay the request?",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-082",
+   "text": "The file is report_2025-Q3_v2.1.4_final.xlsx, 4.2 MB, last modified 2025-10-14. Suggest a better naming convention.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-083",
+   "text": "Can you summarise the main differences between the Q3 and Q4 marketing plans? Focus on budget allocation and channel mix.",
+   "label": "clean",
+   "split": "fewshot",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-084",
+   "text": "pin for the safe is 4821, alarm code 7733-FAKE. Make a shift handover note, mention not to share.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "Physical access codes rather than digital credentials, but still secrets that grant access."
+  },
+  {
+   "id": "sensitive-text-gate-085",
+   "text": "azure storage: DefaultEndpointsProtocol=https;AccountName=fakeacct;AccountKey=EXAMPLEKEY/FAKE0123456789abcdefghijklmnopqrstuvwxyz==;EndpointSuffix=core.windows.net",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-086",
+   "text": "Passport number X1234567 (FAKE), nationality Canadian, holder Victor Nakamura, DOB 1990-11-02. Fill in the visa form.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-087",
+   "text": "The root password for the NAS is 'Banana-Split-EXAMPLE' and the encryption key is in the next line: 3f9a...FAKE. Back it up.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-088",
+   "text": "Resume attached: Aisha Karim, 14 Birch Rd, Leeds LS6 1AA, mobile 555-0113, DOB 5 June 1994. Tailor it for the analyst role.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-089",
+   "text": "heres the new password for the shared mailbox: Autumn#Leaves-FAKE-77 dont tell anyone lol",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-091",
+   "text": "Here's my config, can you find why it fails? AWS_ACCESS_KEY_ID=\u0041KIAIOSFODNN7EXAMPLE AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+   "label": "secret-or-credential",
+   "split": "fewshot",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-092",
+   "text": "Error: ECONNREFUSED 127.0.0.1\u003a5432 when starting the app locally. What does it usually mean?",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-093",
+   "text": "Contact: Dr. Samira Haddad, psychiatrist, patients Wed 2pm. Her personal mobile is 555-0188.",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-094",
+   "text": "In docker-compose I have MYSQL_ROOT_PASSWORD=Tiger-Lily-FAKE-99 and REDIS_PASSWORD=EXAMPLEredis. Tidy the file.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-095",
+   "text": "Photo ID scan: name Zoltan Varga, DOB 1976-02-14, ID no 123456AB (fake), address 2 Fenyő utca, Budapest.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-096",
+   "text": "Payroll export: Chen Wei, bank 98765432, tax code 1257L; Sofia Rossi, bank 87654321, tax code 1257L. Why are the totals off?",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-097",
+   "text": "Coupon SPRING20 gives 20% off orders over $50. Write a short SMS reminder under 160 characters.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-098",
+   "text": "In the README we set API_KEY=your-api-key-here as the placeholder. Rewrite the setup section so it's clearer for new joiners.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-099",
+   "text": "VPN pre-shared key: correct-horse-battery-FAKE-staple. Please format these setup instructions for the new starters.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-100",
+   "text": "my encryption passphrase is 'purple elephant dances at midnight FAKE'. Use it to write the gpg command.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-101",
+   "text": "Explain the difference between a left join and an inner join with a small example using customers and orders tables.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-102",
+   "text": "Visa 4242 4242 4242 4242, exp 09/28, CVV 123, cardholder Samuel Ortega. Process the refund for order 7731.",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-103",
+   "text": "The employee, Ms. Tanya Brooks, is pregnant (due in March) and asked to keep it private. How do I plan her cover?",
+   "label": "personal-data",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-104",
+   "text": "Please send the placeholder config to the team: SMTP_USER=user\u0040example.com, SMTP_HOST=smtp.example.com. We'll fill in the real values later.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-105",
+   "text": "Mortgage application: borrower Fatima Zahra, income 54k, outstanding loan 212,000, current address 5 Willow Court. Is the debt ratio OK?",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-106",
+   "text": "Bearer \u0065yJhbGciOiJIUzI1NiJ9.\u0065yJzdWIiOiJGQUtFIn0.FAKEsignatureEXAMPLE. This JWT is from production. Decode it and tell me when it expires.",
+   "label": "secret-or-credential",
+   "split": "test",
+   "ambiguous": true,
+   "note": "A JWT may be a public sample or a live token; the writer says it is from production."
+  },
+  {
+   "id": "sensitive-text-gate-107",
+   "text": "my wifi password is Sunflower!2024-FAKE and the router admin login is admin / Tr0ub4dor&3-EXAMPLE, set up the guest network for me",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-108",
+   "text": "Meeting with Northwind Traders on 14/03/2026 at 10:30 to discuss the 2026 contract renewal. Write a short agenda.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-109",
+   "text": "Heroku API key: 01234567-89ab-cdef-0123-EXAMPLE456789. Add it to the CI.",
+   "label": "secret-or-credential",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-110",
+   "text": "Our flagship product Hexagon Pro 3 and the Hexagon Lite are being rebranded. Write a one-paragraph announcement for the Orbitel partner newsletter.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-111",
+   "text": "Version string looks off: v2.0.0-alpha+build.5514. Is that valid semver?",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-112",
+   "text": "Summarise the Q3 numbers: 1,204 tickets, 87% resolved in 24h, CSAT 4.6, average handle time 7m42s.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-113",
+   "text": "Hi, can you check this SQL? SELECT name, total FROM orders WHERE total > 1000 ORDER BY total DESC; It runs slow on 2M rows.",
+   "label": "clean",
+   "split": "dev",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-115",
+   "text": "What's a good structure for a 30-minute onboarding talk for new engineers? We have 12 people joining in January.",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-116",
+   "text": "For the demo, use the dummy email jane.doe\u0040example.org and phone 555-0100 as shown in the mockup. Does the form validation accept both?",
+   "label": "clean",
+   "split": "test",
+   "ambiguous": false
+  },
+  {
+   "id": "sensitive-text-gate-117",
+   "text": "Review text to moderate: 'Dr. Lim at Harbour Clinic fixed my back, call 555-0120 if you want a reference.'",
+   "label": "personal-data",
+   "split": "dev",
+   "ambiguous": true,
+   "note": "A public review with a doctor's name and a reviewer's phone number; the reviewer volunteered it."
+  }
+ ]
+}

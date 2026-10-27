@@ -1,0 +1,864 @@
+{
+  "id": "document-type",
+  "title": "Document type sorter",
+  "instruction": "Say what type of business document this pasted or scanned text is.",
+  "labels": [
+    {
+      "id": "invoice",
+      "name": "Invoice",
+      "definition": "A bill from a seller asking the buyer to pay an amount by a due date."
+    },
+    {
+      "id": "receipt",
+      "name": "Receipt",
+      "definition": "Proof that a payment has already been made, such as a till slip or payment confirmation."
+    },
+    {
+      "id": "purchase-order",
+      "name": "Purchase order",
+      "definition": "A buyer's order to a supplier listing what they want to purchase, often with a PO number and delivery details."
+    },
+    {
+      "id": "quote",
+      "name": "Quote",
+      "definition": "A seller's price offer or estimate for goods or services that is valid for a limited time and not yet accepted."
+    },
+    {
+      "id": "shipping-notice",
+      "name": "Shipping notice",
+      "definition": "A notice that goods have been dispatched, are in transit or have been delivered, usually with tracking or carrier details."
+    },
+    {
+      "id": "other",
+      "name": "Other",
+      "definition": "Any other document, such as letters, contracts, statements, packing lists that are not shipping notices, agendas or certificates."
+    }
+  ],
+  "business_rules": [
+    "The model only picks the document type. It never reads, extracts or checks any amount, date or total in the text.",
+    "Low-confidence predictions go to a manual-sort pile instead of a type folder."
+  ],
+  "items": [
+    {
+      "id": "document-type-001",
+      "text": "Quotation No 2025-77 | Item: LED floodlight 50W | Qty 20 | Unit 31.50 | Line total 630.00 | Valid until: 15/12/2025 | Prepared by: Sales, Lumina Wholesale",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-002",
+      "text": "Out for delivery today: 1 package from Tarn Coffee Roasters. Driver is 6 stops away. Tracking: TR882019 .",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-003",
+      "text": "Payment confirmation (not an invoice): your annual dues of $60 have been paid in full. Next renewal Jan 2027.",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-004",
+      "text": "Delivery Note DN-2290: Goods dispatched to Maple St shop: 12 cases olive oil, 4 cases vinegar. Driver: Paolo. Please check items on receipt and sign.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-005",
+      "text": "T0TAL  $64.18   AMEX ***1005   APPR CODE 04412A   Thank you, please come again   Wlcm Fuel Stop 18",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-006",
+      "text": "Q U O T E   N o .  0 3 1 2   Cust: Seaside Boats   Antifoul + polish 8m hull   est. 1,150.00 +VAT   Valid 21 days",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-007",
+      "text": "BESTELLUNG Nr. B-8812. Wir bestellen hiermit bei Ihnen: 20 Bürostühle Modell Ergo-2 zum Stückpreis von 189,00 EUR. Lieferung bis KW 47. Einkauf, Hartmann GmbH",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-008",
+      "text": "CAFE ROSSO  Tbl 7\n1 cappuccino 3.20\n1 croissant 2.80\nSERVICE 0.60\nTOTAL EUR 6.60\nCASH 10.00\nCHANGE 3.40\nGrazie!",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-009",
+      "text": "ENVÍO: Su pedido #7710 salió hoy. Transportista: ExpresoSur. Seguimiento 2201 0099. Entrega estimada: 3 a 5 días hábiles.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-010",
+      "text": "We are pleased to offer you the sedan for $12,900 as discussed. Offer expires Friday 5pm.",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A sales offer in letter form."
+    },
+    {
+      "id": "document-type-011",
+      "text": "Invoice IN-205 for Project Delta, milestone 2 (of 4): $12,500.00. Remit to Greywell Studio LLC. Reference MS2-DELTA. Due 30 days.",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-012",
+      "text": "heads up ur parcel is coming tmrw between 10 and 2. courier will text. ref 883-12",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-013",
+      "text": "Invoice 5503 (PAID). Total 250.00. Received with thanks 14/05.",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "An invoice stamped paid works as a receipt too."
+    },
+    {
+      "id": "document-type-014",
+      "text": "Receipt: monthly rent October, 1,100.00 received by bank transfer on 1 Oct. Landlord: B. Haddad. Property: Flat 3, 22 Mill Street.",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-015",
+      "text": "Order no 1182 / Beställning\nLeverantör: Fjord Pack AB\nKartonger 40x30x20, 2000 st\nÖnskad leverans 15 dec\nAnsvarig: Elin Berg",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-016",
+      "text": "Package arrived at local sorting facility. Next step: out for delivery. Tracking JT-0031-FAKE. Weight 2.3 kg. Origin: Busan, KR.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-017",
+      "text": "PO Date: 2025-07-19\nPO Number: 1002-X\nBill To: Accounts Payable, Kestrel Maritime\nShip To: Berth 4 Stores\nLine 1: Rope 24mm 100m x 5 @ 310.00\nTotal: 1,550.00 EUR",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-018",
+      "text": "Dispatch note. Your parcel left our warehouse today (Mon). Courier: SwiftPost. Consignment no. SP00918822. Delivery usually within 2 working days. Sign on receipt.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-019",
+      "text": "TAX INVOICE\nInvoice No: 5532\nCustomer: Harbor View Dental\nConsulting services, September: 14 hrs x $120 = $1,680.00\nBalance due: $1,680.00\nTerms: Net 30",
+      "label": "invoice",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-020",
+      "text": "Insurance certificate: Policy HX-FAKE-2210, holder Orchard Care Ltd, cover Public liability up to 2,000,000. Valid 01/01/2025 – 31/12/2025.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-021",
+      "text": "TRACKING UPDATE - 03/11 07:40: Departed Memphis hub. 03/11 19:15: Arrived Chicago hub. Delivery expected 05/11 by end of day.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-022",
+      "text": "HARDWARE DEPOT\nSKU 11902 Wood screws 100pk 6.99\nSKU 55120 Drill bit set 18.99\nSubtotal 25.98\nVAT 20% 5.20 incl.\nPaid CONTACTLESS 25.98\n14/09/25 16:03",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-023",
+      "text": "Customs hold: shipment 7761 is held at port of entry pending duties payment of CAD 42.10. Pay online to release for delivery.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "About a shipment, but it demands a payment like a bill."
+    },
+    {
+      "id": "document-type-024",
+      "text": "DELIVERY ATTEMPT FAILED. We tried to deliver parcel 5530-1182 at 14:05 but nobody was home. Redelivery scheduled tomorrow between 9-13. Or collect from Depot 6.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-025",
+      "text": "Statement of services, NOT a receipt. Invoice no. 3-2208. Translation EN>FR 4,300 words @ 0.11 CHF = 473.00 CHF. Payment due 30 days from date of invoice.",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-026",
+      "text": "Hi — attaching our PO. Please ship 12 cases of olive oil to the Maple St shop. PO # 2290. Thanks, Stefano",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-027",
+      "text": "Bid for tender T-2209: supply and installation of 12 desks, total 14,400. Price held for 60 days.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A tender bid is a formal offer; some would file it as other."
+    },
+    {
+      "id": "document-type-028",
+      "text": "Estimate only. Car repair: replace alternator 380, belt 45, labour 2h 110. Approx 535. Final price may vary after inspection. Valid 7 days.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-029",
+      "text": "Invoice 7710 – Dunmore Roofing\nRe: leak repair, 14 Alder Rd\nMaterials 215.00, labour 380.00\nTotal payable 595.00 (no VAT, small trader)\nCheque or transfer within 7 days. Thanks!",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-030",
+      "text": "Dear Sirs, please accept this as our official order for 10 laptops model Zenith 14 at the price quoted in your quote Q-5521. PO number 30045. Regards, IT Dept, Willow Primary School",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A letter in form, but its purpose is a buyer placing an order."
+    },
+    {
+      "id": "document-type-031",
+      "text": "Cotización 77: Instalación de paneles solares 4 kW. Precio total 6.200 EUR, IVA incluido. Oferta válida por 30 días desde la fecha.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-032",
+      "text": "Paid. Cash. $200. Thanks again for the bike! - Jorge",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A handwritten note of payment; informal enough that a human might call it other."
+    },
+    {
+      "id": "document-type-033",
+      "text": "Blanket PO for 2026 janitorial supplies, not to exceed $18,000. Supplier: CleanSweep Wholesale. Releases against this PO require manager approval. PO 26-0001.",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-034",
+      "text": "Standing order: please deliver 5 loaves and 2 trays of rolls every weekday. Customer: St. Brigid's Café. Order ref SO-12.",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A recurring order without a PO number or prices; informal but still a buyer's order."
+    },
+    {
+      "id": "document-type-035",
+      "text": "Pricing sheet for Orchard Care Ltd: Basic plan £19/user/month, Plus £39/user/month, minimum 10 users. Annual discount 15%. Prices valid until 1 Jan.",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A price list tailored to one customer; a generic price list would be other."
+    },
+    {
+      "id": "document-type-036",
+      "text": "PAYMENT RECEIVED - Thank you. Date: 03/11/2025. Ref #TX-009231. Amt: £120.00. Method: Debit card ending 0017. This serves as your receipt.",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-037",
+      "text": "PURCHASE ORDER\nPO Number: PO-20931\nBuyer: Larkspur Clinics\nVendor: MediSupply Co.\nShip To: 12 Garden Way, Leeds\n200 x nitrile gloves, box of 100 @ £4.20\nDelivery requested by 30 Nov\nAuthorised: S. Whitcombe",
+      "label": "purchase-order",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-038",
+      "text": "Invoice No. 00045 \n Date 5-Jan \n Item: Piano lessons x4 \n Rate 35.00 \n Amount 140.00 \n Pls pay cash or bank transfer by 20 Jan. Mrs. Ellery",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-039",
+      "text": "Re: PO 33810. We confirm you have placed an order for 40 pallets of potting soil. Our acknowledgement follows.",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Written by the supplier acknowledging an order, so it could be other."
+    },
+    {
+      "id": "document-type-040",
+      "text": "Return label created for Order 5521. Drop the parcel at any Parcelway point within 14 days. Tracking will start once scanned.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A return shipment notice; the parcel has not actually shipped yet."
+    },
+    {
+      "id": "document-type-041",
+      "text": "TIMESHEET — week 44. Mon 8h, Tue 8h, Wed 7.5h, Thu 8h, Fri 6h. Approved by: C. Dube. Project: Delta.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-042",
+      "text": "Proposal & pricing: Website redesign (5 pages) — USD 4,800. Hosting setup — USD 300. Estimated timeline 6 weeks. Prices valid through 30 Nov 2025. Reply to accept.",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-043",
+      "text": "FACTURE n° F-2291\nClient: Atelier Ciel\nCréation graphique logo — 1 200,00 €\nTVA 20% — 240,00 €\nNet à payer: 1 440,00 € avant le 30/11",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-044",
+      "text": "PO#: 0047-B  Vendor: Tanaka Seiki  Part no. TS-882 qty 1500  Unit ¥38  Required date: 2025-12-10  Ship via: sea freight  Incoterm FOB Yokohama",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-045",
+      "text": "ANGEBOT Nr. 2290\nSehr geehrter Herr Braun, gerne unterbreiten wir Ihnen folgendes Angebot: Montage Küche, pauschal 3.200,00 EUR zzgl. MwSt. Gültig bis 31.12.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-046",
+      "text": "AWB 618-FAKE-5521 / Airfreight. Origin NBO Dest AMS. Pieces 14, Weight 320kg. Flight KL-FAKE 566 on 12 Nov. Consignee notified on arrival.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-047",
+      "text": "Remittance advice: we have paid your invoices 33 and 41, total £460.00 by BACS on 02/11.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Proof of payment from the payer's side; could pass as a receipt."
+    },
+    {
+      "id": "document-type-048",
+      "text": "PO 0091 — approved by finance. Vendor: Quill & Paper. 6 reams A4 80gsm, 3 boxes pens, 1 stapler. Charge to dept 14. Pls confirm ETA.",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-049",
+      "text": "lNV0ICE   Nr. 10-4471\nRechnungsdatum 03.10.2024\nWartung Server (Okt)   EUR 350,00\nMwSt 19%   EUR 66,50\nGesamtbetrag EUR 416,50\nZahlbar innerhalb 14 Tagen",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-050",
+      "text": "ACCOUNT STATEMENT – October\nOpening balance 1,204.50\n03 Oct  Deposit  +300.00\n12 Oct  Card purchase  -48.20\n29 Oct  Direct debit  -75.00\nClosing balance 1,381.30",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-051",
+      "text": "REQUEST FOR QUOTATION RESPONSE\nRFQ ref: RFQ-0031\nLaptop stands x 50: 14.90 each\nLead time 10 working days\nQuotation validity: 45 days\nIncoterms: DAP",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-052",
+      "text": "MEETING AGENDA — Product sync, Thursday. 1. Roadmap risks. 2. Hiring. 3. Q4 launch dates. 4. AOB. Please read the doc beforehand.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-053",
+      "text": "Refund slip: $45.00 returned to Visa ending 0017. Order 88213. Items returned: 1.",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Records money paid out rather than a purchase, but it is still proof of a payment transaction."
+    },
+    {
+      "id": "document-type-054",
+      "text": "SUNRISE PHARMACY #204\n03-OCT 14:22\nIBUPROFEN 200MG   4.99\nBANDAGES ASSORT   3.49\nTAX   0.68\nTOTAL   9.16\nCARD   9.16\nSAVE YOUR RECEIPT FOR RETURNS",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-055",
+      "text": "P.O. # 5-77310  Date 10/02/25\nTo: Rivera Fasteners\nPlease supply: 500 hex bolts M8, 500 nuts M8, 100 washers.\nTerms: Net 45. Deliver to Dock 3. Buyer: Plant Ops, Calder Works",
+      "label": "purchase-order",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-056",
+      "text": "Purchase Order No. 4400021177\nSupplier code 80211\nItem 10: Pump seal kit, Qty 6, Unit price 215.00 USD\nItem 20: Gasket set, Qty 12, Unit price 48.50 USD\nPayment terms 60 days from invoice\nCost centre 3305",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-057",
+      "text": "Your parcel has been delivered. Left in porch at 12:31. Signed by: R. Alvarez. View proof of delivery.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-058",
+      "text": "Credit invoice -120.00 against INV-3310 (returned goods). Net balance now 0.00.",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "A credit note is a negative invoice; some would file it as other."
+    },
+    {
+      "id": "document-type-059",
+      "text": "Your order has shipped!\nOrder #A-9981\nCarrier: Parcelway Express\nTracking: PW 4471 0092 18\nEstimated delivery: Thu, Nov 6\nTrack your package online.",
+      "label": "shipping-notice",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-060",
+      "text": "Hi Ahmed, as promised here's what it would cost: 2 days on-site training, 1,800 per day, plus travel at cost. So about 3,600 + expenses. Happy to hold the dates till Friday.",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-061",
+      "text": "Parking Receipt Lot B. In 08:02, Out 17:40. Duration 9h38m. Fee ¥2,400 paid. Machine #07.",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-062",
+      "text": "Quote #884  Date 4 Oct  Customer: Mr Fabris  Bathroom retile approx 9m2: tile supply 410, fitting 520, waste removal 60 = 990.00 incl. VAT. Valid 14 days. Deposit 30% to confirm.",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-063",
+      "text": "Price quote - catering for 60 guests. Buffet A at $22/head = $1,320. Staff 3 x $90. Delivery $45. Total $1,635. Quote good for 10 days. Subject to date availability.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-064",
+      "text": "PRO FORMA INVOICE No. PF-77. Not valid for tax purposes. Goods: 40 x ceramic planters, 12.00 = 480.00 EUR. Payment required before dispatch.",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A pro forma invoice reads like a quote because nothing is yet owed; it still asks for payment."
+    },
+    {
+      "id": "document-type-065",
+      "text": "ESTIMATE\nJob: Repaint exterior, 3-bed house\nMaterials $640, labour 4 days @ $280\nEstimated total $1,760\nEstimate valid until 15 Dec. Not a final bill.",
+      "label": "quote",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-066",
+      "text": "INV-00918  |  Issued 2025-02-14  |  Due 2025-03-16\nSeat licences (12) x ¥4,800 = ¥57,600\nConsumption tax 10% ¥5,760\nTOTAL ¥63,360\nBank: Sakura Test Bank, a/c 0000000",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-067",
+      "text": "Duplicate receipt, copy. Original date 12/12/2024. Total 38.50. Reprinted at customer request.",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-068",
+      "text": "Purchase requisition converted to PO. Req 7712 became PO 99120. Supplier: Nimbus Cabling. Line 1: Cat6 cable 305m x 8. Line 2: Patch panels 24-port x 2. Total est. 1,420.00 CAD. Approver: K. Doyle",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-069",
+      "text": "PURCHASE ORDER (draft)\nBuyer: Ember Bakery\nSupplier: Millstone Flour\n25kg strong white flour x 40\nDelivery: weekly, Tuesdays\nPO ref: EB-0457\nPrices as per agreed list.",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-070",
+      "text": "Page 2 of 2\nInvoice 4410 continued\nOvertime hours (Sat) 6 x 55 = 330.00\nTravel 48.00\nTotal this invoice 378.00 GBP\nPayment terms: 21 days",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-071",
+      "text": "PURCHASE 0RDER   PO N0: 7781-R   VENDOR: Delta Pipe & Valve   ITEM 4in gate valve   QTY 8   PRICE 112.00   SHIP TO: Stockroom 2",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-072",
+      "text": "Dear Mr. Alvarez,\n\nThank you for your letter of 3 October. We have reviewed your complaint and would like to invite you to a meeting to discuss it further.\n\nYours sincerely,\nPatricia Lowe\nCustomer Relations",
+      "label": "other",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-073",
+      "text": "Job offer: We are delighted to offer you the position of Operations Coordinator at Brightwater Logistics, starting 6 January. Salary and benefits are outlined in the enclosed contract.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-074",
+      "text": "Bill of Lading No. 4411-FAKE. Shipper: Meridian Seeds. Consignee: Aldous Farms. Vessel: MV Helga. Port of loading: Hamburg. 22 containers. ETD 2 Dec.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A bill of lading is a transport contract and receipt; it may be seen as other."
+    },
+    {
+      "id": "document-type-075",
+      "text": "Warranty card. Product: Aero 5 vacuum. Serial AE5-FAKE-0912. Purchased 14/02/2025. Valid 24 months. Keep with proof of purchase.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-076",
+      "text": "THANK YOU FOR SHOPPING AT GREENLEAF GROCER\n2 x Oat milk 1L   $5.80\nBananas 1.2kg   $2.64\nSubtotal $8.44\nTax $0.00\nTOTAL $8.44\nVISA **** 4242\nChange due $0.00",
+      "label": "receipt",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-077",
+      "text": "Order acknowledgement (not an invoice). We confirm your order 33810 for 40 pallets and will confirm delivery dates separately.",
+      "label": "other",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A supplier's reply to an order, near purchase-order and shipping-notice."
+    },
+    {
+      "id": "document-type-078",
+      "text": "ORDER FORM / PURCHASE ORDER\nFrom: Seaview Hotel Procurement\nTo: Linens Direct\nQty 120  Bath towels white 500gsm  $6.40 ea\nQty 60  Bed sheets queen  $14.00 ea\nOrder ref PO-SV-2210\nDeliver: Rear loading bay, Mon-Fri 7-11am",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-079",
+      "text": "PACKING LIST\nCarton 1 of 3: 24 x ceramic mugs\nCarton 2 of 3: 24 x ceramic mugs\nCarton 3 of 3: 12 saucers, 12 plates\nGross weight 31 kg\nNot an invoice. For customs reference.",
+      "label": "other",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-080",
+      "text": "Receipt No. 88213\nReceived from: R. Mehta\nAmount: $350.00\nFor: Deposit, studio rental 14 Nov\nPaid in full by card. Thank you!\nBluebird Studios",
+      "label": "receipt",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-081",
+      "text": "INVOICE #2024-0381\nBill To: Fenwick & Marsh Ltd\nDate: 12 Sep 2024   Due: 12 Oct 2024\n\nWeb hosting (annual)  £480.00\nVAT 20%  £96.00\nTotal due  £576.00\nPay by bank transfer to the account below.",
+      "label": "invoice",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-082",
+      "text": "PAYSLIP Oct 2025. Gross 3,450.00 Tax 612.30 Pension 172.50 Net 2,665.20",
+      "label": "other",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-083",
+      "text": "MINUTES of the board meeting, 12 Sept. Present: J. Okoye (chair), M. Lindqvist, T. Barros. 1. Apologies. 2. Approval of last minutes. 3. Budget for next year: deferred to October.",
+      "label": "other",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-084",
+      "text": "QUOTATION Q-5521\nPrepared for: Willow Primary School\n10 x Zenith 14 laptop @ £620.00 = £6,200.00\nCarry case x10 @ £18 = £180.00\nTotal £6,380.00 ex VAT\nThis quote is valid for 30 days.",
+      "label": "quote",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-085",
+      "text": "Terms and Conditions of Sale. 1. Prices exclude VAT. 2. Title passes on full payment. 3. Goods returned must be unused. 4. Claims within 7 days.",
+      "label": "other",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-086",
+      "text": "We hereby order the following: 3 x conference table, oak, 240cm. Our PO 7770. Price per your quotation dated 3 March. Invoice to Finance, Northgate Council.",
+      "label": "purchase-order",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Mentions a quotation and invoicing; the document itself is the order."
+    },
+    {
+      "id": "document-type-087",
+      "text": "To whom it may concern: this letter confirms that Ms. Tanya Brooks has been employed as a senior analyst at Quillfeather Ltd since March 2021. Signed, HR Department.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-088",
+      "text": "Hi, your pre-order is on its way. We handed it to the carrier this morning, tracking link: track.example.com/9921. If it hasn't arrived in a week write to us.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-089",
+      "text": "Rcpt # 4471  Date 5/9/25\nRec'd from Mr Okonkwo the sum of Five hundred naira only (N500) being payment for photocopy. Signed: A. Bello",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-090",
+      "text": "Revised quote (v2) replaces Q-4410. Removed: optional sound system. New total CHF 9,850.00. Valid 20 days from 2 May.",
+      "label": "quote",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-091",
+      "text": "RENTAL AGREEMENT\nThis agreement is made on 1 June 2025 between Mr. B. Haddad (Landlord) and Ms. L. Farouk (Tenant) for the property at Flat 3, 22 Mill Street. The term is twelve months. Rent shall be payable monthly in advance.",
+      "label": "other",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-092",
+      "text": "SHIPMENT NOTICE\nASN 330912\nShip date: 2025-09-11\n4 pallets, 2,100 kg\nCarrier: Northline Freight\nBOL 77-2210\nExpected arrival: 16 Sep, Dock 3",
+      "label": "shipping-notice",
+      "split": "fewshot",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-093",
+      "text": "Freight quote: Rotterdam to Chicago, 1 x 40ft container, all-in USD 3,950. Transit approx 28 days. Rates valid until end of month. Excludes customs duties.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-094",
+      "text": "Taxi fare 14.50 (no change). From Station Rd to Elm Park. 21:14. Driver ID 3382. Thank you.",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-095",
+      "text": "Tuition payment receipt. Student: Lina Farouk. Term: Autumn. Amount received: 1,250.00 AED. Date: 2 Sept. Receipt issued by Bursar Office, Cedar Language Institute.",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-096",
+      "text": "NON-DISCLOSURE AGREEMENT. The parties agree to keep confidential any information disclosed in connection with the project Falcon. Term: 3 years from the date of signing. Governing law: England and Wales.",
+      "label": "other",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-097",
+      "text": "Statement of Account – Harlow Supplies\nInvoices outstanding: 3\nINV-33 £120.00 (60 days)\nINV-41 £340.00 (30 days)\nINV-47 £95.00 (current)\nTotal outstanding £555.00",
+      "label": "other",
+      "split": "test",
+      "ambiguous": true,
+      "note": "Lists invoices but is a summary statement, not a bill for one transaction."
+    },
+    {
+      "id": "document-type-098",
+      "text": "Invoice\nBill to: Orchard Lane Cafe\nDescription: Espresso machine service call\nLabor 2h  $160\nParts  $43.75\nTotal $203.75 USD\nPlease remit within 15 days. Late fee 1.5% per month.",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-099",
+      "text": "PO CHANGE ORDER: PO 8841 line 3 quantity changed from 100 to 140. All other terms unchanged. Approved by M. Osei.",
+      "label": "purchase-order",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "An amendment to an order rather than a fresh PO."
+    },
+    {
+      "id": "document-type-100",
+      "text": "Quotation (pro forma) for customs purposes only: 20 sample bottles, value 5.00 each, total 100 USD. No commercial value.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Called a quotation but used as a customs value statement, closer to a pro forma invoice."
+    },
+    {
+      "id": "document-type-101",
+      "text": "Bill To: Kowalczyk Auto\nShip To: same\nInvoice Date: 2025-04-02\nQty 4 | Brake pads | 38.00 | 152.00\nQty 1 | Labour | 90.00 | 90.00\nSubtotal 242.00 | Tax 8.5% 20.57 | Total 262.57",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-102",
+      "text": "Quote: per hour $85, minimum 3 hours, includes travel within 20 km. Tell me which day suits you.",
+      "label": "quote",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-103",
+      "text": "Bank of Eastmere notice: Your savings interest rate will change to 3.1% from 1 Dec. No action is required.",
+      "label": "other",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-104",
+      "text": "Shipping confirmation – Order 5521. Items: 3 of 4 shipped. Remaining item (blue kettle) backordered, ships in 2 weeks. Shipping method: Standard, 3-5 days.",
+      "label": "shipping-notice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-105",
+      "text": "Faktura 2025/044. Sprzedawca: Nowak Meble. Nabywca: Studio Lipa. Szafa dębowa 1 szt. 2 400,00 PLN netto. VAT 23% 552,00. Do zapłaty 2 952,00 PLN. Termin płatności 14 dni.",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-106",
+      "text": "Lohnabrechnung Nov: Brutto CHF 5'200.00, AHV 275.60, BVG 310.00, Netto CHF 4'614.40. Auszahlung am 25.",
+      "label": "other",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-107",
+      "text": "Reminder: Invoice 3098 is 30 days overdue. Total 860.00. Late fee applied.",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": true,
+      "note": "A dunning notice rather than the invoice itself."
+    },
+    {
+      "id": "document-type-108",
+      "text": "Donation received with thanks: $25.00 from anonymous. Goodwill Garden Society. Receipt for your records.",
+      "label": "receipt",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-109",
+      "text": "Thank you for your purchase! Your payment of 89.00 EUR has been processed. Transaction ID: FAKE-77310. Product: online course Linear Algebra Basics.",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-110",
+      "text": "Order #A-9981 confirmed and paid. Thanks for your order! Items: trail socks (2), water bottle. Paid $41.20 via card. Estimated delivery 5-7 days.",
+      "label": "receipt",
+      "split": "test",
+      "ambiguous": true,
+      "note": "An order confirmation carries payment proof and delivery estimate, so it mixes receipt and shipping notice."
+    },
+    {
+      "id": "document-type-111",
+      "text": "PACKING SLIP + SHIPPED. Order 88213. 1 x kettle. Shipped via Parcelway. Tracking inside.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": true,
+      "note": "Part packing list, part dispatch confirmation; a plain packing list would be other."
+    },
+    {
+      "id": "document-type-112",
+      "text": "...ice from Pellam Freight Services\nDate 01/08/25\nPallet storage July x 12 @ 18.50 = 222.00\nSubtotal 222.00\nGST 10% 22.20\nAmount Due AUD 244.20\nDue on receipt",
+      "label": "invoice",
+      "split": "test",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-113",
+      "text": "lnvoice  No 9921 — Crestline Software  — Subscription Team plan (Nov) $299.00 — Amount due $299.00 — Please pay online: billing.example.com",
+      "label": "invoice",
+      "split": "dev",
+      "ambiguous": false
+    },
+    {
+      "id": "document-type-114",
+      "text": "Versandbestätigung\nIhre Bestellung 20931 wurde versendet.\nPaketdienst: Rhein-Express\nSendungsnummer 0043 8821 9910\nVoraussichtliche Zustellung: 08.11.",
+      "label": "shipping-notice",
+      "split": "dev",
+      "ambiguous": false
+    }
+  ]
+}
