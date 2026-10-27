@@ -1,0 +1,39 @@
+/* rd-chip status variants: a tinted background + a matching border turn the colour-only
+   --good/--warn/--bad/--neutral variants (frozen core) into proper status badges. The tint is a
+   light mix of the status colour over the card ground, so a badge reads as "filled with this
+   status" in both themes; the border uses the same colour at higher alpha. A Lucide .rd-icon in
+   the chip inherits the status colour. Two extra states: --running (accent, in progress) and
+   --pending (dashed, muted, not started or unknown). Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-chip--good {
+	background: color-mix(in srgb, var(--rd-good) 12%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-good) 40%, transparent);
+}
+/* Warn and bad text is darkened toward --rd-text-strong so it holds 4.5:1 on the tint (the bare
+   --rd-warn/--rd-bad are too light on a same-hue fill). The mix stays theme-aware: in dark mode
+   --rd-text-strong is near-white, so the ink lightens to match. */
+.rd-chip--warn {
+	color: color-mix(in srgb, var(--rd-warn) 45%, var(--rd-text-strong));
+	background: color-mix(in srgb, var(--rd-warn) 16%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-warn) 55%, transparent);
+}
+.rd-chip--bad {
+	color: color-mix(in srgb, var(--rd-bad) 45%, var(--rd-text-strong));
+	background: color-mix(in srgb, var(--rd-bad) 12%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-bad) 40%, transparent);
+}
+.rd-chip--neutral {
+	background: var(--rd-card-bg);
+	border: 1px solid var(--rd-line);
+}
+.rd-chip--running {
+	color: var(--rd-accent-ink);
+	background: color-mix(in srgb, var(--rd-accent) 12%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-accent) 45%, transparent);
+}
+.rd-chip--pending {
+	color: var(--rd-text-muted);
+	background: var(--rd-card-bg);
+	border: 1px dashed var(--rd-line);
+}

@@ -1,0 +1,10 @@
+/* rd-card__sub: a small muted line under a card heading — the "what this card shows" subtitle
+   (e.g. "dev_knee_20261021 · complete · 4 → 512 users"). The frozen core has .rd-card but no
+   subtitle slot; this adds one. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-card__sub {
+	font-size: var(--rd-fs-xs);
+	color: var(--rd-text-muted);
+	margin: var(--rd-space-1) 0 var(--rd-gap-para);
+}

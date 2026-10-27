@@ -1055,3 +1055,217 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 /* Citation links ([n] → #ref-…) are 15px inline anchors; give them a 24px tap target. a[href^="#ref"]
    covers the bare anchors some pages use (no .rd-cite class). */
 .rd-cite, a[href^="#ref"] { display: inline-flex; align-items: center; min-height: 24px; min-width: 24px; }
+/* rd-chip status variants: a tinted background + a matching border turn the colour-only
+   --good/--warn/--bad/--neutral variants (frozen core) into proper status badges. The tint is a
+   light mix of the status colour over the card ground, so a badge reads as "filled with this
+   status" in both themes; the border uses the same colour at higher alpha. A Lucide .rd-icon in
+   the chip inherits the status colour. Two extra states: --running (accent, in progress) and
+   --pending (dashed, muted, not started or unknown). Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-chip--good {
+	background: color-mix(in srgb, var(--rd-good) 12%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-good) 40%, transparent);
+}
+/* Warn and bad text is darkened toward --rd-text-strong so it holds 4.5:1 on the tint (the bare
+   --rd-warn/--rd-bad are too light on a same-hue fill). The mix stays theme-aware: in dark mode
+   --rd-text-strong is near-white, so the ink lightens to match. */
+.rd-chip--warn {
+	color: color-mix(in srgb, var(--rd-warn) 45%, var(--rd-text-strong));
+	background: color-mix(in srgb, var(--rd-warn) 16%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-warn) 55%, transparent);
+}
+.rd-chip--bad {
+	color: color-mix(in srgb, var(--rd-bad) 45%, var(--rd-text-strong));
+	background: color-mix(in srgb, var(--rd-bad) 12%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-bad) 40%, transparent);
+}
+.rd-chip--neutral {
+	background: var(--rd-card-bg);
+	border: 1px solid var(--rd-line);
+}
+.rd-chip--running {
+	color: var(--rd-accent-ink);
+	background: color-mix(in srgb, var(--rd-accent) 12%, var(--rd-card-bg));
+	border: 1px solid color-mix(in srgb, var(--rd-accent) 45%, transparent);
+}
+.rd-chip--pending {
+	color: var(--rd-text-muted);
+	background: var(--rd-card-bg);
+	border: 1px dashed var(--rd-line);
+}
+/* rd-verdict: the headline conclusion block. A card with a thick left rule and a large h2, for
+   the one-sentence answer a report leads with. Distinct from .rd-callout (thinner rule, smaller,
+   for notes/caveats) and .rd-brief (three fixed columns). --pending uses the warn rule for an
+   open/unsettled conclusion. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-verdict {
+	background: var(--rd-card-bg);
+	border: 1px solid var(--rd-line);
+	border-left: 5px solid var(--rd-accent);
+	border-radius: var(--rd-radius-md);
+	padding: var(--rd-pad-card) var(--rd-space-4);
+	margin: var(--rd-gap-block) 0;
+}
+.rd-verdict--pending { border-left-color: var(--rd-warn); }
+.rd-verdict h2 {
+	font-size: var(--rd-fs-h1);
+	line-height: 1.3;
+	margin: 0 0 var(--rd-space-1);
+}
+.rd-verdict h2::before { content: none; } /* no section accent bar inside the verdict */
+
+/* rd-verdicts: a grid of verdict cards (go / no-go / open / pending), one per decision, coloured
+   by a top rule. Auto-fit so it reflows from a wide dashboard to a phone. The kicker is a small
+   uppercase status line above the card title. Every colour is a --rd-* token. */
+.rd-verdicts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+	gap: var(--rd-space-2);
+	margin: var(--rd-gap-block) 0;
+}
+.rd-verdict-card {
+	background: var(--rd-card-bg);
+	border: 1px solid var(--rd-line);
+	border-top: 4px solid var(--rd-good);
+	border-radius: var(--rd-radius-md);
+	padding: var(--rd-pad-card);
+	min-width: 0;
+}
+.rd-verdict-card--nogo { border-top-color: var(--rd-bad); }
+.rd-verdict-card--open { border-top-color: var(--rd-warn); }
+.rd-verdict-card--pending { border-top-color: var(--rd-line); }
+.rd-verdict-card__kicker {
+	display: flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+	font-size: var(--rd-fs-xs);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--rd-text-muted);
+	font-weight: 600;
+	margin: 0 0 var(--rd-space-1);
+}
+.rd-verdict-card__kicker .rd-icon { width: 1em; height: 1em; }
+.rd-prose .rd-verdict-card h3 {
+	font-size: var(--rd-fs-h3);
+	line-height: 1.3;
+	margin: 0 0 var(--rd-space-1);
+}
+.rd-verdict-card p { margin: 0; font-size: var(--rd-fs-sm); color: var(--rd-text); }
+/* rd-card__sub: a small muted line under a card heading — the "what this card shows" subtitle
+   (e.g. "dev_knee_20261021 · complete · 4 → 512 users"). The frozen core has .rd-card but no
+   subtitle slot; this adds one. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-card__sub {
+	font-size: var(--rd-fs-xs);
+	color: var(--rd-text-muted);
+	margin: var(--rd-space-1) 0 var(--rd-gap-para);
+}
+/* rd-toolbar: a flex row that holds a card's filter controls (selects, .rd-filter chips) and a
+   result count. The frozen core has .rd-filter (a single toggle) but no wrapper row for a group
+   of them. __count is the muted "N of M shown" line. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--rd-space-1) var(--rd-space-2);
+	margin: 0 0 var(--rd-gap-block);
+}
+.rd-toolbar label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--rd-space-1);
+	font-size: var(--rd-fs-xs);
+	color: var(--rd-text-muted);
+}
+.rd-toolbar__count {
+	font-size: var(--rd-fs-xs);
+	color: var(--rd-text-muted);
+}
+/* rd-hbar: a labelled horizontal bar row — a label, a track with a fill, and a value. The
+   .rd-meter (frozen core) is a bare bar; this adds the label and value so a row reads as
+   "candidate · [██████████░░] · 1,312". The fill width is set inline (style="width: 60%") because
+   it is data-driven; the track and value come from tokens. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-hbar {
+	display: grid;
+	grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) minmax(0, 5.5rem);
+	gap: var(--rd-space-2);
+	align-items: center;
+	font-size: var(--rd-fs-sm);
+	margin: var(--rd-space-1) 0;
+}
+.rd-hbar__label {
+	color: var(--rd-text);
+	overflow-wrap: anywhere;
+}
+.rd-hbar__track {
+	display: block;
+	height: 0.625rem;
+	border-radius: 999px;
+	background: var(--rd-btn-bg);
+	overflow: hidden;
+}
+.rd-hbar__fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background: var(--rd-accent);
+}
+.rd-hbar__value {
+	font-variant-numeric: tabular-nums;
+	color: var(--rd-text-muted);
+	text-align: right;
+}
+@media (max-width: 480px) {
+	.rd-hbar { grid-template-columns: minmax(0, 1fr) minmax(0, 4rem); }
+	.rd-hbar__label { grid-column: 1 / -1; }
+}
+/* rd-table row states and the wrapping column. The frozen core has .rd-num (right align),
+   .rd-table__ref (tinted reference row) and hover, but no "selected row" tint, no dimmed
+   "pending" row, and no column that wraps instead of forcing nowrap.
+   - .rd-row--active: the selected/highlighted row (e.g. click a row to highlight that value in
+     every chart). A stronger accent tint than the hover.
+   - .rd-row--pending: a dimmed row for not-yet-run / unknown data.
+   - .rd-wrap: a column that wraps long text (the table's default is nowrap).
+   Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-table tr.rd-row--active td {
+	background: color-mix(in srgb, var(--rd-accent) 14%, transparent);
+}
+.rd-table tr.rd-row--pending td {
+	color: var(--rd-text-muted);
+}
+.rd-table td.rd-wrap,
+.rd-table th.rd-wrap {
+	white-space: normal;
+	min-width: 12.5rem;
+	max-width: 44ch;
+	overflow-wrap: anywhere;
+}
+/* rd-tip: a fixed dark tooltip for chart hover (a <div> the page positions on mousemove). The
+   design system had no tooltip; this ships the style only — the positioning JS stays page-local.
+   It is ink-on-card (the page's text colour on the card ground) so it inverts correctly in both
+   themes. Every colour is a --rd-* token.
+   Ships in rd.css only (the research.css compatibility alias stays the frozen core). */
+
+.rd-tip {
+	position: fixed;
+	z-index: 60;
+	pointer-events: none;
+	max-width: 20rem;
+	padding: var(--rd-space-1) var(--rd-space-2);
+	border-radius: var(--rd-radius-sm);
+	background: var(--rd-text-strong);
+	color: var(--rd-card-bg);
+	font-size: var(--rd-fs-xs);
+	line-height: 1.4;
+	white-space: pre-line;
+}
