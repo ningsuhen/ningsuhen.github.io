@@ -1,6 +1,18 @@
 {
   "items": [
     {
+      "title": "LPM: a small model as a function call, performance and results so far",
+      "summary": "Measured results from the first three milestones of LPM, a Rust engine that runs a small language model on the GPU through one WGSL source, on native Metal and in Chrome WebGPU, with every number labelled by model, machine, target and load, plus the eight lessons that cost time getting there.",
+      "href": "/research/lpm-model-as-a-function-call-results/",
+      "post": "/posts/lpm-model-as-a-function-call-results/",
+      "started": "2026-10-26",
+      "updated": "2026-10-26",
+      "status": "Live",
+      "tags": [
+        "Research"
+      ]
+    },
+    {
       "title": "AI video for technical YouTube: options, quality and cost",
       "summary": "A comparison of the current talking-head, slide, B-roll and voice tools for technical YouTube videos, with three pipelines and a cost model for a 10-minute video.",
       "href": "/research/ai-video-for-technical-youtube/",
