@@ -711,7 +711,6 @@
     });
     revealTab(tabs[i]);
     barEdges();
-    spy();
   }
   function focusTarget(el) {
     var t = /^H[1-6]$/.test(el.tagName) ? el : el.querySelector('h1,h2,h3,h4,h5,h6') || el;
@@ -840,23 +839,8 @@
   wide.addEventListener('change', openToc);
   openToc();
 
-  // Scroll-spy for the active tab's "On this page" list.
-  var ticking = false;
-  function spy() {
-    ticking = false;
-    var i = panels.findIndex(function (p) { return !p.hidden; });
-    var links = panels[i] ? panels[i].querySelectorAll('.rd-toc a') : [];
-    var cur = links[0];
-    Array.prototype.forEach.call(links, function (a) {
-      var s = document.getElementById(a.getAttribute('href').slice(1));
-      if (s && s.getBoundingClientRect().top <= navH() + 24) cur = a;
-    });
-    Array.prototype.forEach.call(links, function (a) {
-      if (a === cur) a.setAttribute('aria-current', 'location');
-      else a.removeAttribute('aria-current');
-    });
-  }
-  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+  // The "On this page" rail's scroll-spy lives in the rail script below (one Rail per tab); it lights exactly the in-view
+  // headings, so there is no separate single-link spy here.
 
 
   // First paint. A legacy URL (hash only, or a tab id in the hash) is mapped to the query with replaceState: no entry.
@@ -895,9 +879,10 @@
 </script>
 <script>
 // "On this page" rails: a port of the main post page's TOC (Fuwari, src/components/widget/TOC.astro), one rail per tab.
-// Scroll-spy: every section is observed (threshold 0). Each section that intersects the viewport is highlighted (.visible),
-// and the dashed indicator spans the highlighted run. The rail scrolls to keep the highlighted entries in view. Wide only
-// (1536px+): the rail is open and the indicator shows; narrow: the disclosure, with the highlighted entries filled.
+// Scroll-spy: each heading whose top edge is in the viewport is highlighted (.visible) — exactly the in-view set, so the lit
+// run never includes a section scrolled past the top — and the dashed indicator spans the highlighted run. The rail scrolls to
+// keep the highlighted entries in view. Wide only (1536px+): the rail is open and the indicator shows; narrow: the disclosure,
+// with the highlighted entries filled.
 (function () {
   if (window.__rdToc) return;
   window.__rdToc = true;
@@ -921,32 +906,37 @@
     this.sections.forEach(function (s) { if (s) self.observer.observe(s); });
     nav.addEventListener('click', function (e) { self.onClick(e); }, true);
     nav.classList.add('is-live');
-    this.fallback();
+    window.addEventListener('scroll', function () { self.update(); }, { passive: true });
     this.update();
   }
-  Rail.prototype.onIntersect = function (entries) {
-    var self = this;
-    entries.forEach(function (e) {
-      var i = self.index.get(e.target);
-      if (i !== undefined) self.active[i] = e.isIntersecting;
-      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
-    });
-    if (this.active.indexOf(true) < 0) this.fallback();
-    this.update();
-  };
+  // The lit run is exactly the headings whose top edge is in the viewport (the design-system check's in-view rule): a section
+  // scrolled past the top no longer lights, so the highlighted entries always equal the in-view set. Observer and scroll both
+  // drive it; update() debounces to one recompute per frame.
   Rail.prototype.fallback = function () {
     var vh = window.innerHeight;
     for (var i = 0; i < this.sections.length; i++) {
       var s = this.sections[i];
-      if (!s) continue;
+      if (!s) { this.active[i] = false; continue; }
       var r = s.getBoundingClientRect();
-      if ((r.top > 0 && r.top < vh) || (r.bottom > 0 && r.bottom < vh) || (r.top < 0 && r.bottom > vh)) this.active[i] = true;
-      else if (r.top > vh) break;
+      this.active[i] = r.top >= 0 && r.top < vh;
     }
+  };
+  Rail.prototype.onIntersect = function (entries) {
+    var self = this;
+    entries.forEach(function (e) {
+      if (e.isIntersecting && self.anchorNavTarget === e.target) self.anchorNavTarget = null;
+    });
+    this.update();
   };
   Rail.prototype.update = function () {
     var self = this;
-    requestAnimationFrame(function () { self.toggle(); self.scroll(); });
+    if (self._raf) return;
+    self._raf = requestAnimationFrame(function () {
+      self._raf = 0;
+      self.fallback();
+      self.toggle();
+      self.scroll();
+    });
   };
   Rail.prototype.toggle = function () {
     var links = this.links, a = this.active;
