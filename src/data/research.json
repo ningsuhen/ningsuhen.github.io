@@ -1,6 +1,20 @@
 {
   "items": [
     {
+      "title": "Spark-X2.6-4B as a Brev 4B-Tier Replacement",
+      "summary": "We ran XHToken/Spark-X2.6-4B against Brev's current 4B generative tiers on the same 1,960-row classification arm: it ties on accuracy, costs more, and can't ship on the current ONNX-WebGPU path, so the current tiers stay.",
+      "href": "/research/spark-x2-6-4b/",
+      "post": "/posts/spark-x2-6-4b/",
+      "started": "2026-10-27",
+      "updated": "2026-10-27",
+      "status": "Live",
+      "tags": [
+        "Research",
+        "AI",
+        "Benchmark"
+      ]
+    },
+    {
       "title": "LPM: a small model as a function call, performance and results so far",
       "summary": "Measured results from the first three milestones of LPM, a Rust engine that runs a small language model on the GPU through one WGSL source, on native Metal and in Chrome WebGPU, with every number labelled by model, machine, target and load, plus the eight lessons that cost time getting there.",
       "href": "/research/lpm-model-as-a-function-call-results/",
