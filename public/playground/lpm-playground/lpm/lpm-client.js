@@ -227,7 +227,10 @@ export async function loadModel({ url, file, onProgress } = {}) {
     }
     if (url && source === "network") await dropCached(url);
     const msg = String(e && e.message ? e.message : e);
-    if (/BLAKE3|ended early|shorter than|LPM1/i.test(msg)) {
+    // Genuine payload corruption / truncation only. A version mismatch
+    // ("unsupported LPM1 version") is a wrong-format file, not corruption, so
+    // it must not be swallowed into MODEL_CORRUPT.
+    if (/BLAKE3 mismatch|ended early|shorter than|data bytes, want/i.test(msg)) {
       if (url && source === "opfs") await dropCached(url);
       throw new LpmError(ERR.MODEL_CORRUPT, msg);
     }
