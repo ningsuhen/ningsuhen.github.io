@@ -28,7 +28,7 @@ const enabled =
 			</div>
 		</div>
 		<!-- Shown instead of the widget when giscus fails; keeps the skeleton's height so nothing below moves. -->
-		<div class="giscus-unavailable" role="status" hidden>
+		<div class="giscus-unavailable text-75" role="status" hidden>
 			<p>Comments could not load right now. Try again later.</p>
 			<p class="giscus-unavailable-actions">
 				<button type="button" class="giscus-retry btn-regular">Try again</button>
@@ -94,38 +94,45 @@ const enabled =
 				document.querySelectorAll("script[data-giscus], iframe.giscus-frame").forEach(function (el) {
 					el.remove();
 				});
-				var s = document.createElement("script");
-				s.src = "https://giscus.app/client.js";
-				s.async = true;
-				s.crossOrigin = "anonymous";
-				s.setAttribute("data-repo", repo);
-				s.setAttribute("data-repo-id", repoId);
-				s.setAttribute("data-category", category);
-				s.setAttribute("data-category-id", categoryId);
-				s.setAttribute("data-mapping", "pathname");
-				s.setAttribute("data-strict", "0");
-				s.setAttribute("data-reactions-enabled", "1");
-				// Metadata tells us the discussion rendered (see the message listener).
-				s.setAttribute("data-emit-metadata", "1");
-				s.setAttribute("data-input-position", "top");
-				s.setAttribute("data-theme", giscusTheme());
-				s.setAttribute("data-lang", "en");
-				s.setAttribute("loading", "lazy");
-				s.setAttribute("data-giscus", "1");
-				s.onerror = function () { settle(host, false); };
-				host.appendChild(s);
-
-				// The iframe loads lazily, so only time out once the comments are actually on screen.
+				// Defer the giscus bootstrap until the block is on screen: nothing fetches from giscus.app
+				// before the reader scrolls to it. The retry button lives inside the block, so by the time it
+				// is clicked the block is in view and the (fresh) observer fires immediately.
+				function loadWidget() {
+					var s = document.createElement("script");
+					s.src = "https://giscus.app/client.js";
+					s.async = true;
+					s.crossOrigin = "anonymous";
+					s.setAttribute("data-repo", repo);
+					s.setAttribute("data-repo-id", repoId);
+					s.setAttribute("data-category", category);
+					s.setAttribute("data-category-id", categoryId);
+					s.setAttribute("data-mapping", "pathname");
+					s.setAttribute("data-strict", "0");
+					s.setAttribute("data-reactions-enabled", "1");
+					// Metadata tells us the discussion rendered (see the message listener).
+					s.setAttribute("data-emit-metadata", "1");
+					s.setAttribute("data-input-position", "top");
+					s.setAttribute("data-theme", giscusTheme());
+					s.setAttribute("data-lang", "en");
+					s.setAttribute("loading", "lazy");
+					s.setAttribute("data-giscus", "1");
+					s.onerror = function () { settle(host, false); };
+					host.appendChild(s);
+				}
 				if ("IntersectionObserver" in window) {
 					var io = new IntersectionObserver(function (entries) {
 						if (!entries[0].isIntersecting) return;
 						io.disconnect();
+						loadWidget();
+						// The iframe loads lazily, so only time out once the comments are actually on screen.
 						clearTimeout(host.__giscusTimeout);
 						host.__giscusTimeout = setTimeout(function () {
 							if (!host.hasAttribute("data-loaded")) settle(host, false);
 						}, 30000);
 					});
 					io.observe(host);
+				} else {
+					loadWidget();
 				}
 			}
 

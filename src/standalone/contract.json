@@ -12,7 +12,7 @@
 	},
 	"meta": {
 		"required": ["contract", "kind", "slug", "title", "created", "updated", "summary"],
-		"optional": ["eyebrow", "width", "layout", "comments", "search", "source"],
+		"optional": ["eyebrow", "width", "layout", "comments", "search", "source", "icons"],
 		"types": {
 			"contract": "literal 1",
 			"kind": "string, must equal the folder kind",
@@ -26,14 +26,15 @@
 			"layout": "tabbed | scroll (default scroll)",
 			"comments": "boolean (default true)",
 			"search": "boolean (default true)",
-			"source": "{ project: string, build: string } (the build hash)"
+			"source": "{ project: string, build: string } (the build hash)",
+			"icons": "string[] — Lucide names the page creates in page.js (not in the body markup); the shell adds them to the sprite"
 		}
 	},
 	"body": {
 		"contentOnly": true,
 		"tabbed": "top-level <section data-rd-tab=\"id\" data-rd-label=\"…\" [data-rd-icon=\"…\"]>; ids equal today's ?tab= values",
 		"scroll": "data-rd-section",
-		"allowed": ["rd-* components", "inline SVG", "<script type=\"application/json\" data-rd-data> up to 100 KB"],
+		"allowed": ["rd-* components", "inline SVG", "pre-rendered Mermaid diagrams (self-contained <svg id=\"mmd-…\"> with an internal <style> and style= presentation attributes — the design system's own output; a documented exception to the no-<style>/no-style= rules)", "<script type=\"application/json\" data-rd-data> up to 100 KB"],
 		"forbidden": [
 			"html/head/body/style/link/iframe tags",
 			"executable scripts",

@@ -1,0 +1,382 @@
+<section class="rd-tabpanel rd-with-toc" id="summary" data-rd-tab="summary" data-rd-label="Summary" data-rd-icon="file-text">
+<div class="rd-tab__body">
+  <p class="idea-hero-chips">
+    <span class="rd-chip"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg>Idea; a rough version is in progress</span>
+    <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Nothing is measured</span>
+  </p>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-check"/></svg></span><h2 id="in-30-seconds">In 30 seconds</h2></header>
+    <ul class="idea-30s">
+      <li>Fixing one word on a static blog means finding the repo, the file and the line, then a pull request and a deploy.</li>
+      <li>The idea: a browser extension that lets me edit my own post on the live page, then sends the change back to the Markdown as a pull request.</li>
+      <li>Astro makes the way back easier. Its URLs come from file names, and its Markdown build can say which lines each paragraph came from.</li>
+      <li>When the extension can't find the lines, an AI coding agent gets the before and after text and makes the edit.</li>
+      <li>I'm building a rough version for this site. It isn't finished, and I haven't measured anything.</li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="the-problem">The problem</h2></header>
+    <p>My blog is Markdown files in a GitHub repo. Astro builds them and GitHub Pages serves the result. That setup is cheap and simple, until I want to fix one word.</p>
+    <p>Then I find the repo, then the file, then the line. I edit the Markdown, open a pull request, wait for the checks and the deploy, and look at the page again to make sure it reads right.</p>
+    <p>GitHub's web editor helps with the editing part. Pressing the period key on a repository opens it in an editor in the browser (<a href="#ref-githubdev">source</a>). But I'm still editing raw Markdown, in a different place from where I saw the typo, and I still have to find the file.</p>
+    <p>Most of the time the fix is one sentence. The trip around it is the cost.</p>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-pull-request"/></svg></span><h2 id="one-picture">The idea in one picture</h2></header>
+    <p>One fix, from the live page back to the live page. Press Next to follow it.</p>
+    <figure class="rd-figure idea-fig idea-steps" data-steps="7" aria-label="Step-through of one fix">
+      <svg viewBox="0 0 680 340" role="img" aria-label="One fix: I read my post, edit it in place, see the Markdown diff, publish a pull request, the required checks run, auto-merge merges it, and the site rebuilds with the fix.">
+        <defs><marker id="ah-e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <g data-s="1"><rect class="idea-box" x="10" y="30" width="190" height="76" rx="10"/><text class="idea-t idea-t--b" x="105" y="62">Your post</text><text class="idea-t idea-t--s" x="105" y="82">on the live site</text></g>
+        <g data-s="2"><path class="idea-line" d="M200 68 H245" marker-end="url(#ah-e1)"/><rect class="idea-box idea-box--key" x="245" y="30" width="190" height="76" rx="10"/><text class="idea-t idea-t--b idea-t--accent" x="340" y="62">Edit in place</text><text class="idea-t idea-t--s" x="340" y="82">with the site's styling</text></g>
+        <g data-s="3"><path class="idea-line" d="M435 68 H480" marker-end="url(#ah-e1)"/><rect class="idea-box" x="480" y="30" width="190" height="76" rx="10"/><text class="idea-t idea-t--b" x="575" y="62">Diff</text><text class="idea-t idea-t--s" x="575" y="82">the Markdown lines</text></g>
+        <g data-s="4"><path class="idea-line" d="M575 106 V196" marker-end="url(#ah-e1)"/><rect class="idea-box" x="480" y="196" width="190" height="76" rx="10"/><text class="idea-t idea-t--b" x="575" y="228">Pull request</text><text class="idea-t idea-t--s" x="575" y="248">only those lines</text></g>
+        <g data-s="5"><path class="idea-line" d="M480 234 H435" marker-end="url(#ah-e1)"/><rect class="idea-box" x="245" y="196" width="190" height="76" rx="10"/><text class="idea-t idea-t--b" x="340" y="228">Required checks</text><text class="idea-t idea-t--s" x="340" y="248">build, links, leak scan</text></g>
+        <g data-s="6"><path class="idea-line" d="M245 234 H200" marker-end="url(#ah-e1)"/><rect class="idea-box" x="10" y="196" width="190" height="76" rx="10"/><text class="idea-t idea-t--b" x="105" y="228">Auto-merge</text><text class="idea-t idea-t--s" x="105" y="248">after the checks pass</text></g>
+        <g data-s="7"><path class="idea-line" d="M105 196 V106" marker-end="url(#ah-e1)"/><text class="idea-t idea-t--s idea-t--l" x="114" y="156">site rebuilds</text></g>
+        <text class="idea-t idea-t--s" x="340" y="318">Nothing leaves the browser before the diff.</text>
+      </svg>
+      <div class="idea-steps__ctrl">
+        <button type="button" class="rd-btn" data-prev><svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Previous</button>
+        <span class="idea-steps__count" aria-live="polite">Step 1 of 7</span>
+        <button type="button" class="rd-btn" data-next>Next<svg class="rd-icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+      </div>
+      <ol class="idea-steps__list">
+        <li data-s="1">1. I read my post on the live site and spot a typo.</li>
+        <li data-s="2">2. I click Edit, or right-click and pick "Edit this post". The paragraph becomes editable right there, with the site's own styling.</li>
+        <li data-s="3">3. Before anything leaves the browser, I see the change as a diff of the Markdown file.</li>
+        <li data-s="4">4. Publish opens a pull request that changes only those lines.</li>
+        <li data-s="5">5. The repo's required checks run. On this site that is the build, a link check and a leak scan.</li>
+        <li data-s="6">6. Auto-merge merges the pull request once the checks pass. If one fails, nothing merges.</li>
+        <li data-s="7">7. GitHub Pages rebuilds the site, and the fixed post goes live.</li>
+      </ol>
+      <figcaption>One fix, seven steps. The labels are simplified; the order is the point.</figcaption>
+    </figure>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2 id="principles">Principles</h2></header>
+    <ol>
+      <li><strong>Edit where you read.</strong> The page I'm reading is the editor.</li>
+      <li><strong>Change only what I touched.</strong> The rest of the file stays as it was, byte for byte.</li>
+      <li><strong>Show the diff first.</strong> Nothing goes to GitHub until I've seen the Markdown change.</li>
+      <li><strong>Every change is a pull request.</strong> It can be checked, closed or reverted like any other.</li>
+      <li><strong>The repo decides when it merges.</strong> Required checks gate the merge, not the extension.</li>
+      <li><strong>Hand it over instead of guessing.</strong> When the source can't be found, an agent gets the edit. The extension never writes to lines it isn't sure of.</li>
+      <li><strong>Only on sites I allow.</strong> The extension stays quiet everywhere else.</li>
+    </ol>
+  </section>
+
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" id="how" data-rd-tab="how" data-rd-label="How it works" data-rd-icon="route">
+<div class="rd-tab__body">
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-search"/></svg></span><h2 id="finding-the-source">Finding the source</h2></header>
+    <p>The hard part is the way back: from a paragraph on the page to the lines in a file. I see three ways, from most exact to least.</p>
+    <figure class="rd-figure idea-fig">
+      <svg viewBox="0 0 680 300" role="img" aria-label="Three ways to find the source, tried in order. First, the site says which lines each block came from. If it doesn't, the extension guesses the file from the URL and confirms it by matching text. If nothing matches, an AI coding agent gets the before and after text.">
+        <defs><marker id="ah-e2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+        <rect class="idea-box idea-box--key" x="10" y="10" width="290" height="66" rx="10"/><text class="idea-t idea-t--b idea-t--accent" x="155" y="38">1. The site says</text><text class="idea-t idea-t--s" x="155" y="58">a build plugin marks each block's lines</text>
+        <text class="idea-t idea-t--s idea-t--l" x="330" y="48">Exact. Needs one change to the site.</text>
+        <path class="idea-line" d="M155 76 V112" marker-end="url(#ah-e2)"/><text class="idea-t idea-t--s idea-t--l" x="165" y="98">not marked</text>
+        <rect class="idea-box" x="10" y="112" width="290" height="66" rx="10"/><text class="idea-t idea-t--b" x="155" y="140">2. Guess from the URL</text><text class="idea-t idea-t--s" x="155" y="160">then confirm by matching the text</text>
+        <text class="idea-t idea-t--s idea-t--l" x="330" y="150">Exact, or it refuses. No site change.</text>
+        <path class="idea-line" d="M155 178 V214" marker-end="url(#ah-e2)"/><text class="idea-t idea-t--s idea-t--l" x="165" y="200">no match</text>
+        <rect class="idea-box idea-box--dash" x="10" y="214" width="290" height="66" rx="10"/><text class="idea-t idea-t--b" x="155" y="242">3. Hand it to an AI coding agent</text><text class="idea-t idea-t--s" x="155" y="262">before and after; it finds the file</text>
+        <text class="idea-t idea-t--s idea-t--l" x="330" y="252">A fallback, and labelled as one.</text>
+      </svg>
+      <figcaption>Tried top to bottom. The extension never writes to lines it isn't sure of.</figcaption>
+    </figure>
+    <ol>
+      <li><strong>The site says.</strong> A small build plugin marks each rendered block with the source lines it came from, and the page names its source file. The extension reads that and knows exactly which lines to change. This needs one change to the site.</li>
+      <li><strong>The extension guesses.</strong> On an Astro site the URL points at a likely file (see Why Astro). The extension fetches that file and matches the page's paragraphs against it by their text. If the text never matches, the guess was wrong and it stops.</li>
+      <li><strong>An AI coding agent.</strong> When neither works, for example inside an MDX component or on a site built some other way, the extension hands the before and after text to an agent. The agent finds the source, makes the edit and opens the pull request itself.</li>
+    </ol>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-diff"/></svg></span><h2 id="small-diffs">Small diffs</h2></header>
+    <p>Going from a rendered page back to Markdown loses things. Curly quotes, how the lines were wrapped, whether a word used underscores or asterisks for emphasis. If the extension rewrote a whole paragraph from the page, every edit would change more than it should.</p>
+    <p>So it compares instead. It turns the paragraph back into Markdown before and after the edit, takes the difference, and applies only that difference to the real source lines. Text I didn't touch keeps its original spelling. When the difference won't apply cleanly, it rewrites that one block, and the diff shows it.</p>
+    <p>Code, math, tables and images don't survive a trip through the page. Those open as Markdown in a small box instead of being edited in place.</p>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-merge"/></svg></span><h2 id="publishing">Publishing and merging</h2></header>
+    <p>Publish creates a branch, commits the changed file and opens a pull request. Then it turns on GitHub's auto-merge for that pull request.</p>
+    <p>Auto-merge merges a pull request after all required reviews and status checks pass. It has to be enabled for the repository first (<a href="#ref-automerge">source</a>). One detail matters here. GitHub only offers auto-merge on pull requests that can't be merged right away. If the repo requires no checks, there is nothing to wait for, so the checks only gate the merge if the repo requires them.</p>
+    <p>On this site the required checks are the build, a link check and a leak scan. A failed check leaves the pull request open, and nothing reaches the live site.</p>
+    <p>The commit is made against the exact file I was shown. If that file changed in the meantime, for example from another edit, the extension stops instead of overwriting it.</p>
+  </section>
+
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" id="astro" data-rd-tab="astro" data-rd-label="Why Astro" data-rd-icon="rocket">
+<div class="rd-tab__body">
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-route"/></svg></span><h2 id="astro-routing">URLs come from files</h2></header>
+    <p>Astro builds its URLs from the files in <code>src/pages/</code>. Markdown and MDX files there become pages on their own (<a href="#ref-routing">source</a>). So a page at <code>/about/</code> could come from <code>src/pages/about.md</code>, and the URL alone is a good guess for the file.</p>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2 id="astro-collections">Content collections</h2></header>
+    <p>Blog posts usually live in a content collection instead. Astro gives each entry an id made from its file name, unless the entry sets its own slug (<a href="#ref-collections">source</a>). Astro makes no pages for a collection by default, so the site's own route decides the URL. On many blogs that route is something like <code>/posts/&lt;id&gt;/</code>.</p>
+    <p>That is enough for a guess. The last part of the URL names the file, and the part before it often names the collection. The guess is never trusted on its own: the page's text has to match the file before any line is touched.</p>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-eye"/></svg></span><h2 id="astro-generator">Knowing it's Astro</h2></header>
+    <p>Astro exposes its version as <code>Astro.generator</code>, and the docs show it used in a <code>&lt;meta name="generator"&gt;</code> tag (<a href="#ref-generator">source</a>). Some sites print that tag, so the extension can tell it's on an Astro site.</p>
+    <p>It is opt-in. A site that leaves it out still works with the first and third ways to find the source.</p>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-code"/></svg></span><h2 id="astro-plugins">Line numbers from the build</h2></header>
+    <p>Astro's Markdown build accepts plugins (<a href="#ref-markdown">source</a>). The syntax tree a Markdown parser builds records where each piece sits in the source file (<a href="#ref-unist">source</a>). So a small plugin can stamp every rendered block with its first and last line. That makes the first way exact.</p>
+    <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Which plugins</p>
+      <p>Since Astro 7 the default Markdown processor takes its own plugin list. Sites that use the unified processor take remark plugins. I've only tried the unified one.</p></div>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-globe"/></svg></span><h2 id="other-builders">Other site builders</h2></header>
+    <p>Hugo, Jekyll and the others have their own rules for where pages come from. I haven't looked at them. For now the AI coding agent is the only way to edit those.</p>
+  </section>
+
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" id="safety" data-rd-tab="safety" data-rd-label="Safety" data-rd-icon="shield">
+<div class="rd-tab__body">
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-users"/></svg></span><h2 id="who-can-do-what">Who can do what</h2></header>
+    <p>An extension puts its code into a page with content scripts. Those run in an isolated world, so the page's own JavaScript can't see the extension's variables (<a href="#ref-content-scripts">source</a>). That is why the GitHub token stays with the extension. The page only ever gets results back.</p>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>Who can do what</caption>
+      <thead><tr><th>Who</th><th>Can</th><th>Can't</th></tr></thead>
+      <tbody>
+        <tr><td>The page</td><td>Show its text, which I then edit</td><td>Read the token or talk to GitHub</td></tr>
+        <tr><td>The extension</td><td>Read the source, open a branch and a pull request, turn on auto-merge</td><td>Skip the repo's required checks, or run on sites I didn't allow</td></tr>
+        <tr><td>The repo</td><td>Run its required checks and hold the merge until they pass</td><td>Check anything before the branch is pushed</td></tr>
+        <tr><td>Me</td><td>See the diff first, close or revert the pull request</td><td>Take back a pushed branch on a public repo (see below)</td></tr>
+      </tbody>
+    </table></div>
+    <p>I'd use a fine-grained token limited to the blog's repository. GitHub lets you limit a token to specific repositories (<a href="#ref-tokens">source</a>). The extension should only run on sites I name, and its right-click item can be limited to matching pages too (<a href="#ref-context-menus">source</a>).</p>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg></span><h2 id="risks">Risks</h2></header>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <caption>Risks and what limits them</caption>
+      <thead><tr><th>Risk</th><th>What could go wrong</th><th>What limits it</th></tr></thead>
+      <tbody>
+        <tr><td>Wrong lines</td><td>The edit lands in the wrong place</td><td>The text must match before a line is touched; the diff comes first; otherwise the agent gets it</td></tr>
+        <tr><td>Stale page</td><td>The page is older than the source</td><td>The commit stops if the file changed; reload after the deploy</td></tr>
+        <tr><td>A script on the page</td><td>It changes the text I'm editing</td><td>I see the diff before Publish; the token never enters the page</td></tr>
+        <tr><td>A secret pasted by mistake</td><td>A token or a private path ends up in a post</td><td>A leak scan in the required checks, with the caveat below</td></tr>
+        <tr><td>A broken build</td><td>A Markdown mistake breaks the site</td><td>The build is a required check, so nothing merges</td></tr>
+        <tr><td>A token that can do too much</td><td>It can write to other repos</td><td>A fine-grained token limited to the blog's repo</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-eye"/></svg></span><h2 id="public-before-checks">Public before the checks</h2></header>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>The diff is the real last check</p>
+      <p>My blog's repo is public. GitHub puts it this way: "The code will be visible to everyone who can visit GitHub.com" (<a href="#ref-visibility">source</a>). That includes the branch the extension pushes, before any check runs. A leak scan can stop a mistake from reaching the live site, but it can't stop it from being seen.</p></div>
+  </section>
+
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" id="learn" data-rd-tab="learn" data-rd-label="Learn" data-rd-icon="graduation-cap">
+<div class="rd-tab__body">
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2 id="glossary">Glossary</h2></header>
+    <div class="idea-gloss">
+      <details class="rd-fold"><summary>GitHub Pages</summary><p>GitHub's static site hosting. A user site lives at <code>&lt;owner&gt;.github.io</code> and a project site at <code>&lt;owner&gt;.github.io/&lt;repository&gt;</code>.</p></details>
+      <details class="rd-fold"><summary>Astro</summary><p>A site builder that turns Markdown, MDX and its own components into static pages. Its docs show deploying to GitHub Pages with a GitHub Actions workflow.</p></details>
+      <details class="rd-fold"><summary>Content collection</summary><p>A set of related entries of the same shape, such as blog posts. Each entry's id comes from its file name unless it sets a slug.</p></details>
+      <details class="rd-fold"><summary>Frontmatter</summary><p>The block of fields at the top of a Markdown file: title, date, tags. It is not part of the body, so editing a paragraph doesn't touch it.</p></details>
+      <details class="rd-fold"><summary>Syntax tree</summary><p>What a Markdown parser builds from the text. Each piece records where it starts and ends in the source file, which is what makes line numbers possible.</p></details>
+      <details class="rd-fold"><summary>Build plugin</summary><p>A small function that runs while the site is built. Here it would stamp each block with the source lines it came from.</p></details>
+      <details class="rd-fold"><summary>Pull request</summary><p>A proposed change on its own branch. It can be checked, discussed, merged, closed, and reverted after merging.</p></details>
+      <details class="rd-fold"><summary>Required status check</summary><p>A check a protected branch insists on before a merge, such as a build. It has to pass, or be skipped or neutral.</p></details>
+      <details class="rd-fold"><summary>Auto-merge</summary><p>A GitHub setting that merges a pull request on its own once its required reviews and checks pass. The repo has to allow it.</p></details>
+      <details class="rd-fold"><summary>Content script</summary><p>Extension code that runs inside a web page, so it can read and change what's on it.</p></details>
+      <details class="rd-fold"><summary>Isolated world</summary><p>The private space a content script runs in. The page's own scripts can't see into it.</p></details>
+      <details class="rd-fold"><summary>Fine-grained token</summary><p>A GitHub personal access token that can be limited to specific repositories and permissions.</p></details>
+      <details class="rd-fold"><summary>Diff</summary><p>The lines a change removes and adds, side by side. Here it's shown before anything is sent.</p></details>
+    </div>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2 id="quiz">Check yourself</h2></header>
+    <p>Four questions. Pick an answer and the explanation opens. Nothing is stored.</p>
+    <div class="idea-quiz">
+      <fieldset data-q="1">
+        <legend>1. I fix a typo with the extension. What changes in the repo?</legend>
+        <label><input type="radio" name="q1" value="a"> The built HTML that GitHub Pages serves</label>
+        <label><input type="radio" name="q1" value="b"> The Markdown lines for that paragraph, through a pull request</label>
+        <label><input type="radio" name="q1" value="c"> The whole Markdown file, rewritten from the page</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The second. The source is the Markdown, and the extension changes only the lines it can tie to the paragraph. The site is rebuilt from the source after the merge.</p></details>
+      </fieldset>
+      <fieldset data-q="2">
+        <legend>2. Why is Astro a good first target?</legend>
+        <label><input type="radio" name="q2" value="a"> It has a built-in edit API</label>
+        <label><input type="radio" name="q2" value="b"> Its URLs come from file paths and collection ids, so the URL is a good guess for the file</label>
+        <label><input type="radio" name="q2" value="c"> It always prints a generator tag</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The second. File-based routing and file-name ids make the guess possible, and the page's text confirms it. The generator tag is opt-in, so not every Astro site prints it.</p></details>
+      </fieldset>
+      <fieldset data-q="3">
+        <legend>3. The repo is public and I paste a secret by mistake, then press Publish. When can others see it?</legend>
+        <label><input type="radio" name="q3" value="a"> Only after the pull request merges</label>
+        <label><input type="radio" name="q3" value="b"> As soon as the branch is pushed</label>
+        <label><input type="radio" name="q3" value="c"> Never, because the leak scan blocks it</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The second. A public repo's branches are visible to anyone on GitHub. The leak scan only keeps the mistake out of the live site. That's why the diff comes first.</p></details>
+      </fieldset>
+      <fieldset data-q="4">
+        <legend>4. The repo requires no checks. What happens with auto-merge?</legend>
+        <label><input type="radio" name="q4" value="a"> It waits for every check anyway</label>
+        <label><input type="radio" name="q4" value="b"> It isn't offered, because the pull request can already be merged</label>
+        <label><input type="radio" name="q4" value="c"> It merges after a fixed delay</label>
+        <p class="idea-verdict" aria-live="polite"></p>
+        <details class="rd-fold"><summary>Answer</summary><p>The second. GitHub only offers auto-merge on pull requests that can't be merged right away. The checks gate the merge only if the repo requires them.</p></details>
+      </fieldset>
+    </div>
+  </section>
+
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" id="ask" data-rd-tab="ask" data-rd-label="Ask this idea" data-rd-icon="message-circle">
+<div class="rd-tab__body">
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg></span><h2 id="ask-this-idea">Ask this idea</h2></header>
+    <div class="rd-callout"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>How answers work</p>
+      <p>Answers come from short notes written from this page. There is no AI model. Your question is matched against the notes by keyword (a ranking called BM25), right here in the page. If nothing matches well, it says it does not know. Every answer links to the section it came from. Nothing you type is stored or sent, and the conversation is gone when you leave the page.</p></div>
+    <ul class="idea-chips" aria-label="Suggested questions">
+      <li><button type="button" class="rd-btn" data-ask="What is the idea in one sentence?">What is the idea?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Why Astro?">Why Astro?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="How does it find the source file?">How does it find the source?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="When does the AI coding agent take over?">When does the agent take over?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Is it built?">Is it built?</button></li>
+      <li><button type="button" class="rd-btn" data-ask="Is it safe on a public repo?">Is it safe on a public repo?</button></li>
+    </ul>
+    <div class="idea-ask">
+      <!-- With scripts on, submit is handled in the page. Without them, the GET keeps the reader on this tab. -->
+      <form id="idea-ask-form" role="search" method="get" action="#ask-this-idea">
+        <label for="idea-ask-input" class="rd-eyebrow">Your question</label>
+        <input type="hidden" name="tab" value="ask">
+        <input id="idea-ask-input" type="text" name="q" autocomplete="off" placeholder="Ask about the idea" maxlength="300">
+        <button type="submit" class="rd-btn"><svg class="rd-icon" aria-hidden="true"><use href="#i-send"/></svg>Ask</button>
+      </form>
+      <div class="idea-log" id="idea-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+    </div>
+    <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg>Typed questions only. There is no microphone and no spoken reply.</p>
+  </section>
+
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" id="limits" data-rd-tab="limits" data-rd-label="Limits and sources" data-rd-icon="scale">
+<div class="rd-tab__body">
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="open-problems">Open problems</h2></header>
+    <ul class="rd-icon-list">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><strong>Other people's sites.</strong> I've only looked at mine. I don't know how often the text matching finds the right lines on other Astro blogs.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><strong>Custom domains.</strong> On <code>&lt;owner&gt;.github.io</code> the address names the account that owns the site. A custom domain doesn't, so the extension needs another way to find the repo.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><strong>MDX, frontmatter and images.</strong> An edit inside a component, a new title or date, or a new image doesn't map to a paragraph's lines. Today those go to the agent.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><strong>Stale pages.</strong> Right after a merge, the live page can be older than the source for a few minutes. An edit made then stops and has to wait for the deploy.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><strong>More than one author.</strong> If two people edit the same post at once, the second edit stops. I haven't worked out what should happen next.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg><strong>Faster or not.</strong> I haven't timed this against the web editor, so I can't say it saves time.</li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-x"/></svg></span><h2 id="not-decided">What is not decided</h2></header>
+    <ul>
+      <li>Whether the build plugin should be the default, or the text matching is good enough on its own.</li>
+      <li>How much the AI coding agent may change beyond the exact edit.</li>
+      <li>Whether every edit should bump an "updated" date on the post.</li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="caveats">Caveats</h2></header>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Read this first</p>
+      <p>This is an idea with a rough version in progress. Nothing on this page is measured or security reviewed. What it says about GitHub, Chrome and Astro comes from their docs, listed below.</p></div>
+    <ul class="rd-icon-list rd-icon-list--warn">
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>The Q&amp;A on the Ask tab is written from this page. It is not a model, and it can miss things.</li>
+      <li><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>The diagrams are simplified.</li>
+    </ul>
+  </section>
+
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2 id="sources">Sources</h2></header>
+    <p>Only sources I opened and read are listed.</p>
+    <ol class="rd-refs">
+      <li id="ref-automerge">GitHub Docs. <a class="rd-ref" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/automatically-merging-a-pull-request"><em>Automatically merging a pull request</em></a>. Used: auto-merge waits for required reviews and status checks, must be enabled for the repository, and is offered only on pull requests that can't be merged right away.</li>
+      <li id="ref-protected">GitHub Docs. <a class="rd-ref" href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"><em>About protected branches</em></a>. Used: required status checks must pass (or be skipped or neutral) before the merge.</li>
+      <li id="ref-pages">GitHub Docs. <a class="rd-ref" href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages"><em>About GitHub Pages</em></a>. Used: user sites at <code>&lt;owner&gt;.github.io</code>, project sites at <code>&lt;owner&gt;.github.io/&lt;repositoryname&gt;</code>.</li>
+      <li id="ref-tokens">GitHub Docs. <a class="rd-ref" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens"><em>Managing your personal access tokens</em></a>. Used: a fine-grained token can be limited to specific repositories.</li>
+      <li id="ref-githubdev">GitHub Docs. <a class="rd-ref" href="https://docs.github.com/en/codespaces/the-githubdev-web-based-editor"><em>The github.dev web-based editor</em></a>. Used: the period key opens a repository in an editor in the browser.</li>
+      <li id="ref-visibility">GitHub Docs. <a class="rd-ref" href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility"><em>Setting repository visibility</em></a>. Used: the quote on public code.</li>
+      <li id="ref-content-scripts">Chrome for Developers. <a class="rd-ref" href="https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts"><em>Content scripts</em></a>. Used: content scripts run in the context of web pages, in an isolated world the page can't access.</li>
+      <li id="ref-context-menus">Chrome for Developers. <a class="rd-ref" href="https://developer.chrome.com/docs/extensions/reference/api/contextMenus"><em>chrome.contextMenus</em></a>. Used: menu items can be limited to documents whose URL matches given patterns.</li>
+      <li id="ref-routing">Astro Docs. <a class="rd-ref" href="https://docs.astro.build/en/guides/routing/"><em>Routing</em></a>. Used: file-based routing from <code>src/pages/</code>; Markdown and MDX files there become pages.</li>
+      <li id="ref-collections">Astro Docs. <a class="rd-ref" href="https://docs.astro.build/en/guides/content-collections/"><em>Content collections</em></a>. Used: entry ids from file names, the slug override, and no pages generated by default.</li>
+      <li id="ref-generator">Astro Docs. <a class="rd-ref" href="https://docs.astro.build/en/reference/api-reference/"><em>API reference</em></a>. Used: <code>Astro.generator</code> and its use in a generator meta tag.</li>
+      <li id="ref-markdown">Astro Docs. <a class="rd-ref" href="https://docs.astro.build/en/guides/markdown-content/"><em>Markdown in Astro</em></a>. Used: Markdown plugins, the unified processor's remark plugins, and the default processor since Astro 7.</li>
+      <li id="ref-deploy">Astro Docs. <a class="rd-ref" href="https://docs.astro.build/en/guides/deploy/github/"><em>Deploy your Astro site to GitHub Pages</em></a>. Used: deploying with GitHub Actions and Astro's official action.</li>
+      <li id="ref-unist">syntax-tree. <a class="rd-ref" href="https://github.com/syntax-tree/unist"><em>unist: Universal Syntax Tree</em></a>. Used: a node's position is its location in the source file.</li>
+    </ol>
+    <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Sources read on 2026-10-25. No data or measurements are referenced, because none exist yet.</p>
+  </section>
+
+  </div>
+</section>
+
+<script type="application/json" data-rd-data id="idea-kb">[
+{"q":"What is the idea in one sentence?","a":"A browser extension that lets you fix your own post on the live page, then carries the change back to the Markdown source as a pull request that merges once the repo's checks pass.","k":"idea summary one sentence what is it","s":"in-30-seconds","t":"In 30 seconds"},
+{"q":"Is it built?","a":"A rough version is in progress for this site. It isn't finished, and nothing is measured. This page describes the idea, not that code.","k":"built product prototype status finished working","s":"caveats","t":"Caveats"},
+{"q":"What problem does it solve?","a":"Fixing one word on a static blog means finding the repo, the file and the line, then a pull request and a deploy. The fix is small; the trip around it is the cost.","k":"problem typo trip steps why","s":"the-problem","t":"The problem"},
+{"q":"Why not just use GitHub's web editor?","a":"It helps with the editing part: the period key opens a repository in an editor in the browser. But you still edit raw Markdown, away from the page where you saw the typo, and you still find the file yourself.","k":"github dev web editor period key alternative vscode","s":"the-problem","t":"The problem"},
+{"q":"What are the steps of one fix?","a":"Read the post, click Edit, see the Markdown diff, publish a pull request, the required checks run, auto-merge merges it, and the site rebuilds.","k":"steps flow picture diagram fix","s":"one-picture","t":"The idea in one picture"},
+{"q":"How does it find the source file?","a":"Three ways, in order. The site says which lines each block came from. Or the extension guesses the file from the URL and confirms it by matching the page's text. Or an AI coding agent gets the before and after text.","k":"find source file lines mapping match","s":"finding-the-source","t":"Finding the source"},
+{"q":"When does the AI coding agent take over?","a":"When the source lines can't be found: inside an MDX component, on a site built some other way, or when the guessed file never matches the page's text. The agent finds the source, makes the edit and opens the pull request itself.","k":"ai agent fallback mdx unknown site","s":"finding-the-source","t":"Finding the source"},
+{"q":"Does it rewrite the whole paragraph?","a":"No. It turns the paragraph into Markdown before and after the edit and applies only the difference to the real source lines, so untouched text keeps its spelling. If that won't apply cleanly, it rewrites that one block and the diff shows it.","k":"small diff rewrite paragraph spelling minimal","s":"small-diffs","t":"Small diffs"},
+{"q":"Can I edit code blocks, math or tables?","a":"Not in place. They don't survive a trip through the page, so they open as Markdown in a small box.","k":"code block math table image source box","s":"small-diffs","t":"Small diffs"},
+{"q":"Who merges the pull request?","a":"GitHub's auto-merge, after the repo's required reviews and checks pass. The extension turns auto-merge on; it never merges by itself.","k":"merge auto-merge who merges","s":"publishing","t":"Publishing and merging"},
+{"q":"What if the repo requires no checks?","a":"Then auto-merge isn't offered, because the pull request can already be merged. The checks only gate the merge if the repo requires them.","k":"no required checks auto merge offered branch protection","s":"publishing","t":"Publishing and merging"},
+{"q":"What checks run on this site?","a":"The build, a link check and a leak scan. A failed check leaves the pull request open and nothing reaches the live site.","k":"checks build links leak scan ci","s":"publishing","t":"Publishing and merging"},
+{"q":"What if the file changed while I was editing?","a":"The commit is made against the exact file you were shown. If it changed in the meantime, the extension stops instead of overwriting it.","k":"conflict changed stale overwrite concurrent","s":"publishing","t":"Publishing and merging"},
+{"q":"Why Astro?","a":"Astro builds URLs from files in src/pages, and content collection entries get ids from their file names. So the URL is a good guess for the file, and the page's text confirms the guess.","k":"astro why routing collections","s":"astro-routing","t":"URLs come from files"},
+{"q":"How does the URL point at a content collection file?","a":"Each entry's id comes from its file name unless it sets its own slug. The site's route turns the id into a URL, often like /posts/<id>/, so the last part of the URL names the file.","k":"content collection id slug url posts","s":"astro-collections","t":"Content collections"},
+{"q":"How does the extension know a site is Astro?","a":"Some Astro sites print a generator meta tag with Astro.generator. It is opt-in, so a site without it still works with the first and third ways to find the source.","k":"generator meta tag detect astro","s":"astro-generator","t":"Knowing it's Astro"},
+{"q":"Where would line numbers come from?","a":"From the build. A Markdown parser's syntax tree records where each piece sits in the source file, so a small build plugin can stamp every block with its first and last line.","k":"line numbers build plugin remark syntax tree position","s":"astro-plugins","t":"Line numbers from the build"},
+{"q":"Does it work with Hugo or Jekyll?","a":"Not directly. They have their own rules for where pages come from, and I haven't looked at them. For now the AI coding agent is the only way to edit those.","k":"hugo jekyll other site builders","s":"other-builders","t":"Other site builders"},
+{"q":"Can the page steal my GitHub token?","a":"The token stays with the extension. Content scripts run in an isolated world, so the page's scripts can't see the extension's variables, and the page only ever gets results back.","k":"token steal page security isolated world","s":"who-can-do-what","t":"Who can do what"},
+{"q":"What token should I use?","a":"A fine-grained token limited to the blog's repository. GitHub lets you limit a token to specific repositories.","k":"token fine grained scope repository pat","s":"who-can-do-what","t":"Who can do what"},
+{"q":"Does it run on every website?","a":"No. It should only run on sites you name, and its right-click item can be limited to matching pages too.","k":"which sites allow list websites every","s":"who-can-do-what","t":"Who can do what"},
+{"q":"Is it safe on a public repo?","a":"Mostly, with one catch: on a public repo the pushed branch is visible to everyone before any check runs. A leak scan keeps a mistake out of the live site but can't stop it from being seen, so the diff before Publish is the real last check.","k":"public repo safe secret leak visible branch","s":"public-before-checks","t":"Public before the checks"},
+{"q":"What are the main risks?","a":"Wrong lines, a stale page, a script on the page changing the text, a pasted secret, a broken build, and a token that can do too much. The Risks table says what limits each one.","k":"risks threats mitigation","s":"risks","t":"Risks"},
+{"q":"Does it work with a custom domain?","a":"Not yet. On <owner>.github.io the address names the account that owns the site. A custom domain doesn't, so the extension needs another way to find the repo.","k":"custom domain cname","s":"open-problems","t":"Open problems"},
+{"q":"Can I edit the title or the date?","a":"Not in place. Frontmatter, MDX components and images don't map to a paragraph's lines, so today those go to the agent.","k":"title date frontmatter image mdx component","s":"open-problems","t":"Open problems"},
+{"q":"Is it faster than editing on GitHub?","a":"I don't know. I haven't timed it against the web editor.","k":"faster time save speed measure","s":"open-problems","t":"Open problems"},
+{"q":"What is not decided?","a":"Whether the build plugin should be the default, how much the agent may change beyond the exact edit, and whether every edit should bump an updated date.","k":"not decided open questions undecided","s":"not-decided","t":"What is not decided"}
+]</script>

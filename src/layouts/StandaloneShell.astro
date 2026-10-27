@@ -48,7 +48,9 @@ const pageCss = css ? `<style is:inline>${css}</style>` : "";
 
 // The page's Lucide icons, inlined as a self-contained sprite (no request) — the shell-rendered
 // fragment has no public/ page for the sprite builder to rewrite, so the shell supplies its own.
-const sprite = spriteBlock(iconNames(tabBar + body));
+// meta.icons adds names the page creates in page.js (not referenced in the body markup), so they
+// are in the sprite too; the union is deduped.
+const sprite = spriteBlock([...new Set([...iconNames(tabBar + body), ...(meta.icons ?? [])])]);
 
 // The page's runtime module (contract: export default init({ root, data, rd })). Served as a Vite asset
 // (content-hashed, no public/ duplicate) and invoked by a tiny per-page module that hands it the root,

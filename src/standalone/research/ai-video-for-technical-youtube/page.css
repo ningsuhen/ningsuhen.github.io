@@ -1,0 +1,4 @@
+/* Report layout. Colours/sizes from design-system tokens; raw lengths in custom properties. */
+[data-page="ai-video-for-technical-youtube"]{--av-claim-min:14rem}
+[data-page="ai-video-for-technical-youtube"] .av-fig>svg{max-width:none}
+[data-page="ai-video-for-technical-youtube"] .av-claims td:nth-child(2){word-break:break-all;min-width:var(--av-claim-min)}

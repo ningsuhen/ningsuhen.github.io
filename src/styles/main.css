@@ -5,6 +5,7 @@
        Accent ink (--btn-content, like LicenseNote): 3:1+ against card and page; --primary is only 2.3-2.7:1 in light. */
     a:focus-visible,
     button:focus-visible,
+    input:focus-visible,
     summary:focus-visible,
     [tabindex]:focus-visible {
         @apply outline-2 outline-[var(--btn-content)] outline-offset-2;
@@ -95,9 +96,6 @@
     /* Secondary text (meta, TOC, search). 0.56 in light: 4.5:1+ on card, page, button and TOC-active grounds. */
     .text-50 {
         @apply text-black/[0.56] dark:text-white/50
-    }
-    .text-30 {
-        @apply text-black/30 dark:text-white/30
     }
     .text-25 {
         @apply text-black/25 dark:text-white/25

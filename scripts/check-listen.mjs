@@ -639,14 +639,14 @@ async function realOrtRuntime() {
 }
 const REAL_ORT = await realOrtRuntime();
 
-const routeModelFiles = async (ctx, counter, runtime = {}) => {
+const routeModelFiles = async (ctx, counter, runtime = {}, bodies = {}) => {
 	await ctx.route("**/tts/manifest.json", (route) =>
 		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FAKE_MANIFEST) }),
 	);
 	await ctx.route("https://huggingface.co/**", (route) => {
 		counter.hf += 1;
 		const key = new URL(route.request().url()).pathname.split("/").slice(-2).join("/");
-		const body = FAKE_FILES[key];
+		const body = bodies[key] ?? FAKE_FILES[key];
 		return route.fulfill({
 			status: body ? 200 : 404,
 			contentType: "application/octet-stream",
@@ -665,12 +665,12 @@ const routeModelFiles = async (ctx, counter, runtime = {}) => {
 		});
 	});
 };
-const neuralContext = async (browser, { delayMs, initMs, status, body, gpu = true, counter = { hf: 0 }, runtime = {} }) => {
+const neuralContext = async (browser, { delayMs, initMs, status, body, gpu = true, counter = { hf: 0 }, runtime = {}, bodies = {}, init = "" }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	ctx.setDefaultTimeout(10000);
-	await ctx.addInitScript(`${SPEECH_STUB}; ${gpu ? GPU_STUB : ""}; window.__KOKORO_READY = true;`);
+	await ctx.addInitScript(`${SPEECH_STUB}; ${gpu ? GPU_STUB : ""}; window.__KOKORO_READY = true; ${init}`);
 	await routeKokoro(ctx, body ?? stubEngine(delayMs ?? 50, initMs ?? 0), status);
-	await routeModelFiles(ctx, counter, runtime);
+	await routeModelFiles(ctx, counter, runtime, bodies);
 	return ctx;
 };
 const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
@@ -1038,6 +1038,50 @@ for (const [label, runtime, expected] of [
 	await ctx.close();
 }
 
+// 14. Memory: a download never reads a stored file whole on each progress update. The runtime's "stored" probe used
+// to read and hash the 24 MB binary per network chunk, thousands of buffers in flight during the 325 MB model
+// download, and the tab crashed (Aw, Snap). Every whole-body read (Response/Blob arrayBuffer, blob, text) is counted.
+await step("14. download memory", async () => {
+	const WHOLE_READS = `(() => { window.__wholeBytes = 0; for (const proto of [Response.prototype, Blob.prototype]) for (const name of ["arrayBuffer", "blob", "text"]) { const orig = proto[name]; if (!orig) continue; proto[name] = async function (...args) { const out = await orig.apply(this, args); window.__wholeBytes += out.byteLength ?? out.size ?? out.length ?? 0; return out; }; } })();`;
+	const ctx = await neuralContext(browser, { init: WHOLE_READS });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	await page.evaluate(() => (window.__wholeBytes = 0));
+	await page.click("[data-action=play]");
+	await page.waitForSelector("[data-consent][open]", { timeout: 4000 });
+	await page.click("[data-variant=fp32]");
+	await page.waitForFunction(() => window.__stubInits > 0, null, { timeout: 20000 })
+		.catch(() => expect(false, "download memory: the engine was not initialised"));
+	await page.waitForTimeout(500);
+	const whole = await page.evaluate(() => window.__wholeBytes);
+	expect(whole < 2 * ORT_BYTES, `download memory: ${Math.round(whole / 1e6)} MB read whole during one download (the runtime probe must not read the body)`);
+	// Stored under the real keys only: no staging copy is left behind.
+	const keys = await page.evaluate(async () => (await (await caches.open("kokoro-tts-v1")).keys()).map((r) => r.url));
+	expect(keys.some((u) => u.endsWith("onnx/model.onnx")), "download memory: the model was not stored");
+	expect(!keys.some((u) => u.includes("kokoro-staging")), `download memory: staging copies left: ${keys.join(", ")}`);
+	await ctx.close();
+});
+
+// 15. A model file whose bytes do not match the pinned SHA-256 is never stored (not under its key, not as a staging
+// copy); the listener gets the browser voice and the reason.
+await step("15. model checksum", async () => {
+	const bad = Buffer.alloc(FAKE_FILES["onnx/model.onnx"].length, 1);
+	const ctx = await neuralContext(browser, { bodies: { "onnx/model.onnx": bad } });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	await page.click("[data-action=play]");
+	await page.waitForSelector("[data-consent][open]", { timeout: 4000 });
+	await page.click("[data-variant=fp32]");
+	await page.waitForFunction(() => /checksum does not match/.test(document.querySelector("[data-status]")?.textContent ?? ""), null, { timeout: 20000 })
+		.catch(() => expect(false, "model checksum: no checksum error shown"));
+	expect(await engineValue(page) === "web-speech", "model checksum: the browser voice did not take over");
+	const keys = await page.evaluate(async () => (await (await caches.open("kokoro-tts-v1")).keys()).map((r) => r.url));
+	expect(!keys.some((u) => /onnx\/model\.onnx/.test(u)), `model checksum: a bad model was stored: ${keys.join(", ")}`);
+	await ctx.close();
+});
+
 // 11. Pronunciation fixes reach the engine; the highlight still covers the written words.
 // A fixture paragraph (independent of the post's prose) exercises the global lexicon (src/data/pronunciations.json:
 // Wikipedia), post front matter (data-pronounce, set here) and an inline :say span (data-say); a reconnect re-extracts.
@@ -1162,6 +1206,9 @@ await step("12. comments: giscus error", async () => {
 			};
 		});
 	const before = await below();
+	// The giscus bootstrap is deferred until the block scrolls into view; trigger it the way a
+	// reader would (scroll to the comments) before expecting the widget's error to settle.
+	await page.evaluate(() => document.getElementById("giscus-comments").scrollIntoView({ block: "center" }));
 	await page
 		.waitForFunction(() => document.getElementById("giscus-comments")?.hasAttribute("data-failed"), null, { timeout: 5000 })
 		.catch(() => expect(false, "comments: a giscus error did not show the failure notice"));

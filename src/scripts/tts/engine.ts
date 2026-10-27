@@ -47,6 +47,8 @@ export interface EngineInitOptions {
 	baseUrl?: string;
 	/** Neural engines: absolute URL of the ONNX Runtime dist (served from this site). */
 	ortBase?: string;
+	/** Neural engines: false when the text is already normalised (extract.ts does it before speak). */
+	normalize?: boolean;
 }
 
 export interface TtsEngine {

@@ -62,6 +62,8 @@ jobs:
         run: pnpm check:syntax
       - name: astro check
         run: pnpm check
+      - name: front matter
+        run: pnpm check:frontmatter
       - name: thumbnails
         run: pnpm check:thumbnails
       - name: source map
