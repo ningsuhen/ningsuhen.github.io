@@ -1,25 +1,13 @@
 {
   "items": [
     {
-      "title": "LPM learnings: one shader set for Metal and Chrome",
-      "summary": "Eight concrete lessons from building a GPU language-model engine whose WGSL runs unchanged on native Metal and in Chrome, each with its evidence and its cost.",
-      "href": "/research/lpm-learnings-one-shader-set-metal-and-chrome/",
-      "post": "/posts/lpm-learnings-one-shader-set-metal-and-chrome/",
-      "started": "2026-10-26",
-      "updated": "2026-10-26",
-      "status": "Draft",
-      "tags": [
-        "Research"
-      ]
-    },
-    {
       "title": "LPM: a small model as a function call, performance and results so far",
-      "summary": "Measured results from the first three milestones of LPM, a Rust engine that runs a small language model on the GPU through one WGSL source, on native Metal and in Chrome WebGPU, with every number labelled by model, machine, target and load.",
+      "summary": "Measured results from the first three milestones of LPM, a Rust engine that runs a small language model on the GPU through one WGSL source, on native Metal and in Chrome WebGPU, with every number labelled by model, machine, target and load, plus the eight lessons that cost time getting there.",
       "href": "/research/lpm-model-as-a-function-call-results/",
       "post": "/posts/lpm-model-as-a-function-call-results/",
       "started": "2026-10-26",
       "updated": "2026-10-26",
-      "status": "Draft",
+      "status": "Live",
       "tags": [
         "Research"
       ]
