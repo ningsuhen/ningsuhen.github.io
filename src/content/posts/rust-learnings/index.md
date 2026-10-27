@@ -10,7 +10,9 @@ draft: false
 
 Python was the primary choice for a lot of tools I created when I first started using claude code. But as the code base became larger , it became slower and slower, and it was easy to break something when there's a change in another. There were periods of frustration feeling like the codebase is a complete bust of AI Slop. 
 
-At the same time, claude code was doing a very good job of generating code. This reminded me Rust - how it has so many checks and safety features during compilation to the extent that compilation is so slow and slow enough to put me off. But with agentic coding, this is a different game. I was starting to have a system where I could just prompt the instructions and the agent will do their work until completion. This was a good time to try rewriting some Python programs in Rust and here are the learnings from it.
+<!-- owner:manual -->
+
+At the same time, claude code was doing a very good job of generating code. It needed a way to prevent regressions. Initially, I tried to fix with LSP,  mypy and various tools to ensure correctness but they just felt like a bunch of hacks. This reminded me of Rust - how it has so many checks and safety features during compilation to the extent that compilation is so slow to put me off. But with agentic coding, this was a different game. I was starting to have a system where I could just prompt the instructions and the agent will do their work until completion. This was a good time to try rewriting some Python programs in Rust and here are the learnings from it.
 
 ## What I did not measure
 
