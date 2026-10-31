@@ -4,7 +4,8 @@
    ====================================================================== */
 /* Section bar (rd-expnav): the navbar-width frame, the breadcrumb band's height (--rd-crumb-h) under the injected navbar card. The
    first link starts flush at the bar's left edge (no left inset); the right keeps a 16px gutter so a scrolled-to-end bar does not
-   butt against the card edge. The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
+   butt against the card edge. Over a content card of its own width (tabbed and wide reports) it is that card's top instead (see
+   "The bar is the card's top" below). The injected navbar is sticky (standalone-header.ts, like the main site), so the bar sticks at
    --rd-navbar-h + --rd-crumb-h (the band's height under it). Links scroll sideways inside the bar; edge fades show where more is, and the scroll-spy keeps the active
    link in view. Links are plain anchors; scroll-spy adds .is-active (see template.html). */
 @media (max-width: 767.98px) { :root { --rd-navbar-h: 3.9375rem; } } /* 4.5 x 14px: the navbar's font drops to 14px below 768px */
@@ -30,8 +31,19 @@
 /* Inside the content card (shell-rendered pages put the tab bar under the hero) it is a plain tab row with its rule. */
 main .rd-expnav { border-radius: 0; border-bottom-color: var(--rd-line); }
 @media (max-width: 767.98px) { .rd-expnav { border-radius: 0; } } /* full-bleed under the full-bleed navbar card */
-/* The content card sits one main-site gap (16px) under the bar. */
+/* Over a narrower card (a single column) the bar is a card strip one main-site gap (16px) above it. */
 .rd-expnav ~ main:is(.rd-container, .rd-container--wide, .rd-tabbed) { margin-top: var(--rd-space-4); }
+/* The bar is the card's top over a card of its own width: the card's width, rounded top corners, a rule under the tabs, and the
+   card flush and square under it. Nothing changes shape when it sticks, and text never slides under it without an edge. The
+   first tab's icon sits on the content's text edge (the tab's own 12px padding is part of the card padding). */
+.rd-expnav:has(~ main:is(.rd-container--wide, .rd-tabbed)) {
+	padding: 0 var(--rd-pad-surface) 0 calc(var(--rd-pad-surface) - var(--rd-space-3));
+	border-radius: var(--rd-radius) var(--rd-radius) 0 0;
+	border-bottom-color: var(--rd-line);
+}
+@media (min-width: 768px) { .rd-expnav:has(~ main:is(.rd-container--wide, .rd-tabbed)) { max-width: min(100% - 2rem, var(--rd-navbar-width)); } }
+@media (max-width: 767.98px) { .rd-expnav:has(~ main:is(.rd-container--wide, .rd-tabbed)) { border-radius: 0; } }
+.rd-expnav ~ main:is(.rd-container--wide, .rd-tabbed) { margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; }
 .rd-expnav::-webkit-scrollbar { display: none; }
 .rd-expnav a {
 	display: inline-flex;
@@ -97,8 +109,8 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 .rd-tabpanel[hidden] { display: none; }
 .rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 /* Below 1536px the rail is the disclosure above the content. It sticks flush under the section bar (navbar + band + bar,
-   no gap, so nothing scrolls through between them), so it stays
-   in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
+   no gap, so nothing scrolls through between them), so it stays in reach while the reader scrolls the tab. With JS it is
+   one line (see "Narrow, with JS" below); without JS it is the open list. Wide screens use the fixed margin rail below. */
 .rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-expnav-line)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-expnav-line)); overflow-y: auto; background: var(--rd-surface); padding-bottom: var(--rd-space-2); border-bottom: 1px solid var(--rd-line-soft); }
 .rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
@@ -117,6 +129,30 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 @media (max-width: 1535px) {
   .rd-toc a.visible { background: var(--rd-toc-hover); }
 }
+/* Narrow, with JS: one sticky line, "On this page" and the current section, and the list opens over the content, so the
+   stuck header never grows by the list. The injected rail script (src/chrome/rail-bar.ts) closes the disclosure, adds
+   .is-bar and keeps .rd-toc__current and a.is-current on the section being read. Until it runs the list is hidden here,
+   so the page never jumps when it collapses. Without JS (scripting: none) none of this applies: the open list. */
+@media (max-width: 1535px) and (scripting: enabled) {
+  :root { --rd-toc-bar-h: calc(var(--rd-control-h) + 1px); } /* the line and its rule: anchor jumps clear it */
+  .rd-toc { overflow: visible; max-height: none; padding-bottom: 0; }
+  .rd-toc:not(.is-bar) details > :not(summary) { display: none; }
+  .rd-toc summary { min-height: var(--rd-expnav-h); }
+  .rd-toc summary::after { content: ""; flex: none; margin: 0 0.25rem 0 auto; width: 0.4em; height: 0.4em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-0.15em) rotate(45deg); transition: transform 0.15s ease; }
+  .rd-toc details[open] > summary::after { transform: translateY(0.1em) rotate(-135deg); }
+  .rd-toc__current { display: flex; align-items: center; gap: 0.5rem; min-width: 0; color: var(--rd-text-strong); font-weight: 500; }
+  .rd-toc__current:empty { display: none; }
+  .rd-toc__current::before { content: ""; flex: none; width: 1px; height: 1em; margin-right: 0.15rem; background: var(--rd-line); }
+  .rd-toc__current .rd-toc__text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: inherit; }
+  .rd-toc.is-bar details > ol { position: absolute; top: 100%; left: 0; right: 0; z-index: 3; max-height: min(60vh, 30rem); overflow-y: auto; overscroll-behavior: contain; padding: var(--rd-space-2); background: var(--rd-surface); border-radius: 0 0 var(--rd-radius) var(--rd-radius); box-shadow: 0 0 0 1px var(--rd-line-soft), 0 16px 32px -16px rgb(0 0 0 / 0.3); }
+  .rd-toc a.visible { background: none; }
+  .rd-toc a.is-current { background: var(--rd-toc-hover); }
+  .rd-toc a.is-current .rd-toc__text { color: var(--rd-text-strong); }
+}
+@media (max-width: 767.98px) and (scripting: enabled) {
+  .rd-toc__label:has(+ .rd-toc__current:not(:empty)) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* the nav's aria-label still names it */
+  .rd-toc__current::before { content: none; }
+}
 /* Wide (1536px+): the rail, fixed in the right margin, like the main post page's TOC. */
 @media (min-width: 1536px) {
   .rd-toc { position: fixed; top: 3.5rem; left: calc(50% + var(--rd-navbar-width) / 2 + 1rem); z-index: 1; width: var(--rd-toc-width); height: calc(100vh - 20rem); box-sizing: border-box; padding: 2rem 0; background: none; border-bottom: 0; overflow-x: hidden; overflow-y: scroll; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); }
@@ -128,7 +164,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 
 /* Section header: an icon badge, an h2, and an id that the navbar links to. */
-.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose .rd-section__head { display: flex; align-items: center; gap: var(--rd-space-3); margin: var(--rd-gap-section) 0 var(--rd-gap-block); scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-toc-bar-h, 0px) + var(--rd-space-4)); }
 .rd-prose .rd-section__head h2 { margin: 0; padding: 0; font-size: var(--rd-fs-h2); }
 .rd-prose .rd-section__head h2::before { content: none; }
 .rd-section__icon {
@@ -143,7 +179,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	color: var(--rd-accent);
 }
 .rd-section__icon .rd-icon { width: 1em; height: 1em; }
-.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-space-4)); }
+.rd-prose [id] { scroll-margin-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-toc-bar-h, 0px) + var(--rd-space-4)); }
 
 /* Hero: eyebrow, h1, lede, a row of status chips and meta. */
 .rd-hero { padding: var(--rd-gap-block) 0 var(--rd-space-2); }

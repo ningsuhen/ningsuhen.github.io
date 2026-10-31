@@ -224,6 +224,15 @@ async function testPage(rel) {
 		await legacy.ctx.close();
 	}
 
+	// Below 1536px the rail is one line (src/chrome/rail-bar.ts): a reader opens it, then picks a link. Open it the same way;
+	// opening is not navigation (no history entry, no scroll).
+	async function openRail(page, panelId) {
+		const closed = await page.evaluate((id) => {
+			const sm = document.querySelector(`#${id} .rd-toc summary`);
+			return !!sm && !sm.parentElement.open && sm.getClientRects().length > 0 && getComputedStyle(sm).display !== "none";
+		}, panelId);
+		if (closed) await page.click(`#${panelId} .rd-toc summary`);
+	}
 	// 4. "On this page" links (the right rail): one pushState entry per jump; Back restores the tab, the section and the
 	// scroll; Forward goes back to the target; reload keeps all of it.
 	for (let i = 0; i < meta.length; i++) {
@@ -233,7 +242,9 @@ async function testPage(rel) {
 		// (navbar, breadcrumb band, section bar and any page bar under them): a covered link would make the click scroll the
 		// page first, and the test would then compare against the wrong start. 150px when that is clear, else just above it.
 		const startY = await page.evaluate((sel) => {
-			const link = document.querySelector(sel);
+			const a = document.querySelector(sel);
+			// Below 1536px the rail is one line and its links are hidden until it opens: what must be clear is the summary.
+			const link = a?.getClientRects().length ? a : a?.closest("details")?.querySelector("summary");
 			if (!link) return 150;
 			const chrome = Math.max(0, ...[...document.querySelectorAll("body *, [data-site-navbar]")]
 				.filter((el) => !el.closest(".rd-tabpanel") && getComputedStyle(el).position === "sticky" && el.getClientRects().length)
@@ -245,6 +256,7 @@ async function testPage(rel) {
 		await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
 		await settle(page);
 		const s0 = await snap(page);
+		await openRail(page, meta[i].id);
 		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
 		const s1 = await snap(page);
 		check(label(`TOC #${meta[i].toc}: +1 entry, hash, same tab`), s1.len === s0.len + 1 && s1.hash === `#${meta[i].toc}` && s1.active === i && s1.search === s0.search, `${s0.len}->${s1.len}`);
@@ -254,6 +266,7 @@ async function testPage(rel) {
 		await act(page, () => page.goForward());
 		const f = await snap(page);
 		check(label(`TOC #${meta[i].toc}: Forward restores the target`), f.hash === `#${meta[i].toc}` && f.active === i && Math.abs(f.y - s1.y) <= 3, `y ${f.y} vs ${s1.y}`);
+		await openRail(page, meta[i].id);
 		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
 		check(label(`TOC #${meta[i].toc} again while there: no entry`), (await snap(page)).len === f.len);
 		await act(page, () => page.reload());
