@@ -1,0 +1,12 @@
+{
+	"contract": 1,
+	"kind": "research",
+	"slug": "spark-x2-6-4b",
+	"title": "Spark-X2.6-4B as a Brev 4B-Tier Replacement",
+	"created": "2026-10-27",
+	"updated": "2026-10-27",
+	"summary": "We ran XHToken/Spark-X2.6-4B against Brev's current 4B generative tiers on the same 1,960-row classification arm: it ties on accuracy, costs more, and can't ship on the current ONNX-WebGPU path, so the current tiers stay.",
+	"eyebrow": "Brev research · generative tier · 4B replacement",
+	"width": "wide",
+	"layout": "tabbed"
+}

@@ -1,4 +1,4 @@
-/* Idea-page layout. Colours/sizes from design-system tokens; raw lengths in custom properties. */
+/* Idea layout; tokens only. */
 [data-page="edit-blog-in-place"]{--idea-fig-max:42.5rem;--idea-log-max:34rem;--idea-gloss-min:18rem;--idea-ask-min:14rem;--idea-hair:1px}
 [data-page="edit-blog-in-place"] .idea-fig>svg{width:100%;height:auto;max-width:var(--idea-fig-max);margin-inline:auto;color:var(--rd-text-strong)}
 [data-page="edit-blog-in-place"] .idea-box{fill:var(--rd-card-bg);stroke:currentColor;stroke-width:1.5}
@@ -32,3 +32,5 @@
 [data-page="edit-blog-in-place"] .idea-verdict--ok{color:var(--rd-good)}
 [data-page="edit-blog-in-place"] .idea-verdict--no{color:var(--rd-bad)}
 [data-page="edit-blog-in-place"] .idea-gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--idea-gloss-min)),1fr));gap:var(--rd-space-2);align-items:start}
+
+[data-page="edit-blog-in-place"] .idea-hero-chips{margin-top:var(--rd-space-4)}

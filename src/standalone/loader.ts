@@ -96,11 +96,15 @@ function derive(body: string): { tabs: Tab[]; rails: Record<string, Rail>; body:
 		}));
 		rails[s.id] = rail;
 		if (rail.length) {
-			const nav = `<nav class="rd-toc" aria-label="On this page"><ol>${rail
+			// data-rd="rail": rd.js mounts the scroll-spy (shell pages have no inline rail script, so without it nothing is
+			// ever highlighted). Same disclosure markup as the public pages: open by default so no-JS sees every link.
+			const nav = `<nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>${rail
 				.map((r, n) => `<li class="rd-toc__l${r.level}"><a href="#${r.id}"><span class="rd-toc__badge">${n + 1}</span><span class="rd-toc__text">${r.text}</span></a></li>`)
-				.join("")}</ol></nav>`;
+				.join("")}</ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>`;
 			out = out.slice(0, s.end) + nav + out.slice(s.end);
 		}
+		// The panel's ARIA, server-side so it holds without JS: role=tabpanel, labelled by its tab (the shell's id="tab-<id>").
+		if (!/\brole=/.test(s.tag)) out = out.slice(0, s.at) + s.tag.replace(/>$/, ` role="tabpanel" aria-labelledby="tab-${s.id}">`) + out.slice(s.end);
 	}
 	return { tabs, rails, body: out };
 }
