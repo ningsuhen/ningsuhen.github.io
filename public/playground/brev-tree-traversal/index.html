@@ -24,8 +24,6 @@
 /* hashes and repo ids are long unbroken strings: let them wrap at 375px instead of widening the page */
 .rd-tabsec li, .rd-tabsec p { overflow-wrap: anywhere; }
 #c-laya-size { white-space: nowrap; }
-/* the stamp sits inside the h1 (design-system template) but is set small, muted and on its own line so the heading stays at most two lines at 375px */
-.rd-prose .rd-hero h1 .tt-stamp { display: block; font-size: var(--rd-fs-sm); font-weight: 400; letter-spacing: 0; line-height: 1.4; color: var(--rd-text-muted); margin-top: var(--rd-space-1); }
 .tt-card { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-3) 0; }
 .tt-pick { display: grid; grid-template-columns: 1fr 1fr; gap: var(--rd-space-3); }
 .tt-pick label { display: block; font-size: var(--rd-fs-xs); color: var(--rd-text-muted); margin-bottom: 0.2rem; }
@@ -169,7 +167,7 @@ tr.tt-hl .tt-acc-bar i { background: var(--rd-accent); }
 <main class="rd-tabbed rd-container--wide rd-prose">
   <header class="rd-hero">
     <p class="rd-eyebrow">Playground · brev-tree-traversal</p>
-    <h1>Brev tree traversal<span class="tt-stamp"> · created 2026-10-24 · updated 2026-10-25</span></h1>
+    <h1>Brev tree traversal<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created 2026-10-24 · updated 2026-10-25</span></h1>
     <p class="rd-hero__lede">Pick a customer message and watch a 400M encoder (laya) walk a 23-node, 7-group intent tree on Banking77, one question at a time; see how that walk scores against flat rules and a 27B model, and why it fails when it does. Then time the same encoder on your own GPU, in this browser.</p>
     <p class="rd-hero__meta">
       <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Walk: replay of a recorded run</span>
