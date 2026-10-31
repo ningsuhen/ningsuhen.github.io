@@ -21,7 +21,6 @@
 .lp-card [hidden], .rd-tabsec [hidden] { display: none !important; }
 .rd-tabsec { min-width: 0; }
 .rd-tabsec li, .rd-tabsec p, .lp-card p, .lp-card dd { overflow-wrap: anywhere; }
-.rd-prose .rd-hero h1 .lp-stamp { display: block; font-size: var(--rd-fs-sm); font-weight: 400; letter-spacing: 0; line-height: 1.4; color: var(--rd-text-muted); margin-top: var(--rd-space-1); }
 .lp-card { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-4) 0; min-width: 0; }
 .lp-card > :first-child { margin-top: 0; }
 .lp-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--rd-space-1) var(--rd-space-4); margin: var(--rd-space-3) 0; font-size: var(--rd-fs-sm); }
@@ -143,7 +142,7 @@
 <main class="rd-tabbed rd-container--wide rd-prose">
   <header class="rd-hero">
     <p class="rd-eyebrow">Playground · lpm-playground</p>
-    <h1>LPM playground<span class="lp-stamp"> · created 2026-10-26 · updated 2026-10-26</span></h1>
+    <h1>LPM playground<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created 2026-10-26 · updated 2026-10-26</span></h1>
     <p class="rd-hero__lede">A small language model that runs on your own graphics card and makes one closed-choice decision per call. A program branches on the answer. Your text is not sent anywhere.</p>
     <p class="rd-hero__meta">
       <span class="rd-chip rd-chip--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg>Runs in this tab, on your GPU</span>
@@ -894,12 +893,14 @@
     this.indicator = nav.querySelector('.rd-toc__indicator');
     this.sections = [];
     this.index = new Map();
-    this.active = [];
+    this.active = [];   // sections meeting the viewport (any part in view) → .visible
+    this.topLit = [];   // headings whose top edge is in view → aria-current
     this.anchorNavTarget = null;
     this.links.forEach(function (a, i) {
       var sec = document.getElementById(decodeURIComponent(a.hash.slice(1)));
       self.sections.push(sec);
       self.active.push(false);
+      self.topLit.push(false);
       if (sec) self.index.set(sec, i);
     });
     this.observer = new IntersectionObserver(function (entries) { self.onIntersect(entries); }, { threshold: 0 });
@@ -909,16 +910,18 @@
     window.addEventListener('scroll', function () { self.update(); }, { passive: true });
     this.update();
   }
-  // The lit run is exactly the headings whose top edge is in the viewport (the design-system check's in-view rule): a section
-  // scrolled past the top no longer lights, so the highlighted entries always equal the in-view set. Observer and scroll both
-  // drive it; update() debounces to one recompute per frame.
-  Rail.prototype.fallback = function () {
+  // Two highlight sets from one recompute (observer + scroll; update() debounces to one per frame):
+  //  - active: sections meeting the viewport (any part in view) → .visible (the standalone check's "intersecting" rule, and the
+  //    indicator run);
+  //  - topLit: headings whose top edge is in view → aria-current (the design-system check's in-view rule).
+  Rail.prototype.sync = function () {
     var vh = window.innerHeight;
     for (var i = 0; i < this.sections.length; i++) {
       var s = this.sections[i];
-      if (!s) { this.active[i] = false; continue; }
+      if (!s) { this.active[i] = false; this.topLit[i] = false; continue; }
       var r = s.getBoundingClientRect();
-      this.active[i] = r.top >= 0 && r.top < vh;
+      this.active[i] = r.bottom > 0 && r.top < vh;
+      this.topLit[i] = r.top >= 0 && r.top < vh;
     }
   };
   Rail.prototype.onIntersect = function (entries) {
@@ -933,20 +936,20 @@
     if (self._raf) return;
     self._raf = requestAnimationFrame(function () {
       self._raf = 0;
-      self.fallback();
+      self.sync();
       self.toggle();
       self.scroll();
     });
   };
   Rail.prototype.toggle = function () {
-    var links = this.links, a = this.active;
-    links.forEach(function (l, k) { if (a[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current'); });
-    var i = links.length - 1, min = links.length - 1, max = -1;
-    while (i >= 0 && !a[i]) { links[i].classList.remove('visible'); i--; }
-    while (i >= 0 && a[i]) { links[i].classList.add('visible'); min = Math.min(min, i); max = Math.max(max, i); i--; }
-    while (i >= 0) { links[i].classList.remove('visible'); i--; }
+    var links = this.links, a = this.active, t = this.topLit;
+    var min = -1, max = -1;
+    links.forEach(function (l, k) {
+      if (t[k]) l.setAttribute('aria-current', 'location'); else l.removeAttribute('aria-current');
+      if (a[k]) { l.classList.add('visible'); if (min < 0) min = k; max = k; } else l.classList.remove('visible');
+    });
     if (!this.indicator) return;
-    if (min > max) { this.indicator.style.cssText = 'opacity: 0'; return; }
+    if (min < 0) { this.indicator.style.cssText = 'opacity: 0'; return; }
     var parentTop = this.nav.getBoundingClientRect().top, scroll = this.nav.scrollTop;
     var top = links[min].getBoundingClientRect().top - parentTop + scroll;
     var bottom = links[max].getBoundingClientRect().bottom - parentTop + scroll;

@@ -1,5 +1,4 @@
-/* Idea-page layout. Colours/sizes from design-system tokens; raw lengths live in custom properties.
-   Every selector is prefixed with the page scope; no rd-* component is restyled. */
+/* Idea layout; tokens only. */
 [data-page="decentralized-office"]{
 	--idea-fig-max:42.5rem;
 	--idea-preset-h:2.25rem;
@@ -35,3 +34,5 @@
 [data-page="decentralized-office"] .idea-table td [data-p]{display:block}
 [data-page="decentralized-office"] .idea-table td [data-p]+[data-p]{margin-top:var(--rd-space-1)}
 [data-page="decentralized-office"] .idea-table.is-js td [data-p]:not(.is-on){display:none}
+
+[data-page="decentralized-office"] .idea-hero-chips{margin-top:var(--rd-space-4)}

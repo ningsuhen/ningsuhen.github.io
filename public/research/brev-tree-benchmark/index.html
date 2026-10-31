@@ -15,17 +15,15 @@
 body { margin: 0; background: var(--rd-page-bg); color: var(--rd-text); font: 400 16px/1.7 var(--rd-font); -webkit-font-smoothing: antialiased;
   padding: 0 max(16px, env(safe-area-inset-right, 0px)) 4rem max(16px, env(safe-area-inset-left, 0px)) }
 @media (max-width: 768px) { body { font-size: 14px } }
-main { max-width: var(--rd-content-width); margin: 0 auto; display: grid; gap: 2.5rem }
-.rd-tabbed { max-width: min(100%, var(--rd-navbar-width)); padding-left: 0; padding-right: 0 } /* site fix: content = navbar card edges; the body padding is the gutter */
-.rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100%, var(--rd-navbar-width)); padding-left: 0; padding-right: 0 } /* site fix: the trail starts on the content edge */
+main { display: grid; gap: 2.5rem }
+main.rd-tabbed { max-width: min(100%, var(--rd-navbar-width)) } /* the body's 16px padding is already the navbar card's inset */
+.rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100%, var(--rd-navbar-width)) } /* the same inset for the trail */
 h1, h2, h3 { color: var(--rd-text-strong); font-weight: 700; line-height: 1.3; text-wrap: balance; margin: 0 }
 h1 { font-size: 2rem }
 h2 { font-size: 1.5rem; padding-left: .9rem; position: relative }
 h2::before { content: ""; position: absolute; left: 0; top: .2em; bottom: .2em; width: .3rem; border-radius: .15rem; background: var(--rd-primary) }
 h3 { font-size: 1.15rem }
 p { margin: 0 }
-.eyebrow { font: 500 .75rem/1 var(--rd-font); text-transform: uppercase; letter-spacing: .09em; color: var(--rd-accent) }
-.stamp { font-size: .875rem; color: var(--rd-text-muted) }
 header { display: grid; gap: .75rem }
 .lede { font-size: 1.05rem }
 section { display: grid; gap: 1rem; min-width: 0 }
@@ -127,9 +125,8 @@ a { color: var(--rd-accent) }
 <main class="rd-tabbed rd-container--wide rd-prose">
 
   <header class="rd-hero">
-    <span class="eyebrow">Brev research · experiment E1 · Banking77</span>
-    <h1>Brev Tree Benchmark · created 2026-10-16 · updated 2026-10-24</h1>
-    <span class="stamp">created 2026-10-16 · updated <span id="updated">2026-10-24</span></span>
+    <span class="rd-eyebrow">Brev research · experiment E1 · Banking77</span>
+    <h1>Brev Tree Benchmark<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created 2026-10-16 · updated 2026-10-24</span></h1>
     <p class="lede">Can a decision tree hold the knowledge, so a 400M encoder that reads only the criteria on its path matches a 27B model given a short instruction, without its latency? laya walks the tree on an RTX 4060; Qwen3.8-27B answers through a shared model gateway.</p>
     <div class="legend">
       <span class="who"><span class="dot laya"></span>laya + tree (RTX 4060, 8 GB)</span>

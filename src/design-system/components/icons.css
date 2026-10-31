@@ -64,13 +64,16 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	max-width: var(--rd-content-width); /* rd-container */
 	height: 100%;
 	margin: 0 auto;
-	padding: 0 var(--rd-space-4);
+	padding: 0 var(--rd-pad-surface); /* = the content card's padding: the trail starts on the card's text edge */
 	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
 	color: var(--rd-text-muted);
 }
 .rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: var(--rd-navbar-width); }
-@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-inline: 0; } } /* = .rd-tabbed: the trail starts on the content (navbar card) edge */
-.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); }
+@media (min-width: 768px) { /* = the card's width rules (base.css, .rd-tabbed): the trail starts on the card's text edge */
+	.rd-crumb-band .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-content-width)); }
+	.rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); }
+}
+.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); padding-inline: var(--rd-space-4); } /* a page-owned column keeps its own 16px gutter */
 .rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
 .rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
 .rd-breadcrumb li:last-child { flex: 0 1 auto; }

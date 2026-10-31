@@ -21,12 +21,16 @@
 	--rd-navbar-h: 4.5rem; /* the injected navbar card's height: 4.5em of its 16px font (standalone-header.ts); 14px below 768px */
 	--rd-content-width: 54.5rem;
 	--rd-radius: 1rem;
+	--rd-pad-surface: 2.25rem; /* the content card's inline padding: the main post card's (36px); 20px below 768px */
 	--rd-radius-md: 0.75rem;
 	--rd-radius-sm: 0.5rem;
 
 	/* Surface */
 	--rd-page-bg: oklch(0.92 0.012 var(--hue));
 	--rd-card-bg: #fff;
+	--rd-surface: #fff; /* the content card: main.rd-container / .rd-tabbed on the page ground, like the main post's card */
+	--rd-surface-inset: oklch(0.965 0.008 var(--hue)); /* inside the content card --rd-card-bg maps here, so nested cards still read as cards */
+	--rd-on-accent: var(--rd-surface); /* text on accent fills (primary buttons, active filters, own chat messages, tooltips): never --rd-card-bg, which the card remaps */
 	--rd-primary: oklch(0.7 0.14 var(--hue));
 	--rd-accent: oklch(0.55 0.12 var(--hue)); /* links, badges, rules */
 	--rd-accent-ink: oklch(0.5 0.12 var(--hue)); /* text on tab, button and page grounds (4.5:1+ on each) */
@@ -167,6 +171,8 @@
 :root.dark {
 	--rd-page-bg: oklch(0.16 0.014 var(--hue));
 	--rd-card-bg: oklch(0.23 0.015 var(--hue));
+	--rd-surface: oklch(0.23 0.015 var(--hue));
+	--rd-surface-inset: oklch(0.275 0.016 var(--hue));
 	--rd-primary: oklch(0.75 0.14 var(--hue));
 	--rd-accent: oklch(0.75 0.1 var(--hue));
 	--rd-accent-ink: var(--rd-accent);

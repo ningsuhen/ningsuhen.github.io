@@ -14,9 +14,27 @@
 	width: 100%;
 	max-width: var(--rd-content-width);
 	margin: 0 auto;
-	padding: var(--rd-gap-block) var(--rd-space-4) var(--rd-gap-section);
+	padding: var(--rd-space-6) var(--rd-pad-surface) var(--rd-gap-section);
 }
 .rd-container--wide { max-width: var(--rd-navbar-width); } /* matches the injected navbar width */
+
+/* Content card: the page's main column is one rounded surface on the page ground, like the main post's card.
+   Nested cards (stats, briefs, folds, figures, a page's own --rd-card-bg panels) switch to the inset tone so they
+   still read as cards on it. Below 768px the card is full-bleed with rounded top corners, as on the main post. */
+main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
+	--rd-card-bg: var(--rd-surface-inset);
+	background: var(--rd-surface);
+	border-radius: var(--rd-radius);
+}
+/* From 768px up the card keeps the navbar card's 16px inset (calc(min(100%, 75em) - 2em)), so it never runs edge to edge. */
+@media (min-width: 768px) {
+	.rd-container { max-width: min(100% - 2rem, var(--rd-content-width)); }
+	.rd-container--wide { max-width: min(100% - 2rem, var(--rd-navbar-width)); }
+}
+@media (max-width: 767.98px) {
+	:root { --rd-pad-surface: 1.25rem; }
+	main:is(.rd-container, .rd-container--wide, .rd-tabbed) { border-radius: var(--rd-radius) var(--rd-radius) 0 0; }
+}
 
 /* ---- Cards ---- */
 .rd-card {
@@ -87,6 +105,11 @@
 }
 .rd-prose pre code { background: none; color: inherit; padding: 0; }
 
+/* Title stamp: <h1>Title<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created … · updated …</span></h1>.
+   The h1's text still ends with "· created … · updated …" (title-stamp rule); on screen it is a muted line under the title. */
+.rd-stamp { display: block; margin-top: var(--rd-space-1); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); font-weight: 400; line-height: var(--rd-lh); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.rd-stamp__sep { display: none; }
+
 .rd-meta { color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
 .rd-eyebrow {
 	color: var(--rd-text-muted);
@@ -102,6 +125,7 @@
 .rd-table th, .rd-table td { padding: var(--rd-pad-cell-y) var(--rd-pad-cell-x); text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
 .rd-table th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); }
 .rd-table td.rd-num, .rd-table th.rd-num { text-align: right; }
+.rd-table-wrap > .rd-table > caption { position: sticky; left: 0; } /* a wide table scrolls under its caption, which stays in view */
 .rd-table code { font-size: 1em; } /* keep table code at the cell size: never below the 11px floor */
 .rd-table tr:hover td { background: var(--rd-plain-hover); }
 
@@ -133,6 +157,8 @@
    inside itself, so axis and annotation text stays at the density size instead of scaling below 11px. */
 .rd-figure > svg { display: block; width: 100%; min-width: 42rem; height: auto; border-radius: var(--rd-radius-sm); }
 .rd-figure figcaption { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+/* When the chart is wider than the figure (phones), only the chart scrolls: captions, step text and controls stay in view. */
+.rd-figure > :not(svg) { position: sticky; left: 0; }
 
 /* ---- Buttons / chips / nav tabs ---- */
 .rd-btn {

@@ -1,56 +1,11 @@
-<!doctype html>
-<html lang="en" data-theme="light" data-density="compact">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spark-X2.6-4B as a Brev 4B-Tier Replacement · created 2026-10-27 · updated 2026-10-27</title>
-<meta name="description" content="We ran XHToken/Spark-X2.6-4B against Brev's current 4B generative tiers on the same 1,960-row classification arm: it ties on accuracy, costs more, and can't ship on the current ONNX-WebGPU path, so the current tiers stay.">
-<link rel="stylesheet" href="/design-system/rd.css">
-<script type="module" src="/design-system/rd.js"></script>
-<style>
-/* Page-local: let long run-output filenames in <code> break at 375px (the frozen core's
-   .rd-prose code has no overflow-wrap, so a ~48-char token overflows the post column). */
-.rd-prose code { overflow-wrap: anywhere; }
-</style>
-</head>
-<body class="rd-body">
-<!-- Lucide sprite: generated between the markers by scripts/build-lucide-sprite.mjs (pnpm build runs it); it keeps only the icons this page uses. -->
-<!-- lucide-sprite:start -->
-<svg style="display:none" aria-hidden="true">
-<symbol id="i-book-open" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v16m8.001-2A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2a5 5 0 0 1 4-2z"/></symbol>
-<symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M8 2v3m8-3v3"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></g></symbol>
-<symbol id="i-chart-column" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v16a2 2 0 0 0 2 2h16m-3-4V9m-5 8V5M8 17v-3"/></symbol>
-<symbol id="i-file-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 9H8m8 4H8m8 4H8"/></g></symbol>
-<symbol id="i-flask-conical" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2M6.453 15h11.094M8.5 2h7"/></symbol>
-<symbol id="i-info" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></symbol>
-<symbol id="i-link" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></g></symbol>
-<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4m0 4h.01"/></symbol>
-</svg>
-<!-- lucide-sprite:end -->
-
-<nav class="rd-expnav" data-rd="expnav" aria-label="Sections">
-<a href="#summary" class="is-active"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg>Summary</a>
-<a href="#method"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Method</a>
-<a href="#results"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg>Results</a>
-<a href="#caveats"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Caveats</a>
-<a href="#sources"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg>Sources</a>
-</nav>
-
-<main class="rd-container rd-prose">
-  <header class="rd-hero">
-    <p class="rd-eyebrow">Brev research · generative tier · 4B replacement</p>
-    <h1>Spark-X2.6-4B as a Brev 4B-Tier Replacement · created 2026-10-27 · updated 2026-10-27</h1>
-    <p class="rd-hero__lede">We ran XHToken/Spark-X2.6-4B against Brev's current 4B generative tiers on the same 1,960-row classification arm: it ties on accuracy, costs more, and can't ship on the current ONNX-WebGPU path, so the current tiers stay.</p>
-    <p class="rd-hero__meta">
-      <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Live</span>
-      <span><svg class="rd-icon" aria-hidden="true"><use href="#i-calendar"/></svg> Data cut: 2026-10-25</span>
-    </p>
-  </header>
-
-  <header class="rd-section__head" id="summary">
-    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg></span>
-    <h2>Summary</h2>
-  </header>
+<section class="rd-tabpanel rd-with-toc" id="summary" data-rd-tab="summary" data-rd-label="Summary" data-rd-icon="file-text">
+<div class="rd-tab__body">
+  <p>
+    <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Live</span>
+    <span><svg class="rd-icon" aria-hidden="true"><use href="#i-calendar"/></svg> Data cut: 2026-10-25</span>
+  </p>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg></span><h2 id="s-summary">Summary</h2></header>
   <div class="rd-stats">
     <div class="rd-stat rd-stat--candidate">
       <div class="rd-stat__value">84.6%</div>
@@ -67,11 +22,14 @@
     <div class="rd-brief__item"><p class="rd-eyebrow">Status</p><p>Complete. Verdict: reject — no quality win, higher cost, and no shipping path on the current ONNX-WebGPU runtime.</p></div>
     <div class="rd-brief__item"><p class="rd-eyebrow">How to read it</p><p>Accuracy is the headline. Latency numbers are a CPU-bound llama.cpp proxy, not the shipped WebGPU path — use them only for relative comparison across models.</p></div>
   </div>
+  </section>
+</div>
+</section>
 
-  <header class="rd-section__head" id="method">
-    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg></span>
-    <h2>Method</h2>
-  </header>
+<section class="rd-tabpanel rd-with-toc" id="method" data-rd-tab="method" data-rd-label="Method" data-rd-icon="flask-conical">
+<div class="rd-tab__body">
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg></span><h2 id="s-method">Method</h2></header>
   <p>Three 4B models — Spark-X2.6-4B, Qwen3.5-4B, and FrogNano-4B — were each served as Q4_K_M GGUF via llama.cpp (b11889) on an Apple M4 Max and run over the same 1,960-row H5 test set (real customer-support messages, 196 intents). The arm is <code>rules</code>: a 196-rule system prompt (~18,800 tokens) with a ~4-token completion asking for a category key. Temperature 0, max_tokens 32, thinking disabled. Two recorded baselines are included for reference: Qwen3-4B-Instruct-2507 (RTX 4060, the original baseline) and Qwen3.8-27B (the teacher).</p>
   <dl class="rd-defs">
     <dt>H5 test set</dt><dd>1,960 sealed customer-support messages across 196 intents. The same rows the original baseline was scored on.</dd>
@@ -79,11 +37,14 @@
     <dt>Q4_K_M</dt><dd>The quantization Brev ships. Matching the baseline's quant keeps the only variable the model itself.</dd>
     <dt>Second opinion</dt><dd>The product role of the 4B tier: laya (the router) decides, and the 4B re-classifies the small fraction of messages laya is uncertain about (~6% of traffic).</dd>
   </dl>
+  </section>
+</div>
+</section>
 
-  <header class="rd-section__head" id="results">
-    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span>
-    <h2>Results</h2>
-  </header>
+<section class="rd-tabpanel rd-with-toc" id="results" data-rd-tab="results" data-rd-label="Results" data-rd-icon="chart-column">
+<div class="rd-tab__body">
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"/></svg></span><h2 id="s-results">Results</h2></header>
   <div class="rd-table-wrap">
     <table class="rd-table">
       <caption>Accuracy and latency on the rules arm (1,960 rows). All three 4B models are Q4_K_M via llama.cpp on the same host; the two recorded baselines ran on different hardware.</caption>
@@ -133,11 +94,14 @@
     <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-link"/></svg>Source: run outputs in the Brev research harness</p>
   </figure>
   <p>All three 4B models land in the 83.9–84.6% band. Spark's 0.25-point lead over Qwen3.5 and 0.7-point lead over FrogNano are within noise on 1,960 rows. None approaches the 27B teacher at 90.4% — the 4B tiers leave roughly 5.7 points of headroom on the table. Spark is also the largest file (3.30 GB vs 2.55–2.61 GB for the current tiers, ~28% bigger), slower to decode on this runtime (p50 757 ms vs 296–399 ms), and its mean prompt is 1,273 tokens longer because the 196 rules render longer under Spark's 131k-vocab tokenizer.</p>
+  </section>
+</div>
+</section>
 
-  <header class="rd-section__head" id="caveats">
-    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span>
-    <h2>Caveats</h2>
-  </header>
+<section class="rd-tabpanel rd-with-toc" id="caveats" data-rd-tab="caveats" data-rd-label="Caveats" data-rd-icon="triangle-alert">
+<div class="rd-tab__body">
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="s-caveats">Caveats</h2></header>
   <div class="rd-callout rd-callout--warn">
     <p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>Read this first</p>
     Latency is llama.cpp on an Apple M4 Max, CPU-bound — a relative proxy across models, not the shipped WebGPU/ORT path. Do not compare these numbers to the recorded RTX 4060 baseline (159 ms p50) or to the model card's M5 Pro Metal figures.
@@ -148,11 +112,14 @@
     <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><strong>Card benchmarks don't transfer.</strong> Spark's model card reports a 63.3 aggregate (thinking mode, agentic/coding/math/long-context). Those numbers do not transfer to a no-thinking, 4-token classification task — the local run settles that.</li>
     <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"/></svg><strong>Single runtime.</strong> All three 4B models ran on the same llama.cpp build and host. The relative comparison is fair, but absolute latency is not representative of the shipped ONNX-WebGPU path.</li>
   </ul>
+  </section>
+</div>
+</section>
 
-  <header class="rd-section__head" id="sources">
-    <span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span>
-    <h2>Sources</h2>
-  </header>
+<section class="rd-tabpanel rd-with-toc" id="sources" data-rd-tab="sources" data-rd-label="Sources" data-rd-icon="book-open">
+<div class="rd-tab__body">
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2 id="s-sources">Sources</h2></header>
   <ol class="rd-refs">
     <li id="ref-1">XHToken/Spark-X2.6-4B model card and benchmark figures — Hugging Face, fetched 2026-10-25.</li>
     <li id="ref-2">Run outputs: <code>spark-llm-acc-rules-spark-x2-6-4b-q4-k-m.jsonl</code>, <code>qwen35-llm-acc-rules-qwen3-5-4b-q4-k-m.jsonl</code>, <code>frog-llm-acc-rules-frognano-4b-2609-q4-k-m.jsonl</code> (Brev research harness, 1,960 rows each).</li>
@@ -160,6 +127,7 @@
     <li id="ref-4">Brev generative-tier architecture: ONNX q4f16 on WebGPU (ORT-web), loaded via <code>Llm.load_split</code> / <code>Llm.load_frog</code>. See the Brev extension source.</li>
   </ol>
   <p class="rd-source"><svg class="rd-icon" aria-hidden="true"><use href="#i-calendar"/></svg>Data: H5 test set (1,960 rows, 196 intents). Code: Brev research harness (<code>llm_arms.py</code>, <code>score.py</code>).</p>
-</main>
-</body>
-</html>
+  </section>
+</div>
+</section>
+

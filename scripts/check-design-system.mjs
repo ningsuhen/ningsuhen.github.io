@@ -12,7 +12,7 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
 import { checkFresh as spriteFresh } from "./build-lucide-sprite.mjs";
-import { standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
+import { pageSource, shellPages, standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -60,7 +60,7 @@ const RULES = {
 	"tab-deeplink": "each tab sets its address (?tab= or a hash) that opens that tab on load",
 	"tab-history": "each tab change adds exactly one history entry; Back restores the previous tab",
 	"tab-rail": "every tab panel has the shared rd-toc",
-	"tab-width": "in every tab from 768px up, the panel, its tab body and their sections span the navbar card's edges; a nested section spans its parent",
+	"tab-width": "in every tab from 768px up, the panel, its tab body and their sections span the content card's inner edges (the navbar card's width less the card padding); a nested section spans its parent",
 	"typography-scale": "h1/h2/h3/p/td font size, line height and weight match the template (compact)",
 	"nav-card": "navbar card position and size equal the main site's",
 	"nav-links": "navbar link positions equal the main site's",
@@ -71,6 +71,7 @@ const RULES = {
 	"footer-type": "license card text size and colour equal the site footer text",
 	"footer-gap": "space between content and the footer card equals the main site's",
 	surface: "page background and navbar card background equal the main site's (tokens)",
+	"content-surface": "the main content sits on a card: main's background equals the main post card's and differs from the page background",
 	"rail-presence": "the contents rail appears at the same widths as on the main post",
 	"rail-geometry": "rail x offset from the navbar card, width and top offset equal the main site's",
 	"rail-type": "rail link font size and colour equal the main site's",
@@ -93,7 +94,9 @@ const pages = standalonePages({ sections: SECTIONS, depth: 3 });
 // pages — at 375 and 1440, light and dark. Both sets come from the shared page registry, so a new page is
 // covered without editing this file. template.html is a scaffold source (placeholder content, not a shipped
 // page), so it is excluded.
-const a11yPages = [...pages, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
+// Shell-rendered pages (src/standalone/**) get every rendered-page rule and axe; their source contract is check:export.
+const shell = shellPages();
+const a11yPages = [...pages, ...shell, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -158,7 +161,7 @@ for (const problem of (await checkFresh()).problems) failures.push(`bundle-fresh
 for (const problem of (await spriteFresh()).problems) failures.push(`sprite-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
-	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	const src = pageSource(rel);
 	const set = new Set();
 	for (const [, content] of src.matchAll(/<meta[^>]+name=["']ds-allow["'][^>]+content=["']([^"']+)["']/gi)) {
 		const [rule, reason] = content.split(/:(.*)/s);
@@ -497,6 +500,9 @@ const probeChrome = (isRef) => {
 	const navBg = navCard ? rgb(getComputedStyle(navCard).backgroundColor) : null;
 	const content = isRef ? document.querySelector("#content-wrapper") : document.querySelector("main");
 	const contentRect = rect(content);
+	// The surface the content sits on: the post's article card (the .card-base holding the prose) or the standalone main.
+	const surfaceEl = isRef ? [...(content?.querySelectorAll(".card-base") ?? [])].find((e) => vis(e) && e.querySelector(".prose")) : content;
+	const contentBg = surfaceEl ? rgb(getComputedStyle(surfaceEl).backgroundColor) : null;
 	const siteFoot = isRef ? [...document.querySelectorAll(".footer")].find(vis)?.querySelector(".rounded-2xl") : null;
 	const lic = document.querySelector("div[data-site-license]")?.shadowRoot?.querySelector("footer");
 	const footEl = isRef ? siteFoot : lic;
@@ -537,6 +543,7 @@ const probeChrome = (isRef) => {
 		navBg,
 		navFamily: navA[0] ? family(getComputedStyle(navA[0]).fontFamily) : null,
 		contentRect,
+		contentBg,
 		footRect,
 		footRadius,
 		footTypo,
@@ -647,6 +654,8 @@ function compareAt(page, w, t, c, r) {
 		if (!near(r.footGap, c.footGap, TOL.gap)) bad("footer-gap", `gap above footer ${c.footGap}px, main post ${r.footGap}px`);
 	}
 	if (rgbDiff(c.bg, r.bg) > TOL.surface) bad("surface", `page background ${fmtC(c.bg)}, main post ${fmtC(r.bg)}`);
+	if (!c.contentBg || c.contentBg[3] < 1 || rgbDiff(c.contentBg, c.bg) <= TOL.surface) bad("content-surface", `content background ${c.contentBg ? fmtC(c.contentBg) : "none"} on page ${fmtC(c.bg)}: the content is not on a card`);
+	else if (r.contentBg && rgbDiff(c.contentBg, r.contentBg) > TOL.surface) bad("content-surface", `content card background ${fmtC(c.contentBg)}, main post card ${fmtC(r.contentBg)}`);
 	// Contents rail
 	if (c.railPresent !== r.railPresent) bad("rail-presence", `contents rail ${c.railPresent ? "shown" : "hidden"}, main post ${r.railPresent ? "shown" : "hidden"}`);
 	else if (r.railPresent) {
@@ -677,15 +686,18 @@ function compareAt(page, w, t, c, r) {
 	if (c.railPresent && r.railPresent && c.hl === null) bad("rail-highlight", "no heading of the contents rail is ever in view, so the highlight could not be checked");
 }
 
-// Tab content edges (tab-width): every tab panel's blocks against the navbar card. Top level (the panel, .rd-tab__body
-// and their direct section children) must sit on the card's edges; a section nested in a stacking parent must span the
+// Tab content edges (tab-width): every tab panel's blocks against the content card (main.rd-tabbed, the navbar card's
+// width). Top level (the panel, .rd-tab__body and their direct section children) must sit on the card's inner edges
+// (its content box, --rd-pad-surface in from each side); a section nested in a stacking parent must span the
 // parent's content box (catches a max-width cap like 72ch on a card). Below 768px the card is full-bleed and the content
 // keeps a gutter, so only 768px and up are measured.
 const TAB_WIDTHS = [1440, 1280, 1024, 768];
 const probeTabEdges = () => {
-	const nav = document.querySelector("div[data-site-navbar]")?.shadowRoot?.querySelector("header")?.getBoundingClientRect();
+	const card = document.querySelector("main.rd-tabbed");
 	const panel = [...document.querySelectorAll(".rd-tabpanel")].find((p) => p.getBoundingClientRect().width > 0);
-	if (!nav || !panel) return { issues: [nav ? "no visible .rd-tabpanel" : "navbar card not found"] };
+	if (!card || !panel) return { issues: [card ? "no visible .rd-tabpanel" : "main.rd-tabbed not found"] };
+	const cs = getComputedStyle(card), cb = card.getBoundingClientRect();
+	const nav = { left: cb.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), right: cb.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
 	const SEC = "section, .section, .rd-tabsec, .rd-tab__body";
 	const shown = (el) => {
 		const s = getComputedStyle(el);
@@ -702,7 +714,7 @@ const probeTabEdges = () => {
 	for (const b of panel.querySelectorAll(":scope > .rd-tab__body")) top.push(...[...b.children].filter((k) => k.matches(SEC)));
 	for (const el of top.filter(shown)) {
 		const b = el.getBoundingClientRect();
-		if (Math.abs(b.left - nav.left) > 1 || Math.abs(b.right - nav.right) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, navbar card ${r1(nav.left)}..${r1(nav.right)}`);
+		if (Math.abs(b.left - nav.left) > 1 || Math.abs(b.right - nav.right) > 1) issues.push(`${name(el)} ${r1(b.left)}..${r1(b.right)}, content card inner edges ${r1(nav.left)}..${r1(nav.right)}`);
 	}
 	for (const el of [...panel.querySelectorAll(SEC)].filter((e) => !top.includes(e) && !e.closest(".rd-toc") && shown(e))) {
 		const par = el.parentElement;
@@ -797,7 +809,8 @@ async function tabChecks(page, ok) {
 }
 
 // Pages run in parallel: each one has its own browser contexts and only writes to `found` (synchronous).
-await Promise.all(pages.map(async (rel) => {
+for (const rel of shell) allowed(rel);
+await Promise.all([...pages, ...shell].map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page);
 	// Each width x theme: chrome against the live reference. At 1440 also the structure and typography. (axe runs
