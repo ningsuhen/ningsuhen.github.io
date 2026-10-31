@@ -30,6 +30,7 @@
 	--rd-card-bg: #fff;
 	--rd-surface: #fff; /* the content card: main.rd-container / .rd-tabbed on the page ground, like the main post's card */
 	--rd-surface-inset: oklch(0.965 0.008 var(--hue)); /* inside the content card --rd-card-bg maps here, so nested cards still read as cards */
+	--rd-on-accent: var(--rd-surface); /* text on accent fills (primary buttons, active filters, own chat messages, tooltips): never --rd-card-bg, which the card remaps */
 	--rd-primary: oklch(0.7 0.14 var(--hue));
 	--rd-accent: oklch(0.55 0.12 var(--hue)); /* links, badges, rules */
 	--rd-accent-ink: oklch(0.5 0.12 var(--hue)); /* text on tab, button and page grounds (4.5:1+ on each) */

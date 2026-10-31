@@ -886,7 +886,7 @@ for (const rel of bandPages) {
 // against the bar's bottom (navbar + band + bar, no gap), so nothing scrolls through between them. On every page with a
 // sticky rail, at 375, 768 and 1440, light and dark, at three scroll positions inside the visible panel: when the rail is
 // stuck its top equals the bar's bottom, the topmost element just under the bar is the rail, and the screenshot pixels of a
-// 2px strip at the rail's top are the page background.
+// 2px strip at the rail's top are the rail's own opaque background (the content card's surface), so nothing shows through.
 const railPages = bandPages.filter((rel) => readFileSync(path.join(PUBLIC, rel), "utf8").includes('class="rd-toc"') && /\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, rel), "utf8")));
 for (const rel of railPages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
@@ -924,7 +924,7 @@ for (const rel of railPages) {
 					if (!el?.closest(".rd-toc")) hits.push(`${Math.round(x)},${Math.round(yy)}=${el ? el.tagName.toLowerCase() + (typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : "") : "none"}`);
 				}
 				const c = document.createElement("canvas").getContext("2d");
-				c.fillStyle = getComputedStyle(document.body).backgroundColor;
+				c.fillStyle = getComputedStyle(railEl).backgroundColor;
 				c.fillRect(0, 0, 1, 1);
 				return { barBottom: bar.bottom, railTop: rail.top, railLeft: rail.left, railW: rail.width, stuck: Math.abs(rail.top - stuckTop) < 0.5, stuckTop, hits, bg: [...c.getImageData(0, 0, 1, 1).data] };
 			});
@@ -933,6 +933,7 @@ for (const rel of railPages) {
 			stuck++;
 			if (Math.abs(m.railTop - m.barBottom) > 0.5) failures.push(`${at}: stuck rail top ${m.railTop.toFixed(1)}px, section bar bottom ${m.barBottom.toFixed(1)}px (content shows through the ${(m.railTop - m.barBottom).toFixed(1)}px gap)`);
 			if (m.hits.length) failures.push(`${at}: under the section bar the topmost element is not the rail: ${m.hits.join(" ")}`);
+			if (m.bg[3] !== 255) failures.push(`${at}: the stuck rail's background is not opaque (alpha ${m.bg[3]}/255), content shows through it`);
 			const png = await page.screenshot({ clip: { x: Math.max(0, m.railLeft), y: m.barBottom, width: Math.min(m.railW, width - Math.max(0, m.railLeft)), height: 2 }, animations: "disabled", caret: "hide" });
 			const off = await page.evaluate(async ({ b64, bg }) => {
 				const img = new Image();
@@ -947,7 +948,7 @@ for (const rel of railPages) {
 				for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - bg[0]) > 3 || Math.abs(d[i + 1] - bg[1]) > 3 || Math.abs(d[i + 2] - bg[2]) > 3) { bad++; first ??= `x=${(i / 4) % c.width} rgb(${d[i]},${d[i + 1]},${d[i + 2]})`; }
 				return { bad, first, n: d.length / 4 };
 			}, { b64: png.toString("base64"), bg: m.bg });
-			if (off.bad) failures.push(`${at}: ${off.bad}/${off.n} pixels just under the section bar are not the page background (first ${off.first})`);
+			if (off.bad) failures.push(`${at}: ${off.bad}/${off.n} pixels just under the section bar are not the rail's background (first ${off.first})`);
 		}
 		// Below 1536px the rail is sticky; a page whose panel is too short to stick it at all is not a pass by default.
 		if (!stuck) failures.push(`${tag}: rail never stuck at the sampled scroll positions (check the sample or the page)`);

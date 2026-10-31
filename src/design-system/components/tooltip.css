@@ -12,7 +12,7 @@
 	padding: var(--rd-space-1) var(--rd-space-2);
 	border-radius: var(--rd-radius-sm);
 	background: var(--rd-text-strong);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 	font-size: var(--rd-fs-xs);
 	line-height: 1.4;
 	white-space: pre-line;

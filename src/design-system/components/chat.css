@@ -14,7 +14,7 @@
 .rd-chat__msg--me {
 	align-self: flex-end;
 	background: var(--rd-accent);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 }
 .rd-chat__msg--them {
 	align-self: flex-start;

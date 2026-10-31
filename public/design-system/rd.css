@@ -30,6 +30,7 @@
 	--rd-card-bg: #fff;
 	--rd-surface: #fff; /* the content card: main.rd-container / .rd-tabbed on the page ground, like the main post's card */
 	--rd-surface-inset: oklch(0.965 0.008 var(--hue)); /* inside the content card --rd-card-bg maps here, so nested cards still read as cards */
+	--rd-on-accent: var(--rd-surface); /* text on accent fills (primary buttons, active filters, own chat messages, tooltips): never --rd-card-bg, which the card remaps */
 	--rd-primary: oklch(0.7 0.14 var(--hue));
 	--rd-accent: oklch(0.55 0.12 var(--hue)); /* links, badges, rules */
 	--rd-accent-ink: oklch(0.5 0.12 var(--hue)); /* text on tab, button and page grounds (4.5:1+ on each) */
@@ -223,6 +224,11 @@ main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
 	background: var(--rd-surface);
 	border-radius: var(--rd-radius);
 }
+/* From 768px up the card keeps the navbar card's 16px inset (calc(min(100%, 75em) - 2em)), so it never runs edge to edge. */
+@media (min-width: 768px) {
+	.rd-container { max-width: min(100% - 2rem, var(--rd-content-width)); }
+	.rd-container--wide { max-width: min(100% - 2rem, var(--rd-navbar-width)); }
+}
 @media (max-width: 767.98px) {
 	:root { --rd-pad-surface: 1.25rem; }
 	main:is(.rd-container, .rd-container--wide, .rd-tabbed) { border-radius: var(--rd-radius) var(--rd-radius) 0 0; }
@@ -317,6 +323,7 @@ main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
 .rd-table th, .rd-table td { padding: var(--rd-pad-cell-y) var(--rd-pad-cell-x); text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
 .rd-table th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); }
 .rd-table td.rd-num, .rd-table th.rd-num { text-align: right; }
+.rd-table-wrap > .rd-table > caption { position: sticky; left: 0; } /* a wide table scrolls under its caption, which stays in view */
 .rd-table code { font-size: 1em; } /* keep table code at the cell size: never below the 11px floor */
 .rd-table tr:hover td { background: var(--rd-plain-hover); }
 
@@ -348,6 +355,8 @@ main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
    inside itself, so axis and annotation text stays at the density size instead of scaling below 11px. */
 .rd-figure > svg { display: block; width: 100%; min-width: 42rem; height: auto; border-radius: var(--rd-radius-sm); }
 .rd-figure figcaption { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+/* When the chart is wider than the figure (phones), only the chart scrolls: captions, step text and controls stay in view. */
+.rd-figure > :not(svg) { position: sticky; left: 0; }
 
 /* ---- Buttons / chips / nav tabs ---- */
 .rd-btn {
@@ -522,13 +531,16 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	max-width: var(--rd-content-width); /* rd-container */
 	height: 100%;
 	margin: 0 auto;
-	padding: 0 var(--rd-space-4);
+	padding: 0 var(--rd-pad-surface); /* = the content card's padding: the trail starts on the card's text edge */
 	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
 	color: var(--rd-text-muted);
 }
 .rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: var(--rd-navbar-width); }
-@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-inline: 0; } } /* = .rd-tabbed: the trail starts on the content (navbar card) edge */
-.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); }
+@media (min-width: 768px) { /* = the card's width rules (base.css, .rd-tabbed): the trail starts on the card's text edge */
+	.rd-crumb-band .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-content-width)); }
+	.rd-crumb-band--wide .rd-breadcrumb, .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); }
+}
+.rd-crumb-band--page .rd-breadcrumb { max-width: calc(var(--rd-content-width) + 2 * var(--rd-space-4)); padding-inline: var(--rd-space-4); } /* a page-owned column keeps its own 16px gutter */
 .rd-breadcrumb ol { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; list-style: none; }
 .rd-breadcrumb li { display: flex; align-items: center; flex: none; min-width: 0; }
 .rd-breadcrumb li:last-child { flex: 0 1 auto; }
@@ -868,7 +880,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
    dark in dark mode) so it stays 4.5:1+ on the accent in both themes. */
 .rd-btn--primary {
 	background: var(--rd-accent);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 }
 .rd-btn--primary:hover { background: var(--rd-primary); }
 
@@ -927,7 +939,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 .rd-filter[aria-pressed="true"] {
 	background: var(--rd-accent);
 	border-color: var(--rd-accent);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 }
 .rd-filter[aria-pressed="true"]:hover { background: var(--rd-primary); }
 /* rd-field: a form field — a label, a control (input or select), and an optional hint or error.
@@ -1023,7 +1035,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 .rd-chat__msg--me {
 	align-self: flex-end;
 	background: var(--rd-accent);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 }
 .rd-chat__msg--them {
 	align-self: flex-start;
@@ -1291,7 +1303,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 	padding: var(--rd-space-1) var(--rd-space-2);
 	border-radius: var(--rd-radius-sm);
 	background: var(--rd-text-strong);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 	font-size: var(--rd-fs-xs);
 	line-height: 1.4;
 	white-space: pre-line;

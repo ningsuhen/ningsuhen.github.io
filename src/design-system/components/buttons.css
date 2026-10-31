@@ -7,7 +7,7 @@
    dark in dark mode) so it stays 4.5:1+ on the accent in both themes. */
 .rd-btn--primary {
 	background: var(--rd-accent);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 }
 .rd-btn--primary:hover { background: var(--rd-primary); }
 

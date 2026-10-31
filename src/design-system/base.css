@@ -26,6 +26,11 @@ main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
 	background: var(--rd-surface);
 	border-radius: var(--rd-radius);
 }
+/* From 768px up the card keeps the navbar card's 16px inset (calc(min(100%, 75em) - 2em)), so it never runs edge to edge. */
+@media (min-width: 768px) {
+	.rd-container { max-width: min(100% - 2rem, var(--rd-content-width)); }
+	.rd-container--wide { max-width: min(100% - 2rem, var(--rd-navbar-width)); }
+}
 @media (max-width: 767.98px) {
 	:root { --rd-pad-surface: 1.25rem; }
 	main:is(.rd-container, .rd-container--wide, .rd-tabbed) { border-radius: var(--rd-radius) var(--rd-radius) 0 0; }
@@ -120,6 +125,7 @@ main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
 .rd-table th, .rd-table td { padding: var(--rd-pad-cell-y) var(--rd-pad-cell-x); text-align: left; border-bottom: 1px solid var(--rd-line-soft); }
 .rd-table th { color: var(--rd-text-strong); font-weight: 700; background: var(--rd-btn-bg); }
 .rd-table td.rd-num, .rd-table th.rd-num { text-align: right; }
+.rd-table-wrap > .rd-table > caption { position: sticky; left: 0; } /* a wide table scrolls under its caption, which stays in view */
 .rd-table code { font-size: 1em; } /* keep table code at the cell size: never below the 11px floor */
 .rd-table tr:hover td { background: var(--rd-plain-hover); }
 
@@ -151,6 +157,8 @@ main:is(.rd-container, .rd-container--wide, .rd-tabbed) {
    inside itself, so axis and annotation text stays at the density size instead of scaling below 11px. */
 .rd-figure > svg { display: block; width: 100%; min-width: 42rem; height: auto; border-radius: var(--rd-radius-sm); }
 .rd-figure figcaption { margin-top: var(--rd-space-2); color: var(--rd-text-muted); font-size: var(--rd-fs-sm); }
+/* When the chart is wider than the figure (phones), only the chart scrolls: captions, step text and controls stay in view. */
+.rd-figure > :not(svg) { position: sticky; left: 0; }
 
 /* ---- Buttons / chips / nav tabs ---- */
 .rd-btn {

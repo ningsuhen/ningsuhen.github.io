@@ -23,6 +23,6 @@
 .rd-filter[aria-pressed="true"] {
 	background: var(--rd-accent);
 	border-color: var(--rd-accent);
-	color: var(--rd-card-bg);
+	color: var(--rd-on-accent);
 }
 .rd-filter[aria-pressed="true"]:hover { background: var(--rd-primary); }
