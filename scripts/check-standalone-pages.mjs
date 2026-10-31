@@ -296,7 +296,9 @@ for (const rel of tabbed) {
 }
 // Section bar (rd-expnav) block for scripts/check-standalone-pages.mjs. Inserted before the "Drift" comment.
 // Section bar (rd-expnav) on every standalone page with one: directly under the breadcrumb band, which sits directly under
-// the navbar card (--rd-crumb-h, 40px; 16px when the page has no trail), the first link flush at the bar's left edge. Once
+// the navbar card (--rd-crumb-h, 40px; 16px when the page has no trail). A bar above a content card of its own width (tabbed and
+// wide reports on the shared CSS) is the card's top: the card starts at the bar's bottom with no gap, and the first tab's icon
+// sits on the card's inner (text) edge. Any other bar keeps its first link flush at the bar's left edge. Once
 // scrolled 800px the navbar stays on top (sticky, like the main site), the band sticks under it and the bar under the band.
 // Jump targets land below all three: scroll-margin-top clears them.
 const BAR_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
@@ -316,6 +318,9 @@ for (const rel of barPages) {
 			return {
 				navb: R(host?.shadowRoot?.querySelector("header")),
 				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l, inCard: !!bar?.closest("main"),
+				firstPad: bar?.querySelector("a") ? parseFloat(getComputedStyle(bar.querySelector("a")).paddingLeft) : 0,
+				// The bar is the card's top only over a card of its own width on a page that links the shared CSS (a frozen copy keeps its own bar).
+				card: (() => { const el = document.querySelector(".rd-expnav ~ main:is(.rd-container--wide, .rd-tabbed)"); if (!el || !document.querySelector('link[href*="/design-system/research.css"], link[href*="/design-system/rd.css"]')) return null; const b = el.getBoundingClientRect(); return { t: b.top, inner: b.left + parseFloat(getComputedStyle(el).paddingLeft) }; })(),
 				band: R(document.querySelector(".rd-crumb-band")), bandEmpty: !!document.querySelector(".rd-crumb-band--empty"),
 				bandBg: getComputedStyle(document.querySelector(".rd-crumb-band") ?? document.body, "::before").backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
 			};
@@ -334,9 +339,14 @@ for (const rel of barPages) {
 				// A bar inside the content card (shell-rendered pages) sits under the hero; the sticky test below still holds it.
 				if (width >= 768 && !m.inCard && Math.abs(m.bar.t - m.band.b) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.band.b).toFixed(1)}px below the band, expected 0`);
 			} else if (width >= 768 && Math.abs(m.bar.t - m.navb.b - gap) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.navb.b).toFixed(1)}px below the navbar card, expected ${gap}px (the main site rhythm)`);
-			// Flush left: the first tab starts at the bar's left edge (no left inset) at every width.
-			const edge = m.bar.l;
-			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (flush at the bar's left edge)`);
+			if (m.inCard || !m.card) {
+				// Inside the card, or over a narrower one: the first tab starts at the bar's left edge (no left inset).
+				if (Math.abs(m.firstL - m.bar.l) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${m.bar.l.toFixed(1)}px (flush at the bar's left edge)`);
+			} else {
+				// Above the card: the card continues the bar (no gap) and the first tab's icon sits on the card's text edge.
+				if (Math.abs(m.card.t - m.bar.b) > 1) failures.push(`${tag}: content card ${(m.card.t - m.bar.b).toFixed(1)}px below the section bar, expected 0 (the bar is the card's top)`);
+				if (Math.abs(m.firstL + m.firstPad - m.card.inner) > 1) failures.push(`${tag}: first tab's icon at ${(m.firstL + m.firstPad).toFixed(1)}px, the content's edge at ${m.card.inner.toFixed(1)}px`);
+			}
 		}
 		// Scroll far enough to stick the bar: 800px, or for a bar inside the card (it starts under the hero) 40px past the
 		// point where it meets the band when that is less, so a short first tab still proves the bar sticks.
@@ -935,7 +945,8 @@ for (const rel of railPages) {
 				const c = document.createElement("canvas").getContext("2d");
 				c.fillStyle = getComputedStyle(railEl).backgroundColor;
 				c.fillRect(0, 0, 1, 1);
-				return { barBottom: bar.bottom, railTop: rail.top, railLeft: rail.left, railW: rail.width, stuck: Math.abs(rail.top - stuckTop) < 0.5, stuckTop, hits, bg: [...c.getImageData(0, 0, 1, 1).data] };
+				const line = railEl.querySelector("summary")?.getBoundingClientRect().height ?? 0;
+				return { barBottom: bar.bottom, railTop: rail.top, railH: rail.height, line, open: !!railEl.querySelector("details")?.open, railLeft: rail.left, railW: rail.width, stuck: Math.abs(rail.top - stuckTop) < 0.5, stuckTop, hits, bg: [...c.getImageData(0, 0, 1, 1).data] };
 			});
 			const at = `${tag} scrollY ${y}`;
 			if (!m.stuck) continue;
@@ -943,6 +954,8 @@ for (const rel of railPages) {
 			if (Math.abs(m.railTop - m.barBottom) > 0.5) failures.push(`${at}: stuck rail top ${m.railTop.toFixed(1)}px, section bar bottom ${m.barBottom.toFixed(1)}px (content shows through the ${(m.railTop - m.barBottom).toFixed(1)}px gap)`);
 			if (m.hits.length) failures.push(`${at}: under the section bar the topmost element is not the rail: ${m.hits.join(" ")}`);
 			if (m.bg[3] !== 255) failures.push(`${at}: the stuck rail's background is not opaque (alpha ${m.bg[3]}/255), content shows through it`);
+			// One line: the stuck rail is its summary and rule, never the open list (that took 25% of a desktop screen, 40% of a phone's).
+			if (m.open || m.railH > m.line + 2) failures.push(`${at}: stuck rail is ${m.railH.toFixed(0)}px tall${m.open ? " and open" : ""}, expected one line (${m.line.toFixed(0)}px + its rule); the list opens over the content`);
 			const png = await page.screenshot({ clip: { x: Math.max(0, m.railLeft), y: m.barBottom, width: Math.min(m.railW, width - Math.max(0, m.railLeft)), height: 2 }, animations: "disabled", caret: "hide" });
 			const off = await page.evaluate(async ({ b64, bg }) => {
 				const img = new Image();
