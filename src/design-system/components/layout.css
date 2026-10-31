@@ -23,9 +23,15 @@
 	overscroll-behavior-x: contain;
 	scrollbar-width: none; /* no visible bar: the track is swipeable and the edge fade shows more */
 	min-height: var(--rd-expnav-h);
-	background: var(--rd-page-bg);
-	border-bottom: var(--rd-expnav-line) solid var(--rd-line);
+	background: var(--rd-surface);
+	border-radius: var(--rd-radius);
+	border-bottom: var(--rd-expnav-line) solid transparent; /* keeps the bar's height (sticky offsets add it); the card edge is the rule */
 }
+/* Inside the content card (shell-rendered pages put the tab bar under the hero) it is a plain tab row with its rule. */
+main .rd-expnav { border-radius: 0; border-bottom-color: var(--rd-line); }
+@media (max-width: 767.98px) { .rd-expnav { border-radius: 0; } } /* full-bleed under the full-bleed navbar card */
+/* The content card sits one main-site gap (16px) under the bar. */
+.rd-expnav ~ main:is(.rd-container, .rd-container--wide, .rd-tabbed) { margin-top: var(--rd-space-4); }
 .rd-expnav::-webkit-scrollbar { display: none; }
 .rd-expnav a {
 	display: inline-flex;
@@ -52,8 +58,8 @@
 .rd-expnav.is-fade-start::before, .rd-expnav.is-fade-end::after {
 	content: ""; position: sticky; flex: none; width: 2.5rem; pointer-events: none;
 }
-.rd-expnav.is-fade-start::before { left: 0; margin-right: -2.5rem; background: linear-gradient(to right, var(--rd-page-bg) 30%, transparent); }
-.rd-expnav.is-fade-end::after { right: 0; margin-left: -2.5rem; background: linear-gradient(to left, var(--rd-page-bg) 30%, transparent); }
+.rd-expnav.is-fade-start::before { left: 0; margin-right: -2.5rem; background: linear-gradient(to right, var(--rd-surface) 30%, transparent); }
+.rd-expnav.is-fade-end::after { right: 0; margin-left: -2.5rem; background: linear-gradient(to left, var(--rd-surface) 30%, transparent); }
 @media (prefers-reduced-motion: no-preference) {
 	html:has(.rd-expnav) { scroll-behavior: smooth; }
 }
@@ -82,18 +88,18 @@
   --rd-toc-text-faint: rgba(255, 255, 255, 0.3);
 }
 html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card follows the tabbed width */
-/* The content box IS the navbar card from 768px up (the card's own formula: min(100%, 75rem) - 2rem), so every tab's
-   sections, cards and tables span the card's edges, like the main post column. No inline padding there: a gutter inside
-   this box would inset the content 16px from the card. Below 768px the card is full-bleed and the content keeps a 16px gutter. */
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: min(100% - 2rem, var(--rd-navbar-width)); margin: 0 auto; padding: 1.5rem 0 4rem; }
-@media (max-width: 767.98px) { .rd-tabbed { max-width: none; padding-inline: var(--rd-space-4); } }
+/* The content card spans the navbar card's edges from 768px up (the card's own formula: min(100%, 75rem) - 2rem), and
+   every tab's sections, cards and tables span the content card's inner edges (--rd-pad-surface in from each side), like the
+   main post's card. Below 768px the card is full-bleed (base.css) with the narrower --rd-pad-surface. */
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: min(100% - 2rem, var(--rd-navbar-width)); margin: 0 auto; padding: var(--rd-space-6) var(--rd-pad-surface) var(--rd-gap-section); }
+@media (max-width: 767.98px) { .rd-tabbed { max-width: none; } }
 .rd-with-toc { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
 .rd-tab__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--rd-gap-block); min-width: 0; }
 /* Below 1536px the rail is the disclosure above the content. It sticks flush under the section bar (navbar + band + bar,
    no gap, so nothing scrolls through between them), so it stays
    in reach while the reader scrolls the tab. Wide screens use the fixed margin rail below. */
-.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-expnav-line)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-expnav-line)); overflow-y: auto; background: var(--rd-page-bg); }
+.rd-toc { min-width: 0; position: sticky; align-self: start; z-index: 2; top: calc(var(--rd-navbar-h) + var(--rd-crumb-h) + var(--rd-expnav-h) + var(--rd-expnav-line)); max-height: calc(100vh - var(--rd-navbar-h) - var(--rd-crumb-h) - var(--rd-expnav-h) - var(--rd-expnav-line)); overflow-y: auto; background: var(--rd-surface); padding-bottom: var(--rd-space-2); border-bottom: 1px solid var(--rd-line-soft); }
 .rd-toc summary { display: flex; align-items: center; gap: 0.4rem; min-height: var(--rd-control-h); padding: 0 0.5rem; color: var(--rd-toc-text); font-size: var(--rd-fs-sm); font-weight: 600; cursor: pointer; list-style: none; }
 .rd-toc summary::-webkit-details-marker { display: none; }
 .rd-toc summary .rd-icon { color: var(--rd-accent); }
@@ -113,7 +119,7 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 }
 /* Wide (1536px+): the rail, fixed in the right margin, like the main post page's TOC. */
 @media (min-width: 1536px) {
-  .rd-toc { position: fixed; top: 3.5rem; left: calc(50% + var(--rd-navbar-width) / 2 + 1rem); z-index: 1; width: var(--rd-toc-width); height: calc(100vh - 20rem); box-sizing: border-box; padding: 2rem 0; overflow-x: hidden; overflow-y: scroll; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); }
+  .rd-toc { position: fixed; top: 3.5rem; left: calc(50% + var(--rd-navbar-width) / 2 + 1rem); z-index: 1; width: var(--rd-toc-width); height: calc(100vh - 20rem); box-sizing: border-box; padding: 2rem 0; background: none; border-bottom: 0; overflow-x: hidden; overflow-y: scroll; scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 2rem, #000 calc(100% - 2rem), transparent 100%); }
   .rd-toc::-webkit-scrollbar { display: none; }
   .rd-toc summary { display: none; }
   .rd-toc ol { grid-template-columns: minmax(0, 1fr); gap: 0; }
