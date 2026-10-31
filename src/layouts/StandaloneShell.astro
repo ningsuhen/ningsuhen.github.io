@@ -77,7 +77,7 @@ const doc =
 	`<body class="rd-body">` +
 	`${sprite}` +
 	`<main class="${meta.layout === "tabbed" ? "rd-tabbed " : ""}rd-container${meta.width === "wide" ? "--wide" : ""} rd-prose" data-page="${esc(slug)}" data-pagefind-body="${meta.search ? "" : "false"}">` +
-	`<header class="rd-hero"><p class="rd-eyebrow">${esc(meta.eyebrow ?? kindLabel(kind))}</p><h1>${esc(title)}</h1><p class="rd-hero__lede">${esc(meta.summary)}</p></header>` +
+	`<header class="rd-hero"><p class="rd-eyebrow">${esc(meta.eyebrow ?? kindLabel(kind))}</p><h1>${esc(meta.title)}<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created ${esc(meta.created)} · updated ${esc(meta.updated)}</span></h1><p class="rd-hero__lede">${esc(meta.summary)}</p></header>` +
 	`${tabBar}` +
 	`${body}` +
 	`</main>` +
