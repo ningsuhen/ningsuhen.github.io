@@ -21,7 +21,6 @@
 .lp-card [hidden], .rd-tabsec [hidden] { display: none !important; }
 .rd-tabsec { min-width: 0; }
 .rd-tabsec li, .rd-tabsec p, .lp-card p, .lp-card dd { overflow-wrap: anywhere; }
-.rd-prose .rd-hero h1 .lp-stamp { display: block; font-size: var(--rd-fs-sm); font-weight: 400; letter-spacing: 0; line-height: 1.4; color: var(--rd-text-muted); margin-top: var(--rd-space-1); }
 .lp-card { background: var(--rd-card-bg); border-radius: var(--rd-radius); padding: var(--rd-pad-card); margin: var(--rd-space-4) 0; min-width: 0; }
 .lp-card > :first-child { margin-top: 0; }
 .lp-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--rd-space-1) var(--rd-space-4); margin: var(--rd-space-3) 0; font-size: var(--rd-fs-sm); }
@@ -143,7 +142,7 @@
 <main class="rd-tabbed rd-container--wide rd-prose">
   <header class="rd-hero">
     <p class="rd-eyebrow">Playground · lpm-playground</p>
-    <h1>LPM playground<span class="lp-stamp"> · created 2026-10-26 · updated 2026-10-26</span></h1>
+    <h1>LPM playground<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created 2026-10-26 · updated 2026-10-26</span></h1>
     <p class="rd-hero__lede">A small language model that runs on your own graphics card and makes one closed-choice decision per call. A program branches on the answer. Your text is not sent anywhere.</p>
     <p class="rd-hero__meta">
       <span class="rd-chip rd-chip--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg>Runs in this tab, on your GPU</span>

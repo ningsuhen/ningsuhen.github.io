@@ -1123,7 +1123,7 @@ async function boot() {
   S.gpu = await checkGpu();
   const st = card.status();
   clear(st).append(S.gpu.ok ? chip("WebGPU found", "good", "circle-check") : chip("WebGPU not usable", "bad", "circle-x"));
-  card.adapter().textContent = S.gpu.adapter || "none";
+  card.adapter().textContent = S.gpu.adapter || "";
   setStage(S.gpu.ok ? "Not loaded." : S.gpu.message);
   if (!S.gpu.ok) card.stage().classList.add("lp-bad");
   card.meter().hidden = true;
