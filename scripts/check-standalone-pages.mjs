@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
-import { standalonePages } from "./lib/standalone-pages.mjs";
+import { pageSource, shellPages, standalonePages } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -51,9 +51,10 @@ const base = `http://127.0.0.1:${server.address().port}`;
 // Headless Chrome hides scrollbars by default, which would hide a 15px page scrollbar from this check.
 const browser = await chromium.launch({ executablePath: findChrome(), ignoreDefaultArgs: ["--hide-scrollbars"] });
 const failures = [];
-const pages = standalonePages();
+// Public pages plus the shell-rendered ones (src/standalone/**): every rule here renders the page.
+const pages = [...standalonePages(), ...shellPages()];
 for (const rel of pages) {
-	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	const src = pageSource(rel);
 	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const vp of VIEWPORTS) {
@@ -231,7 +232,7 @@ for (const sitePath of ["/", "/about/", "/archive/", "/research/", "/playground/
 // Wide container (tabbed reports, class rd-container--wide = the navbar's width): from 1200px up, the content's
 // left and right edges must sit on the navbar card's edges, so the page reads as one column with the navbar.
 const WIDE_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
-for (const rel of pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-container--wide\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")))) {
+for (const rel of pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-container--wide\b/.test(pageSource(p)))) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const width of WIDE_VIEWPORTS) {
 		const ctx = await browser.newContext({ viewport: { width, height: 900 } });
@@ -256,7 +257,7 @@ for (const rel of pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-containe
 // and both must highlight the headings whose section meets the viewport (the same rule, at the same scroll offsets).
 const TAB_VIEWPORTS = [1920, 1600, 1536, 1440, 1280, 1024, 768, 375];
 const railLog = [];
-const tabbed = pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-tabbed\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
+const tabbed = pages.filter((p) => /<main\b[^>]*class=["'][^"']*\brd-tabbed\b/.test(pageSource(p)));
 for (const rel of tabbed) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const width of TAB_VIEWPORTS) {
@@ -270,6 +271,9 @@ for (const rel of tabbed) {
 			const rail = panel?.querySelector(".rd-toc");
 			return {
 				navb, tabs: R(document.querySelector('.rd-expnav[role="tablist"]')), main: R(document.querySelector("main.rd-tabbed")),
+				// A bar inside the content card (shell-rendered pages: under the hero) spans the card's inner edges instead.
+				barInCard: !!document.querySelector('main .rd-expnav[role="tablist"]'),
+				inner: (() => { const el = document.querySelector("main.rd-tabbed"); if (!el) return null; const b = el.getBoundingClientRect(), s = getComputedStyle(el); return { l: b.left + parseFloat(s.paddingLeft), r: b.right - parseFloat(s.paddingRight) }; })(),
 				rail: R(rail), railFixed: !!rail && getComputedStyle(rail).position === "fixed",
 				tabCount: document.querySelectorAll('.rd-expnav[role="tablist"] [role="tab"]').length,
 				panelCount: document.querySelectorAll(".rd-tabpanel").length,
@@ -280,7 +284,8 @@ for (const rel of tabbed) {
 		if (m.tabCount < 1 || m.tabCount !== m.panelCount) failures.push(`${tag}: ${m.tabCount} tabs for ${m.panelCount} panels (expected at least 1, one per panel)`);
 		if (width >= 1200 && m.navb && m.tabs && m.main) {
 			for (const [name, box] of [["tab bar", m.tabs], ["content", m.main]]) {
-				if (Math.abs(box.l - m.navb.l) > 1 || Math.abs(box.r - m.navb.r) > 1) failures.push(`${tag}: ${name} ${Math.round(box.l)}..${Math.round(box.r)} differs from the navbar card ${Math.round(m.navb.l)}..${Math.round(m.navb.r)}`);
+				const edge = name === "tab bar" && m.barInCard ? m.inner : m.navb;
+				if (Math.abs(box.l - edge.l) > 1 || Math.abs(box.r - edge.r) > 1) failures.push(`${tag}: ${name} ${Math.round(box.l)}..${Math.round(box.r)} differs from the ${edge === m.navb ? "navbar card" : "content card's inner edges"} ${Math.round(edge.l)}..${Math.round(edge.r)}`);
 			}
 		}
 		if (m.railFixed !== (width >= 1536)) failures.push(`${tag}: rail ${m.railFixed ? "fixed in the margin" : "not in the margin"} but the rule is 1536px and up`);
@@ -295,7 +300,7 @@ for (const rel of tabbed) {
 // scrolled 800px the navbar stays on top (sticky, like the main site), the band sticks under it and the bar under the band.
 // Jump targets land below all three: scroll-margin-top clears them.
 const BAR_VIEWPORTS = [1440, 1280, 1200, 1024, 768, 375];
-const barPages = pages.filter((p) => /<nav\b[^>]*class=["'][^"']*\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, p), "utf8")));
+const barPages = pages.filter((p) => /<nav\b[^>]*class=["'][^"']*\brd-expnav\b/.test(pageSource(p)));
 const CRUMB_BAND_PX = 40; // --rd-crumb-h (2.5rem): the breadcrumb band under the navbar card
 const MAIN_GAP_PX = 16; // the main site's rhythm (MainGridLayout gap-4; the TOC sits 16px from the navbar card). A fixed reference, not --rd-navbar-gap: the token must match it.
 for (const rel of barPages) {
@@ -310,7 +315,7 @@ for (const rel of barPages) {
 			const bar = document.querySelector(".rd-expnav");
 			return {
 				navb: R(host?.shadowRoot?.querySelector("header")),
-				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l,
+				bar: R(bar), firstL: R(bar?.querySelector("a"))?.l, inCard: !!bar?.closest("main"),
 				band: R(document.querySelector(".rd-crumb-band")), bandEmpty: !!document.querySelector(".rd-crumb-band--empty"),
 				bandBg: getComputedStyle(document.querySelector(".rd-crumb-band") ?? document.body, "::before").backgroundColor, bodyBg: getComputedStyle(document.body).backgroundColor,
 			};
@@ -326,15 +331,19 @@ for (const rel of barPages) {
 				if (Math.abs(m.band.t - m.navb.b) > 0.5) failures.push(`${tag}: band top ${m.band.t.toFixed(1)}px, navbar card bottom ${m.navb.b.toFixed(1)}px`);
 				if (Math.abs(bandH - gap) > 0.5) failures.push(`${tag}: band ${bandH.toFixed(1)}px tall, expected ${gap}px`);
 				if (m.bandBg !== m.bodyBg) failures.push(`${tag}: band background ${m.bandBg} is not the page background ${m.bodyBg} (must be opaque)`);
-				if (width >= 768 && Math.abs(m.bar.t - m.band.b) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.band.b).toFixed(1)}px below the band, expected 0`);
+				// A bar inside the content card (shell-rendered pages) sits under the hero; the sticky test below still holds it.
+				if (width >= 768 && !m.inCard && Math.abs(m.bar.t - m.band.b) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.band.b).toFixed(1)}px below the band, expected 0`);
 			} else if (width >= 768 && Math.abs(m.bar.t - m.navb.b - gap) > 1) failures.push(`${tag}: section bar ${(m.bar.t - m.navb.b).toFixed(1)}px below the navbar card, expected ${gap}px (the main site rhythm)`);
 			// Flush left: the first tab starts at the bar's left edge (no left inset) at every width.
 			const edge = m.bar.l;
 			if (Math.abs(m.firstL - edge) > 1) failures.push(`${tag}: first tab at ${m.firstL.toFixed(1)}px, expected ${edge.toFixed(1)}px (flush at the bar's left edge)`);
 		}
-		await page.evaluate(() => window.scrollTo({ top: 800, behavior: "instant" }));
+		// Scroll far enough to stick the bar: 800px, or for a bar inside the card (it starts under the hero) 40px past the
+		// point where it meets the band when that is less, so a short first tab still proves the bar sticks.
+		const need = m.inCard && m.bar ? Math.min(800, Math.ceil(m.bar.t - (m.band?.b ?? m.navb.b)) + 40) : 800;
+		await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), need);
 		// Wait for the scroll to land (or the page's end when shorter), then two frames for the sticky layout to settle.
-		await page.waitForFunction(() => window.scrollY >= Math.min(800, document.documentElement.scrollHeight - window.innerHeight) - 0.5);
+		await page.waitForFunction((y) => window.scrollY >= Math.min(y, document.documentElement.scrollHeight - window.innerHeight) - 0.5, need);
 		await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 		const s = await page.evaluate(() => {
 			const bar = document.querySelector(".rd-expnav");
@@ -353,7 +362,7 @@ for (const rel of barPages) {
 			return { top: bar.getBoundingClientRect().top, navBottom: hd.bottom, navTop: hd.top, scrollY: window.scrollY, bandTop: bb?.top ?? null, bandBottom: bb?.bottom ?? null, hits, bandBg: alpha, bodyBg: getComputedStyle(document.body).backgroundColor };
 		});
 		// The navbar is sticky (parity with the main site); the band sticks under it and the section bar under the band.
-		if (s.scrollY < 799) failures.push(`${tag}: page too short to scroll 800px (reached ${s.scrollY})`);
+		if (s.scrollY < need - 1) failures.push(`${tag}: page too short to scroll ${need}px (reached ${s.scrollY})`);
 		else if (Math.abs(s.navTop) > 0.5) failures.push(`${tag}: navbar not sticky at the top (top ${s.navTop.toFixed(1)}px, scrollY ${s.scrollY})`);
 		else if (s.bandTop !== null && Math.abs(s.bandTop - s.navBottom) > 0.5) failures.push(`${tag}: stuck band at ${s.bandTop.toFixed(1)}px, expected directly under the navbar (bottom ${s.navBottom.toFixed(1)}px)`);
 		else if (s.bandTop !== null && Math.abs(s.top - s.bandBottom) > 0.5) failures.push(`${tag}: stuck section bar at ${s.top.toFixed(1)}px, expected directly under the band (bottom ${s.bandBottom.toFixed(1)}px, scrollY ${s.scrollY})`);
@@ -637,7 +646,7 @@ const commentCfg = (key) => commentsSrc.match(new RegExp(`\\b${key}: "([^"]+)"`)
 const GISCUS_STUB = "(function(){var s=document.currentScript;var f=document.createElement('iframe');f.className='giscus-frame';f.src='about:blank';s.parentElement.appendChild(f);f.contentWindow.postMessage=function(m,o){(window.__posted=window.__posted||[]).push([m,o])};})();";
 for (const rel of pages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
-	const expected = COMMENTS_PAGE.test(urlPath) && !COMMENTS_OPT_OUT.test(readFileSync(path.join(PUBLIC, rel), "utf8"));
+	const expected = COMMENTS_PAGE.test(urlPath) && !COMMENTS_OPT_OUT.test(pageSource(rel));
 	const built = readFileSync(path.join(DIST, rel), "utf8");
 	const has = built.includes("data-site-comments");
 	if (has !== expected) failures.push(`${urlPath}: comments section ${has ? "present" : "missing"}, expected ${expected ? "present" : "absent"}`);
@@ -723,7 +732,7 @@ const CRUMB_WIDTHS = [1440, 768, 375];
 const CRUMB_SITE = "https://ningsuhen.github.io/";
 const decodeEntities = (t) => t.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 for (const rel of pages) {
-	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	const src = pageSource(rel);
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	const segs = urlPath.split("/").filter(Boolean);
 	const section = CRUMB_SECTIONS[segs[0] ?? ""];
@@ -811,7 +820,7 @@ for (const rel of pages) {
 // the page background. A transparent or covered band shows content there.
 const BAND_WIDTHS = [375, 768, 1440];
 const bandPages = pages.filter((rel) => {
-	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	const src = pageSource(rel);
 	return /design-system\/(?:research|rd)\.css/.test(src) || src.includes(".rd-crumb-band {");
 });
 for (const rel of bandPages) {
@@ -887,7 +896,7 @@ for (const rel of bandPages) {
 // sticky rail, at 375, 768 and 1440, light and dark, at three scroll positions inside the visible panel: when the rail is
 // stuck its top equals the bar's bottom, the topmost element just under the bar is the rail, and the screenshot pixels of a
 // 2px strip at the rail's top are the rail's own opaque background (the content card's surface), so nothing shows through.
-const railPages = bandPages.filter((rel) => readFileSync(path.join(PUBLIC, rel), "utf8").includes('class="rd-toc"') && /\brd-expnav\b/.test(readFileSync(path.join(PUBLIC, rel), "utf8")));
+const railPages = bandPages.filter((rel) => pageSource(rel).includes('class="rd-toc"') && /\brd-expnav\b/.test(pageSource(rel)));
 for (const rel of railPages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const theme of ["light", "dark"]) for (const width of BAND_WIDTHS) {

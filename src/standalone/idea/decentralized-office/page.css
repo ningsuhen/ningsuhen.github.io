@@ -35,5 +35,4 @@
 [data-page="decentralized-office"] .idea-table td [data-p]+[data-p]{margin-top:var(--rd-space-1)}
 [data-page="decentralized-office"] .idea-table.is-js td [data-p]:not(.is-on){display:none}
 
-[data-page="decentralized-office"] .idea-fig>:not(svg){position:sticky;left:0}
 [data-page="decentralized-office"] .idea-hero-chips{margin-top:var(--rd-space-4)}

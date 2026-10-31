@@ -33,5 +33,4 @@
 [data-page="edit-blog-in-place"] .idea-verdict--no{color:var(--rd-bad)}
 [data-page="edit-blog-in-place"] .idea-gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--idea-gloss-min)),1fr));gap:var(--rd-space-2);align-items:start}
 
-[data-page="edit-blog-in-place"] .idea-fig>:not(svg){position:sticky;left:0}
 [data-page="edit-blog-in-place"] .idea-hero-chips{margin-top:var(--rd-space-4)}

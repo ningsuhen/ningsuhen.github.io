@@ -34,5 +34,4 @@
 [data-page="wikipedia-ai-age"] .idea-verdict--no{color:var(--rd-bad)}
 [data-page="wikipedia-ai-age"] .idea-gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--idea-gloss-min)),1fr));gap:var(--rd-space-2)}
 
-[data-page="wikipedia-ai-age"] .idea-fig>:not(svg){position:sticky;left:0}
 [data-page="wikipedia-ai-age"] .idea-hero-chips{margin-top:var(--rd-space-4)}

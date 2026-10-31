@@ -16,7 +16,8 @@ body { margin: 0; background: var(--rd-page-bg); color: var(--rd-text); font: 40
   padding: 0 max(16px, env(safe-area-inset-right, 0px)) 4rem max(16px, env(safe-area-inset-left, 0px)) }
 @media (max-width: 768px) { body { font-size: 14px } }
 main { display: grid; gap: 2.5rem }
-.rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100%, var(--rd-navbar-width)); padding-left: 0; padding-right: 0 } /* site fix: the trail starts on the content edge */
+main.rd-tabbed { max-width: min(100%, var(--rd-navbar-width)) } /* the body's 16px padding is already the navbar card's inset */
+.rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100%, var(--rd-navbar-width)) } /* the same inset for the trail */
 h1, h2, h3 { color: var(--rd-text-strong); font-weight: 700; line-height: 1.3; text-wrap: balance; margin: 0 }
 h1 { font-size: 2rem }
 h2 { font-size: 1.5rem; padding-left: .9rem; position: relative }

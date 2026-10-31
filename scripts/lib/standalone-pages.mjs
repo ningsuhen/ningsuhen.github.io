@@ -6,7 +6,7 @@
 //   - exclude: filenames to skip (e.g. "template.html").
 //   - drafts: include Draft pages (default false — they are not shipped, so most consumers leave them out).
 // Returns public-relative paths ("research/<slug>/index.html"), sorted. Consumers convert to URLs as they need.
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { draftHrefs, isDraftPage } from "./draft-pages.mjs";
 
@@ -40,4 +40,33 @@ export function standalonePages({ sections = null, depth = null, exclude = [], d
 	};
 	walk("", "");
 	return out.sort();
+}
+
+// Shell-rendered pages (src/standalone/<kind>/<slug>/, built by src/pages/<segment>/[slug].astro): no public/ file, but
+// they ship at <segment>/<slug>/index.html like the public pages. Same relative shape, so checks that render pages
+// cover them too. Their source contract is check:export; source-text rules stay on public/ pages.
+const SHELL_SEGMENT = { research: "research", idea: "ideas", playground: "playground" };
+export function shellPages({ drafts = false } = {}) {
+	const root = path.resolve("src/standalone");
+	const out = [];
+	for (const kind of Object.keys(SHELL_SEGMENT)) {
+		let slugs;
+		try {
+			slugs = readdirSync(path.join(root, kind), { withFileTypes: true }).filter((e) => e.isDirectory() && existsSync(path.join(root, kind, e.name, "meta.json")));
+		} catch {
+			continue;
+		}
+		for (const e of slugs) {
+			const r = path.join(SHELL_SEGMENT[kind], e.name, "index.html");
+			if (!drafts && isDraftPage(r, draftHrefs())) continue;
+			out.push(r);
+		}
+	}
+	return out.sort();
+}
+
+// A page's HTML: the public/ source when there is one, else the built page in dist/ (shell-rendered pages).
+export function pageSource(rel) {
+	const pub = path.resolve("public", rel);
+	return readFileSync(existsSync(pub) ? pub : path.resolve("dist", rel), "utf8");
 }

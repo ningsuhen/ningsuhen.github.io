@@ -12,7 +12,7 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 import { checkFresh } from "./build-design-system.mjs";
 import { checkFresh as spriteFresh } from "./build-lucide-sprite.mjs";
-import { standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
+import { pageSource, shellPages, standalonePages, SECTIONS } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
 const PUBLIC = path.resolve("public");
@@ -94,7 +94,9 @@ const pages = standalonePages({ sections: SECTIONS, depth: 3 });
 // pages — at 375 and 1440, light and dark. Both sets come from the shared page registry, so a new page is
 // covered without editing this file. template.html is a scaffold source (placeholder content, not a shipped
 // page), so it is excluded.
-const a11yPages = [...pages, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
+// Shell-rendered pages (src/standalone/**) get every rendered-page rule and axe; their source contract is check:export.
+const shell = shellPages();
+const a11yPages = [...pages, ...shell, ...standalonePages({ sections: ["design-system"], exclude: ["template.html"] })];
 const urlOf = (rel) => `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 const norm = (s) => s.replace(/\s+/g, "");
 const CANON = norm(readFileSync(path.join(PUBLIC, "design-system/research.css"), "utf8"));
@@ -159,7 +161,7 @@ for (const problem of (await checkFresh()).problems) failures.push(`bundle-fresh
 for (const problem of (await spriteFresh()).problems) failures.push(`sprite-fresh: ${problem}`);
 const allowedBy = new Map();
 const allowed = (rel) => {
-	const src = readFileSync(path.join(PUBLIC, rel), "utf8");
+	const src = pageSource(rel);
 	const set = new Set();
 	for (const [, content] of src.matchAll(/<meta[^>]+name=["']ds-allow["'][^>]+content=["']([^"']+)["']/gi)) {
 		const [rule, reason] = content.split(/:(.*)/s);
@@ -807,7 +809,8 @@ async function tabChecks(page, ok) {
 }
 
 // Pages run in parallel: each one has its own browser contexts and only writes to `found` (synchronous).
-await Promise.all(pages.map(async (rel) => {
+for (const rel of shell) allowed(rel);
+await Promise.all([...pages, ...shell].map(async (rel) => {
 	const page = urlOf(rel);
 	const ok = allowedBy.get(page);
 	// Each width x theme: chrome against the live reference. At 1440 also the structure and typography. (axe runs

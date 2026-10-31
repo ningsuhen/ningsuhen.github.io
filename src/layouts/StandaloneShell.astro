@@ -8,7 +8,8 @@
 // /<kind>/<slug>/, so renaming a kind is a folder move, not a shell change.
 //
 // The shell renders a complete standalone HTML document and hands it to the same applyChrome pipeline the
-// old injection path uses, so the two paths stay uniform. The document is emitted with set:html.
+// old injection path uses, so the two paths stay uniform. The document is emitted with set:html on a Fragment: the string
+// carries its own <!doctype html><html>, and wrapping it in <html> put the doctype inside that element (quirks mode).
 import { buildScript } from "../chrome/navbar";
 import { buildLicenseScript } from "../chrome/license";
 import { applyChrome } from "../chrome/apply";
@@ -90,4 +91,4 @@ const doc =
 // applyChrome adds the navbar, license footer, comments, breadcrumb band, theme sync and OG/canonical.
 const html = applyChrome(doc, buildScript(base), "", buildLicenseScript(base), urlPath, base, site);
 ---
-<html set:html={html} />
+<Fragment set:html={html} />

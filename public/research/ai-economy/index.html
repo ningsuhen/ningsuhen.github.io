@@ -511,7 +511,7 @@ html:has(.rd-crumb-band--empty) { --rd-crumb-h: var(--rd-navbar-gap); }
 	max-width: var(--rd-content-width); /* rd-container */
 	height: 100%;
 	margin: 0 auto;
-	padding: 0 var(--rd-space-4);
+	padding: 0 var(--rd-pad-surface); /* = the content card padding */
 	font: 400 var(--rd-crumb-fs) / 1.5rem var(--rd-font);
 	color: var(--rd-text-muted);
 }
@@ -639,7 +639,8 @@ html:has(.rd-tabbed) { --rd-footer-width: var(--rd-navbar-width); } /* the injec
 :root { --rd-surface: #fff; --rd-surface-inset: oklch(0.965 0.008 var(--hue)); --rd-pad-surface: 2.25rem; }
 :root[data-theme="dark"], :root.dark { --rd-surface: oklch(0.23 0.015 var(--hue)); --rd-surface-inset: oklch(0.275 0.016 var(--hue)); }
 @media (max-width: 767.98px) { :root { --rd-pad-surface: 1.25rem; } }
-.rd-tabbed { box-sizing: border-box; width: 100%; max-width: var(--rd-navbar-width); margin: 0 auto; padding: var(--rd-space-6) var(--rd-pad-surface) var(--rd-gap-section); }
+.rd-tabbed { box-sizing: border-box; width: 100%; max-width: min(100% - 2rem, var(--rd-navbar-width)); margin: 0 auto; padding: var(--rd-space-6) var(--rd-pad-surface) var(--rd-gap-section); }
+@media (max-width: 767.98px) { .rd-tabbed { max-width: none; border-radius: var(--rd-radius) var(--rd-radius) 0 0; } } /* full-bleed card on phones, as the design system */
 main:is(.rd-container, .rd-container--wide, .rd-tabbed) { --rd-card-bg: var(--rd-surface-inset); --surface: var(--rd-surface-inset); background: var(--rd-surface); border-radius: var(--rd-radius); }
 .rd-with-toc { display: grid; gap: var(--rd-gap-block); min-width: 0; }
 .rd-tabpanel[hidden] { display: none; }
@@ -898,7 +899,7 @@ body {
    stays off the viewport edge on narrow screens. The conditioning bar sits
    outside <main> and matches the navbar card's width + 16px padding the same
    way. The expnav already has this in the design system. */
-@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-left: 0; padding-right: 0; } } /* site fix: the trail starts on the content edge */
+@media (min-width: 768px) { .rd-crumb-band--tabbed .rd-breadcrumb { max-width: min(100% - 2rem, var(--rd-navbar-width)); padding-left: var(--rd-pad-surface); padding-right: var(--rd-pad-surface); } } /* site fix: the trail starts on the content edge */
 .condition-bar {
   max-width: var(--rd-navbar-width); margin-left: auto; margin-right: auto;
   padding-left: var(--rd-space-4); padding-right: var(--rd-space-4);
