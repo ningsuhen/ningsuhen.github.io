@@ -190,13 +190,24 @@ function withStallGuard<T>(
 	});
 }
 
-async function hasWebGpuAdapter(): Promise<boolean> {
+/**
+ * "none": the browser has no WebGPU. "blocked": it has WebGPU but gives no adapter. Chrome does that after a GPU
+ * reset or while its GPU process restarts, so it can be momentary: ask once more before giving up.
+ */
+type WebGpu = "ready" | "none" | "blocked";
+
+async function webGpu(): Promise<WebGpu> {
 	const gpu = (navigator as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
-	try {
-		return Boolean(gpu && (await gpu.requestAdapter()));
-	} catch {
-		return false;
+	if (!gpu) return "none";
+	for (const wait of [0, 1000]) {
+		if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+		try {
+			if (await gpu.requestAdapter()) return "ready";
+		} catch {
+			// Counts as no adapter.
+		}
 	}
+	return "blocked";
 }
 
 function pickDefaultVoice(voices: Voice[], lang: string): string | null {
@@ -228,8 +239,8 @@ let neuralReady = false;
 let manifestLoad: Promise<Manifest> | null = null;
 
 /** WebGPU gives the GPU model. The CPU model (fp16, Brev's CPU default) is used only when its flag is set: it still runs slower than real time and produces NaN chunks. */
-async function neuralVariant(): Promise<KokoroVariant | null> {
-	if (await hasWebGpuAdapter()) return "fp32";
+async function neuralVariant(gpu?: WebGpu): Promise<KokoroVariant | null> {
+	if ((gpu ?? (await webGpu())) === "ready") return "fp32";
 	return window.__KOKORO_CPU === true ? "fp16" : null;
 }
 let audioContext: AudioContext | null = null;
@@ -330,7 +341,7 @@ class ListenPlayer extends HTMLElement {
 			? activeEngineId
 			: wantsNeural &&
 				  window.__KOKORO_READY === true &&
-				  (explicit === "kokoro" || (await hasWebGpuAdapter()))
+				  (explicit === "kokoro" || (await webGpu()) === "ready")
 				? "kokoro"
 				: "web-speech";
 		if (signal.aborted) return;
@@ -427,9 +438,14 @@ class ListenPlayer extends HTMLElement {
 	/** Gets the neural engine ready: checks storage, asks and downloads when allowed, loads and (if asked) initialises. */
 	private async prepareNeural(askConsent: boolean): Promise<TtsEngine | null> {
 		const n = await neural();
-		let variant = await neuralVariant();
+		const gpu = await webGpu();
+		let variant = await neuralVariant(gpu);
 		if (!variant) {
-			this.status("The neural voice needs WebGPU on this device.");
+			this.status(
+				gpu === "none"
+					? "The neural voice needs WebGPU, and this browser has none."
+					: "The browser gave this page no GPU just now. Reload, or restart the browser, to use the neural voice.",
+			);
 			this.syncEngineSelect(activeEngineId);
 			return null;
 		}
@@ -716,7 +732,7 @@ class ListenPlayer extends HTMLElement {
 		if (!dialog || typeof dialog.showModal !== "function") return null;
 		// The GPU variant is only offered when this browser has a WebGPU adapter.
 		const fast = dialog.querySelector<HTMLButtonElement>("[data-variant=fp32]");
-		if (fast) fast.hidden = !(await hasWebGpuAdapter());
+		if (fast) fast.hidden = (await webGpu()) !== "ready";
 		// The CPU tier stays hidden until it is verified (see ListenPlayer.astro).
 		const light = dialog.querySelector<HTMLButtonElement>("[data-variant=q8f16]");
 		if (light) light.hidden = window.__KOKORO_CPU !== true;

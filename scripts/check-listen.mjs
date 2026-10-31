@@ -961,6 +961,28 @@ await step("10b. connect once, neural", async () => {
 	expect(await engineValue(page) === "web-speech", "no WebGPU: default is not the browser voice");
 	await ctx.close();
 }
+// A browser with WebGPU that gives no adapter (Chrome after a GPU reset): one more ask, then a message that says so,
+// never "needs WebGPU".
+{
+	const flaky = `{ let n = 0; Object.defineProperty(navigator, "gpu", { value: { requestAdapter: async () => (n++ ? {} : null) }, configurable: true }); }`;
+	const ctx = await neuralContext(browser, { gpu: false, init: flaky });
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	expect(await engineValue(page) === "kokoro", "a momentary null adapter: default is not neural");
+	await ctx.close();
+}
+{
+	const blocked = `Object.defineProperty(navigator, "gpu", { value: { requestAdapter: async () => null }, configurable: true });`;
+	const ctx = await neuralContext(browser, { gpu: false, init: blocked });
+	await ctx.addInitScript(() => localStorage.setItem("listen-engine-choice", JSON.stringify("kokoro")));
+	const page = await ctx.newPage();
+	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	const status = await page.$eval("[data-status]", (el) => el.textContent ?? "");
+	expect(/no GPU just now/.test(status), `no adapter: status is "${status}", not the no-GPU-just-now message`);
+	await ctx.close();
+}
 {
 	const ctx = await neuralContext(browser, {});
 	await ctx.addInitScript(() => localStorage.setItem("listen-engine-choice", JSON.stringify("web-speech")));
