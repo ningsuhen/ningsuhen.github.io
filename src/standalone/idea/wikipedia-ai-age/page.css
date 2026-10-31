@@ -1,4 +1,4 @@
-/* Idea-page layout. Colours/sizes from design-system tokens; raw lengths in custom properties. */
+/* Idea layout; tokens only. */
 [data-page="wikipedia-ai-age"]{--idea-fig-max:42.5rem;--idea-log-max:34rem;--idea-gloss-min:18rem;--idea-hair:1px}
 [data-page="wikipedia-ai-age"] .idea-fig>svg{width:100%;height:auto;max-width:var(--idea-fig-max);color:var(--rd-text-strong)}
 [data-page="wikipedia-ai-age"] .idea-box{fill:var(--rd-card-bg);stroke:currentColor;stroke-width:1.5}
@@ -33,3 +33,6 @@
 [data-page="wikipedia-ai-age"] .idea-verdict--ok{color:var(--rd-good)}
 [data-page="wikipedia-ai-age"] .idea-verdict--no{color:var(--rd-bad)}
 [data-page="wikipedia-ai-age"] .idea-gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--idea-gloss-min)),1fr));gap:var(--rd-space-2)}
+
+[data-page="wikipedia-ai-age"] .idea-fig>:not(svg){position:sticky;left:0}
+[data-page="wikipedia-ai-age"] .idea-hero-chips{margin-top:var(--rd-space-4)}
