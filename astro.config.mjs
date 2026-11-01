@@ -42,10 +42,10 @@ function standaloneSitemapPages() {
 // https://astro.build/config
 export default defineConfig({
 	site: SITE,
-	// Dev port is 4321 and fails loudly if taken (vite strictPort below). `pnpm dev:agent` overrides it to 4400+.
+	// Dev port: 8050 by default (override with ASTRO_DEV_PORT); fails loudly if taken (vite strictPort below). `pnpm dev:agent` overrides it to 4400+.
 	server: {
 		host: "127.0.0.1",
-		port: 4321,
+		port: Number(process.env.ASTRO_DEV_PORT) || 8050,
 	},
 	base: "/",
 	trailingSlash: "always",

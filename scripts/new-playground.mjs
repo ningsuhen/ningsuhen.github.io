@@ -73,4 +73,4 @@ writeFileSync(jsonPath, `${JSON.stringify(data, null, 2)}\n`);
 console.log(`Created:
   ${hasPage ? `${pagePath}                     (navbar + license are injected at build time)\n  ` : ""}${path.join(postDir, "index.md")}   (draft: true)
   ${jsonPath}                 (status "Draft": hidden from /${section}/ until you set it to "Live")
-Next: ${hasPage ? "write the page and the post" : "write the post"}, then set its status to "Live" in ${jsonPath}; pnpm dev -> http://127.0.0.1:4321${href} (live reload); before the PR: pnpm build && pnpm check:standalone`);
+Next: ${hasPage ? "write the page and the post" : "write the post"}, then set its status to "Live" in ${jsonPath}; pnpm dev -> http://127.0.0.1:8050${href} (live reload); before the PR: pnpm build && pnpm check:standalone`);

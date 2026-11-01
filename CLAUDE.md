@@ -26,9 +26,9 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 
 ## Commands
 
-- `pnpm dev`: the always-on dev server on http://127.0.0.1:4321 (strict: exits if 4321 is taken).
+- `pnpm dev`: the always-on dev server on http://127.0.0.1:8050 (strict: exits if 8050 is taken).
 - `pnpm dev:agent`: ad-hoc dev server for agents and worktrees, first free port from 4400 up (the URL is printed).
-- Agents must NEVER start a server on port 4321 (`pnpm dev`, `pnpm preview`, `astro dev --port 4321`): the LaunchAgent owns it. Use `pnpm dev:agent`.
+- Agents must NEVER start a server on port 8050 (`pnpm dev`, `pnpm preview`, `astro dev --port 8050`): the LaunchAgent owns it. Use `pnpm dev:agent`.
 - `pnpm build`: Astro build + Pagefind.
 - `pnpm check:standalone`: real-browser check of standalone pages and Back navigation. Needs a build and `CHROME_PATH` (or `pnpm exec playwright-core install chromium`).
 - `pnpm check:theme`: real-browser check of the theme model (light default, only `auto` follows the OS, toggles, navigation, second tab). Needs a build and `CHROME_PATH`.
@@ -41,7 +41,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 - `pnpm check:markers`: owner markers never reach `dist/`; lists unresolved markers per post (not `manual`). Needs a build. `pnpm test:markers`: unit tests for the parser and the anchoring around markers.
 - `pnpm check:leaks`: scans the built site, `public/`, `src/content/`, `src/data/` and these docs for leaks (see CRITICAL "No leaks"). `node scripts/check-public-leaks.mjs <dir>` scans any export folder.
 - `scripts/leak-denylist.local.txt` (gitignored, never committed): optional extra private terms, one per line, read by `check:leaks`.
-- Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 4321) against the branch checked out in the project root. It only picks up merged work after `pnpm sync`. Its log is the LaunchAgent log file under the user's Library/Logs.
+- Dev server: LaunchAgent `com.ningsuhen.github-io.dev` runs `scripts/dev-server.sh` (pnpm dev, port 8050) against the branch checked out in the project root. It only picks up merged work after `pnpm sync`. Its log is the LaunchAgent log file under the user's Library/Logs.
 
 ## Repo contents: shipped output only (CRITICAL)
 
