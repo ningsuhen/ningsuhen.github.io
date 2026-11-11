@@ -14,6 +14,10 @@ import { chromium } from "playwright-core";
 const DIST = path.resolve(process.argv[2] ?? "dist");
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".svg": "image/svg+xml", ".webp": "image/webp", ".png": "image/png", ".woff2": "font/woff2" };
 const VIEWPORT = { width: 1440, height: 900 };
+// The Doc design (data-rd="doc") lists its pages in a left sidebar and the shown section's headings in a right rail. Both
+// dock from 92rem; below that they are drawers opened from the bar. The history model is the same either way, so the
+// check reads it where both are on screen.
+const DOC_VIEWPORT = { width: 1600, height: 900 };
 
 function tabbedPages(dir = DIST, rel = "") {
 	return readdirSync(path.join(dir, rel), { withFileTypes: true }).flatMap((e) => {
@@ -103,8 +107,8 @@ async function act(page, action) {
 }
 
 // marker: wait for the restore marker (not for the probe, which decides whether a page is tabbed at all).
-async function open(url, marker = true) {
-	const ctx = await browser.newContext({ viewport: VIEWPORT });
+async function openAt(url, marker = true, viewport = VIEWPORT) {
+	const ctx = await browser.newContext({ viewport });
 	const page = await ctx.newPage();
 	const errors = [];
 	page.on("pageerror", (e) => errors.push(e.message));
@@ -120,6 +124,11 @@ const relPath = (rel) => `/${rel.replace(/index\.html$/, "")}`;
 async function testPage(rel) {
 	const url = relPath(rel);
 	const label = (s) => `${url} ${s}`;
+	const doc = /\bdata-rd="doc"/.test(readFileSync(path.join(DIST, rel), "utf8"));
+	const vp = doc ? DOC_VIEWPORT : VIEWPORT;
+	const open = (u, marker = true) => openAt(u, marker, vp);
+	// "On this page": the Card design has one rail per tab panel; the Doc design one rail with a list per page.
+	const tocLink = (id, toc) => (doc ? `.rd-doc__rail ol[data-for="${id}"] a[href="#${toc}"]` : `#${id} .rd-toc a[href="#${toc}"]`);
 
 	// Discover tabs, one deep-link target per panel, and one "On this page" link per panel.
 	const probe = await open(url, false);
@@ -130,21 +139,22 @@ async function testPage(rel) {
 	}
 	tested.push(url);
 	await ready(probe.page);
-	const meta = await probe.page.evaluate(() => {
+	const meta = await probe.page.evaluate((doc) => {
 		const tabs = [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
 		return tabs.map((t) => {
 			const panel = document.getElementById(t.getAttribute("aria-controls"));
 			// A deep-link target must render and take focus: skip headings, the panel itself, and SVG <defs> content (markers,
 			// gradients) which is reference-only and has no box.
 			const target = panel ? [...panel.querySelectorAll("[id]")].find((e) => !/^H[1-6]$/.test(e.tagName) && e.id !== panel.id && !e.closest("defs")) : null;
+			const links = doc ? document.querySelectorAll(`.rd-doc__rail ol[data-for="${CSS.escape(panel?.id ?? "")}"] a[href^="#"]`) : panel?.querySelectorAll('.rd-toc a[href^="#"]');
 			const toc = panel
-				? [...panel.querySelectorAll('.rd-toc a[href^="#"]')]
+				? [...links]
 						.map((a) => document.getElementById(a.getAttribute("href").slice(1)))
 						.find((e) => e && panel.contains(e) && e !== target)
 				: null;
 			return { id: t.getAttribute("aria-controls"), href: t.getAttribute("href"), target: target?.id ?? null, toc: toc?.id ?? null };
 		});
-	});
+	}, doc);
 	const hasTablist = await probe.page.evaluate(() => document.querySelectorAll('[role="tablist"] [role="tab"]').length > 0);
 	check(label("has a tablist with tabs"), hasTablist);
 	check(label("tabs are real links to ?tab="), meta.every((m) => m.href === `?tab=${m.id}`), meta.map((m) => m.href).join(" "));
@@ -183,9 +193,11 @@ async function testPage(rel) {
 		const { ctx, page } = await open(url);
 		await page.focus(`[role="tab"][aria-controls="${meta[0].id}"]`);
 		const s0 = await snap(page);
-		await page.keyboard.press("ArrowRight");
+		// A vertical tab list (the Doc design's sidebar) moves with ArrowDown.
+		const next = (await page.getAttribute('[role="tablist"]', "aria-orientation")) === "vertical" ? "ArrowDown" : "ArrowRight";
+		await page.keyboard.press(next);
 		const focused = await page.evaluate(() => document.activeElement?.getAttribute("aria-controls"));
-		check(label("ArrowRight: focus on the next tab, no entry"), focused === meta[1 % meta.length].id && (await snap(page)).len === s0.len, `focus ${focused}`);
+		check(label(`${next}: focus on the next tab, no entry`), focused === meta[1 % meta.length].id && (await snap(page)).len === s0.len, `focus ${focused}`);
 		await page.keyboard.press("End");
 		check(label("End: focus on the last tab"), (await page.evaluate(() => document.activeElement?.getAttribute("aria-controls"))) === meta[meta.length - 1].id);
 		await page.keyboard.press("Home");
@@ -207,7 +219,8 @@ async function testPage(rel) {
 		check(label(`deep link #${meta[i].target}: ?tab added, no entry added`), s.len === 2 && s.search === `?tab=${meta[i].id}` && s.hash === `#${meta[i].target}`, `len ${s.len} ${s.search}`);
 		const pos = await page.evaluate((id) => {
 			const el = document.getElementById(id);
-			const bar = document.querySelector('[role="tablist"]');
+			// The bar content stays under: the tab bar, or in the Doc design the sticky page bar (its tab list is a sidebar).
+			const bar = document.querySelector(".rd-doc__bar") ?? document.querySelector('[role="tablist"]');
 			const top = el.getBoundingClientRect().top;
 			return { top, bar: bar.getBoundingClientRect().bottom, h: window.innerHeight, focusIn: el.contains(document.activeElement) };
 		}, meta[i].target);
@@ -238,6 +251,14 @@ async function testPage(rel) {
 	for (let i = 0; i < meta.length; i++) {
 		if (!meta[i].toc) continue;
 		const { ctx, page } = await open(`${url}?tab=${meta[i].id}`);
+		// The Doc design's rail lists only the shown section's headings: take the first one it shows for this page.
+		if (doc) {
+			meta[i].toc = await page.evaluate((id) => [...document.querySelectorAll(`.rd-doc__rail ol[data-for="${CSS.escape(id)}"] li:not([hidden]) a[href^="#"]`)].map((a) => a.getAttribute("href").slice(1))[0] ?? null, meta[i].id);
+			if (!meta[i].toc) {
+				await ctx.close();
+				continue;
+			}
+		}
 		// Start from a scrolled position (so Back has a non-zero y to restore) where the link is clear of the sticky chrome
 		// (navbar, breadcrumb band, section bar and any page bar under them): a covered link would make the click scroll the
 		// page first, and the test would then compare against the wrong start. 150px when that is clear, else just above it.
@@ -252,12 +273,12 @@ async function testPage(rel) {
 				.filter((b) => Number.isFinite(b) && b < window.innerHeight / 2));
 			const clear = Math.floor(link.getBoundingClientRect().top + window.scrollY - chrome - 24);
 			return Math.max(1, Math.min(150, clear));
-		}, `#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`);
+		}, tocLink(meta[i].id, meta[i].toc));
 		await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
 		await settle(page);
 		const s0 = await snap(page);
 		await openRail(page, meta[i].id);
-		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
+		await act(page, () => page.click(tocLink(meta[i].id, meta[i].toc)));
 		const s1 = await snap(page);
 		check(label(`TOC #${meta[i].toc}: +1 entry, hash, same tab`), s1.len === s0.len + 1 && s1.hash === `#${meta[i].toc}` && s1.active === i && s1.search === s0.search, `${s0.len}->${s1.len}`);
 		await act(page, () => page.goBack());
@@ -267,7 +288,7 @@ async function testPage(rel) {
 		const f = await snap(page);
 		check(label(`TOC #${meta[i].toc}: Forward restores the target`), f.hash === `#${meta[i].toc}` && f.active === i && Math.abs(f.y - s1.y) <= 3, `y ${f.y} vs ${s1.y}`);
 		await openRail(page, meta[i].id);
-		await act(page, () => page.click(`#${meta[i].id} .rd-toc a[href="#${meta[i].toc}"]`));
+		await act(page, () => page.click(tocLink(meta[i].id, meta[i].toc)));
 		check(label(`TOC #${meta[i].toc} again while there: no entry`), (await snap(page)).len === f.len);
 		await act(page, () => page.reload());
 		const r = await snap(page);

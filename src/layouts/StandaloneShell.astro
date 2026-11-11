@@ -29,6 +29,10 @@ const SECTION_LABEL: Record<string, string> = { research: "Research", playground
 const DOC_ALLOW = [
 	"typography-scale: the Doc design reads at the document template's comfortable sizes (16px body, 22px page headings), not the compact report template's",
 	"rail-presence: in the Doc design a page's sections are the bar's nav; the right sidebar lists only the shown section's sub-headings, so it is empty when the section has none",
+	"prose-type: the Doc design sets its prose in the design system's own type scale and ink colours (see typography-scale), not the main post's",
+	"footer-box: the license card spans the document column (the navbar card's width, like the breadcrumb and the comments), not the main post's 872px column",
+	"footer-type: the license is the site's small print on every standalone page (12px, muted), not the main post's footer text",
+	"footer-gap: the click-to-load comments section sits between the document and the license card",
 ];
 
 interface Props { kind: string; slug: string; segment: string; fragment: Fragment }
@@ -104,6 +108,9 @@ const doc =
 	// documented exceptions (check:design-system, ds-allow), one place for every doc page.
 	(isDoc ? DOC_ALLOW.map((a) => `<meta name="ds-allow" content="${esc(a)}">`).join("") : "") +
 	`<link rel="stylesheet" href="/design-system/rd.css">` +
+	// The JS layout (.js rules: the Doc grid and drawers) from the first paint. rd.js sets the same flag, but it is a
+	// module and runs after first paint, so the no-JS layout would show first and then jump (a layout shift).
+	`<script>document.documentElement.classList.add("js")</script>` +
 	`<script data-site-theme>${themeRuntimeScript(true)}</script>` +
 	`</head>` +
 	`<body class="rd-body">` +
