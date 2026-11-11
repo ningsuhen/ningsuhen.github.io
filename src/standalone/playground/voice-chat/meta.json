@@ -1,0 +1,26 @@
+{
+  "contract": 1,
+  "kind": "playground",
+  "slug": "voice-chat",
+  "title": "Voice chat",
+  "created": "2026-10-26",
+  "updated": "2026-10-26",
+  "summary": "A voice conversation that runs entirely on your device: your microphone feeds a voice-activity detector and a turn detector, your words are transcribed, a small language model answers, and Kokoro speaks the answer back. You can interrupt it mid-sentence. Nothing is sent anywhere.",
+  "eyebrow": "Playground \u00b7 voice-chat",
+  "width": "post",
+  "layout": "tabbed",
+  "icons": [
+    "mic",
+    "keyboard",
+    "audio-lines",
+    "triangle-alert",
+    "cpu",
+    "zap",
+    "arrow-right",
+    "play",
+    "square",
+    "brain",
+    "volume-2",
+    "message-circle"
+  ]
+}
