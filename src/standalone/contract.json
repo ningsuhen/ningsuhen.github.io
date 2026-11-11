@@ -54,6 +54,7 @@
 	"pageJs": {
 		"shape": "export default init({ root, data, rd })",
 		"events": "rd.on('tabshow', …) for charts in hidden tabs",
+		"history": "a widget that keeps its state in the hash (#m=5&s=2) uses rd.nav.hash(h, { push, state }) and rd.nav.back(); put data-rd-hash on the widget so the Doc design keeps its section shown",
 		"forbidden": ["history calls", "tab/rail code", "external URLs", "globals (window./document.)"]
 	},
 	"data": "over 100 KB goes to same-origin sidecar files; never base64 in HTML; shared assets under public/shared/<project>/",
