@@ -70,7 +70,12 @@ export function mountTabs(bar, opts = {}) {
 		const tab = t >= 0 ? t : loc && loc.tab >= 0 ? loc.tab : 0;
 		return { tab, el: loc && loc.el ? loc.el : null };
 	}
-	const urlFor = (tab, id) => location.pathname + "?tab=" + panels[tab].id + (id ? "#" + id : "");
+	// The page's own query parameters (a widget's ?filter=…) ride along: only tab is the router's.
+	const urlFor = (tab, id) => {
+		const q = new URLSearchParams(location.search);
+		q.set("tab", panels[tab].id);
+		return location.pathname + "?" + q.toString() + (id ? "#" + id : "");
+	};
 	function barEdges() {
 		bar.classList.toggle("is-fade-start", bar.scrollLeft > 2);
 		bar.classList.toggle("is-fade-end", bar.scrollLeft < bar.scrollWidth - bar.clientWidth - 2);
