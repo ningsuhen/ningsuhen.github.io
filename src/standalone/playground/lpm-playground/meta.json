@@ -1,0 +1,25 @@
+{
+  "contract": 1,
+  "kind": "playground",
+  "slug": "lpm-playground",
+  "title": "LPM playground",
+  "created": "2026-10-26",
+  "updated": "2026-10-26",
+  "summary": "A small language model that runs on your own graphics card and makes one closed-choice decision per call. A program branches on the answer. Your text is not sent anywhere.",
+  "eyebrow": "Playground \u00b7 lpm-playground",
+  "width": "wide",
+  "layout": "tabbed",
+  "icons": [
+    "quote",
+    "list",
+    "trophy",
+    "gauge",
+    "route",
+    "code",
+    "circle-check",
+    "circle-x",
+    "triangle-alert",
+    "trash",
+    "plus"
+  ]
+}
