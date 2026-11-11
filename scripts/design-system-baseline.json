@@ -1,12 +1,6 @@
 {
 	"entries": [
 		{
-			"page": "/research/brev-tree-benchmark/",
-			"rule": "axe",
-			"owner": "Brev",
-			"reason": "color-contrast (serious) on text in the Brev report (muted or small text on the card background). Fix the source colours."
-		},
-		{
 			"page": "/research/ai-economy/",
 			"rule": "axe",
 			"owner": "EcoSimulation",
@@ -161,24 +155,6 @@
 			"rule": "prose-type",
 			"owner": "site",
 			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
-		},
-		{
-			"page": "/research/brev-tree-benchmark/",
-			"rule": "rail-presence",
-			"owner": "site",
-			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
-		},
-		{
-			"page": "/research/brev-tree-benchmark/",
-			"rule": "rail-type",
-			"owner": "site",
-			"reason": "Standalone rail text is 13px; the main TOC is 12px."
-		},
-		{
-			"page": "/research/brev-tree-benchmark/",
-			"rule": "typography-scale",
-			"owner": "site",
-			"reason": "Compact density is intentional (guide: Density): the template's compact sizes are the reference here."
 		}
 	]
 }
