@@ -80,6 +80,15 @@ export function load(kind: string, slug: string): Fragment {
 // the tab's start tag (works without JS).
 const TAB_RE = /<section\b[^>]*\bdata-rd-tab="([^"]+)"[^>]*>/g;
 const LABEL_RE = /\bdata-rd-label="([^"]+)"/;
+// An attribute value as written in the markup is HTML ("Caveats &amp; sources"); the tabs carry plain text, which the
+// shells escape once when they render it. Without decoding, a label showed a literal "&amp;".
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+const attr = (v: string | undefined): string | null =>
+	v === undefined
+		? null
+		: v.replace(/&(?:#(\d+)|#x([0-9a-f]+)|(amp|lt|gt|quot|apos));/gi, (m, dec, hex, name) =>
+				dec ? String.fromCodePoint(+dec) : hex ? String.fromCodePoint(parseInt(hex, 16)) : (ENTITIES[name.toLowerCase()] ?? m),
+			);
 const ICON_RE = /\bdata-rd-icon="([^"]+)"/;
 const GROUP_RE = /\bdata-rd-group="([^"]+)"/;
 const SUB_RE = /\bdata-rd-sub="([^"]+)"/;
@@ -89,10 +98,10 @@ function derive(body: string, inlineRail: boolean): { tabs: Tab[]; rails: Record
 	const starts = [...body.matchAll(TAB_RE)].map((m) => ({ id: m[1], at: m.index!, end: m.index! + m[0].length, tag: m[0] }));
 	const tabs: Tab[] = starts.map((s) => ({
 		id: s.id,
-		label: s.tag.match(LABEL_RE)?.[1] ?? s.id,
-		icon: s.tag.match(ICON_RE)?.[1] ?? null,
-		group: s.tag.match(GROUP_RE)?.[1] ?? null,
-		sub: s.tag.match(SUB_RE)?.[1] ?? null,
+		label: attr(s.tag.match(LABEL_RE)?.[1]) ?? s.id,
+		icon: attr(s.tag.match(ICON_RE)?.[1]),
+		group: attr(s.tag.match(GROUP_RE)?.[1]),
+		sub: attr(s.tag.match(SUB_RE)?.[1]),
 	}));
 	const rails: Record<string, Rail> = {};
 	let out = body;
