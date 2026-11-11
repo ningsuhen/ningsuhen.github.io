@@ -103,12 +103,6 @@
 			"reason": "Compact density is intentional (guide: Density): h2 19.2px vs the main post's 24px. Accepted until the guide changes."
 		},
 		{
-			"page": "/playground/brev-tree-traversal/",
-			"rule": "rail-presence",
-			"owner": "site",
-			"reason": "Standalone contents rail shows from 1100px; the main post's TOC shows only from 1536px. Decide one breakpoint."
-		},
-		{
 			"page": "/playground/lpm-playground/",
 			"rule": "footer-box",
 			"owner": "site",

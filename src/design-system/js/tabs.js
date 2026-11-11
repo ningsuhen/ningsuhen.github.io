@@ -203,7 +203,9 @@ export function mountTabs(bar, opts = {}) {
 	let touched = false;
 	["wheel", "touchstart", "keydown", "mousedown"].forEach((ev) => window.addEventListener(ev, () => { touched = true; }, { passive: true, once: true }));
 	if (!new URLSearchParams(location.search).has("tab") || tabOf(decodeURIComponent(location.hash.slice(1))) >= 0) {
-		history.replaceState(history.state, "", urlFor(v0.tab, v0.el ? v0.el.id : ""));
+		// A hash that is no tab or element (a widget's state, #m=5&s=2) is kept.
+		const raw = decodeURIComponent(location.hash.slice(1));
+		history.replaceState(history.state, "", urlFor(v0.tab, v0.el ? v0.el.id : tabOf(raw) < 0 ? raw : ""));
 	}
 	resync();
 	function restoreFirst() {

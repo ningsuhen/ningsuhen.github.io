@@ -229,6 +229,11 @@ export function mountDoc(frame, { on } = {}) {
 	function subFromUrl() {
 		const id = decodeURIComponent(location.hash.slice(1));
 		const el = id ? d.getElementById(id) : null;
+		// A hash that is no element id is a widget's state (a walker's #m=5&s=2): the section holding [data-rd-hash] stays shown.
+		if (id && !el) {
+			const owner = cur.panel.querySelector("[data-rd-hash]");
+			return (owner && subOf(cur.subs, owner)) || cur.sub || cur.subs[0] || null;
+		}
 		return (el && cur.panel.contains(el) && subOf(cur.subs, el)) || cur.subs[0] || null;
 	}
 	function onShow({ id, index }) {

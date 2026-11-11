@@ -54,6 +54,19 @@ const rd = {
 	fullscreen: mountFullscreen,
 	tabs: mountTabs,
 	doc: mountDoc,
+	// A widget's own state in the hash (a walker's #m=5&s=2), the one history write a fragment may make. hash(h, { push, state })
+	// writes the current path and query plus h: push adds one entry (state { k, y } like the tabs' own entries, so scroll
+	// restore works, plus the widget's own keys), otherwise the current entry is replaced. back() is history.back().
+	// The hash must not be an element id: put data-rd-hash on the widget so the Doc design keeps its section shown.
+	nav: {
+		hash(h, { push = false, state = {} } = {}) {
+			const url = location.pathname + location.search + h;
+			if (url === location.pathname + location.search + location.hash) return;
+			if (push) history.pushState({ k: Date.now(), y: Math.round(scrollY), ...state }, "", url);
+			else history.replaceState({ ...history.state, ...state }, "", url);
+		},
+		back: () => history.back(),
+	},
 	// Fragment-contract entry point: init({ root, data, rd }). Mounts the opt-in behaviours in root, including
 	// ?tab= tabs + history (data-rd="tabs").
 	init({ root, data, rd: self } = {}) {
