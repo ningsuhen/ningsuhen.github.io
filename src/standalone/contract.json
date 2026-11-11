@@ -12,7 +12,7 @@
 	},
 	"meta": {
 		"required": ["contract", "kind", "slug", "title", "created", "updated", "summary"],
-		"optional": ["eyebrow", "width", "layout", "comments", "search", "source", "icons"],
+		"optional": ["eyebrow", "width", "layout", "shell", "comments", "search", "source", "icons"],
 		"types": {
 			"contract": "literal 1",
 			"kind": "string, must equal the folder kind",
@@ -24,6 +24,7 @@
 			"eyebrow": "string",
 			"width": "post | wide (default post)",
 			"layout": "tabbed | scroll (default scroll)",
+			"shell": "doc | card (default doc): the design the same body renders in. doc = pages in a left sidebar, the page's <h2 id> sections in the bar, its headings in a right sidebar; card = hero, tab bar and rail on the content card. Optional per tab: data-rd-group (sidebar group), data-rd-sub (page subtitle)",
 			"comments": "boolean (default true)",
 			"search": "boolean (default true)",
 			"source": "{ project: string, build: string } (the build hash)",

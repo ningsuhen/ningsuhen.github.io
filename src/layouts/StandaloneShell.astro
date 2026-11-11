@@ -16,11 +16,20 @@ import { applyChrome } from "../chrome/apply";
 import { esc } from "../chrome/util";
 import { themeRuntimeScript } from "../utils/theme-runtime";
 import { iconNames, spriteBlock } from "../design-system/lucide";
+import { DOC_ICONS, renderDoc } from "../design-system/shell/doc";
 import type { Fragment } from "../standalone/loader";
 
 // Human label for a kind, used as the hero eyebrow when the fragment has no eyebrow of its own.
 const KIND_LABEL: Record<string, string> = { research: "Research", experiment: "Experiment", playground: "Playground", idea: "Idea", "design-system": "Design system" };
 const kindLabel = (kind: string) => KIND_LABEL[kind] ?? kind;
+// The section a page belongs to, by its URL segment: the Doc design links it from the sidebar brand.
+const SECTION_LABEL: Record<string, string> = { research: "Research", playground: "Playground", ideas: "Ideas" };
+// Where the Doc design departs from the references the conformance check compares with (the compact report template
+// and the main post), and why. Rule ids are check:design-system's.
+const DOC_ALLOW = [
+	"typography-scale: the Doc design reads at the document template's comfortable sizes (16px body, 22px page headings), not the compact report template's",
+	"rail-presence: in the Doc design a page's sections are the bar's nav; the right sidebar lists only the shown section's sub-headings, so it is empty when the section has none",
+];
 
 interface Props { kind: string; slug: string; segment: string; fragment: Fragment }
 const { kind, slug, segment, fragment } = Astro.props;
@@ -51,7 +60,26 @@ const pageCss = css ? `<style is:inline>${css}</style>` : "";
 // fragment has no public/ page for the sprite builder to rewrite, so the shell supplies its own.
 // meta.icons adds names the page creates in page.js (not referenced in the body markup), so they
 // are in the sprite too; the union is deduped.
-const sprite = spriteBlock([...new Set([...iconNames(tabBar + body), ...(meta.icons ?? [])])]);
+// Two designs for the same body (meta.shell): "card" (hero, tab bar, rail beside the content, on the content card) or
+// "doc" (components/doc.css: page list in a left sidebar, sticky page bar, On this page in a right sidebar). A doc page
+// needs tabs (its page list is the tabs); without them it falls back to card.
+const isDoc = meta.shell === "doc" && tabs.length > 0;
+const docBody = isDoc
+	? renderDoc({
+			slug,
+			title: meta.title,
+			summary: meta.summary,
+			created: meta.created,
+			updated: meta.updated,
+			eyebrow: meta.eyebrow ?? kindLabel(kind),
+			section: SECTION_LABEL[segment] ? { label: SECTION_LABEL[segment], href: `${base.replace(/\/$/, "")}/${segment}/` } : null,
+			tabs,
+			rails: fragment.rails,
+			body,
+			indexed: meta.search,
+		})
+	: "";
+const sprite = spriteBlock([...new Set([...iconNames(isDoc ? docBody : tabBar + body), ...(isDoc ? DOC_ICONS : []), ...(meta.icons ?? [])])]);
 
 // The page's runtime module (contract: export default init({ root, data, rd })). Served as a Vite asset
 // (content-hashed, no public/ duplicate) and invoked by a tiny per-page module that hands it the root,
@@ -66,22 +94,27 @@ const pageJs = js
 // public/**/*.html page. The design-system bundle is linked (not inlined) so it stays current.
 const doc =
 	`<!doctype html>` +
-	`<html lang="en" data-theme="light">` +
+	`<html lang="en" data-theme="light"${isDoc ? ` data-rd-host="site"` : ""}>` +
 	`<head>` +
 	`<meta charset="utf-8">` +
 	`<meta name="viewport" content="width=device-width, initial-scale=1">` +
 	`<title>${esc(title)}</title>` +
 	`<meta name="description" content="${esc(meta.summary)}">` +
+	// The Doc design differs from the Card design's references on purpose; the conformance check reads these as
+	// documented exceptions (check:design-system, ds-allow), one place for every doc page.
+	(isDoc ? DOC_ALLOW.map((a) => `<meta name="ds-allow" content="${esc(a)}">`).join("") : "") +
 	`<link rel="stylesheet" href="/design-system/rd.css">` +
 	`<script data-site-theme>${themeRuntimeScript(true)}</script>` +
 	`</head>` +
 	`<body class="rd-body">` +
 	`${sprite}` +
-	`<main class="${meta.layout === "tabbed" ? "rd-tabbed " : ""}rd-container${meta.width === "wide" ? "--wide" : ""} rd-prose" data-page="${esc(slug)}" data-pagefind-body="${meta.search ? "" : "false"}">` +
-	`<header class="rd-hero"><p class="rd-eyebrow">${esc(meta.eyebrow ?? kindLabel(kind))}</p><h1>${esc(meta.title)}<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created ${esc(meta.created)} · updated ${esc(meta.updated)}</span></h1><p class="rd-hero__lede">${esc(meta.summary)}</p></header>` +
-	`${tabBar}` +
-	`${body}` +
-	`</main>` +
+	(isDoc
+		? docBody
+		: `<main class="${meta.layout === "tabbed" ? "rd-tabbed " : ""}rd-container${meta.width === "wide" ? "--wide" : ""} rd-prose" data-page="${esc(slug)}" data-pagefind-body="${meta.search ? "" : "false"}">` +
+			`<header class="rd-hero"><p class="rd-eyebrow">${esc(meta.eyebrow ?? kindLabel(kind))}</p><h1>${esc(meta.title)}<span class="rd-stamp"><span class="rd-stamp__sep"> · </span>created ${esc(meta.created)} · updated ${esc(meta.updated)}</span></h1><p class="rd-hero__lede">${esc(meta.summary)}</p></header>` +
+			`${tabBar}` +
+			`${body}` +
+			`</main>`) +
 	`${pageCss}` +
 	`<script type="module" src="/design-system/rd.js"></script>` +
 	`${pageJs}` +

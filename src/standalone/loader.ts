@@ -22,6 +22,10 @@ export const metaSchema = z.object({
 	eyebrow: z.string().optional(),
 	width: z.enum(["post", "wide"]).default("post"),
 	layout: z.enum(["tabbed", "scroll"]).default("scroll"),
+	// The design the content renders in: "doc" (the document shell: pages in a left sidebar, the page's sections in the
+	// bar, "On this page" in a right sidebar) or "card" (the content card: hero, tab bar, rail beside the content). Same
+	// body. A doc needs tabs (its pages); a fragment without them renders as card.
+	shell: z.enum(["card", "doc"]).default("doc"),
 	comments: z.boolean().default(true),
 	search: z.boolean().default(true),
 	source: z.object({ project: z.string(), build: z.string() }).optional(),
@@ -32,7 +36,9 @@ export const metaSchema = z.object({
 });
 export type Meta = z.infer<typeof metaSchema>;
 
-export type Tab = { id: string; label: string; icon: string | null };
+// group and sub are optional (data-rd-group, data-rd-sub): the Doc design groups its page list by group and shows sub
+// under the page title. The Card design ignores both.
+export type Tab = { id: string; label: string; icon: string | null; group: string | null; sub: string | null };
 export type Rail = { id: string; text: string; level: 2 | 3 }[];
 
 const ROOT = path.resolve("src/standalone");
@@ -65,7 +71,7 @@ export function load(kind: string, slug: string): Fragment {
 	const body = readFileSync(path.join(dir, "body.html"), "utf8");
 	const css = existsSync(path.join(dir, "page.css")) ? readFileSync(path.join(dir, "page.css"), "utf8") : "";
 	const js = existsSync(path.join(dir, "page.js")) ? readFileSync(path.join(dir, "page.js"), "utf8") : "";
-	const { tabs, rails, body: withRails } = derive(body);
+	const { tabs, rails, body: withRails } = derive(body, meta.shell === "card");
 	return { meta, body: withRails, css, js, tabs, rails };
 }
 
@@ -75,13 +81,18 @@ export function load(kind: string, slug: string): Fragment {
 const TAB_RE = /<section\b[^>]*\bdata-rd-tab="([^"]+)"[^>]*>/g;
 const LABEL_RE = /\bdata-rd-label="([^"]+)"/;
 const ICON_RE = /\bdata-rd-icon="([^"]+)"/;
+const GROUP_RE = /\bdata-rd-group="([^"]+)"/;
+const SUB_RE = /\bdata-rd-sub="([^"]+)"/;
 
-function derive(body: string): { tabs: Tab[]; rails: Record<string, Rail>; body: string } {
+// inlineRail: put each tab's rail inside its panel (the Card design). The Doc design renders the rails in its right sidebar.
+function derive(body: string, inlineRail: boolean): { tabs: Tab[]; rails: Record<string, Rail>; body: string } {
 	const starts = [...body.matchAll(TAB_RE)].map((m) => ({ id: m[1], at: m.index!, end: m.index! + m[0].length, tag: m[0] }));
 	const tabs: Tab[] = starts.map((s) => ({
 		id: s.id,
 		label: s.tag.match(LABEL_RE)?.[1] ?? s.id,
 		icon: s.tag.match(ICON_RE)?.[1] ?? null,
+		group: s.tag.match(GROUP_RE)?.[1] ?? null,
+		sub: s.tag.match(SUB_RE)?.[1] ?? null,
 	}));
 	const rails: Record<string, Rail> = {};
 	let out = body;
@@ -95,7 +106,7 @@ function derive(body: string): { tabs: Tab[]; rails: Record<string, Rail>; body:
 			text: m[3].replace(/<[^>]+>/g, "").trim(),
 		}));
 		rails[s.id] = rail;
-		if (rail.length) {
+		if (rail.length && inlineRail) {
 			// data-rd="rail": rd.js mounts the scroll-spy (shell pages have no inline rail script, so without it nothing is
 			// ever highlighted). Same disclosure markup as the public pages: open by default so no-JS sees every link.
 			const nav = `<nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>${rail

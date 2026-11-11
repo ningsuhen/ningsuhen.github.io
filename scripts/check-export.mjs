@@ -75,6 +75,10 @@ function validateMeta(meta, kind, slug) {
 		p.push(`meta.width "${meta.width}" must be "post" or "wide"`);
 	if (meta.layout !== undefined && !["tabbed", "scroll"].includes(meta.layout))
 		p.push(`meta.layout "${meta.layout}" must be "tabbed" or "scroll"`);
+	if (meta.shell !== undefined && !["card", "doc"].includes(meta.shell))
+		p.push(`meta.shell "${meta.shell}" must be "card" or "doc"`);
+	if (meta.shell === "doc" && meta.layout !== "tabbed")
+		p.push('meta.shell "doc" needs layout "tabbed": its page list is the tabs');
 	if (meta.comments !== undefined && typeof meta.comments !== "boolean")
 		p.push("meta.comments must be a boolean");
 	if (meta.search !== undefined && typeof meta.search !== "boolean")
