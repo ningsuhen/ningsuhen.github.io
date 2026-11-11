@@ -26,6 +26,7 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import standaloneHeader from "./src/integrations/standalone-header.ts";
 import { standalonePages } from "./scripts/lib/standalone-pages.mjs";
+import { draftHrefs } from "./scripts/lib/draft-pages.mjs";
 import { remarkOwnerMarkers } from "./src/plugins/owner-markers.mjs";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { remarkSourceMap } from "./src/plugins/remark-source-map.mjs";
@@ -137,7 +138,8 @@ export default defineConfig({
 			}
 		}),
         svelte(),
-		sitemap({ customPages: standaloneSitemapPages() }),
+		// Draft pages are not shipped (the build removes their folder), but a shell-rendered Draft is still an Astro route.
+		sitemap({ customPages: standaloneSitemapPages(), filter: (page) => !draftHrefs().has(new URL(page).pathname) }),
 	],
 	markdown: {
 		// Astro 7 default processor is Satteri; keep the unified (remark/rehype) pipeline the site was built on.

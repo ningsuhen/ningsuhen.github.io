@@ -72,6 +72,35 @@ function rail(tabs: DocTab[], rails: Record<string, DocRail>): string {
 	return `<p class="rd-doc__rail-label">On this page</p>${lists}<p class="rd-doc__rail-empty" hidden>Nothing to list on this page.</p>`;
 }
 
+// The first page's sections, by doc.js's rule (sectionOf): a <section> (or .rd-tabsec) that opens with its head (a
+// <header> or .rd-section__head holding the <h2>) or with the <h2>; its id is the h2's, else the head's, else its own.
+const idOf = (attrs: string | undefined) => attrs?.match(/\bid="([^"]+)"/)?.[1] ?? null;
+function sectionsOf(chunk: string): { id: string; text: string }[] {
+	const out: { id: string; text: string }[] = [];
+	for (const m of chunk.matchAll(/<(section|div)\b([^>]*)>/g)) {
+		if (/\bdata-rd-tab=/.test(m[2]) || (m[1] === "div" && !/\brd-tabsec\b/.test(m[2]))) continue;
+		const rest = chunk.slice(m.index! + m[0].length);
+		const head = rest.match(/^\s*<(header|div)\b([^>]*)>/);
+		if (head && head[1] === "div" && !/\brd-section__head\b/.test(head[2])) continue;
+		const h2 = (head ? rest.slice(head[0].length) : rest).match(head ? /^(?:(?!<\/?section\b)[\s\S])*?<h2\b([^>]*)>([\s\S]*?)<\/h2>/ : /^\s*<h2\b([^>]*)>([\s\S]*?)<\/h2>/);
+		if (!h2) continue;
+		const id = idOf(h2[1]) ?? idOf(head?.[2]) ?? idOf(m[2]);
+		if (id) out.push({ id, text: h2[2].replace(/<[^>]+>/g, "").trim() });
+	}
+	return out;
+}
+
+// The bar's section nav for the first page, as doc.js builds it (one link per section, the first current), so a load with
+// no ?tab paints the bar at its final height. doc.js rebuilds it for whichever page it shows.
+function subnav(tabs: DocTab[], body: string): string {
+	const at = tabs[0] ? body.indexOf(`data-rd-tab="${tabs[0].id}"`) : -1;
+	const next = tabs[1] ? body.indexOf(`data-rd-tab="${tabs[1].id}"`) : -1;
+	const secs = at < 0 ? [] : sectionsOf(body.slice(body.indexOf(">", at) + 1, next > at ? body.lastIndexOf("<", next) : body.length));
+	if (secs.length < 2) return `<nav class="rd-doc__subnav" aria-label="Sections" hidden></nav>`;
+	const links = secs.map((s, i) => `<a href="#${esc(encodeURIComponent(s.id))}" data-sub="${esc(s.id)}"${i ? "" : " aria-current"}>${s.text}</a>`).join("");
+	return `<nav class="rd-doc__subnav" aria-label="Sections">${links}</nav>`;
+}
+
 /** The <body> content for the Doc design. The caller adds the sprite, page CSS and scripts, and the host chrome. */
 export function renderDoc(d: DocInput): string {
 	const first = d.tabs[0];
@@ -89,7 +118,7 @@ export function renderDoc(d: DocInput): string {
 		`<div class="rd-doc__head"><h2>${first ? esc(first.label) : esc(d.title)}</h2><p>${first?.sub ? esc(first.sub) : ""}</p></div>` +
 		`<button type="button" class="rd-doc__btn" data-rd-doc-search aria-label="Search this document" title="Search ( / )">${icon("search")}</button>` +
 		`<button type="button" class="rd-doc__btn" data-rd-doc-toggle="toc" aria-controls="rd-doc-toc" aria-expanded="false" aria-label="Show or hide On this page" title="On this page">${icon("panel-right")}</button>` +
-		`</div><nav class="rd-doc__subnav" aria-label="Sections" hidden></nav></header>`;
+		`</div>${subnav(d.tabs, d.body)}</header>`;
 	const intro =
 		`<div class="rd-doc__intro"><p class="rd-eyebrow">${esc(d.eyebrow)}</p>` +
 		`<h1>${esc(d.title)}${stamp}</h1><p class="rd-hero__lede">${esc(d.summary)}</p></div>`;
@@ -98,7 +127,9 @@ export function renderDoc(d: DocInput): string {
 			`<div class="rd-doc__search-box">${icon("search")}<input type="search" placeholder="Search this document" aria-label="Search this document" autocomplete="off"><kbd>Esc</kbd></div>` +
 		`<ul class="rd-doc__search-results"></ul><p class="rd-doc__search-hint"></p></div></dialog>`;
 	return (
-		`<div class="rd-doc" data-rd="doc" data-nav="closed" data-toc="closed">` +
+		// data-first: a load with no ?tab shows the first page's first section, so the cover ships shown (doc.js keeps it
+		// for that view and drops it for any other); set late, it would push the whole page down after first paint.
+		`<div class="rd-doc" data-rd="doc" data-nav="closed" data-toc="closed" data-first>` +
 		`<aside class="rd-doc__side" id="rd-doc-side" aria-label="Pages">${brand}` +
 		`<nav class="rd-doc__nav" role="tablist" aria-orientation="vertical" aria-label="Pages" data-rd="tabs" data-rd-offset=".rd-doc__bar">${nav(d.tabs)}</nav></aside>` +
 		`<main class="rd-doc__main" data-page="${esc(d.slug)}" data-density="comfortable" data-pagefind-body="${d.indexed ? "" : "false"}">` +
