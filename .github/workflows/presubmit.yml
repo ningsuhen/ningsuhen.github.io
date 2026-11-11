@@ -1,0 +1,201 @@
+name: Presubmit
+
+# One workflow for every pull request, in stages (the StackBase presubmit shape: verify, test, security):
+#   verify    install, unit tests, build, then the static checks on that build
+#   test      the real-browser checks, in two balanced shards; each shard builds the site itself (about 15s),
+#             so it starts with verify instead of waiting for it
+#   gitleaks  the secret scan (pull requests and pushes to master)
+#   check     the aggregate of verify and test
+# `check` and `gitleaks` are the required statuses for branch protection (and scripts/merge-pr.sh reads
+# them by name): keep both job names. On a push to master only gitleaks runs.
+#
+# Every check is its own step, so a failure is named in the run; a step runs even when an earlier check
+# failed (`!cancelled()`), so one run reports every failure. Browser checks retry only on browser-launch
+# (infra) failures, never on assertion failures (scripts/ci-check.sh).
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "false"
+      - name: Cache Vite/Astro
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.vite
+          key: vite-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            vite-${{ runner.os }}-
+      - name: unit tests
+        run: pnpm test:tts && pnpm test:drafts && pnpm test:markers && pnpm test:voice && pnpm test:dates
+      - name: script syntax
+        if: ${{ !cancelled() }}
+        run: pnpm check:syntax
+      - name: astro check
+        if: ${{ !cancelled() }}
+        run: pnpm check
+      - name: front matter
+        if: ${{ !cancelled() }}
+        run: pnpm check:frontmatter
+      - name: thumbnails
+        if: ${{ !cancelled() }}
+        run: pnpm check:thumbnails
+      - name: fragment contract
+        if: ${{ !cancelled() }}
+        run: pnpm check:export
+      - name: build
+        id: build
+        if: ${{ !cancelled() }}
+        run: pnpm build
+      # The checks below read the build output.
+      - name: source map
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm check:source-map
+      - name: owner markers
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm check:markers
+      - name: owner voice
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm check:voice
+      - name: internal links
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm check:links
+      - name: 404 page + rss.xml (no network)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: node scripts/check-external-links.mjs --no-network
+      - name: seo (noindex, canonical, sitemap, robots)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm check:seo
+      - name: leaks (incl. embedded payloads)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: pnpm check:leaks
+
+  # The browser checks, balanced by their usual run time (navigation alone is about 8 minutes; standalone and
+  # report-history about 5.5 each). A shard runs only the steps whose name is in its `checks` list.
+  test:
+    if: github.event_name == 'pull_request'
+    name: test (${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: navigation
+            checks: " navigation theme listen dates cwv "
+          - shard: pages
+            checks: " standalone report-history design-system visual "
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/check-setup
+        with:
+          need-dist: "false"
+      - name: Cache Vite/Astro
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.vite
+          key: vite-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            vite-${{ runner.os }}-
+      - uses: ./.github/actions/playwright-env
+      - name: build
+        run: pnpm build
+      - name: check:navigation
+        if: ${{ !cancelled() && contains(matrix.checks, ' navigation ') }}
+        run: bash scripts/ci-check.sh navigation "pnpm check:navigation"
+      - name: check:theme
+        if: ${{ !cancelled() && contains(matrix.checks, ' theme ') }}
+        run: bash scripts/ci-check.sh theme "pnpm check:theme"
+      - name: check:listen
+        if: ${{ !cancelled() && contains(matrix.checks, ' listen ') }}
+        env:
+          LISTEN_SHOTS: listen-shots
+        run: bash scripts/ci-check.sh listen "pnpm check:listen"
+      - name: check:dates
+        if: ${{ !cancelled() && contains(matrix.checks, ' dates ') }}
+        run: bash scripts/ci-check.sh dates "pnpm check:dates"
+      # Core Web Vitals budget: LCP/CLS/TBT on a fixed page set, mobile + desktop, under a CPU throttle, median of
+      # N runs, no external requests. Fails only on a budget breach (scripts/cwv-budget.json).
+      - name: check:cwv
+        if: ${{ !cancelled() && contains(matrix.checks, ' cwv ') }}
+        run: bash scripts/ci-check.sh cwv "pnpm check:cwv"
+      - name: check:standalone
+        if: ${{ !cancelled() && contains(matrix.checks, ' standalone ') }}
+        run: bash scripts/ci-check.sh standalone "pnpm check:standalone"
+      - name: check:report-history
+        if: ${{ !cancelled() && contains(matrix.checks, ' report-history ') }}
+        run: bash scripts/ci-check.sh report-history "pnpm check:report-history"
+      - name: check:design-system
+        if: ${{ !cancelled() && contains(matrix.checks, ' design-system ') }}
+        run: bash scripts/ci-check.sh design-system "pnpm check:design-system"
+      # Visual regression: every page at 375/768/1440, light and dark, pixelmatched against the last master
+      # baseline (the visual-baseline branch, rendered on the same runner image). Passes with no baseline yet.
+      - name: Fetch the visual baseline
+        if: ${{ !cancelled() && contains(matrix.checks, ' visual ') }}
+        run: |
+          if git ls-remote --exit-code --heads origin visual-baseline >/dev/null 2>&1; then
+            git clone --depth 1 --branch visual-baseline --single-branch https://github.com/${{ github.repository }}.git visual-baseline-ref
+          else
+            echo "no visual-baseline branch yet (first run)"
+          fi
+      - name: check:visual
+        if: ${{ !cancelled() && contains(matrix.checks, ' visual ') }}
+        run: bash scripts/ci-check.sh visual "pnpm check:visual --compare visual-baseline-ref/visual-baseline"
+      - name: Upload failure logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-${{ matrix.shard }}-logs
+          path: |
+            *.log
+            listen-shots/
+          retention-days: 7
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  # The single required status for the checks: fails unless verify and every test shard passed.
+  check:
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    needs: [verify, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Aggregate result
+        run: |
+          echo "verify: ${{ needs.verify.result }}, test: ${{ needs.test.result }}"
+          if [ "${{ needs.verify.result }}" != "success" ] || [ "${{ needs.test.result }}" != "success" ]; then
+            echo "::error::a presubmit stage did not pass"
+            exit 1
+          fi
