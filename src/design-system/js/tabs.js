@@ -36,7 +36,11 @@ export function mountTabs(bar, opts = {}) {
 	// rd.js owns the tabs now, so it sets the flag.
 	document.documentElement.classList.add("js");
 	const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-	const navH = () => bar.getBoundingClientRect().bottom;
+	// The line content must stay under: the bar's bottom, or, for a bar that is not on top of the panels (the Doc
+	// design's sidebar page list), the element its data-rd-offset selector names (the sticky page bar).
+	const offsetEl = bar.dataset.rdOffset ? document.querySelector(bar.dataset.rdOffset) : null;
+	const navH = () => (offsetEl || bar).getBoundingClientRect().bottom;
+	const vertical = bar.getAttribute("aria-orientation") === "vertical";
 	let saveTimer = 0;
 	let seq = Date.now();
 	const yByKey = {};
@@ -166,8 +170,8 @@ export function mountTabs(bar, opts = {}) {
 		const i = tabs.indexOf(document.activeElement);
 		if (i < 0) return;
 		let n = null;
-		if (e.key === "ArrowRight") n = (i + 1) % tabs.length;
-		else if (e.key === "ArrowLeft") n = (i - 1 + tabs.length) % tabs.length;
+		if (e.key === (vertical ? "ArrowDown" : "ArrowRight")) n = (i + 1) % tabs.length;
+		else if (e.key === (vertical ? "ArrowUp" : "ArrowLeft")) n = (i - 1 + tabs.length) % tabs.length;
 		else if (e.key === "Home") n = 0;
 		else if (e.key === "End") n = tabs.length - 1;
 		else if (e.key === " ") { e.preventDefault(); tabs[i].click(); return; }

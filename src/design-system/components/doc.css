@@ -1,0 +1,221 @@
+
+/* ======================================================================
+   rd-doc: the Doc design. A full-height document shell: a left sidebar (the document's brand and its page list), one
+   centred column (a sticky bar with the page title, then the page), and a right rail ("On this page"). It is the second
+   design for the same content: the Card design (rd-tabbed) and this one render the same fragment body (tabs are
+   <section data-rd-tab>, sections are <h2 id>). Ported from the SDLC document shell; colours only from --rd-* tokens.
+
+   Host: --rd-host-top is how much host chrome sticks above the document. 0 by default (a self-contained page);
+   <html data-rd-host="site"> sets it to the site navbar card plus its breadcrumb band. Every sticky or fixed part of the
+   shell sits under it, so the shell never covers the host's navbar.
+
+   Layout: the column is always centred in the window and the same width on every page (73rem, the navbar card's width).
+   The two side tracks are equal, so hiding a sidebar never moves the content. From 92rem both sidebars dock beside the
+   column; below that they are drawers over it, opened from the bar. The document scrolls (no inner scroll panes), so
+   anchors, find-in-page and the footer behave as on any page. Without JS: one plain document, every page in order.
+   ====================================================================== */
+:root {
+	--rd-host-top: 0px;
+	--rd-doc-side: 16rem; /* page list; the side tracks are at least this wide */
+	--rd-doc-rail: 15rem; /* on this page */
+	--rd-doc-col: var(--rd-navbar-width); /* the column, padding included: as wide as the navbar card */
+	--rd-doc-min: 60rem; /* the narrowest the column gets with both sidebars docked: 60 + 2 x 16 = the 92rem breakpoint */
+	--rd-doc-pad: 2.5rem; /* the column's inline padding */
+	--rd-doc-bar-h: 3.5rem; /* the sticky bar's height; doc.js keeps it exact */
+}
+[data-rd-host="site"] { --rd-host-top: calc(var(--rd-navbar-h) + var(--rd-crumb-h)); }
+html:has(.rd-doc) { scroll-padding-top: calc(var(--rd-host-top) + var(--rd-doc-bar-h) + var(--rd-space-4)); }
+html:has(.rd-doc) .rd-prose [id] { scroll-margin-top: calc(var(--rd-host-top) + var(--rd-doc-bar-h) + var(--rd-space-4)); }
+html:has(.rd-doc) { --rd-footer-width: var(--rd-navbar-width); } /* the injected license card lines up with the column */
+/* The host's chrome around the document follows the column: the breadcrumb trail (site: the band under the navbar) and
+   the comments section (site: under the document) take the column's width and inline padding, so they start and end on
+   its text edges. From 92rem the column shrinks between the docked sidebars, so they follow the same clamp. */
+html:has(.rd-doc) :is(.rd-crumb-band .rd-breadcrumb, .rd-comments) { max-width: var(--rd-doc-col); padding-inline: var(--rd-doc-pad); margin-inline: auto; }
+@media (min-width: 92rem) {
+	html:has(.rd-doc) :is(.rd-crumb-band .rd-breadcrumb, .rd-comments) { max-width: min(var(--rd-doc-col), max(var(--rd-doc-min), 100% - 2 * var(--rd-doc-side))); }
+}
+
+/* ---- Without JS: the sidebar is a header block over the column; every page shows in order. ---- */
+.rd-doc { display: block; }
+.rd-doc__main {
+	--rd-card-bg: var(--rd-surface-inset); /* nested cards on the white column use the inset tone, as on the Card design */
+	box-sizing: border-box;
+	min-width: 0;
+	max-width: var(--rd-doc-col);
+	margin: 0 auto;
+	background: var(--rd-surface);
+}
+.rd-doc__side { box-sizing: border-box; max-width: var(--rd-doc-col); margin: 0 auto; padding: var(--rd-space-6) var(--rd-doc-pad) 0; background: var(--rd-surface); }
+.rd-doc__bar, .rd-doc__rail, .rd-doc__scrim, .rd-doc__pager, .rd-doc__totop { display: none; }
+html:not(.js) .rd-doc__brand { display: none; } /* the intro carries the title; the page list stays as links */
+html:not(.js) .rd-doc__nav { display: flex; flex-wrap: wrap; gap: var(--rd-space-1) var(--rd-space-6); }
+
+/* ---- Grid: the column centred in the window; each sidebar in its own equal track, against the column. ---- */
+.js .rd-doc {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, var(--rd-doc-col)) minmax(0, 1fr);
+	align-items: start;
+	min-height: calc(100dvh - var(--rd-host-top));
+}
+.js .rd-doc__main { grid-column: 2; grid-row: 1; max-width: none; margin: 0; min-height: calc(100dvh - var(--rd-host-top)); box-shadow: 0 0 0 1px var(--rd-line-soft); }
+
+/* ---- Sidebars: drawers under the host chrome until both fit beside the column. ---- */
+.js .rd-doc__side, .js .rd-doc__rail {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	position: fixed;
+	top: var(--rd-host-top);
+	bottom: 0;
+	z-index: 20;
+	width: min(18rem, 86vw);
+	max-width: none;
+	margin: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--rd-page-bg);
+	box-shadow: 0 0 0 1px var(--rd-line), 0 24px 64px -24px rgb(0 0 0 / 0.45);
+	visibility: hidden;
+	transition: transform 0.2s ease, visibility 0.2s;
+	scrollbar-width: thin;
+	scrollbar-color: var(--rd-text-faint) transparent;
+}
+.js .rd-doc__side { left: 0; gap: var(--rd-space-5); padding: var(--rd-space-4) var(--rd-space-3); transform: translateX(-102%); }
+.js .rd-doc__rail { right: 0; padding: var(--rd-space-4) var(--rd-space-3) var(--rd-space-4) var(--rd-space-4); transform: translateX(102%); }
+.js .rd-doc[data-nav="drawer"] .rd-doc__side, .js .rd-doc[data-toc="drawer"] .rd-doc__rail { transform: none; visibility: visible; }
+.js .rd-doc__scrim { display: block; position: fixed; inset: var(--rd-host-top) 0 0 0; z-index: 15; background: rgb(0 0 0 / 0.35); }
+.js .rd-doc__scrim[hidden] { display: none; }
+@media (min-width: 92rem) {
+	.js .rd-doc { grid-template-columns: minmax(var(--rd-doc-side), 1fr) minmax(var(--rd-doc-min), var(--rd-doc-col)) minmax(var(--rd-doc-side), 1fr); }
+	.js .rd-doc__side, .js .rd-doc__rail { position: sticky; top: var(--rd-host-top); bottom: auto; grid-row: 1; height: calc(100dvh - var(--rd-host-top)); transform: none; visibility: visible; box-shadow: none; transition: none; }
+	.js .rd-doc__side { grid-column: 1; justify-self: end; width: var(--rd-doc-side); }
+	.js .rd-doc__rail { grid-column: 3; justify-self: start; width: var(--rd-doc-rail); }
+	.js .rd-doc[data-nav="closed"] .rd-doc__side, .js .rd-doc[data-toc="closed"] .rd-doc__rail { display: none; }
+	.js .rd-doc__rail.is-empty > * { visibility: hidden; } /* a docked rail with nothing to list stays as quiet space */
+}
+
+/* ---- Brand and page list ---- */
+.rd-doc__brand { display: grid; gap: var(--rd-space-2); padding: 0 0.625rem; }
+.rd-doc__kind { font-size: var(--rd-fs-xs); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--rd-text-muted); text-decoration: none; }
+.rd-doc__kind:hover { color: var(--rd-accent-ink); }
+.rd-doc__title { margin: 0; font-size: 1.0625rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; color: var(--rd-text-strong); }
+.rd-doc__brand .rd-stamp { display: grid; font-size: var(--rd-fs-xs); line-height: 1.5; font-variant-numeric: tabular-nums; color: var(--rd-text-muted); }
+.rd-doc__brand p { margin: 0; font-size: var(--rd-fs-sm); line-height: 1.45; color: var(--rd-text-muted); }
+.rd-doc__nav { display: grid; gap: var(--rd-space-4); }
+.rd-doc__group { display: grid; gap: 1px; }
+.rd-doc__label { margin: 0 0 0.375rem; padding: 0 0.625rem; font-size: var(--rd-fs-xs); line-height: 1.5; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--rd-text-muted); }
+.rd-doc__nav a { display: flex; align-items: center; gap: 0.625rem; min-height: 2rem; padding: 0 0.625rem; border-radius: var(--rd-radius-sm); font-size: 0.875rem; line-height: 1.3; color: var(--rd-text); text-decoration: none; }
+.rd-doc__nav a .rd-icon { flex: none; width: 1rem; height: 1rem; color: var(--rd-text-muted); }
+.rd-doc__nav a:hover { background: var(--rd-plain-hover); color: var(--rd-text-strong); }
+.rd-doc__nav a[aria-selected="true"] { background: var(--rd-surface); color: var(--rd-accent-ink); font-weight: 600; box-shadow: 0 0 0 1px var(--rd-line-soft); }
+.rd-doc__nav a[aria-selected="true"] .rd-icon { color: inherit; }
+
+/* ---- The bar: sidebar toggle, page title and subtitle, search, rail toggle; under them the page's sections ---- */
+.js .rd-doc__bar { display: block; position: sticky; top: var(--rd-host-top); z-index: 5; background: var(--rd-surface); border-bottom: 1px solid var(--rd-line); }
+.rd-doc__row { display: flex; align-items: center; gap: var(--rd-space-1); box-sizing: border-box; min-height: 3.5rem; padding: var(--rd-space-2) var(--rd-doc-pad); }
+.rd-doc__bar:has(.rd-doc__subnav:not([hidden])) .rd-doc__row { padding-bottom: 0; }
+/* The sections: a tab row, one line that scrolls sideways when it must; the shown one is underlined. */
+.rd-doc__subnav { display: flex; flex-wrap: nowrap; gap: var(--rd-space-6); margin-bottom: -1px; padding: 0 var(--rd-doc-pad); overflow-x: auto; scrollbar-width: none; }
+.rd-doc__subnav[hidden] { display: none; }
+.rd-doc__subnav::-webkit-scrollbar { display: none; }
+.rd-doc__subnav a { flex: none; display: inline-flex; align-items: center; min-height: 2.5rem; font-size: 0.875rem; font-weight: 500; color: var(--rd-text-muted); white-space: nowrap; text-decoration: none; }
+.rd-doc__subnav a:hover { color: var(--rd-text-strong); }
+.rd-doc__subnav a[aria-current] { color: var(--rd-accent-ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--rd-primary); }
+.rd-doc__subnav a:focus-visible { outline: 2px solid var(--rd-accent-ink); outline-offset: -2px; }
+/* Sections not shown, and a shown section's own heading (its tab in the bar says it), which stays for screen readers. */
+.js .rd-doc [data-doc-off] { display: none !important; }
+.js .rd-doc [data-doc-subbed] .rd-tabsec > .rd-section__head { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Nothing to list in the shown section: no rail toggle (a docked rail stays as quiet space). */
+.js .rd-doc[data-rail-empty] [data-rd-doc-toggle="toc"] { visibility: hidden; }
+.rd-doc__head { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--rd-space-3); }
+.rd-doc__head h2 { margin: 0; padding: 0; font-size: 1.375rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.012em; color: var(--rd-text-strong); }
+.rd-doc__head h2::before { content: none; }
+.rd-doc__head p { margin: 0; font-size: 0.875rem; line-height: 1.45; color: var(--rd-text-muted); }
+.rd-doc__btn { display: inline-grid; place-items: center; flex: none; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: var(--rd-radius-sm); background: transparent; color: var(--rd-text-muted); cursor: pointer; }
+.rd-doc__btn .rd-icon { width: 1.125rem; height: 1.125rem; }
+.rd-doc__btn:hover { background: var(--rd-plain-hover); color: var(--rd-text-strong); }
+.rd-doc__btn:first-child { margin-left: -0.375rem; }
+.rd-doc__btn:last-child { margin-right: -0.375rem; }
+
+/* ---- Intro: the document's cover (eyebrow, the page's one h1 with its stamp, lede), on the first page only. Other pages
+   start at their content: the bar names the page and the sidebar names the document. Without JS it heads the document. ---- */
+.rd-doc__intro { padding: var(--rd-space-6) var(--rd-doc-pad) 0; }
+.rd-doc__intro h1 { margin: 0; font-size: 1.75rem; line-height: 1.25; letter-spacing: -0.015em; color: var(--rd-text-strong); }
+.rd-doc__intro .rd-hero__lede { max-width: var(--rd-measure, 50rem); margin: var(--rd-space-3) 0 0; color: var(--rd-text-muted); }
+.js .rd-doc:not([data-first]) .rd-doc__intro { display: none; }
+
+/* ---- Pages: reading sizes, every block as wide as the column, prose stopped at the measure. ---- */
+/* break-word: a long unbroken word (a bare URL in a source list) wraps instead of pushing the page sideways at 375px;
+   unlike anywhere it does not change table cells' minimum widths. */
+.rd-doc__panels { --rd-measure: 50rem; overflow-wrap: break-word; }
+.rd-doc .rd-tabpanel { box-sizing: border-box; min-width: 0; padding: var(--rd-space-6) var(--rd-doc-pad) var(--rd-gap-section); outline: 0; }
+.rd-doc .rd-with-toc:not([hidden]) { display: block; } /* the Card design's panel grid has no rail column here: the rail is the right sidebar */
+.rd-doc .rd-tabpanel > .rd-toc { display: none; }
+.rd-doc .rd-tabpanel > :first-child, .rd-doc .rd-tabpanel > :first-child > :first-child { margin-top: 0; }
+/* A section heading's top margin separates it from the section before; a page's first section has none to separate from
+   (whatever precedes it, such as a row of chips, keeps only the body's row gap). */
+.rd-doc .rd-tab__body > .rd-tabsec:first-of-type > .rd-section__head:first-child { margin-top: 0; }
+/* Between sections: the template's rhythm (about 44px above a heading, the body's row gap included), not the Card
+   design's gap-section, which at this reading size left 85px. */
+.rd-doc .rd-tab__body > .rd-tabsec:not(:first-of-type) > .rd-section__head:first-child { margin-top: var(--rd-space-4); }
+@media (prefers-reduced-motion: no-preference) {
+	.rd-doc .rd-tabpanel.is-in { animation: rd-doc-in 0.16s ease-out; }
+	@keyframes rd-doc-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+}
+
+/* ---- On this page: flat and small, a vertical echo of the selected page ---- */
+.rd-doc__rail-label { margin: 0.375rem 0 0.625rem; padding: 0 0.75rem; font-size: var(--rd-fs-xs); line-height: 1.5; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--rd-text-muted); }
+.rd-doc__rail ol { list-style: none; margin: 0; padding: 0; border-inline-start: 1px solid var(--rd-line); }
+.rd-doc__rail ol[hidden] { display: none; }
+.rd-doc__rail li { margin: 0; min-width: 0; }
+.rd-doc__rail li.is-l3 a { padding-left: 1.5rem; }
+.rd-doc__rail a { display: block; margin-inline-start: -1px; padding: 0.3125rem 0.75rem; font-size: 0.8125rem; line-height: 1.4; color: var(--rd-text-muted); text-decoration: none; overflow-wrap: anywhere; }
+.rd-doc__rail a:hover { color: var(--rd-text-strong); }
+.rd-doc__rail a[aria-current] { color: var(--rd-accent-ink); font-weight: 600; box-shadow: inset 2px 0 0 var(--rd-primary); }
+.rd-doc__rail-empty { margin: 0; padding: 0 0.75rem; font-size: 0.8125rem; color: var(--rd-text-muted); }
+.rd-doc__rail-empty[hidden] { display: none; }
+
+/* ---- Pager and back to top (JS: they follow the page being shown) ---- */
+.js .rd-doc__pager { display: grid; grid-template-columns: 1fr 1fr; gap: var(--rd-space-3); margin: 0 var(--rd-doc-pad); padding-top: var(--rd-space-6); border-top: 1px solid var(--rd-line); }
+.js .rd-doc__pager[hidden] { display: none; }
+.rd-doc__pager a { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; padding: var(--rd-space-3) var(--rd-space-4); border: 1px solid var(--rd-line); border-radius: var(--rd-radius-md); color: inherit; text-decoration: none; }
+.rd-doc__pager a:hover { border-color: var(--rd-primary); background: var(--rd-plain-hover); }
+.rd-doc__pager-next { grid-column: 2; align-items: flex-end; text-align: right; }
+.rd-doc__pager-dir { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; color: var(--rd-text-muted); }
+.rd-doc__pager-dir .rd-icon { width: 0.875rem; height: 0.875rem; }
+.rd-doc__pager-title { font-size: 0.875rem; font-weight: 600; color: var(--rd-text-strong); }
+.js .rd-doc__totop { display: inline-flex; align-items: center; gap: 0.375rem; margin: var(--rd-space-4) var(--rd-doc-pad) var(--rd-gap-section); padding: var(--rd-space-1) 0; border: 0; background: none; color: var(--rd-text-muted); font: inherit; font-size: 0.8125rem; cursor: pointer; }
+.rd-doc__totop:hover { color: var(--rd-accent-ink); }
+.rd-doc__totop .rd-icon { width: 0.875rem; height: 0.875rem; }
+
+/* ---- Search: every section of every page, in a dialog ---- */
+.rd-doc__search { width: min(38rem, calc(100vw - 2rem)); max-height: min(32rem, calc(100vh - 6rem)); margin: calc(var(--rd-host-top) + 1rem) auto auto; padding: 0; border: 0; border-radius: var(--rd-radius); background: var(--rd-surface); color: var(--rd-text); box-shadow: 0 0 0 1px var(--rd-line), 0 24px 64px -24px rgb(0 0 0 / 0.45); overflow: hidden; }
+.rd-doc__search::backdrop { background: rgb(0 0 0 / 0.35); }
+.rd-doc__search-panel { display: flex; flex-direction: column; max-height: min(32rem, calc(100vh - 6rem)); }
+.rd-doc__search-box { display: flex; align-items: center; gap: 0.625rem; flex: none; height: 3.25rem; padding: 0 var(--rd-space-4); border-bottom: 1px solid var(--rd-line); color: var(--rd-text-muted); }
+.rd-doc__search-box input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--rd-text-strong); font: inherit; font-size: 1rem; }
+.rd-doc__search kbd { font: 600 var(--rd-fs-xs) / 1 var(--rd-font); padding: 0.25rem 0.375rem; border: 1px solid var(--rd-line); border-radius: 0.25rem; color: var(--rd-text-muted); }
+.rd-doc__search-results { list-style: none; margin: 0; padding: 0.375rem; overflow-y: auto; }
+.rd-doc__search-results:empty { display: none; }
+.rd-doc__search-results a { display: grid; gap: 0.125rem; padding: var(--rd-space-2) var(--rd-space-3); border-radius: var(--rd-radius-sm); color: inherit; text-decoration: none; }
+.rd-doc__search-results a[aria-selected="true"] { background: var(--rd-plain-hover); }
+.rd-doc__search-path { font-size: var(--rd-fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--rd-text-muted); }
+.rd-doc__search-title { font-size: 0.875rem; font-weight: 600; color: var(--rd-text-strong); }
+.rd-doc__search-snip { font-size: 0.8125rem; color: var(--rd-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-doc__search mark { background: var(--rd-toc-badge-bg); color: inherit; border-radius: 0.125rem; }
+.rd-doc__search-hint { margin: 0; padding: var(--rd-space-4); font-size: 0.8125rem; color: var(--rd-text-muted); }
+.rd-doc__search-hint[hidden] { display: none; }
+
+/* ---- Focus, small screens, print ---- */
+.rd-doc__btn:focus-visible, .rd-doc__nav a:focus-visible, .rd-doc__rail a:focus-visible, .rd-doc__pager a:focus-visible, .rd-doc__totop:focus-visible, .rd-doc__search-results a:focus-visible, .rd-doc__kind:focus-visible { outline: 2px solid var(--rd-accent-ink); outline-offset: 1px; }
+@media (max-width: 48rem) {
+	:root { --rd-doc-pad: var(--rd-pad-surface); }
+	.rd-doc__head p { display: none; }
+	.js .rd-doc__pager { grid-template-columns: minmax(0, 1fr); }
+	.rd-doc__pager-next { grid-column: 1; }
+}
+@media print {
+	.rd-doc__side, .rd-doc__bar, .rd-doc__rail, .rd-doc__scrim, .rd-doc__pager, .rd-doc__totop { display: none !important; }
+	.rd-doc, .rd-doc__main { display: block !important; min-height: 0 !important; box-shadow: none !important; }
+	.rd-doc__intro { position: static !important; width: auto !important; height: auto !important; clip-path: none !important; }
+}

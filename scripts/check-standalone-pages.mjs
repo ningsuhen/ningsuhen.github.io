@@ -690,15 +690,22 @@ for (const rel of pages) {
 				frames: document.querySelectorAll("iframe.giscus-frame, script[src*='giscus']").length,
 				cw: document.documentElement.clientWidth,
 				sw: document.documentElement.scrollWidth,
+				// The Doc design's column (.rd-doc__main): its comments span the column, not the post column.
+				doc: document.querySelector(".rd-doc__main")?.getBoundingClientRect().width ?? null,
 			};
 		});
 		if (!pre.sec || !pre.button) failures.push(`${tag}: section or "Load comments" button not found`);
 		else {
 			if (pre.lic !== null && pre.sec.bottom > pre.lic + 1) failures.push(`${tag}: section ends below the license card top`);
 			if (pre.mainBottom !== null && pre.mainBottom > pre.sec.top + 1) failures.push(`${tag}: section starts above the end of the content`);
-			// 872px (54.5rem) column, narrower when the page's own body gutter is in the way; never wider.
-			if (pre.sec.w > Math.min(872, pre.cw) + 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px is wider than 872px or the viewport`);
-			if (width >= 1000 && Math.abs(pre.sec.w - 872) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected 872px (54.5rem)`);
+			if (pre.doc !== null) {
+				// Doc design: as wide as the document column, so the comment box spans the content's text width.
+				if (Math.abs(pre.sec.w - pre.doc) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected the document column ${Math.round(pre.doc)}px`);
+			} else {
+				// 872px (54.5rem) column, narrower when the page's own body gutter is in the way; never wider.
+				if (pre.sec.w > Math.min(872, pre.cw) + 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px is wider than 872px or the viewport`);
+				if (width >= 1000 && Math.abs(pre.sec.w - 872) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected 872px (54.5rem)`);
+			}
 		}
 		if (before.length) failures.push(`${tag}: request(s) to giscus.app before the click: ${[...new Set(before)].slice(0, 3).join(", ")}`);
 		if (pre.frames) failures.push(`${tag}: giscus script or frame present before the click`);

@@ -35,7 +35,7 @@ const RULES = {
 	"sprite-fresh": "the shipped Lucide sprite (lucide-sprite.svg and each page's inlined block) equals a fresh build of the pages' icon references",
 	"bundle-linked": "the page links the design-system bundle instead of inlining a frozen copy",
 	"body-class": '<body class="rd-body">',
-	"container-class": "main content uses rd-container, rd-container--wide or rd-tabbed",
+	"container-class": "main content uses rd-container, rd-container--wide, rd-tabbed or rd-doc__main (the Doc design's column)",
 	"container-width": "rd-container is 872px (54.5rem); wide/tabbed content is the navbar card width",
 	density: "data-density, when set, is compact, comfortable or dense",
 	"theme-owned": "theme comes from html[data-theme] only: no prefers-color-scheme, no page theme toggle",
@@ -303,7 +303,7 @@ const probeStructure = (canon) => {
 		h1Ok: h1 && stamp.test(h1.textContent.trim()) ? "ok" : (h1?.textContent || "no visible h1").trim(),
 		cssInline: flat.includes(canon) || links.some((h) => /(^|\/)design-system\/(research|rd)\.css(\?|$)/.test(h)),
 		bodyRd: document.body.classList.contains("rd-body"),
-		mainClass: !!main && ["rd-container", "rd-container--wide", "rd-tabbed"].some((c) => main.classList.contains(c)),
+		mainClass: !!main && ["rd-container", "rd-container--wide", "rd-tabbed", "rd-doc__main"].some((c) => main.classList.contains(c)),
 		mainWide: !!main && main.classList.contains("rd-container") && !main.classList.contains("rd-container--wide"),
 		mainW: main ? main.getBoundingClientRect().width : 0,
 		mainMax: main ? getComputedStyle(main).maxWidth : "",
@@ -693,9 +693,11 @@ function compareAt(page, w, t, c, r) {
 // keeps a gutter, so only 768px and up are measured.
 const TAB_WIDTHS = [1440, 1280, 1024, 768];
 const probeTabEdges = () => {
-	const card = document.querySelector("main.rd-tabbed");
 	const panel = [...document.querySelectorAll(".rd-tabpanel")].find((p) => p.getBoundingClientRect().width > 0);
-	if (!card || !panel) return { issues: [card ? "no visible .rd-tabpanel" : "main.rd-tabbed not found"] };
+	// The Doc design (.rd-doc) has no content card: its column is the panel itself, so the inner edges are the panel's.
+	const doc = !!document.querySelector(".rd-doc");
+	const card = doc ? panel : document.querySelector("main.rd-tabbed");
+	if (!card || !panel) return { issues: [panel ? "main.rd-tabbed not found" : "no visible .rd-tabpanel"] };
 	const cs = getComputedStyle(card), cb = card.getBoundingClientRect();
 	const nav = { left: cb.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft), right: cb.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight) };
 	const SEC = "section, .section, .rd-tabsec, .rd-tab__body";
@@ -710,7 +712,7 @@ const probeTabEdges = () => {
 	const name = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/).join(".")}` : ""}`;
 	const r1 = (v) => Math.round(v * 10) / 10;
 	const issues = [];
-	const top = [panel, ...[...panel.children].filter((k) => k.matches(SEC))];
+	const top = [...(doc ? [] : [panel]), ...[...panel.children].filter((k) => k.matches(SEC))];
 	for (const b of panel.querySelectorAll(":scope > .rd-tab__body")) top.push(...[...b.children].filter((k) => k.matches(SEC)));
 	for (const el of top.filter(shown)) {
 		const b = el.getBoundingClientRect();
@@ -734,6 +736,7 @@ async function tabWidthChecks(page, ok) {
 		const tabs = p.locator("[role=tablist] [role=tab]");
 		const names = await tabs.allTextContents();
 		for (let i = 0; i < names.length; i++) {
+			await showTab(p, tabs.nth(i));
 			await tabs.nth(i).click();
 			await p.waitForLoadState("load");
 			await p.waitForTimeout(100);
@@ -741,6 +744,11 @@ async function tabWidthChecks(page, ok) {
 		}
 		await ctx.close();
 	}
+}
+
+// The Doc design's page list (its tabs) is a drawer below 92rem: open it before using a tab that is out of sight.
+async function showTab(p, tab) {
+	if (!(await tab.isVisible())) await p.click('[data-rd-doc-toggle="nav"]').catch(() => {});
 }
 
 // ---- Per page -------------------------------------------------------------------------------------------------------------
@@ -754,7 +762,8 @@ async function tabChecks(page, ok) {
 		// settled. Bounded wait + a clear finding, not a crash.
 		const selected = async (what) => {
 			try {
-				await p.waitForSelector('[role=tablist] [role=tab][aria-selected="true"]', { timeout: 3000 });
+				// attached, not visible: the Doc design's page list may be a closed drawer.
+				await p.waitForSelector('[role=tablist] [role=tab][aria-selected="true"]', { state: "attached", timeout: 3000 });
 				return await p.$eval('[role=tablist] [role=tab][aria-selected="true"]', (el) => el.textContent.trim());
 			} catch {
 				if (!ok.has("tab-aria")) add(page, "tab-aria", `no tab is selected ${what} (bounded 3s wait)`);
@@ -772,20 +781,27 @@ async function tabChecks(page, ok) {
 			}
 			if (tabsEl.filter((t) => t.getAttribute("aria-selected") === "true").length !== 1) issues.push("not exactly one aria-selected tab");
 			const panels = [...document.querySelectorAll("[role=tabpanel]:not([hidden])")];
-			return { issues, noRail: panels.filter((pn) => !pn.querySelector(".rd-toc")).length };
+			// The Doc design keeps each panel's rail in its right sidebar (one <ol data-for="<panel id>">), not in the panel,
+			// and lists a page's sections in the bar (.rd-doc__subnav): either is the panel's contents navigation.
+			const hasRail = (pn) => pn.querySelector(".rd-toc") || document.querySelector(`.rd-doc__rail ol[data-for="${CSS.escape(pn.id)}"]`) || (pn.closest(".rd-doc") && document.querySelector(".rd-doc__subnav:not([hidden]) a"));
+			return { issues, noRail: panels.filter((pn) => !hasRail(pn)).length };
 		});
 		for (const i of aria.issues) if (!ok.has("tab-aria")) add(page, "tab-aria", i);
 		if (aria.noRail && !ok.has("tab-rail")) add(page, "tab-rail", `${aria.noRail} visible panel(s) without the shared rd-toc`);
+		await showTab(p, tabs[0]);
 		await tabs[0].focus();
-		await p.keyboard.press("ArrowRight");
+		// A vertical tab list (the Doc design's page list) moves with Down, a horizontal tab bar with Right.
+		const vertical = await p.evaluate(() => document.querySelector("[role=tablist]")?.getAttribute("aria-orientation") === "vertical");
+		await p.keyboard.press(vertical ? "ArrowDown" : "ArrowRight");
 		await p.waitForTimeout(100);
 		const movedFocus = await p.evaluate(() => document.activeElement?.getAttribute("role") === "tab" && document.activeElement !== document.querySelector("[role=tab]"));
-		if (!movedFocus && !ok.has("tab-keys")) add(page, "tab-keys", "ArrowRight from the first tab did not move focus to the next tab");
+		if (!movedFocus && !ok.has("tab-keys")) add(page, "tab-keys", `${vertical ? "ArrowDown" : "ArrowRight"} from the first tab did not move focus to the next tab`);
 		// History: click a tab that is not selected: one entry; Back restores the previous tab.
 		const flags = await p.$$eval("[role=tablist] [role=tab]", (els) => els.map((e) => e.getAttribute("aria-selected") === "true"));
 		const k = flags.findIndex((f) => !f);
 		const before = await selected("after load");
 		const h0 = await p.evaluate(() => history.length);
+		await showTab(p, tabs[k]);
 		await tabs[k].click();
 		await p.waitForTimeout(150);
 		const h1 = await p.evaluate(() => history.length);
@@ -830,7 +846,7 @@ await Promise.all([...pages, ...shell].map(async (rel) => {
 				[s.h1Ok !== "ok", "title-stamp", `visible h1 "${s.h1Ok}"`],
 				[!s.cssInline, "css-canonical", `research.css not linked or inlined (expected sha ${CANON_HASH})`],
 				[!s.bodyRd, "body-class", 'body lacks class "rd-body"'],
-				[!s.mainClass, "container-class", "<main> has none of rd-container / rd-container--wide / rd-tabbed"],
+				[!s.mainClass, "container-class", "<main> has none of rd-container / rd-container--wide / rd-tabbed / rd-doc__main"],
 				[s.mainClass && s.mainWide && Math.abs(s.mainW - 872) > 1, "container-width", `rd-container is ${Math.round(s.mainW)}px, expected 872px`],
 				[s.mainClass && !s.mainWide && s.navW && Math.abs(s.mainW - s.navW) > 1 && s.mainMax !== "none", "container-width", `wide container ${Math.round(s.mainW)}px, navbar card ${Math.round(s.navW)}px`],
 				[s.density != null && !["compact", "comfortable", "dense"].includes(s.density), "density", `data-density="${s.density}"`],
