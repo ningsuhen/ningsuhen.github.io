@@ -92,7 +92,7 @@ function plainError(e) {
     case "DEVICE_LOST":
       return "The graphics card stopped answering (the browser reset it). Press Load model again: it comes from your browser cache, no new download.";
     case "MODEL_NOT_LOADED":
-      return "Load the model first (the card at the top of the page).";
+      return "Load the model first (the Model page).";
     case "PROMPT_TOO_LONG":
       return `This text is too long for the model's prompt window (${lpm.maxPromptTokens || 2048} tokens) together with the demo's fixed examples. Shorten it. Detail: ${detail}`;
     case "BAD_INPUT":
@@ -140,7 +140,7 @@ function setStage(text) {
 }
 function setProgress(done, total) {
   const pctDone = total ? Math.min(100, (done / total) * 100) : 0;
-  card.fill().style.width = `${pctDone}%`;
+  card.fill().style.setProperty("--w", `${pctDone}%`);
   card.meter().setAttribute("aria-valuenow", String(Math.round(pctDone)));
 }
 function showLoadMsg(text, kind = "bad") {
@@ -307,7 +307,7 @@ class Demo {
     const ready = S.model === "ready" && !S.busy;
     const q = this.q;
     q("go").disabled = !ready;
-    q("hint").textContent = S.model === "ready" ? (S.busy ? "The GPU is busy with another run." : "") : "Load the model first (card at the top of the page).";
+    q("hint").textContent = S.model === "ready" ? (S.busy ? "The GPU is busy with another run." : "") : "Load the model first (the Model page).";
     if (this.hasEval) {
       q("eval").disabled = !ready;
       q("stop").hidden = !(S.busy && this.evalRunning);
@@ -517,7 +517,7 @@ class Demo {
         if (S.stop) throw Object.assign(new Error("stopped"), { stopped: true });
         const slice = todo.slice(at, at + CHUNK);
         q("eval-status").textContent = `Running ${Math.min(at + CHUNK, todo.length)} of ${todo.length} (${at < dev.length ? "dev" : "test"} split)...${wasFirst && at === 0 ? " The first call reads this demo's fixed examples through the model once." : ""}`;
-        q("eval-fill").style.width = `${(at / todo.length) * 100}%`;
+        q("eval-fill").style.setProperty("--w", `${(at / todo.length) * 100}%`);
         q("eval-meter").setAttribute("aria-valuenow", String(Math.round((at / todo.length) * 100)));
         const { results: rs } = await lpm.classifyBatch(slice.map((s) => s.i.text), spec);
         rs.forEach((r, k) => {
@@ -746,7 +746,7 @@ class Demo {
       const b = h("button", { type: "button", class: "rd-btn rd-btn--sm" }, "Try this one");
       b.addEventListener("click", () => {
         this.q("text").value = r.text;
-        this.q("try").scrollIntoView({ behavior: "smooth", block: "start" });
+        location.hash = this.q("try").id; // shows the Try it section and scrolls to it
         this.q("text").focus({ preventScroll: true });
       });
       return h(
@@ -1094,7 +1094,7 @@ class Custom extends Demo {
     const ready = S.model === "ready" && !S.busy && this.specOk !== false;
     const q = this.q;
     q("go").disabled = !ready;
-    q("hint").textContent = S.model !== "ready" ? "Load the model first (card at the top of the page)." : S.busy ? "The GPU is busy with another run." : this.specOk === false ? "Fix the settings above first." : "";
+    q("hint").textContent = S.model !== "ready" ? "Load the model first (the Model page)." : S.busy ? "The GPU is busy with another run." : this.specOk === false ? "Fix the settings above first." : "";
   }
   outcome(r) {
     return r.margin >= this.threshold
