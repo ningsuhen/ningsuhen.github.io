@@ -10,10 +10,11 @@
 // front-matter key that carries a reason (an empty value is rejected). It never rewrites a post.
 //
 // Dependency-free (node built-ins only) so it runs in the `static` leg.
-import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
+import { appendFileSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseOwnerMarkers } from "../src/plugins/owner-markers.mjs";
+import { postSource } from "./lib/posts.mjs";
 
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
@@ -143,8 +144,8 @@ const count = (m) => [...m.entries()].map(([k, n]) => `${k}${n > 1 ? ` ×${n}` :
 // ---- run (only when executed directly, not imported by a test) -------------------------------------
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
 	const posts = readdirSync(POSTS)
-		.map((slug) => ({ slug, file: path.join(POSTS, slug, "index.md") }))
-		.filter((p) => existsSync(p.file))
+		.map((slug) => ({ slug, file: postSource(path.join(POSTS, slug)) }))
+		.filter((p) => p.file)
 		.map((p) => {
 			const src = readFileSync(p.file, "utf8");
 			const allow = voiceAllow(src);

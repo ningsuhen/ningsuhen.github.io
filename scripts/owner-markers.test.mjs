@@ -5,7 +5,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createMarkdownProcessor } from "@astrojs/markdown-remark";
+import { createMarkdownProcessor, unified } from "@astrojs/markdown-remark";
+import remarkComment from "remark-comment";
 import {
 	isOpenMarker,
 	parseOwnerMarkers,
@@ -90,4 +91,27 @@ test("remark drops manual markers and keeps data-src on the real source lines", 
 	const { editSource } = metadata.frontmatter;
 	assert.equal(editSource.markers, 1);
 	assert.equal(editSource.manual, 2);
+});
+
+test("MDX: HTML-comment markers parse, never reach the output, and data-src keeps file lines", async (t) => {
+	mkdirSync(path.join(ROOT, ".tmp"), { recursive: true });
+	const dir = mkdtempSync(path.join(ROOT, ".tmp", "owner-markers-mdx-"));
+	t.after(() => rmSync(dir, { recursive: true, force: true }));
+	const file = path.join(dir, "index.mdx");
+	const fm = "---\ntitle: x\n---\n";
+	writeFileSync(file, fm + SRC);
+	// Astro hands MDX the file with the frontmatter blanked to spaces, lines kept.
+	const content = fm.replace(/[^\n]/g, " ") + SRC;
+	const mdx = await unified({
+		remarkPlugins: [remarkComment, remarkOwnerMarkers, [remarkSourceMap, { root: dir }]],
+	}).createMdxRenderer({ syntaxHighlight: false }, { optimize: false, srcDir: pathToFileURL(`${dir}/`) });
+	const frontmatter = {};
+	const { code } = await mdx.process(content, file, frontmatter);
+	assert.doesNotMatch(code, /owner:question|Why did you start/);
+	assert.match(code, /"data-src": "4-4",\s*"data-src-kind": "text",\s*id: "title"/);
+	assert.match(code, /"data-src": "8-8",\s*"data-src-kind": "text",\s*children: "My own words\."/);
+	assert.match(code, /"data-src": "13-13",\s*"data-src-kind": "text",\s*children: "Agent text\."/);
+	assert.equal(frontmatter.editSource.path, "index.mdx");
+	assert.equal(frontmatter.editSource.markers, 1);
+	assert.equal(frontmatter.editSource.manual, 2);
 });

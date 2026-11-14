@@ -1,3 +1,4 @@
+import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { fileURLToPath } from "node:url";
 import svelte from "@astrojs/svelte";
@@ -14,6 +15,7 @@ import rehypeComponents from "rehype-components"; /* Render the custom directive
 import { h } from "hastscript";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
+import remarkComment from "remark-comment"; /* <!-- --> comments, also in MDX (which rejects them otherwise) */
 import remarkDirective from "remark-directive"; /* Handle directives */
 import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-directives";
 import remarkMath from "remark-math";
@@ -137,7 +139,9 @@ export default defineConfig({
 				showCopyToClipboardButton: false,
 			}
 		}),
-        svelte(),
+		// After expressiveCode (its code blocks must reach .mdx too). .mdx inherits markdown.processor below.
+		mdx(),
+		svelte(),
 		// Draft pages are not shipped (the build removes their folder), but a shell-rendered Draft is still an Astro route.
 		sitemap({ customPages: standaloneSitemapPages(), filter: (page) => !draftHrefs().has(new URL(page).pathname) }),
 	],
@@ -145,7 +149,9 @@ export default defineConfig({
 		// Astro 7 default processor is Satteri; keep the unified (remark/rehype) pipeline the site was built on.
 		processor: unified({
 		remarkPlugins: [
-			remarkOwnerMarkers, // first: hidden owner markers never reach the HTML, excerpt or reading time
+			// First: comments (owner markers included) never reach the HTML, excerpt or reading time, in .md and .mdx alike.
+			remarkComment,
+			remarkOwnerMarkers, // guard for a marker remark-comment cannot parse as a comment
 			remarkMath,
 			remarkReadingTime,
 			remarkExcerpt,

@@ -16,34 +16,22 @@ const args = process.argv.slice(2)
 
 if (args.length === 0) {
   console.error(`Error: No filename argument provided
-Usage: npm run new-post -- <filename>`)
+Usage: pnpm new-post <slug>`)
   process.exit(1) // Terminate the script and return error code 1
 }
 
-let fileName = args[0]
+// A post is a folder with index.mdx (new posts are MDX; older index.md posts still build).
+const slug = args[0].replace(/\/?(index)?\.mdx?$/i, "")
+const fullPath = path.join("./src/content/posts/", slug, "index.mdx")
 
-// Add .md extension if not present
-const fileExtensionRegex = /\.(md|mdx)$/i
-if (!fileExtensionRegex.test(fileName)) {
-  fileName += ".md"
-}
-
-const targetDir = "./src/content/posts/"
-const fullPath = path.join(targetDir, fileName)
-
-if (fs.existsSync(fullPath)) {
-  console.error(`Error: File ${fullPath} already exists `)
+if (fs.existsSync(path.dirname(fullPath))) {
+  console.error(`Error: ${path.dirname(fullPath)} already exists`)
   process.exit(1)
 }
-
-// recursive mode creates multi-level directories
-const dirPath = path.dirname(fullPath)
-if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true })
-}
+fs.mkdirSync(path.dirname(fullPath), { recursive: true })
 
 const content = `---
-title: ${args[0]}
+title: ${slug}
 published: ${getDate()}
 description: ''
 image: ''
@@ -54,6 +42,6 @@ lang: ''
 ---
 `
 
-fs.writeFileSync(path.join(targetDir, fileName), content)
+fs.writeFileSync(fullPath, content)
 
 console.log(`Post ${fullPath} created`)

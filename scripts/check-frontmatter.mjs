@@ -18,6 +18,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { postSource } from "./lib/posts.mjs";
 
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
@@ -64,20 +65,20 @@ async function thumbnailProblems(label, slug, rel) {
 }
 
 // ---- run ----------------------------------------------------------------------------------------------
-const slugs = readdirSync(POSTS, { withFileTypes: true })
+const posts = readdirSync(POSTS, { withFileTypes: true })
 	.filter((e) => e.isDirectory())
-	.map((e) => e.name);
+	.map((e) => ({ slug: e.name, file: postSource(path.join(POSTS, e.name)) }))
+	.filter((p) => p.file);
 
 // The current set of categories: every category in use across the posts. A new post must reuse one.
 const categories = new Set();
-for (const slug of slugs) {
-	const c = field(frontmatter(path.join(POSTS, slug, "index.md")), "category");
+for (const { file } of posts) {
+	const c = field(frontmatter(file), "category");
 	if (c) categories.add(c);
 }
 
 const failures = [];
-for (const slug of slugs) {
-	const file = path.join(POSTS, slug, "index.md");
+for (const { slug, file } of posts) {
 	const fm = frontmatter(file);
 	const label = `src/content/posts/${slug}`;
 	const problems = [];
@@ -110,7 +111,7 @@ for (const slug of slugs) {
 	if (problems.length) failures.push(`${label}:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
 }
 
-console.log(`check:frontmatter: ${slugs.length} post(s) scanned`);
+console.log(`check:frontmatter: ${posts.length} post(s) scanned`);
 if (failures.length) {
 	console.error(`\ncheck:frontmatter: ${failures.length} post(s) need fixing:\n`);
 	for (const f of failures) console.error(f + "\n");

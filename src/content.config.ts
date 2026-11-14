@@ -3,7 +3,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 
 const postsCollection = defineCollection({
-	loader: glob({ pattern: "**/index.md", base: "./src/content/posts" }),
+	loader: glob({ pattern: "**/index.{md,mdx}", base: "./src/content/posts" }),
 	schema: z.object({
 		title: z.string(),
 		published: z.date(),
@@ -29,7 +29,7 @@ const postsCollection = defineCollection({
 	}),
 });
 const specCollection = defineCollection({
-	loader: glob({ pattern: "**/*.md", base: "./src/content/spec" }),
+	loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/spec" }),
 	schema: z.object({}),
 });
 export const collections = {

@@ -9,6 +9,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { postSource } from "./lib/posts.mjs";
 
 const DIST = path.resolve("dist");
 const BROWSER_ZONES = ["America/New_York", "Pacific/Kiritimati"];
@@ -18,12 +19,14 @@ const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "
 
 // Front matter straight from the sources, so the expected dates never come from the build under test.
 const posts = readdirSync(path.resolve("src/content/posts"), { withFileTypes: true })
-	.filter((e) => e.isDirectory() && existsSync(path.resolve("src/content/posts", e.name, "index.md")))
+	.filter((e) => e.isDirectory())
+	.map((e) => ({ slug: e.name, file: postSource(path.resolve("src/content/posts", e.name)) }))
+	.filter((e) => e.file)
 	.map((e) => {
-		const text = readFileSync(path.resolve("src/content/posts", e.name, "index.md"), "utf8");
+		const text = readFileSync(e.file, "utf8");
 		const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1] ?? "";
 		const field = (key) => fm.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, "m"))?.[1].replace(/^["']|["']$/g, "");
-		return { slug: e.name, draft: field("draft") === "true", published: field("published"), updated: field("updated") };
+		return { slug: e.slug, draft: field("draft") === "true", published: field("published"), updated: field("updated") };
 	})
 	.filter((p) => !p.draft);
 

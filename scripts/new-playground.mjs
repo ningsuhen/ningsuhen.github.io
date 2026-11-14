@@ -6,6 +6,7 @@
 // Usage: pnpm new-playground [--research | --idea [--page]] <slug> "<Title>" ["<one-sentence summary>"]
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { POST_SOURCES } from "./lib/posts.mjs";
 
 const args = process.argv.slice(2);
 const idea = args.includes("--idea");
@@ -24,6 +25,7 @@ const href = hasPage ? `/${section}/${slug}/` : `/posts/${slug}/`;
 const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
 const pagePath = path.join("public", section, slug, "index.html");
 const postDir = path.join("src/content/posts", slug);
+const postFile = path.join(postDir, POST_SOURCES[0]); // new posts are MDX
 if ((hasPage && existsSync(pagePath)) || existsSync(postDir)) {
 	console.error(`Refusing to overwrite: ${hasPage && existsSync(pagePath) ? pagePath : postDir} already exists.`);
 	process.exit(1);
@@ -48,7 +50,7 @@ const todo = idea
 const body = hasPage ? `${todo}\n\n[${linkLabel}](${href})` : todo;
 mkdirSync(postDir, { recursive: true });
 writeFileSync(
-	path.join(postDir, "index.md"),
+	postFile,
 	`---
 title: ${JSON.stringify(title)}
 published: ${today}
@@ -60,7 +62,7 @@ draft: true
 
 ${body}
 
-Remember: escape every literal dollar sign as \\$ or the math renderer mangles the line.
+Remember: escape every literal dollar sign as \\$ or the math renderer mangles the line. This is MDX: escape a literal \`{\` or \`<\` in prose as \`\\{\` or \`\\<\`, and write comments (owner markers too) as HTML comments.
 `,
 );
 
@@ -71,6 +73,6 @@ data.items.unshift(entry);
 writeFileSync(jsonPath, `${JSON.stringify(data, null, 2)}\n`);
 
 console.log(`Created:
-  ${hasPage ? `${pagePath}                     (navbar + license are injected at build time)\n  ` : ""}${path.join(postDir, "index.md")}   (draft: true)
+  ${hasPage ? `${pagePath}                     (navbar + license are injected at build time)\n  ` : ""}${postFile}   (draft: true)
   ${jsonPath}                 (status "Draft": hidden from /${section}/ until you set it to "Live")
 Next: ${hasPage ? "write the page and the post" : "write the post"}, then set its status to "Live" in ${jsonPath}; pnpm dev -> http://127.0.0.1:8050${href} (live reload); before the PR: pnpm build && pnpm check:standalone`);

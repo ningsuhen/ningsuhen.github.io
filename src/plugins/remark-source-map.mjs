@@ -7,7 +7,7 @@ import { isOpenMarker, parseOwnerMarkers } from "./owner-markers.mjs";
  * Source map for in-place editing (the browser extension's post editor reads it).
  *
  * Every top-level block gets `data-src="<first>-<last>"` (1-based, inclusive lines of the post's
- * index.md) and `data-src-kind`: `text` when it round-trips as prose, `raw` when it must be edited as
+ * index.mdx or index.md) and `data-src-kind`: `text` when it round-trips as prose, `raw` when it must be edited as
  * source. The frontmatter gets `editSource` ({ path, blob }), which the post page emits as
  * `<meta name="edit-source">`; `blob` is the git blob SHA of the file, so the editor can prove the
  * page was built from the file it is about to change. Runs last: sectionize has wrapped the blocks
@@ -27,6 +27,9 @@ const RAW_INLINE = new Set([
 	"math",
 	"code",
 	"table",
+	// MDX: inline JSX and {expressions}. Top-level JSX, expressions and import/export get no data-src.
+	"mdxJsxTextElement",
+	"mdxTextExpression",
 ]);
 
 function isText(node) {
@@ -52,11 +55,17 @@ export function remarkSourceMap({ root }) {
 		if (!file.path) return;
 		const raw = readFileSync(file.path);
 		const text = raw.toString("utf8");
-		// Astro hands remark the body with the frontmatter cut (or blanked) and the ends trimmed:
-		// its first line is the file line after `at`'s preceding newlines.
-		const at = text.indexOf(String(file.value));
-		if (at < 0) return;
-		const offset = text.slice(0, at).split("\n").length - 1;
+		// Astro hands remark the body with the frontmatter cut and the ends trimmed (.md), or blanked
+		// to spaces with its lines kept (.mdx). Either way, the offset is the newlines before the body
+		// in the file minus those before it in the value (0 for .mdx).
+		const value = String(file.value);
+		const body = value.trim();
+		const at = text.indexOf(body);
+		if (!body || at < 0) return;
+		const newlines = (s) => s.split("\n").length - 1;
+		const offset =
+			newlines(text.slice(0, at)) -
+			newlines(value.slice(0, value.indexOf(body)));
 
 		const stamp = (parent) => {
 			for (const node of parent.children ?? []) {
