@@ -4,6 +4,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { postSource } from "./lib/posts.mjs";
 
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
@@ -40,7 +41,8 @@ async function problems(label, file) {
 const failures = [];
 let checked = 0;
 for (const slug of readdirSync(POSTS, { withFileTypes: true }).filter((e) => e.isDirectory())) {
-	const index = path.join(POSTS, slug.name, "index.md");
+	const index = postSource(path.join(POSTS, slug.name));
+	if (!index) continue;
 	let fm = "";
 	try {
 		fm = frontmatter(index);

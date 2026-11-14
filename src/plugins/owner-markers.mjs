@@ -18,8 +18,10 @@
  * that block verbatim: fix only grammar and punctuation; rephrase only on the owner's instruction or
  * for an unavoidable reason stated in the PR. It is never counted as unresolved (`isOpenMarker`).
  *
- * Markers never reach readers: `remarkOwnerMarkers` drops them from the tree (so no HTML, excerpt,
- * reading time or search index), the RSS feed strips them from the raw body (`stripOwnerMarkers`),
+ * The same syntax works in .md and .mdx: `remark-comment` (first in the chain) parses `<!-- -->`, which
+ * MDX would otherwise reject, and drops every comment. Markers never reach readers: that and
+ * `remarkOwnerMarkers` (a guard for any marker left as raw HTML) keep them out of the tree (so no HTML,
+ * excerpt, reading time or search index), the RSS feed strips them from the raw body (`stripOwnerMarkers`),
  * and `pnpm check:markers` fails if any marker text shows up in dist/. The editor reads them from
  * the Markdown source it already fetches (see CLAUDE.md, "Owner markers").
  */
