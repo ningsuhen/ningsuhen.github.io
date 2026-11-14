@@ -286,7 +286,7 @@ class ListenPlayer extends HTMLElement {
 		this.removeAttribute("hidden");
 		// Page load never downloads and never asks. A stored voice is loaded (not initialised) and starts on first
 		// Play; otherwise Play asks first. Without an engine (blocked GPU, failed load) the bar shows why.
-		await this.ensureEngine(false);
+		await this.ensureEngine(false, gpu);
 		// A newer connection (or a disconnect) owns the element now: it settles the player, and this run must not
 		// add a second sentinel.
 		if (signal.aborted) return;
@@ -352,14 +352,15 @@ class ListenPlayer extends HTMLElement {
 
 	/* ---------- engines ---------- */
 
-	private async ensureEngine(askConsent: boolean): Promise<TtsEngine | null> {
+	/** `gpu`: an adapter probe the caller already made (page load), so it is not asked twice. Play always asks fresh. */
+	private async ensureEngine(askConsent: boolean, gpu?: WebGpu): Promise<TtsEngine | null> {
 		// A second start during a download would open a second prompt or a second download.
 		if (this.downloadAbort) {
 			this.status("The neural voice is still downloading.");
 			return null;
 		}
 		if (activeEngine && neuralReady) return activeEngine;
-		if (!askConsent) return this.prepareNeural(false);
+		if (!askConsent) return this.prepareNeural(false, gpu);
 		// One consent prompt and one download at a time: a Play click during a voice switch waits for the switch.
 		neuralPrepare ??= this.prepareNeural(true).finally(() => {
 			neuralPrepare = null;
@@ -368,14 +369,14 @@ class ListenPlayer extends HTMLElement {
 	}
 
 	/** Gets the neural engine ready: checks storage, asks and downloads when allowed, loads and (if asked) initialises. */
-	private async prepareNeural(askConsent: boolean): Promise<TtsEngine | null> {
+	private async prepareNeural(askConsent: boolean, probed?: WebGpu): Promise<TtsEngine | null> {
 		const n = await neural();
 		// Problems are reported only when the reader pressed Play. At page load the bar must settle at the skeleton's
 		// size: a status line written then shifts the post after load (check:navigation caught it, CI has no GPU).
 		const tell = (text: string): void => {
 			if (askConsent) this.status(text);
 		};
-		const gpu = await webGpu();
+		const gpu = probed ?? (await webGpu());
 		let variant = await neuralVariant(gpu);
 		if (!variant) {
 			tell(

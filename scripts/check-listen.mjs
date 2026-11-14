@@ -887,6 +887,19 @@ await step("10b. connect once, neural", async () => {
 	// The bar settles at the skeleton's size: no status at load. Play gives the reason.
 	const atLoad = await page.$eval("[data-status]", (el) => el.textContent ?? "");
 	expect(atLoad === "", `no adapter: status "${atLoad}" at page load, want none until Play`);
+	// Same height settled and loading (CI's Chrome is this case): a mismatch shifts the post after load, and
+	// check:navigation then fails whenever it fingerprints one load mid-skeleton (it did, 129.5px vs 136px).
+	const heights = await page.evaluate(async () => {
+		const p = document.querySelector("listen-player");
+		const h = () => p.getBoundingClientRect().height;
+		const settled = h();
+		p.setAttribute("data-loading", "");
+		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+		const loading = h();
+		p.removeAttribute("data-loading");
+		return { settled, loading };
+	});
+	expect(Math.abs(heights.settled - heights.loading) <= 1, `no adapter: player ${heights.settled}px settled, ${heights.loading}px loading (skeleton), want equal`);
 	await page.click("[data-action=play]");
 	await page.waitForFunction(() => /no GPU just now/.test(document.querySelector("[data-status]")?.textContent ?? ""), null, { timeout: 5000 })
 		.catch(() => expect(false, "no adapter: Play did not say the browser gave no GPU just now"));
