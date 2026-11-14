@@ -104,7 +104,7 @@ function slotOfId(p: Page, rawId: string): string {
 
 // The rail's slots for a page: one per section (the section's own headings below its h2), or one for the page
 // when it has no sections. The rail's lists and the picker's rail rules both resolve items this way.
-type RailSlot = { sub: string; items: DocRail[] };
+type RailSlot = { sub: string; items: DocRail }; // DocRail is the item list itself
 function slotsOf(p: Page, rails: Record<string, DocRail>): RailSlot[] {
 	const items = rails[p.id] ?? [];
 	return p.secs.length

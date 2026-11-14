@@ -115,7 +115,7 @@ const doc =
 	// [data-rd-sub] for a ?tab= / # deep link, which the shell's generated CSS reads — attribute-only, no DOM). Card
 	// pages: just the .js flag. rd.js sets the same flag, but it is a module and runs after first paint, so the no-JS
 	// layout would show first and then jump (a layout shift).
-	(isDoc ? docShell.picker : `<script>document.documentElement.classList.add("js")</script>`) +
+	(docShell ? docShell.picker : `<script>document.documentElement.classList.add("js")</script>`) +
 	`<script data-site-theme>${themeRuntimeScript(true)}</script>` +
 	`</head>` +
 	`<body class="rd-body">` +
