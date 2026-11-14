@@ -1,16 +1,11 @@
 /**
  * <listen-player>: reads the post aloud sentence by sentence, in the visitor's browser.
  *
- * Light DOM, progressive enhancement: the component ships `hidden`, and this script removes that only when a
- * speech engine can run. Without JavaScript the player never appears.
- * Engines: see engine.ts. Engine instances outlive the element, so a Swup page change keeps a loaded model.
+ * Light DOM, progressive enhancement: the component ships `hidden`, and this script removes that only when the
+ * neural voice (Kokoro) can run. Without JavaScript, or without WebGPU, the player never appears.
+ * Engine contract: engine.ts. The engine outlives the element, so a Swup page change keeps a loaded model.
  */
-import {
-	type AudioChunk,
-	accelerationLabel,
-	type TtsEngine,
-	type Voice,
-} from "./engine";
+import { type AudioChunk, accelerationLabel, type TtsEngine } from "./engine";
 import lexicon from "../../data/pronunciations.json";
 import { extractSentences, type Sentence } from "./extract";
 import {
@@ -19,13 +14,11 @@ import {
 	type Pronunciations,
 } from "./pronounce";
 import type { FileSpec, KokoroVariant, Manifest } from "./kokoro-cache";
-import { WebSpeechEngine, webSpeechAvailable } from "./web-speech-engine";
 import { pauseAfter, scaledPause } from "./pauses";
 
 /**
- * The neural-voice cluster (Kokoro engine, its download/cache, and the streamed-audio pipeline) is only needed
- * when the neural engine runs, so it loads on first use instead of on every post. The browser voice needs none
- * of it, and the Web Speech `speak()` stays inside the Play click's gesture.
+ * The neural-voice cluster (Kokoro engine, its download/cache, and the streamed-audio pipeline) loads after the
+ * page, not with it: posts that never play pay nothing for it.
  */
 type NeuralModule = typeof import("./kokoro-engine") &
 	typeof import("./kokoro-cache") &
@@ -40,14 +33,10 @@ function neural(): Promise<NeuralModule> {
 	return neuralModule;
 }
 
-type EngineId = "web-speech" | "kokoro";
-/** The consent prompt returns a variant to download, "web" for the browser voice, or null for cancel. */
-type KokoroChoice = KokoroVariant | "web";
-
-/** Words both engines mispronounce (src/data/pronunciations.json). */
+/** Words the voice mispronounces (src/data/pronunciations.json). */
 const GLOBAL_PRONUNCIATIONS = lexiconMap(lexicon.entries);
 
-/** Neural-voice speed guard. Past these the player offers the browser voice; playback never pauses for it. */
+/** Neural-voice speed guard. Past these the player says gaps may follow; playback never pauses for it. */
 const SLOW_FIRST_AUDIO_MS = 8000;
 /** Average generation time over the last chunks, divided by their audio length. Above 1 the voice falls behind. */
 const SLOW_RTF = 1;
@@ -55,8 +44,6 @@ const SLOW_RTF = 1;
 const SLOW_STALLS = 2;
 /** A model download with no progress for this long counts as failed. */
 const INIT_STALL_MS = 30000;
-/** Set on this device when the neural voice was too slow. Next visit starts on the browser voice. */
-const SLOW_KEY = "listen-neural-slow";
 type PlayState = "idle" | "playing" | "paused";
 
 declare global {
@@ -68,31 +55,7 @@ declare global {
 
 const PREFS_KEY = "listen-prefs";
 const CONSENT_KEY = "listen-kokoro-consent";
-/** Defaults, in one place. The neural voice is the default wherever WebGPU exists; otherwise the browser voice. */
-const DEFAULT_ENGINE: EngineId = "kokoro";
 const DEFAULT_VOICE = "af_heart";
-/** The listener's explicit engine choice (engine menu, consent prompt, cancel). It wins over DEFAULT_ENGINE. */
-const CHOICE_KEY = "listen-engine-choice";
-/** Consecutive neural start failures, and when the default is offered again. A broken device is not re-prompted every visit. */
-const FAILED_KEY = "listen-neural-failed";
-const FAILURES_TO_COOL = 2;
-const COOL_DOWN_MS = 24 * 60 * 60 * 1000;
-/** Set when a prompt is cancelled, a download is cancelled or a start fails: the browser voice for this page session only. */
-let sessionFallback = false;
-
-function neuralCoolingDown(): boolean {
-	return readStorage<{ count: number; until: number }>(FAILED_KEY, { count: 0, until: 0 }).until > Date.now();
-}
-
-function recordNeuralFailure(): void {
-	const count = readStorage<{ count: number }>(FAILED_KEY, { count: 0 }).count + 1;
-	writeStorage(FAILED_KEY, { count, until: count >= FAILURES_TO_COOL ? Date.now() + COOL_DOWN_MS : 0 });
-}
-
-function clearNeuralFailures(): void {
-	writeStorage(FAILED_KEY, { count: 0, until: 0 });
-}
-/** Pinned revision of onnx-community/Kokoro-82M-v1.0-ONNX (Apache-2.0). Pinned so the cached files never drift. */
 const RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
 const FOLLOW_PAUSE_MS = 4000;
 const HIGHLIGHT = "listen-current";
@@ -102,7 +65,6 @@ const CAN_HIGHLIGHT =
 	typeof Highlight !== "undefined";
 
 interface Prefs {
-	engine?: EngineId;
 	voice?: string | null;
 	rate?: number;
 }
@@ -210,18 +172,8 @@ async function webGpu(): Promise<WebGpu> {
 	return "blocked";
 }
 
-function pickDefaultVoice(voices: Voice[], lang: string): string | null {
-	const local = voices.filter((v) => v.local);
-	const pool = local.length ? local : voices;
-	const match = pool.find((v) =>
-		v.lang.toLowerCase().startsWith(lang.toLowerCase()),
-	);
-	return (match ?? pool[0])?.id ?? null;
-}
-
 // The active engine lives at module level: it survives Swup page changes, so a loaded model is reused.
 let activeEngine: TtsEngine | null = null;
-let activeEngineId: EngineId = "web-speech";
 /**
  * One neural engine per page session: created on first use, initialised once, kept across Swup visits.
  * The load promise is cached, not the engine, so concurrent callers share one module load and one engine.
@@ -230,8 +182,6 @@ let neuralLoad: Promise<TtsEngine> | null = null;
 let neuralInit: Promise<void> | null = null;
 /** An in-flight consented preparation (prompt, download, init), shared by every caller. */
 let neuralPrepare: Promise<TtsEngine | null> | null = null;
-/** An in-flight browser-voice load, shared by concurrent callers so only one engine is created. */
-let webSpeechLoad: Promise<TtsEngine> | null = null;
 /** The player whose actions the lock screen calls. Media session handlers are global and last-set wins. */
 let mediaOwner: HTMLElement | null = null;
 const MEDIA_ACTIONS: MediaSessionAction[] = ["play", "pause", "previoustrack", "nexttrack", "stop"];
@@ -254,7 +204,7 @@ class ListenPlayer extends HTMLElement {
 	private rate = 1;
 	private voice: string | null = null;
 	private runId = 0;
-	/** Set when the listener dismisses the slow notice and keeps the neural voice. */
+	/** Set when the listener dismisses the slow notice: it is not shown again on this page. */
 	private slowAcknowledged = false;
 	private downloadAbort: AbortController | null = null;
 	/** The download block paint in flight, and whether another is due after it (see renderDownload). */
@@ -314,11 +264,14 @@ class ListenPlayer extends HTMLElement {
 
 	private async init(signal: AbortSignal): Promise<void> {
 		const root = document.querySelector<HTMLElement>(this.dataset.target ?? "");
-		const engineOffered =
-			webSpeechAvailable() || window.__KOKORO_READY === true;
-		if (!root || !engineOffered) return this.settle(false);
+		if (!root || window.__KOKORO_READY !== true) return this.settle(false);
 		this.sentences = extractSentences(root, this.pronunciations());
 		if (this.sentences.length === 0) return this.settle(false);
+		// No WebGPU at all (and no CPU tier): the neural voice cannot run here, so there is no player. A blocked
+		// adapter can be momentary, so that case keeps the player and says why (prepareNeural).
+		const gpu = await webGpu();
+		if (signal.aborted) return;
+		if (gpu === "none" && !(await neuralVariant(gpu))) return this.settle(false);
 
 		const prefs = readStorage<Prefs>(PREFS_KEY, {});
 		const savedRate = prefs.rate ?? 1;
@@ -328,38 +281,21 @@ class ListenPlayer extends HTMLElement {
 		this.bindScrollTracking(signal);
 		this.setupMediaSession(signal);
 
-		// A saved neural choice loads without a dialog only when the visitor already consented on this device.
-		// Page load never downloads. A stored neural voice is prepared (not initialised) and starts on first Play.
-		const explicit = readStorage<EngineId | null>(CHOICE_KEY, null);
-		const wantsNeural = explicit
-			? explicit === "kokoro"
-			: DEFAULT_ENGINE === "kokoro" &&
-				!readStorage(SLOW_KEY, false) &&
-				!sessionFallback &&
-				!neuralCoolingDown();
-		const wanted: EngineId = activeEngine
-			? activeEngineId
-			: wantsNeural &&
-				  window.__KOKORO_READY === true &&
-				  (explicit === "kokoro" || (await webGpu()) === "ready")
-				? "kokoro"
-				: "web-speech";
-		if (signal.aborted) return;
-		// The placeholder holds the bar's space while the engine loads (a saved neural voice can take seconds).
+		// The placeholder holds the bar's space while the engine loads (a stored voice can take seconds).
 		this.setAttribute("data-loading", "");
 		this.removeAttribute("hidden");
-		const engine =
-			(await this.ensureEngine(wanted, false)) ?? (await this.activateWebSpeech());
+		// Page load never downloads and never asks. A stored voice is loaded (not initialised) and starts on first
+		// Play; otherwise Play asks first. Without an engine (blocked GPU, failed load) the bar shows why.
+		await this.ensureEngine(false);
 		// A newer connection (or a disconnect) owns the element now: it settles the player, and this run must not
 		// add a second sentinel.
 		if (signal.aborted) return;
-		if (!engine) return this.settle(false);
 		this.settle(true);
 		this.observeDock();
 		this.setIndex(0, false);
 	}
 
-	/** End the loading state: show the real bar, or hide the player when no engine can run. */
+	/** End the loading state: show the real bar, or hide the player when the voice cannot run. */
 	private settle(show: boolean): void {
 		this.removeAttribute("data-loading");
 		this.toggleAttribute("hidden", !show);
@@ -416,17 +352,13 @@ class ListenPlayer extends HTMLElement {
 
 	/* ---------- engines ---------- */
 
-	private async ensureEngine(id: EngineId, askConsent: boolean): Promise<TtsEngine | null> {
-		if (id === "web-speech") return this.activateWebSpeech();
+	private async ensureEngine(askConsent: boolean): Promise<TtsEngine | null> {
 		// A second start during a download would open a second prompt or a second download.
 		if (this.downloadAbort) {
 			this.status("The neural voice is still downloading.");
 			return null;
 		}
-		if (activeEngine && activeEngineId === "kokoro" && neuralReady) {
-			this.syncEngineSelect("kokoro");
-			return activeEngine;
-		}
+		if (activeEngine && neuralReady) return activeEngine;
 		if (!askConsent) return this.prepareNeural(false);
 		// One consent prompt and one download at a time: a Play click during a voice switch waits for the switch.
 		neuralPrepare ??= this.prepareNeural(true).finally(() => {
@@ -446,7 +378,6 @@ class ListenPlayer extends HTMLElement {
 					? "The neural voice needs WebGPU, and this browser has none."
 					: "The browser gave this page no GPU just now. Reload, or restart the browser, to use the neural voice.",
 			);
-			this.syncEngineSelect(activeEngineId);
 			return null;
 		}
 		try {
@@ -455,60 +386,39 @@ class ListenPlayer extends HTMLElement {
 			// Both the model and the ONNX Runtime binary must be stored; otherwise the listener agrees first.
 			if (!((await n.isCached(specs)) && (await this.runtimeCached()))) {
 				if (!askConsent) {
-					// Selected but not downloaded: nothing is fetched here. Play asks first.
-					this.activate(await this.createNeural(), "kokoro");
+					// Not downloaded: nothing is fetched here. Play asks first.
+					this.activate(await this.createNeural());
 					this.renderDownload();
 					return activeEngine;
 				}
 				const choice = await this.confirmDownload();
-				if (choice === "web") {
-					writeStorage(CHOICE_KEY, "web-speech");
-					return this.activateWebSpeech();
-				}
 				if (!choice) {
-					// Cancelled: the browser voice for this page session only. Nothing persists.
-					sessionFallback = true;
-					return this.activateWebSpeech();
+					this.status("Nothing downloaded. Press play to choose again.");
+					return null;
 				}
 				variant = choice;
 				specs = await this.specsFor(variant);
 				if (!(await this.download(specs, variant))) {
-					sessionFallback = true;
-					return this.activateWebSpeech("Download cancelled. Using the browser voice.");
+					this.status("Download cancelled. Press play to start it again.");
+					return null;
 				}
 			}
 			const engine = await this.createNeural();
-			if (askConsent) {
-				await this.initNeural(variant);
-				clearNeuralFailures();
-			}
-			this.activate(engine, "kokoro");
+			if (askConsent) await this.initNeural(variant);
+			this.activate(engine);
 			return engine;
 		} catch (err) {
-			// A failed start: the browser voice for this page session. Two in a row pause the default for 24 h.
-			sessionFallback = true;
-			recordNeuralFailure();
-			return this.activateWebSpeech(
-				`The neural voice is not available here (${errorText(err)}). Using the browser voice.`,
-			);
+			// Play tries again: a stored copy is reused, and a broken load is retried (see createNeural, initNeural).
+			this.status(`The neural voice could not start (${errorText(err)}). Press play to try again.`);
+			return null;
 		}
-	}
-
-	private async loadWebSpeech(): Promise<TtsEngine> {
-		webSpeechLoad ??= (async () => {
-			const engine = new WebSpeechEngine();
-			await engine.init();
-			return engine;
-		})().finally(() => {
-			webSpeechLoad = null;
-		});
-		return webSpeechLoad;
 	}
 
 	/** Loads the single neural engine. Concurrent callers share one load; a failed load can be retried. */
 	private async createNeural(): Promise<TtsEngine> {
 		const n = await neural();
-		neuralLoad ??= n.loadKokoroEngine(this.dataset.kokoroSrc ?? "/tts/kokoro.js").catch((err: unknown) => {
+		// Absolute URL: in dev, Vite tags a root-relative dynamic import with ?import and then refuses the public file.
+		neuralLoad ??= n.loadKokoroEngine(this.ttsSrc()).catch((err: unknown) => {
 			neuralLoad = null;
 			throw err;
 		});
@@ -677,55 +587,31 @@ class ListenPlayer extends HTMLElement {
 		}
 	}
 
-	/** Removes the stored files. If the neural voice was playing, playback continues on the browser voice. */
+	/** Removes the stored files and stops playback. Play asks again before downloading. */
 	private async removeNeural(): Promise<void> {
 		const n = await neural();
-		if (activeEngineId === "kokoro") {
-			this.stopPlayback();
-			this.setState("paused");
-			await this.activateWebSpeech("Neural voice download removed. Using the browser voice.");
-		}
+		if (this.state === "playing") this.setState("paused");
+		this.stopPlayback();
 		const loading = neuralLoad;
 		neuralLoad = null;
 		neuralInit = null;
+		activeEngine = null;
 		void loading?.then((engine) => engine.dispose(), () => {});
 		neuralReady = false;
 		await n.removeDownload();
 		await (await n.loadOrtRuntime(this.ttsSrc())).removeOrtRuntime();
 		writeStorage(CONSENT_KEY, null);
+		this.status("Neural voice download removed. Press play to download it again.");
 		this.renderDownload();
 	}
 
-	/** Switches to the browser voice and returns the engine. A message, if given, is shown after the switch. */
-	private async activateWebSpeech(message?: string): Promise<TtsEngine | null> {
-		if (activeEngine && activeEngineId === "web-speech") {
-			this.syncEngineSelect("web-speech");
-		} else {
-			try {
-				this.activate(await this.loadWebSpeech(), "web-speech");
-			} catch (err) {
-				this.status(`The browser voice is not available: ${errorText(err)}`);
-				return null;
-			}
-		}
-		if (message) this.status(message);
-		return activeEngine;
-	}
-
-	private activate(engine: TtsEngine, id: EngineId): void {
-		// The neural engine is a session singleton: switching away must not dispose it.
-		if (activeEngine !== engine && activeEngineId !== "kokoro") activeEngine?.dispose();
+	private activate(engine: TtsEngine): void {
 		activeEngine = engine;
-		activeEngineId = id;
-		const voices = engine.voices();
-		// A voice from the other engine is not valid here: use this engine's default.
-		if (!voices.some((v) => v.id === this.voice))
-			this.voice =
-				id === "kokoro" ? DEFAULT_VOICE : pickDefaultVoice(voices, document.documentElement.lang || "en");
+		if (!engine.voices().some((v) => v.id === this.voice)) this.voice = DEFAULT_VOICE;
 		this.refreshEngineUI();
 	}
 
-	private async confirmDownload(): Promise<KokoroChoice | null> {
+	private async confirmDownload(): Promise<KokoroVariant | null> {
 		const saved = readStorage<KokoroVariant | null>(CONSENT_KEY, null);
 		if (saved) return saved;
 		const dialog = this.querySelector<HTMLDialogElement>("[data-consent]");
@@ -742,7 +628,7 @@ class ListenPlayer extends HTMLElement {
 				"close",
 				() => {
 					const value = dialog.returnValue;
-					resolve(value === "fp32" || value === "q8f16" || value === "web" ? value : null);
+					resolve(value === "fp32" || value === "q8f16" ? value : null);
 				},
 				{ once: true },
 			);
@@ -752,7 +638,6 @@ class ListenPlayer extends HTMLElement {
 	private refreshEngineUI(): void {
 		const engine = activeEngine;
 		if (!engine) return;
-		this.syncEngineSelect(activeEngineId);
 		const notice = this.querySelector<HTMLElement>("[data-notice]");
 		if (notice) {
 			notice.textContent = engine.notice ?? "";
@@ -761,45 +646,14 @@ class ListenPlayer extends HTMLElement {
 		const voices = engine.voices();
 		const select = this.querySelector<HTMLSelectElement>("[data-voice]");
 		if (select) {
-			// The browser can list its voices late (Chrome fires voiceschanged after load). Keep the field in place
-			// with the system default until they arrive, so the panel never collapses and then grows again.
-			select.replaceChildren(
-				...(voices.length === 0
-					? [new Option("System default", "")]
-					: voices.map(
-							(v) =>
-								new Option(
-									`${v.name} (${v.lang})${v.local ? "" : " · remote"}`,
-									v.id,
-								),
-						)),
-			);
+			select.replaceChildren(...voices.map((v) => new Option(`${v.name} (${v.lang})`, v.id)));
 			select.disabled = voices.length === 0;
-			select.value = voices.length === 0 ? "" : (this.voice ?? "");
+			select.value = this.voice ?? "";
 		}
-		const remote =
-			activeEngineId === "web-speech" &&
-			voices.find((v) => v.id === this.voice)?.local === false;
-		this.need<HTMLElement>("[data-note-local]").hidden = remote;
-		this.need<HTMLElement>("[data-note-remote]").hidden = !remote;
 		const accel = this.need<HTMLElement>("[data-accel]");
 		accel.textContent = accelerationLabel(engine.accelerator);
 		accel.hidden = accel.textContent === "";
 		this.status("");
-	}
-
-	private syncEngineSelect(id: EngineId): void {
-		const select = this.querySelector<HTMLSelectElement>("[data-engine]");
-		if (!select) return;
-		const neural = select.querySelector<HTMLOptionElement>("option[value=kokoro]");
-		if (neural) {
-			const ready = window.__KOKORO_READY === true;
-			neural.disabled = !ready;
-			neural.textContent = ready ? "Neural voice" : "Neural voice (not available here)";
-		}
-		select.value = id;
-		const wrap = select.closest<HTMLElement>("[data-engine-wrap]");
-		if (wrap) wrap.hidden = false;
 	}
 
 	/* ---------- playback ---------- */
@@ -811,21 +665,15 @@ class ListenPlayer extends HTMLElement {
 		// Create the AudioContext inside the click, before any await, so the browser allows it.
 		if (!audioContext && typeof AudioContext !== "undefined")
 			audioContext = new AudioContext();
-		const wanted = this.querySelector<HTMLSelectElement>("[data-engine]")
-			?.value as EngineId | undefined;
 		const life = this.life;
 		this.starting = true;
 		let engine: TtsEngine | null;
 		try {
-			engine = await this.ensureEngine(wanted ?? activeEngineId, true);
+			engine = await this.ensureEngine(true);
 		} finally {
 			if (life === this.life) this.starting = false;
 		}
-		if (!life || life.signal.aborted) return;
-		if (!engine) {
-			this.syncEngineSelect(activeEngineId);
-			return;
-		}
+		if (!life || life.signal.aborted || !engine) return;
 		if (this.index >= this.sentences.length) this.index = 0;
 		this.run(this.index);
 	}
@@ -841,34 +689,11 @@ class ListenPlayer extends HTMLElement {
 		void this.loop(engine, from, id, controller.signal);
 	}
 
-	private async loop(
-		engine: TtsEngine,
-		from: number,
-		id: number,
-		signal: AbortSignal,
-	): Promise<void> {
-		if (engine.id !== "web-speech") return this.loopStreamed(engine, from, id, signal);
-		for (let i = from; i < this.sentences.length; i++) {
-			if (id !== this.runId) return;
-			this.setIndex(i, true);
-			for (const unit of this.sentences[i].units) {
-				try {
-					await engine.speak(unit.text, { rate: this.rate, voice: this.voice, signal });
-				} catch (err) {
-					if (id === this.runId) this.fail(err);
-					return;
-				}
-				if (id !== this.runId) return;
-			}
-		}
-		this.finish(id);
-	}
-
 	/**
-	 * Neural voice: one producer synthesises ahead of playback and every chunk is scheduled on the AudioContext
-	 * clock (see playback.ts). Nothing waits for a sentence to finish before the next one is synthesised.
+	 * One producer synthesises ahead of playback and every chunk is scheduled on the AudioContext clock (see
+	 * playback.ts). Nothing waits for a sentence to finish before the next one is synthesised.
 	 */
-	private async loopStreamed(
+	private async loop(
 		engine: TtsEngine,
 		from: number,
 		id: number,
@@ -926,7 +751,7 @@ class ListenPlayer extends HTMLElement {
 		const blocked = errorText(err).includes("not-allowed");
 		this.status(
 			blocked
-				? "The browser blocked speech. Press play to try again."
+				? "The browser blocked audio. Press play to try again."
 				: `Playback stopped: ${errorText(err)}`,
 		);
 	}
@@ -1091,31 +916,17 @@ class ListenPlayer extends HTMLElement {
 		);
 		on<HTMLSelectElement>("[data-rate]", "change", (el) => {
 			this.rate = Number(el.value);
-			writeStorage(PREFS_KEY, {
-				engine: activeEngineId,
-				voice: this.voice,
-				rate: this.rate,
-			});
+			writeStorage(PREFS_KEY, { voice: this.voice, rate: this.rate });
 			if (this.state === "playing") this.run(this.index);
 		});
 		on<HTMLSelectElement>("[data-voice]", "change", (el) => {
 			this.voice = el.value;
-			writeStorage(PREFS_KEY, {
-				engine: activeEngineId,
-				voice: this.voice,
-				rate: this.rate,
-			});
+			writeStorage(PREFS_KEY, { voice: this.voice, rate: this.rate });
 			if (this.state === "playing") this.run(this.index);
 		});
 		on<HTMLButtonElement>("[data-download-cancel]", "click", () => this.downloadAbort?.abort());
 		on<HTMLButtonElement>("[data-download-remove]", "click", () => void this.removeNeural());
-		on<HTMLButtonElement>("[data-slow-browser]", "click", () => void this.leaveNeural());
-		on<HTMLButtonElement>("[data-slow-keep]", "click", () => this.keepNeural());
-		on<HTMLSelectElement>(
-			"[data-engine]",
-			"change",
-			(el) => void this.switchEngine(el.value as EngineId),
-		);
+		on<HTMLButtonElement>("[data-slow-keep]", "click", () => this.dismissSlow());
 		on<HTMLButtonElement>("[data-toggle]", "click", (el) => {
 			const open = !this.hasAttribute("data-open");
 			this.toggleAttribute("data-open", open);
@@ -1131,51 +942,19 @@ class ListenPlayer extends HTMLElement {
 			rate.replaceChildren(...RATES.map((r) => new Option(`${r}x`, String(r))));
 			rate.value = String(this.rate);
 		}
-		this.syncEngineSelect(activeEngineId);
-		if (webSpeechAvailable()) {
-			const onVoices = (): void => {
-				if (activeEngineId === "web-speech" && activeEngine)
-					this.refreshEngineUI();
-			};
-			speechSynthesis.addEventListener("voiceschanged", onVoices, { signal });
-		}
 		this.setState("idle");
 	}
 
-	/** The neural voice fell behind: remember it for this device and offer the browser voice. Audio keeps playing. */
+	/** The neural voice fell behind: say gaps may follow. Audio keeps playing. */
 	private neuralTooSlow(runId: number): void {
 		if (runId !== this.runId || this.slowAcknowledged) return;
-		writeStorage(SLOW_KEY, true);
 		this.need<HTMLElement>("[data-slow]").hidden = false;
 	}
 
-	/** Continues from the current sentence on the browser voice. */
-	private async leaveNeural(): Promise<void> {
-		this.need<HTMLElement>("[data-slow]").hidden = true;
-		await this.switchEngine("web-speech");
-		this.run(this.index);
-	}
-
-	/** Keeps the neural voice and stops offering the switch. Playback is not touched. */
-	private keepNeural(): void {
+	/** Hides the slow notice for the rest of this page. Playback is not touched. */
+	private dismissSlow(): void {
 		this.need<HTMLElement>("[data-slow]").hidden = true;
 		this.slowAcknowledged = true;
-	}
-
-	private async switchEngine(id: EngineId): Promise<void> {
-		const wasPlaying = this.state === "playing";
-		this.stopPlayback();
-		const engine = await this.ensureEngine(id, true);
-		if (!engine) {
-			this.syncEngineSelect(activeEngineId);
-			return;
-		}
-		this.setState("paused");
-		// Save the engine that is active, which can differ from the one asked for (browser voice chosen at the prompt).
-		writeStorage(PREFS_KEY, { engine: activeEngineId, voice: this.voice, rate: this.rate });
-		// Only an engine the listener really asked for is an explicit choice (a cancelled prompt is not).
-		if (activeEngineId === id) writeStorage(CHOICE_KEY, id);
-		if (wasPlaying) this.run(this.index);
 	}
 
 	private need<T extends Element>(selector: string): T {
