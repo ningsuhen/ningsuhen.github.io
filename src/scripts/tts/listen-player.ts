@@ -370,10 +370,15 @@ class ListenPlayer extends HTMLElement {
 	/** Gets the neural engine ready: checks storage, asks and downloads when allowed, loads and (if asked) initialises. */
 	private async prepareNeural(askConsent: boolean): Promise<TtsEngine | null> {
 		const n = await neural();
+		// Problems are reported only when the reader pressed Play. At page load the bar must settle at the skeleton's
+		// size: a status line written then shifts the post after load (check:navigation caught it, CI has no GPU).
+		const tell = (text: string): void => {
+			if (askConsent) this.status(text);
+		};
 		const gpu = await webGpu();
 		let variant = await neuralVariant(gpu);
 		if (!variant) {
-			this.status(
+			tell(
 				gpu === "none"
 					? "The neural voice needs WebGPU, and this browser has none."
 					: "The browser gave this page no GPU just now. Reload, or restart the browser, to use the neural voice.",
@@ -409,7 +414,7 @@ class ListenPlayer extends HTMLElement {
 			return engine;
 		} catch (err) {
 			// Play tries again: a stored copy is reused, and a broken load is retried (see createNeural, initNeural).
-			this.status(`The neural voice could not start (${errorText(err)}). Press play to try again.`);
+			tell(`The neural voice could not start (${errorText(err)}). Press play to try again.`);
 			return null;
 		}
 	}

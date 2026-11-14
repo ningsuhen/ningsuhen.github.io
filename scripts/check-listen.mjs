@@ -672,8 +672,9 @@ await step("8. init failure", async () => {
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	// The failed load on page load already says so; clear it, so the message below comes from Play.
-	await page.evaluate(() => { document.querySelector("[data-status]").textContent = ""; });
+	// Page load never writes a status (it would shift the post after load); the reason comes with Play.
+	const atLoad = await page.$eval("[data-status]", (el) => el.textContent ?? "");
+	expect(atLoad === "", `init failure: status "${atLoad}" at page load, want none until Play`);
 	await page.click("[data-action=play]");
 	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
 	await page.click("[data-variant=fp32]");
@@ -883,8 +884,12 @@ await step("10b. connect once, neural", async () => {
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	const status = await page.$eval("[data-status]", (el) => el.textContent ?? "");
-	expect(/no GPU just now/.test(status), `no adapter: status is "${status}", not the no-GPU-just-now message`);
+	// The bar settles at the skeleton's size: no status at load. Play gives the reason.
+	const atLoad = await page.$eval("[data-status]", (el) => el.textContent ?? "");
+	expect(atLoad === "", `no adapter: status "${atLoad}" at page load, want none until Play`);
+	await page.click("[data-action=play]");
+	await page.waitForFunction(() => /no GPU just now/.test(document.querySelector("[data-status]")?.textContent ?? ""), null, { timeout: 5000 })
+		.catch(() => expect(false, "no adapter: Play did not say the browser gave no GPU just now"));
 	await ctx.close();
 }
 // 12. A cancelled prompt is not remembered: the next visit asks again on Play.
