@@ -194,7 +194,9 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 			flex-wrap: wrap;
 			align-content: flex-start;
 			gap: 0.5rem 1.25rem;
-			height: 5.125rem;
+			/* The settled panel with no download block: one row of fields, the gap, one note line (0.8125rem at line
+			   height 1.5), the bottom padding. check:listen pins the two heights equal; a mismatch shifts the post. */
+			height: calc(2.25rem + 0.5rem + 0.8125rem * 1.5 + 0.75rem);
 			padding: 0 0.75rem 0.75rem;
 		}
 		.listen-skeleton-panel .skeleton {
