@@ -22,7 +22,8 @@ refused() {
 # allowed <label> <pre-push input line>: the dev/next guard must stay silent (gitleaks may still judge the push).
 allowed() {
 	out=$(printf '%s\n' "$2" | sh "$hook" origin 2>&1)
-	if [ "${out#*dev/next}" = "$out" ]; then
+	# Match the guard's own message: other hook output (e.g. gitleaks missing on a CI runner) names the ref too.
+	if [ "${out#*refusing to push dev/next}" = "$out" ]; then
 		echo "ok   not blocked by dev/next guard: $1"
 	else
 		echo "FAIL dev/next guard fired on: $1"
