@@ -51,7 +51,11 @@ const RULES = [
 	},
 	{
 		id: "email",
-		re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g,
+		// Linear-time: the local part is capped (RFC 5321's 255-octet limit) and the domain's
+		// labels partition unambiguously (each iteration ends at its dot). The unbounded local part
+		// plus the ambiguous label repetition backtracked O(L^2) on long base64-like runs (a shipped
+		// 200 KB data field cost 3 min with zero hits).
+		re: /[A-Za-z0-9._%+-]{1,254}@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}/g,
 		docs: true,
 		textOnly: true,
 		allow: (m, file) => {
