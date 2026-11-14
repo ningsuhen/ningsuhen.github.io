@@ -1,20 +1,20 @@
 /**
  * Engine contract for the Listen player.
  *
- * Every engine runs in the visitor's browser. Nothing is sent to a server.
+ * The engine runs in the visitor's browser. Nothing is sent to a server. The only engine is the neural voice.
  *
- * Loader contract for the neural engine (phase 2, built separately):
+ * Loader contract for the neural engine (built separately):
  *   - The page dynamically imports `/tts/kokoro.js` (base-aware, see ListenPlayer.astro).
  *   - That module exports `createEngine(): TtsEngine | Promise<TtsEngine>`.
- *   - The Kokoro option is only offered when `window.__KOKORO_READY === true`.
+ *   - The player is only shown when `window.__KOKORO_READY === true` and the browser has WebGPU.
  *   - The player shows a consent dialog before `init()` (the model is 86-326 MB).
- *   - If the import or `init()` fails, the player falls back to the Web Speech engine.
+ *   - If the import or `init()` fails, the player says why and Play tries again. There is no fallback voice.
  *
- * `speak()` either returns a Promise (the engine plays audio itself, e.g. speechSynthesis)
+ * `speak()` either returns a Promise (the engine plays audio itself)
  * or an AsyncIterable of PCM chunks (the player plays them through an AudioContext queue).
  */
 
-/** Compute the engine actually uses. `none` for engines that do not run a model (Web Speech). */
+/** Compute the engine actually uses. `none` for an engine that runs no model. */
 export type Accelerator = "webgpu" | "wasm" | "none";
 
 export interface Voice {
@@ -58,7 +58,7 @@ export interface TtsEngine {
 	readonly requiresDownloadMB?: number;
 	/** Attribution the player shows while this engine is active (model licence and credits). */
 	readonly notice?: string;
-	/** Reported after init(). The player shows GPU / CPU from it; Web Speech reports `none`. */
+	/** Reported after init(). The player shows GPU / CPU from it. */
 	readonly accelerator: Accelerator;
 	init(opts?: EngineInitOptions): Promise<void>;
 	voices(): Voice[];
@@ -77,7 +77,7 @@ export interface SpeechUnit {
 	text: string;
 }
 
-/** GPU only when the engine reports WebGPU and the browser exposes it; CPU for any other model engine; nothing for Web Speech. */
+/** GPU only when the engine reports WebGPU and the browser exposes it; CPU for any other model engine; nothing for `none`. */
 export function accelerationLabel(accelerator: Accelerator): string {
 	if (accelerator === "webgpu") return "gpu" in navigator ? "GPU" : "CPU";
 	if (accelerator === "wasm") return "CPU";

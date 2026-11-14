@@ -67,8 +67,7 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	<!-- Floats under the bar (absolute), so showing it never shifts the post. Playback continues while it shows. -->
 	<div class="listen-slow" data-slow hidden role="status">
 		<p>The neural voice is slow on this device, so there may be gaps between sentences.</p>
-		<button type="button" class="listen-btn listen-primary" data-slow-browser>Switch to browser voice</button>
-		<button type="button" class="listen-btn listen-text" data-slow-keep>Keep neural voice</button>
+		<button type="button" class="listen-btn listen-primary" data-slow-keep>Got it</button>
 	</div>
 
 	<div id="listen-panel" class="listen-panel">
@@ -80,17 +79,9 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 			<span>Speed</span>
 			<select data-rate class="listen-select" aria-label="Speed"></select>
 		</label>
-		<label class="listen-field" data-engine-wrap>
-			<span>Voice source</span>
-			<select data-engine class="listen-select">
-				<option value="web-speech">Browser voice</option>
-				<option value="kokoro">Neural voice</option>
-			</select>
-		</label>
 		<p class="listen-note">
-			<span data-note-local>Realtime audio generated on your device<sup data-accel hidden></sup>. Nothing is uploaded.</span>
+			<span>Realtime audio generated on your device<sup data-accel hidden></sup>. Nothing is uploaded.</span>
 			<span class="listen-credit" data-notice hidden></span>
-			<span data-note-remote hidden>This voice is a remote service: the sentence text is sent to it.</span>
 		</p>
 		<div class="listen-download" data-download hidden>
 			<p class="listen-download-state" data-download-state></p>
@@ -112,11 +103,10 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 				<li><strong>Fast: GPU</strong>, about 355 MB. Uses WebGPU; runs faster than real time.</li>
 				<li><strong>Light: CPU</strong>, about 105 MB. Works without WebGPU; may pause between sentences.</li>
 			</ul>
-			<p>No download? Choose the browser voice. You can switch at any time from the player.</p>
+			<p>Nothing downloads until you choose. Cancel, and Play asks again next time.</p>
 			<p class="listen-credit">Speech by Kokoro-82M (hexgrad, Apache-2.0), ONNX export by onnx-community. Training data includes Koniwa (CC BY 3.0) and SIWIS (CC BY 4.0).</p>
 			<menu>
 				<button type="submit" value="cancel" class="listen-btn listen-text">Cancel</button>
-				<button type="submit" value="web" class="listen-btn" data-choice="web">Use browser voice</button>
 				<button type="submit" value="q8f16" class="listen-btn" data-variant="q8f16">Light: CPU</button>
 				<button type="submit" value="fp32" class="listen-btn listen-primary" data-variant="fp32">Fast: GPU</button>
 			</menu>
@@ -124,12 +114,12 @@ const kokoroOrtBase = import.meta.env.PUBLIC_KOKORO_ORT_BASE ?? url("/tts/vendor
 	</dialog>
 </listen-player>
 <script is:inline>
-	// Reveal the placeholder before first paint when an engine can run; the module script settles it later.
+	// Reveal the placeholder before first paint when the neural voice can run (WebGPU, or the CPU tier when it is on);
+	// the module script settles it later, and hides it when the browser has no GPU adapter after all.
 	(function () {
 		var p = document.currentScript && document.currentScript.previousElementSibling;
 		if (!p || p.localName !== "listen-player" || p.hasAttribute("data-settled")) return;
-		var canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
-		if (canSpeak || window.__KOKORO_READY === true) {
+		if (window.__KOKORO_READY === true && (navigator.gpu || window.__KOKORO_CPU === true)) {
 			p.setAttribute("data-loading", "");
 			p.removeAttribute("hidden");
 		}

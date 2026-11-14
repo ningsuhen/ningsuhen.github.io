@@ -1,5 +1,5 @@
 // Real-browser check of the Listen player on built post pages. Run after `pnpm build`:  pnpm check:listen
-// speechSynthesis is replaced by a stub, so the test needs no audio device. Optional screenshots:
+// The neural engine is a stub module (no model download), so the test runs in seconds. Optional screenshots:
 // LISTEN_SHOTS=<dir> pnpm check:listen
 // Browser: set CHROME_PATH, or `pnpm exec playwright-core install chromium` (CI does this).
 import {
@@ -31,44 +31,12 @@ const TYPES = {
 	".woff2": "font/woff2",
 };
 
-// Stub: records every utterance and every cancel. Each utterance ends after 120 ms.
-const SPEECH_STUB = `
-(() => {
-  const log = { spoken: [], cancels: 0 };
-  window.__tts = log;
-  let current = null;
-  const voices = [{ name: "Test Voice", lang: "en-US", voiceURI: "test-voice", localService: true, default: true }];
-  const synth = {
-    speaking: false, pending: false, paused: false, onvoiceschanged: null,
-    getVoices() { return voices; },
-    speak(u) {
-      log.spoken.push(u.text);
-      current = u; synth.speaking = true;
-      setTimeout(() => {
-        if (current !== u) return;
-        u.onstart && u.onstart({});
-        setTimeout(() => {
-          if (current !== u) return;
-          current = null; synth.speaking = false;
-          u.onend && u.onend({});
-        }, 120);
-      }, 0);
-    },
-    cancel() {
-      log.cancels++;
-      const u = current; current = null; synth.speaking = false;
-      if (u && u.onerror) u.onerror({ error: "canceled" });
-    },
-    pause() {}, resume() {},
-    addEventListener() {}, removeEventListener() {},
-  };
-  Object.defineProperty(window, "speechSynthesis", { value: synth, configurable: true });
-  window.SpeechSynthesisUtterance = function (text) { this.text = text; this.rate = 1; };
-})();
-`;
-
-// Stub: a WebGPU adapter exists (the neural voice is offered and is the default).
+// The recorder every playback step reads: the text of each speak() call and each cancel() (stub engine below).
+const TTS_LOG = `window.__tts = { spoken: [], cancels: 0 };`;
+// Stub: a WebGPU adapter exists (the player is shown). CI runners have none.
 const GPU_STUB = `Object.defineProperty(navigator, "gpu", { value: { requestAdapter: async () => ({}) }, configurable: true });`;
+// Stub: no WebGPU at all (navigator.gpu is undefined), as in Firefox and older Safari.
+const NO_GPU = `Object.defineProperty(navigator, "gpu", { value: undefined, configurable: true });`;
 
 function findChrome() {
 	if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
@@ -137,19 +105,151 @@ async function openPage(
 	viewport,
 	{ theme = "light", javaScriptEnabled = true } = {},
 ) {
-	const ctx = await browser.newContext({
-		viewport,
-		javaScriptEnabled,
-		reducedMotion: "reduce",
-	});
-	ctx.setDefaultTimeout(10000);
-	await ctx.addInitScript(
-		`${SPEECH_STUB}; try { localStorage.setItem("theme", ${JSON.stringify(theme)}); } catch {}`,
-	);
+	if (!javaScriptEnabled) {
+		const ctx = await browser.newContext({ viewport, javaScriptEnabled, reducedMotion: "reduce" });
+		const page = await ctx.newPage();
+		await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+		return { ctx, page };
+	}
+	// Playback steps run as a visitor who downloaded the voice earlier (see storeVoice).
+	const ctx = await neuralContext(browser, { viewport, theme });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
+	await storeVoice(page);
 	return { ctx, page };
 }
+
+// Stubs for the neural engine: no model download, so the checks run in seconds. The module is served
+// through a route, so the real player code runs against it. Like the real engine, speak() before init() fails.
+// window.__stubEngines and window.__stubInits count createEngine() and init() calls.
+// Fake model files: the real ones are hundreds of MB. The manifest holds their real sizes and SHA-256 values,
+// and the Hugging Face host is routed to these bodies, so the download, checksum and cache path runs for real.
+const FAKE_FILES = {
+	"onnx/model.onnx": Buffer.alloc(4000, 109),
+	"voices/af_heart.bin": Buffer.alloc(1000, 97),
+	"voices/am_michael.bin": Buffer.alloc(1000, 98),
+};
+const FAKE_MANIFEST = {
+	base: "https://huggingface.co/fake/resolve/test/",
+	files: Object.fromEntries(
+		Object.entries(FAKE_FILES).map(([key, body]) => [key, { bytes: body.length, sha256: createHash("sha256").update(body).digest("hex") }]),
+	),
+	local: { "lexicon-en-us.txt": { bytes: 4592212, sha256: "7d33f53aed4e1d6946ab726cda27cef897bbeb17911cbf70e01b63d5b581206b" } },
+};
+const stubEngine = (delayMs, initMs = 0) => `export function createEngine() {
+	window.__stubEngines = (window.__stubEngines || 0) + 1;
+	let ready = false;
+	return {
+	id: "kokoro", label: "Neural voice (Kokoro)", accelerator: "webgpu", requiresDownloadMB: 355, notice: "Stub engine for check:listen.",
+	async init(opts) {
+		window.__stubInits = (window.__stubInits || 0) + 1;
+		await new Promise((r) => setTimeout(r, ${initMs}));
+		ready = true;
+		opts && opts.onProgress && opts.onProgress(1);
+	},
+	voices() { return [{ id: "af_heart", name: "Heart", lang: "en-US", local: true }, { id: "am_michael", name: "Michael", lang: "en-US", local: true }]; },
+	speak(text) { if (!ready) throw new Error("kokoro: call init() first"); window.__tts.spoken.push(text); return (async function* () {
+		await new Promise((r) => setTimeout(r, ${delayMs}));
+		yield { samples: new Float32Array(24000).fill(0.1), sampleRate: 24000 };
+	})(); },
+	cancel() { window.__tts.cancels++; }, dispose() {},
+}; }`;
+const routeKokoro = (ctx, body, status = 200) =>
+	ctx.route("**/tts/kokoro.js", (route) =>
+		route.fulfill({ status, contentType: "text/javascript", body }),
+	);
+// The pinned ONNX Runtime binary. The real bytes are fetched once (checked by size and SHA-256) into the gitignored
+// .tmp/, then served to the page by route, so the real download, check and cache path runs.
+const ORT_URL = "https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0/resolve/c25145ab811e50c175798b09cd6da3fc272d9411/ort-wasm-simd-threaded.asyncify.wasm";
+const ORT_BYTES = 24254953;
+const ORT_SHA = "7e83cd6cee77e478bc96a7e91b198144fb5e4126287daf1f9b54bb195ebcd55a";
+const ORT_CACHE = path.resolve(".tmp/check-listen/ort-wasm.bin");
+async function realOrtRuntime() {
+	const digest = (b) => createHash("sha256").update(b).digest("hex");
+	if (existsSync(ORT_CACHE)) {
+		const kept = readFileSync(ORT_CACHE);
+		if (kept.length === ORT_BYTES && digest(kept) === ORT_SHA) return kept;
+	}
+	const response = await fetch(ORT_URL).catch(() => null);
+	if (!response?.ok) throw new Error("check:listen needs internet once to fetch the pinned ONNX Runtime binary");
+	const body = Buffer.from(await response.arrayBuffer());
+	if (body.length !== ORT_BYTES || digest(body) !== ORT_SHA) throw new Error("the pinned ONNX Runtime binary does not match its size and hash");
+	mkdirSync(path.dirname(ORT_CACHE), { recursive: true });
+	writeFileSync(ORT_CACHE, body);
+	return body;
+}
+const REAL_ORT = await realOrtRuntime();
+
+const routeModelFiles = async (ctx, counter, runtime = {}, bodies = {}) => {
+	await ctx.route("**/tts/manifest.json", (route) =>
+		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FAKE_MANIFEST) }),
+	);
+	await ctx.route("https://huggingface.co/**", (route) => {
+		counter.hf += 1;
+		const key = new URL(route.request().url()).pathname.split("/").slice(-2).join("/");
+		const body = bodies[key] ?? FAKE_FILES[key];
+		return route.fulfill({
+			status: body ? 200 : 404,
+			contentType: "application/octet-stream",
+			headers: { "access-control-allow-origin": "*" },
+			body: body ?? "missing",
+		});
+	});
+	// Registered after the general route, so it matches first.
+	await ctx.route(ORT_URL, (route) => {
+		counter.hf += 1;
+		return route.fulfill({
+			status: runtime.status ?? 200,
+			contentType: "application/wasm",
+			headers: { "access-control-allow-origin": "*" },
+			body: runtime.body ?? REAL_ORT,
+		});
+	});
+};
+const neuralContext = async (
+	browser,
+	{ delayMs, initMs, status, body, gpu = true, counter = { hf: 0 }, runtime = {}, bodies = {}, init = "", viewport = { width: 1440, height: 900 }, theme = "light" } = {},
+) => {
+	const ctx = await browser.newContext({ viewport, reducedMotion: "reduce" });
+	ctx.setDefaultTimeout(10000);
+	await ctx.addInitScript(
+		`${TTS_LOG}; ${gpu ? GPU_STUB : ""}; window.__KOKORO_READY = true; try { localStorage.setItem("theme", ${JSON.stringify(theme)}); } catch {}; ${init}`,
+	);
+	await routeKokoro(ctx, body ?? stubEngine(delayMs ?? 50, initMs ?? 0), status);
+	await routeModelFiles(ctx, counter, runtime, bodies);
+	return ctx;
+};
+
+/** A visitor who downloaded the voice earlier: the stub files, the verified runtime and the consent are stored, then the
+ * page reloads. Play then starts with no prompt and no network. */
+async function storeVoice(page) {
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+	await page.evaluate(async ({ ortUrl, sha }) => {
+		// The verified runtime is stored under its cache key (ort-runtime.js), with the real bytes.
+		const runtimeBytes = await (await fetch(ortUrl, { mode: "cors" })).arrayBuffer();
+		const runtimeCache = await caches.open("ort-runtime-v1");
+		await runtimeCache.put(new URL(`/ort-wasm@1.27.0/${sha}`, location.origin).href, new Response(runtimeBytes, { headers: { "content-length": String(runtimeBytes.byteLength) } }));
+		const manifest = await (await fetch("/tts/manifest.json")).json();
+		const cache = await caches.open("kokoro-tts-v1");
+		// A stored file counts by its recorded size (kokoro-cache.ts), so each entry carries the manifest size.
+		const entries = [
+			...Object.entries(manifest.files).map(([key, file]) => [manifest.base + key, file.bytes]),
+			...Object.entries(manifest.local).map(([key, file]) => [new URL(`/tts/${key}`, location.href).href, file.bytes]),
+		];
+		for (const [url, bytes] of entries)
+			await cache.put(url, new Response("stub", { headers: { "content-length": String(bytes) } }));
+		localStorage.setItem("listen-prefs", JSON.stringify({ rate: 1 }));
+		localStorage.setItem("listen-kokoro-consent", JSON.stringify("fp32"));
+	}, { ortUrl: ORT_URL, sha: ORT_SHA });
+	await page.reload({ waitUntil: "load" });
+	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
+}
+
+const position = (page) =>
+	page.$eval("[data-position]", (el) => Number.parseInt(el.textContent, 10));
+const playerState = (page) =>
+	page.$eval("listen-player", (el) => el.dataset.state);
+
 
 // 1. Progressive enhancement: without JavaScript the player never appears.
 await step("1. no-JS", async () => {
@@ -182,13 +282,10 @@ await step("2. desktop play", async () => {
 		)
 		.catch(() => expect(false, "desktop: player did not render"));
 	expect(
-		await page.$eval("[data-accel]", (el) => el.hidden),
-		"web speech: GPU/CPU superscript shown",
+		await page.$eval("[data-accel]", (el) => !el.hidden && el.textContent === "GPU"),
+		"neural voice: GPU superscript not shown",
 	);
-	expect(
-		await page.$eval("[data-note-local]", (el) => !el.hidden),
-		"local note hidden for local voice",
-	);
+	expect((await page.$$("[data-engine]")).length === 0, "a voice-source picker is shown");
 
 	await page.click("[data-action=play]");
 	await page
@@ -524,7 +621,6 @@ await step("4. swup navigation", async () => {
 	const after = await page.evaluate(() => ({
 		cancels: window.__tts.cancels,
 		spoken: window.__tts.spoken.length,
-		speaking: window.speechSynthesis.speaking,
 	}));
 	await page.waitForTimeout(800);
 	const settled = await page.evaluate(() => window.__tts.spoken.length);
@@ -532,7 +628,6 @@ await step("4. swup navigation", async () => {
 		after.cancels > before.cancels,
 		"nav: speech was not cancelled on navigation",
 	);
-	expect(after.speaking === false, "nav: still speaking after navigation");
 	expect(settled === after.spoken, "nav: new utterances after navigation");
 	await page
 		.waitForFunction(
@@ -546,203 +641,56 @@ await step("4. swup navigation", async () => {
 	await ctx.close();
 });
 
-// 5. Neural slot: offered only when window.__KOKORO_READY is set. Choosing it asks first; cancel keeps the built-in voice.
-await step("5. neural slot", async () => {
-	const ctx = await browser.newContext({
-		viewport: { width: 1440, height: 900 },
-	});
-	ctx.setDefaultTimeout(10000);
-	// The GPU stub: the consent dialog is only offered with a WebGPU adapter, and CI runners have none.
-	await ctx.addInitScript(`${SPEECH_STUB}; ${GPU_STUB}; window.__KOKORO_READY = true;`);
+// 5. Neural voice only: no voice-source picker and no browser-voice button. Play asks first; cancel plays nothing,
+// downloads nothing, and the next Play asks again.
+await step("5. neural only", async () => {
+	const counter = { hf: 0 };
+	const ctx = await neuralContext(browser, { counter });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(
-		await page.$eval("[data-engine-wrap]", (el) => !el.hidden),
-		"kokoro ready: engine select hidden",
-	);
-	await page.selectOption("[data-engine]", "kokoro");
-	await page
-		.waitForSelector("[data-consent][open]", { timeout: 3000 })
-		.catch(() => expect(false, "kokoro: consent dialog did not open"));
-	await page.click("[data-consent] button[value=cancel]");
-	await page
-		.waitForFunction(
-			() => document.querySelector("[data-engine]").value === "web-speech",
-			null,
-			{ timeout: 3000 },
-		)
-		.catch(() =>
-			expect(false, "kokoro: cancel did not return to built-in voice"),
-		);
-	await ctx.close();
-});
-
-// Stubs for the neural engine: no model download, so the checks run in seconds. The module is served
-// through a route, so the real player code runs against it. Like the real engine, speak() before init() fails.
-// window.__stubEngines and window.__stubInits count createEngine() and init() calls.
-// Fake model files: the real ones are hundreds of MB. The manifest holds their real sizes and SHA-256 values,
-// and the Hugging Face host is routed to these bodies, so the download, checksum and cache path runs for real.
-const FAKE_FILES = {
-	"onnx/model.onnx": Buffer.alloc(4000, 109),
-	"voices/af_heart.bin": Buffer.alloc(1000, 97),
-	"voices/am_michael.bin": Buffer.alloc(1000, 98),
-};
-const FAKE_MANIFEST = {
-	base: "https://huggingface.co/fake/resolve/test/",
-	files: Object.fromEntries(
-		Object.entries(FAKE_FILES).map(([key, body]) => [key, { bytes: body.length, sha256: createHash("sha256").update(body).digest("hex") }]),
-	),
-	local: { "lexicon-en-us.txt": { bytes: 4592212, sha256: "7d33f53aed4e1d6946ab726cda27cef897bbeb17911cbf70e01b63d5b581206b" } },
-};
-const stubEngine = (delayMs, initMs = 0) => `export function createEngine() {
-	window.__stubEngines = (window.__stubEngines || 0) + 1;
-	let ready = false;
-	return {
-	id: "kokoro", label: "Neural voice (Kokoro)", accelerator: "webgpu", requiresDownloadMB: 355, notice: "Stub engine for check:listen.",
-	async init(opts) {
-		window.__stubInits = (window.__stubInits || 0) + 1;
-		await new Promise((r) => setTimeout(r, ${initMs}));
-		ready = true;
-		opts && opts.onProgress && opts.onProgress(1);
-	},
-	voices() { return [{ id: "af_heart", name: "Heart", lang: "en-US", local: true }, { id: "am_michael", name: "Michael", lang: "en-US", local: true }]; },
-	speak() { if (!ready) throw new Error("kokoro: call init() first"); return (async function* () {
-		await new Promise((r) => setTimeout(r, ${delayMs}));
-		yield { samples: new Float32Array(24000).fill(0.1), sampleRate: 24000 };
-	})(); },
-	cancel() {}, dispose() {},
-}; }`;
-const routeKokoro = (ctx, body, status = 200) =>
-	ctx.route("**/tts/kokoro.js", (route) =>
-		route.fulfill({ status, contentType: "text/javascript", body }),
-	);
-// The pinned ONNX Runtime binary. The real bytes are fetched once (checked by size and SHA-256) into the gitignored
-// .tmp/, then served to the page by route, so the real download, check and cache path runs.
-const ORT_URL = "https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0/resolve/c25145ab811e50c175798b09cd6da3fc272d9411/ort-wasm-simd-threaded.asyncify.wasm";
-const ORT_BYTES = 24254953;
-const ORT_SHA = "7e83cd6cee77e478bc96a7e91b198144fb5e4126287daf1f9b54bb195ebcd55a";
-const ORT_CACHE = path.resolve(".tmp/check-listen/ort-wasm.bin");
-async function realOrtRuntime() {
-	const digest = (b) => createHash("sha256").update(b).digest("hex");
-	if (existsSync(ORT_CACHE)) {
-		const kept = readFileSync(ORT_CACHE);
-		if (kept.length === ORT_BYTES && digest(kept) === ORT_SHA) return kept;
+	expect((await page.$$("[data-engine]")).length === 0, "neural only: a voice-source picker is shown");
+	expect((await page.$$("[data-choice=web], [data-slow-browser]")).length === 0, "neural only: a browser-voice button is in the page");
+	for (const attempt of ["first", "second"]) {
+		await page.click("[data-action=play]");
+		await page.waitForSelector("[data-consent][open]", { timeout: 3000 })
+			.catch(() => expect(false, `neural only: ${attempt} Play did not ask for consent`));
+		await page.click("[data-consent] button[value=cancel]");
+		await page.waitForFunction(() => /Nothing downloaded/.test(document.querySelector("[data-status]")?.textContent ?? ""), null, { timeout: 3000 })
+			.catch(() => expect(false, `neural only: ${attempt} cancel did not say nothing was downloaded`));
+		expect((await playerState(page)) !== "playing", `neural only: playing after the ${attempt} cancelled prompt`);
+		await page.evaluate(() => { document.querySelector("[data-status]").textContent = ""; });
 	}
-	const response = await fetch(ORT_URL).catch(() => null);
-	if (!response?.ok) throw new Error("check:listen needs internet once to fetch the pinned ONNX Runtime binary");
-	const body = Buffer.from(await response.arrayBuffer());
-	if (body.length !== ORT_BYTES || digest(body) !== ORT_SHA) throw new Error("the pinned ONNX Runtime binary does not match its size and hash");
-	mkdirSync(path.dirname(ORT_CACHE), { recursive: true });
-	writeFileSync(ORT_CACHE, body);
-	return body;
-}
-const REAL_ORT = await realOrtRuntime();
-
-const routeModelFiles = async (ctx, counter, runtime = {}, bodies = {}) => {
-	await ctx.route("**/tts/manifest.json", (route) =>
-		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FAKE_MANIFEST) }),
-	);
-	await ctx.route("https://huggingface.co/**", (route) => {
-		counter.hf += 1;
-		const key = new URL(route.request().url()).pathname.split("/").slice(-2).join("/");
-		const body = bodies[key] ?? FAKE_FILES[key];
-		return route.fulfill({
-			status: body ? 200 : 404,
-			contentType: "application/octet-stream",
-			headers: { "access-control-allow-origin": "*" },
-			body: body ?? "missing",
-		});
-	});
-	// Registered after the general route, so it matches first.
-	await ctx.route(ORT_URL, (route) => {
-		counter.hf += 1;
-		return route.fulfill({
-			status: runtime.status ?? 200,
-			contentType: "application/wasm",
-			headers: { "access-control-allow-origin": "*" },
-			body: runtime.body ?? REAL_ORT,
-		});
-	});
-};
-const neuralContext = async (browser, { delayMs, initMs, status, body, gpu = true, counter = { hf: 0 }, runtime = {}, bodies = {}, init = "" }) => {
-	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-	ctx.setDefaultTimeout(10000);
-	await ctx.addInitScript(`${SPEECH_STUB}; ${gpu ? GPU_STUB : ""}; window.__KOKORO_READY = true; ${init}`);
-	await routeKokoro(ctx, body ?? stubEngine(delayMs ?? 50, initMs ?? 0), status);
-	await routeModelFiles(ctx, counter, runtime, bodies);
-	return ctx;
-};
-const engineValue = (page) => page.$eval("[data-engine]", (el) => el.value);
-
-// 7. Browser voice is always a visible choice. Choosing it downloads nothing; the choice can be changed at any time.
-await step("7. browser voice choice", async () => {
-	const ctx = await neuralContext(browser, {});
-	const page = await ctx.newPage();
-	const requests = [];
-	page.on("request", (req) => requests.push(req.url()));
-	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await page.$eval("[data-engine-wrap]", (el) => !el.hidden), "voice choice hidden");
-	await page.selectOption("[data-engine]", "kokoro");
-	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
-	expect(
-		await page.$eval("[data-choice=web]", (el) => el.offsetParent !== null || el.getClientRects().length > 0),
-		"consent: 'Use browser voice' not visible",
-	);
-	await page.click("[data-choice=web]");
-	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 3000 })
-		.catch(() => expect(false, "browser choice did not select the browser voice"));
-	expect(
-		requests.filter((u) => /vendor\/ort|huggingface|\.hf\.co/.test(u)).length === 0,
-		`browser choice requested neural files: ${requests.filter((u) => /vendor\/ort|huggingface|\.hf\.co/.test(u)).join(", ")}`,
-	);
-	// Back and forth: neural (consent once, then no prompt), browser, neural again.
-	await page.selectOption("[data-engine]", "kokoro");
-	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
-	// Each step waits for the engine the player saved after a successful switch, so no step races a load in flight.
-	const savedEngine = (id) =>
-		page.waitForFunction((want) => JSON.parse(localStorage.getItem("listen-prefs") || "{}").engine === want, id, { timeout: 8000 })
-			.catch(() => expect(false, `engine ${id} was not activated`));
-	await page.click("[data-variant=fp32]");
-	await savedEngine("kokoro");
-	await page.selectOption("[data-engine]", "web-speech");
-	await savedEngine("web-speech");
-	await page.selectOption("[data-engine]", "kokoro");
-	await savedEngine("kokoro");
-	expect(await page.$$eval("[data-consent][open]", (els) => els.length) === 0, "consent asked again after consent was given");
+	expect(counter.hf === 0, `neural only: ${counter.hf} model request(s) after cancelling`);
+	expect((await page.evaluate(() => window.__tts.spoken.length)) === 0, "neural only: audio after cancelling");
 	await ctx.close();
 });
 
-// 8. Forced init failure (the module does not load): the player stays usable on the browser voice and says why.
+// 8. Forced start failure (the module does not load): the player stays, plays nothing and says why.
 await step("8. init failure", async () => {
 	const ctx = await neuralContext(browser, { status: 500, body: "missing" });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	await page.selectOption("[data-engine]", "kokoro");
+	// The failed load on page load already says so; clear it, so the message below comes from Play.
+	await page.evaluate(() => { document.querySelector("[data-status]").textContent = ""; });
+	await page.click("[data-action=play]");
 	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
 	await page.click("[data-variant=fp32]");
-	// Wait for the state change itself: the status text can already be there from the failed start on page load.
-	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 8000 })
-		.catch(() => expect(false, "init failure: engine not back on the browser voice"));
-	expect(await page.$eval("[data-status]", (el) => /not available here/.test(el.textContent ?? "")), "init failure: no fallback notice");
+	await page.waitForFunction(() => /could not start/.test(document.querySelector("[data-status]")?.textContent ?? ""), null, { timeout: 8000 })
+		.catch(() => expect(false, "init failure: no reason shown"));
+	expect((await playerState(page)) !== "playing", "init failure: the player says it is playing");
 	await ctx.close();
 });
 
 // 9. Too slow: a neural engine slower than real time (1 s of audio every 2 s, RTF 2) never pauses playback.
 // The notice and its button show while audio plays, gaps are bridged without any click, the post does not shift,
-// and only the pause button pauses. Switching to the browser voice is remembered for the next visit.
+// and only the pause button pauses. "Got it" hides the notice and changes nothing else.
 await step("9. too slow", async () => {
 	const ctx = await neuralContext(browser, { delayMs: 2000 });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	await page.selectOption("[data-engine]", "kokoro");
-	await page.waitForSelector("[data-consent][open]", { timeout: 3000 });
-	await page.click("[data-variant=fp32]");
-	await page.waitForFunction(() => /Neural voice: downloaded/.test(document.querySelector("[data-download-state]")?.textContent ?? ""), null, { timeout: 15000 })
-		.catch(() => expect(false, "slow engine: download did not complete before Play"));
+	await storeVoice(page);
 	// Every state the player enters from here on, and the post's document offset (layout shift probe).
 	const postTop = () => page.evaluate(() => {
 		const next = document.querySelector("listen-player").nextElementSibling;
@@ -760,21 +708,17 @@ await step("9. too slow", async () => {
 	await page.waitForSelector("[data-slow]:not([hidden])", { timeout: 25000 })
 		.catch(() => expect(false, "slow engine: slow notice did not appear"));
 	expect(await state() === "playing", `slow engine: state is ${await state()} when the notice shows, want playing`);
-	expect(await page.isVisible("[data-slow-browser]"), "slow engine: 'Switch to browser voice' not visible");
+	expect(await page.isVisible("[data-slow-keep]"), "slow engine: 'Got it' not visible");
 	expect(await postTop() === topBefore, "slow engine: the notice shifted the post");
-	expect(
-		await page.evaluate(() => localStorage.getItem("listen-neural-slow") === "true"),
-		"slow engine: device not remembered",
-	);
 	// Gaps (synthesis is twice as slow as playback) are bridged by waiting: position advances with no click.
 	const atNotice = await position();
 	await page.waitForFunction((from) => Number.parseInt(document.querySelector("[data-position]").textContent ?? "0", 10) >= from + 2, atNotice, { timeout: 15000 })
 		.catch(() => expect(false, "slow engine: playback did not continue on its own after a gap"));
 	expect(await state() === "playing", `slow engine: state is ${await state()} after gaps, want playing`);
-	// Keeping the neural voice only hides the notice: no restart, still playing.
+	// "Got it" only hides the notice: no restart, still playing.
 	await page.click("[data-slow-keep]");
-	expect(await page.$eval("[data-slow]", (el) => el.hidden), "slow engine: notice still visible after 'Keep neural voice'");
-	expect(await state() === "playing", "slow engine: 'Keep neural voice' changed the play state");
+	expect(await page.$eval("[data-slow]", (el) => el.hidden), "slow engine: notice still visible after 'Got it'");
+	expect(await state() === "playing", "slow engine: 'Got it' changed the play state");
 	const states = await page.evaluate(() => window.__states);
 	expect(states.every((s) => s === "playing"), `slow engine: player left 'playing' without a pause click: ${states.join(", ")}`);
 	// Pause happens only via the pause button, and then position holds.
@@ -785,21 +729,6 @@ await step("9. too slow", async () => {
 	expect(await position() === held, "slow engine: position moved while paused");
 	await page.click("[data-action=play]");
 	expect(await state() === "playing", "slow engine: play after pause did not resume");
-	// The switch still works mid-playback (the notice is shown again on a fresh page below).
-	await page.evaluate(() => { document.querySelector("[data-slow]").hidden = false; });
-	await page.click("[data-slow-browser]");
-	await page.waitForFunction(() => document.querySelector("[data-engine]").value === "web-speech", null, { timeout: 5000 })
-		.catch(() => expect(false, "slow engine: switch to browser voice failed"));
-	expect(await page.$eval("[data-slow]", (el) => el.hidden), "slow engine: notice still visible after switching");
-	// Next visit on this device starts on the browser voice, and neural stays selectable.
-	const again = await ctx.newPage();
-	await again.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await again.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(again) === "web-speech", "slow device: next visit did not default to the browser voice");
-	expect(
-		await again.$eval("[data-engine] option[value=kokoro]", (el) => !el.disabled),
-		"slow device: neural voice no longer selectable",
-	);
 	await ctx.close();
 });
 
@@ -807,10 +736,6 @@ await step("9. too slow", async () => {
 // and reconnects <listen-player>. Each connection must leave exactly one set of handlers: one sentinel, one Next
 // click moves one sentence, one Play click plays (a second handler would pause it again within milliseconds).
 // Clicks are real mouse events (page.click), never el.click().
-const position = (page) =>
-	page.$eval("[data-position]", (el) => Number.parseInt(el.textContent, 10));
-const playerState = (page) =>
-	page.$eval("listen-player", (el) => el.dataset.state);
 async function expectOneConnection(page, label) {
 	await page
 		.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 })
@@ -845,12 +770,12 @@ async function expectOneConnection(page, label) {
 	expect(paused === "paused", `${label}: state ${paused} after one Pause click, expected paused`);
 }
 
-// 10a. Browser voice (Web Speech stub): hard load, reload, and a reconnect of the element.
-await step("10a. connect once, web speech", async () => {
+// 10a. Stored voice: hard load, reload, and a reconnect of the element.
+await step("10a. connect once, stored voice", async () => {
 	const { ctx, page } = await openPage({ width: 1440, height: 900 });
-	await expectOneConnection(page, "web speech, hard load");
+	await expectOneConnection(page, "stored voice, hard load");
 	await page.reload({ waitUntil: "load" });
-	await expectOneConnection(page, "web speech, after reload");
+	await expectOneConnection(page, "stored voice, after reload");
 	// Reconnect: remove, append to the body, then put it back where it was. Still one set of handlers.
 	await page.evaluate(async () => {
 		const el = document.querySelector("listen-player");
@@ -861,7 +786,7 @@ await step("10a. connect once, web speech", async () => {
 		await new Promise((r) => requestAnimationFrame(r));
 		parent.insertBefore(el, next);
 	});
-	await expectOneConnection(page, "web speech, after reconnect");
+	await expectOneConnection(page, "stored voice, after reconnect");
 	await ctx.close();
 });
 
@@ -871,32 +796,13 @@ await step("10b. connect once, neural", async () => {
 	const ctx = await neuralContext(browser, { delayMs: 30, initMs: 300 });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	// Store the stub files and the consent, as a visitor who downloaded the voice earlier would have them.
-	await page.evaluate(async ({ ortUrl, sha }) => {
-		// The verified runtime is stored under its cache key (ort-runtime.js), with the real bytes.
-		const runtimeBytes = await (await fetch(ortUrl, { mode: "cors" })).arrayBuffer();
-		const runtimeCache = await caches.open("ort-runtime-v1");
-		await runtimeCache.put(new URL(`/ort-wasm@1.27.0/${sha}`, location.origin).href, new Response(runtimeBytes, { headers: { "content-length": String(runtimeBytes.byteLength) } }));
-		const manifest = await (await fetch("/tts/manifest.json")).json();
-		const cache = await caches.open("kokoro-tts-v1");
-		// A stored file counts by its recorded size (kokoro-cache.ts), so each entry carries the manifest size.
-		const entries = [
-			...Object.entries(manifest.files).map(([key, file]) => [manifest.base + key, file.bytes]),
-			...Object.entries(manifest.local).map(([key, file]) => [new URL(`/tts/${key}`, location.href).href, file.bytes]),
-		];
-		for (const [url, bytes] of entries)
-			await cache.put(url, new Response("stub", { headers: { "content-length": String(bytes) } }));
-		localStorage.setItem("listen-prefs", JSON.stringify({ engine: "kokoro", rate: 1 }));
-		localStorage.setItem("listen-kokoro-consent", JSON.stringify("fp32"));
-	}, { ortUrl: ORT_URL, sha: ORT_SHA });
+	await storeVoice(page);
 	const errors = [];
 	page.on("pageerror", (e) => errors.push(e.message));
 	for (const label of ["neural, hard load", "neural, after reload"]) {
 		await page.reload({ waitUntil: "load" });
 		await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
 		await page.waitForTimeout(400);
-		expect((await engineValue(page)) === "kokoro", `${label}: stored neural voice not selected`);
 		const playButton = await page.$("listen-player [data-action=play]");
 		await playButton.scrollIntoViewIfNeeded();
 		const box = await playButton.boundingBox();
@@ -925,15 +831,14 @@ await step("10b. connect once, neural", async () => {
 	await ctx.close();
 });
 
-// 11. Defaults: the neural voice (Heart) when WebGPU exists, the browser voice otherwise, a stored choice wins, and a
-// cached model plays with no prompt and no network.
+// 11. Defaults: the neural voice (Heart) asks before its first download, a cached model plays with no prompt and no
+// network, no WebGPU means no player, and a blocked adapter keeps the player and says why.
 {
 	const counter = { hf: 0 };
 	const ctx = await neuralContext(browser, { counter });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(page) === "kokoro", `default with WebGPU: engine is ${await engineValue(page)}, not neural`);
 	expect(await page.$eval("[data-voice]", (el) => el.value) === "af_heart", "default neural voice is not Heart (af_heart)");
 	expect(await page.$$eval("[data-consent][open]", (els) => els.length) === 0, "default: a prompt opened at page load");
 	await page.click("[data-action=play]");
@@ -946,7 +851,6 @@ await step("10b. connect once, neural", async () => {
 	const again = await ctx.newPage();
 	await again.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await again.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(again) === "kokoro", "cached: default engine is not neural on the next visit");
 	await again.click("[data-action=play]");
 	await again.waitForFunction(() => document.querySelector("[data-status]")?.textContent !== undefined, null, { timeout: 2000 }).catch(() => {});
 	expect(await again.$$eval("[data-consent][open]", (els) => els.length) === 0, "cached: Play asked for consent again");
@@ -954,11 +858,11 @@ await step("10b. connect once, neural", async () => {
 	await ctx.close();
 }
 {
-	const ctx = await neuralContext(browser, { gpu: false });
+	const ctx = await neuralContext(browser, { gpu: false, init: NO_GPU });
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(page) === "web-speech", "no WebGPU: default is not the browser voice");
+	await page.waitForSelector("listen-player[data-settled]", { state: "attached", timeout: 8000 });
+	expect(await page.$eval("listen-player", (el) => el.hidden), "no WebGPU: the player is shown, but the voice cannot run here");
 	await ctx.close();
 }
 // A browser with WebGPU that gives no adapter (Chrome after a GPU reset): one more ask, then a message that says so,
@@ -969,13 +873,13 @@ await step("10b. connect once, neural", async () => {
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(page) === "kokoro", "a momentary null adapter: default is not neural");
+	const status = await page.$eval("[data-status]", (el) => el.textContent ?? "");
+	expect(!/GPU/.test(status), `a momentary null adapter: status "${status}"`);
 	await ctx.close();
 }
 {
 	const blocked = `Object.defineProperty(navigator, "gpu", { value: { requestAdapter: async () => null }, configurable: true });`;
 	const ctx = await neuralContext(browser, { gpu: false, init: blocked });
-	await ctx.addInitScript(() => localStorage.setItem("listen-engine-choice", JSON.stringify("kokoro")));
 	const page = await ctx.newPage();
 	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
@@ -983,18 +887,7 @@ await step("10b. connect once, neural", async () => {
 	expect(/no GPU just now/.test(status), `no adapter: status is "${status}", not the no-GPU-just-now message`);
 	await ctx.close();
 }
-{
-	const ctx = await neuralContext(browser, {});
-	await ctx.addInitScript(() => localStorage.setItem("listen-engine-choice", JSON.stringify("web-speech")));
-	const page = await ctx.newPage();
-	await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(page) === "web-speech", "stored browser choice did not win over the neural default");
-	await ctx.close();
-}
-
-// 12. Choices: only an explicit pick persists. A cancelled prompt keeps the neural default for the next visit; an
-// explicit "Use browser voice" sticks; two failed starts in a row pause the default (cool-down).
+// 12. A cancelled prompt is not remembered: the next visit asks again on Play.
 {
 	const ctx = await neuralContext(browser, {});
 	const first = await ctx.newPage();
@@ -1007,40 +900,12 @@ await step("10b. connect once, neural", async () => {
 	const second = await ctx.newPage();
 	await second.goto(base + PLAYER_POST, { waitUntil: "load" });
 	await second.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(second) === "kokoro", "cancelled prompt: next visit did not default to neural");
+	await second.click("[data-action=play]");
+	await second.waitForSelector("[data-consent][open]", { timeout: 4000 })
+		.catch(() => expect(false, "cancelled prompt: the next visit did not ask again"));
 	await ctx.close();
 }
-{
-	const ctx = await neuralContext(browser, {});
-	const first = await ctx.newPage();
-	await first.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await first.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	await first.selectOption("[data-engine]", "web-speech");
-	await first.waitForFunction(() => JSON.parse(localStorage.getItem("listen-engine-choice") || "null") === "web-speech", null, { timeout: 4000 })
-		.catch(() => expect(false, "explicit browser pick was not stored"));
-	const second = await ctx.newPage();
-	await second.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await second.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(second) === "web-speech", "explicit browser pick did not stick on the next visit");
-	await ctx.close();
-}
-{
-	const ctx = await neuralContext(browser, { status: 500, body: "missing" });
-	for (let visit = 0; visit < 2; visit += 1) {
-		const page = await ctx.newPage();
-		await page.goto(base + PLAYER_POST, { waitUntil: "load" });
-		await page.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-		await page.close();
-	}
-	const third = await ctx.newPage();
-	await third.goto(base + PLAYER_POST, { waitUntil: "load" });
-	await third.waitForSelector("listen-player[data-settled]:not([hidden])", { timeout: 8000 });
-	expect(await engineValue(third) === "web-speech", "two failed starts: the default was not paused");
-	await ctx.close();
-}
-
-// 13. ONNX Runtime binary: bytes that do not match the pin are never used (integrity error, browser voice for this
-// session); an unreachable host is reported as "host unavailable" after retries, with no automatic second host.
+// 13. ONNX Runtime binary: bytes that do not match the pin are never used (integrity error, nothing plays); an unreachable host is reported as "host unavailable" after retries, with no automatic second host.
 for (const [label, runtime, expected] of [
 	["integrity", { body: Buffer.alloc(ORT_BYTES, 0) }, /integrity check/],
 	["host", { status: 500 }, /host unavailable/],
@@ -1055,7 +920,7 @@ for (const [label, runtime, expected] of [
 	await page.click("[data-variant=fp32]");
 	await page.waitForFunction((source) => new RegExp(source).test(document.querySelector("[data-status]")?.textContent ?? ""), expected.source, { timeout: 20000 })
 		.catch(() => expect(false, `${label}: no runtime error shown`));
-	expect(await engineValue(page) === "web-speech", `${label}: the browser voice did not take over`);
+	expect((await playerState(page)) !== "playing", `${label}: the player says it is playing`);
 	expect(!(await page.evaluate(() => /stored/.test(document.querySelector("[data-runtime-state]")?.textContent ?? ""))), `${label}: runtime reported as stored after a failed check`);
 	await ctx.close();
 }
@@ -1086,7 +951,7 @@ await step("14. download memory", async () => {
 });
 
 // 15. A model file whose bytes do not match the pinned SHA-256 is never stored (not under its key, not as a staging
-// copy); the listener gets the browser voice and the reason.
+// copy); the listener gets the reason and nothing plays.
 await step("15. model checksum", async () => {
 	const bad = Buffer.alloc(FAKE_FILES["onnx/model.onnx"].length, 1);
 	const ctx = await neuralContext(browser, { bodies: { "onnx/model.onnx": bad } });
@@ -1098,7 +963,7 @@ await step("15. model checksum", async () => {
 	await page.click("[data-variant=fp32]");
 	await page.waitForFunction(() => /checksum does not match/.test(document.querySelector("[data-status]")?.textContent ?? ""), null, { timeout: 20000 })
 		.catch(() => expect(false, "model checksum: no checksum error shown"));
-	expect(await engineValue(page) === "web-speech", "model checksum: the browser voice did not take over");
+	expect((await playerState(page)) !== "playing", "model checksum: the player says it is playing");
 	const keys = await page.evaluate(async () => (await (await caches.open("kokoro-tts-v1")).keys()).map((r) => r.url));
 	expect(!keys.some((u) => /onnx\/model\.onnx/.test(u)), `model checksum: a bad model was stored: ${keys.join(", ")}`);
 	await ctx.close();
@@ -1108,12 +973,10 @@ await step("15. model checksum", async () => {
 // A fixture paragraph (independent of the post's prose) exercises the global lexicon (src/data/pronunciations.json:
 // Wikipedia), post front matter (data-pronounce, set here) and an inline :say span (data-say); a reconnect re-extracts.
 await step("11. pronunciations", async () => {
-	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
-	ctx.setDefaultTimeout(10000);
-	await ctx.addInitScript(SPEECH_STUB);
+	const ctx = await neuralContext(browser, {});
 	const page = await ctx.newPage();
 	await page.goto(`${base}/posts/wikipedia-ai-age/`, { waitUntil: "load" });
-	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
+	await storeVoice(page);
 	await page.evaluate(async () => {
 		const el = document.querySelector("listen-player");
 		el.dataset.pronounce = JSON.stringify({ citation: "sigh tation" });
@@ -1128,7 +991,7 @@ await step("11. pronunciations", async () => {
 	});
 	await page.waitForSelector("listen-player:not([hidden])", { timeout: 8000 });
 	await page.click("[data-action=play]");
-	// Read the highlight in the same frame the second sentence becomes current (stub utterances last 120 ms).
+	// Read the highlight in the same frame the second sentence becomes current.
 	const highlighted = await page
 		.waitForFunction(
 			() => {
