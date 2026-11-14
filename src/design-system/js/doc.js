@@ -9,7 +9,9 @@
 // 92rem, drawers below), the bar (page title, section nav), the rail, the pager, back to top and the search.
 //
 // Opt-in: data-rd="doc" on the .rd-doc frame. rd.js mounts it before the tabs, so it hears the first 'tabshow' and its
-// click and popstate listeners run before the tabs' ones. Without JS none of this runs: one plain document, in order.
+// click and popstate listeners run before the tabs' ones. The layout is the HTML (doc.css, plus the shell's generated
+// <style data-rd-doc> for a ?tab= / # picked before first paint by the head snippet); this module keeps the behaviour,
+// and once the DOM state matches it clears html[data-rd-tab] / html[data-rd-sub] so the DOM alone drives the layout.
 
 const DOCK = "(min-width: 92rem)"; // the same width as doc.css: both sidebars dock together
 // A section: a top-level <section> opened by an <h2>. Its address is the first id among the h2, its header and the
@@ -77,9 +79,8 @@ export function mountDoc(frame, { on } = {}) {
 
 	// ---- Bar ----
 	const bar = $(".rd-doc__bar");
-	const title = $(".rd-doc__head h2");
-	const subtitle = $(".rd-doc__head p");
-	const subnav = $(".rd-doc__subnav");
+	const heads = $$(".rd-doc__head", bar); // one per page; the shown one is unhidden
+	const subnav = $(".rd-doc__subnav"); // one group per page; the shown one is unhidden
 	if (bar) new ResizeObserver(() => d.documentElement.style.setProperty("--rd-doc-bar-h", bar.offsetHeight + "px")).observe(bar);
 
 	// ---- Pages and their sections ----
@@ -181,31 +182,32 @@ export function mountDoc(frame, { on } = {}) {
 
 	// ---- Showing a page and one of its sections ----
 	let cur = null; // { a, index, panel, subs, sub }
+	let settled = false;
 	function showSub(sub) {
 		const { a, index, panel, subs } = cur;
 		cur.sub = sub;
-		for (const s of subs) for (const m of s.members) m.toggleAttribute("data-doc-off", s !== sub);
+		for (const s of subs) for (const m of s.members) m.toggleAttribute("data-rd-off", s !== sub);
 		// The section's own heading is its tab in the bar (or, alone on its page, the page's title), so it stays for screen
 		// readers only.
 		panel.toggleAttribute("data-doc-subbed", subs.length > 0);
 		if (subnav) {
-			for (const l of subnav.children) l.toggleAttribute("aria-current", l.dataset.sub === sub?.id);
-			subnav.querySelector("[aria-current]")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+			const g = subnav.querySelector(`[data-for="${panel.id}"]`);
+			if (g) for (const l of g.children) l.toggleAttribute("aria-current", l.dataset.sub === sub?.id);
+			g?.querySelector("[aria-current]")?.scrollIntoView({ block: "nearest", inline: "nearest" });
 		}
 		frame.toggleAttribute("data-first", index === 0 && (!sub || sub === subs[0])); // the document's cover: first page only
 		d.title = (subs.length > 1 && sub ? sub.label + " · " : "") + pageLabel(a) + " · " + baseTitle;
-		// Rail: the page's list, its entries inside the shown section other than the section's own heading.
+		// Rail: the shown page's list for the shown section (the shell pre-rendered one list per page per section, its
+		// items already the section's own headings below its h2).
 		let items = [];
 		for (const ol of lists) {
-			const mine = ol.dataset.for === panel.id;
+			const mine = ol.dataset.for === panel.id && (!sub || ol.dataset.sub === sub.id);
 			ol.hidden = !mine;
 			if (!mine) continue;
 			for (const li of ol.children) {
 				const link = li.querySelector("a");
 				const target = link && d.getElementById(decodeURIComponent(link.hash.slice(1)));
-				const show = !!target && (!sub || (target !== sub.head && sub.members.some((m) => m === target || m.contains(target))));
-				li.hidden = !show;
-				if (show) items.push([link, target]);
+				if (target) items.push([link, target]);
 			}
 		}
 		if (empty) empty.hidden = items.length > 0;
@@ -216,7 +218,8 @@ export function mountDoc(frame, { on } = {}) {
 			const at = all.findIndex((s) => s.pi === index && (!sub || s.id === sub.id));
 			const prev = all[at - 1];
 			const next = all[at + 1];
-			pager.replaceChildren(prev ? pagerLink(prev, "prev", prev.pi === index) : d.createElement("span"), ...(next ? [pagerLink(next, "next", next.pi === index)] : []));
+			const div = pager.querySelector(`div[data-for="${panel.id}"]`);
+			if (div) div.replaceChildren(prev ? pagerLink(prev, "prev", prev.pi === index) : d.createElement("span"), ...(next ? [pagerLink(next, "next", next.pi === index)] : []));
 			pager.hidden = !prev && !next;
 		}
 		if (!reduce.matches) {
@@ -245,19 +248,20 @@ export function mountDoc(frame, { on } = {}) {
 		if (cur?.panel === panel) return onUrl();
 		const subs = subsOf(panel);
 		cur = { a, index, panel, subs, sub: null };
-		if (title) title.textContent = pageLabel(a);
-		if (subtitle) subtitle.textContent = panel.dataset.rdSub || "";
+		for (const h of heads) h.hidden = h.dataset.for !== panel.id;
 		if (subnav) {
-			subnav.replaceChildren(...(subs.length > 1 ? subs : []).map((s) => {
-				const l = d.createElement("a");
-				l.href = "#" + encodeURIComponent(s.id);
-				l.dataset.sub = s.id;
-				l.textContent = s.label;
-				return l;
-			}));
-			subnav.hidden = subs.length < 2;
+			for (const g of subnav.children) g.hidden = g.dataset.for !== panel.id;
+			const g = subnav.querySelector(`[data-for="${panel.id}"]`);
+			subnav.hidden = !(g && g.children.length > 1);
 		}
 		showSub(subFromUrl());
+		if (!settled) {
+			settled = true;
+			// The first-paint selection (html[data-rd-tab] / [data-rd-sub], read by the shell's generated CSS) now matches
+			// the DOM state; clear it so the DOM alone drives the layout from here on.
+			d.documentElement.removeAttribute("data-rd-tab");
+			d.documentElement.removeAttribute("data-rd-sub");
+		}
 	}
 	const offShow = on ? on("tabshow", onShow) : null;
 

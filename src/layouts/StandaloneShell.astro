@@ -68,7 +68,9 @@ const pageCss = css ? `<style is:inline>${css}</style>` : "";
 // "doc" (components/doc.css: page list in a left sidebar, sticky page bar, On this page in a right sidebar). A doc page
 // needs tabs (its page list is the tabs); without them it falls back to card.
 const isDoc = meta.shell === "doc" && tabs.length > 0;
-const docBody = isDoc
+// renderDoc returns the body (a generated <style data-rd-doc> leads it) and the head picker: a synchronous snippet
+// that only sets html[data-rd-tab] / [data-rd-sub] for a ?tab= / # deep link — it never builds DOM.
+const docShell = isDoc
 	? renderDoc({
 			slug,
 			title: meta.title,
@@ -82,7 +84,8 @@ const docBody = isDoc
 			body,
 			indexed: meta.search,
 		})
-	: "";
+	: null;
+const docBody = docShell?.body ?? "";
 const sprite = spriteBlock([...new Set([...iconNames(isDoc ? docBody : tabBar + body), ...(isDoc ? DOC_ICONS : []), ...(meta.icons ?? [])])]);
 
 // The page's runtime module (contract: export default init({ root, data, rd })). Served as a Vite asset
@@ -108,9 +111,11 @@ const doc =
 	// documented exceptions (check:design-system, ds-allow), one place for every doc page.
 	(isDoc ? DOC_ALLOW.map((a) => `<meta name="ds-allow" content="${esc(a)}">`).join("") : "") +
 	`<link rel="stylesheet" href="/design-system/rd.css">` +
-	// The JS layout (.js rules: the Doc grid and drawers) from the first paint. rd.js sets the same flag, but it is a
-	// module and runs after first paint, so the no-JS layout would show first and then jump (a layout shift).
-	`<script>document.documentElement.classList.add("js")</script>` +
+	// The JS layout from the first paint. Doc pages: the head picker (adds the .js flag and sets html[data-rd-tab] /
+	// [data-rd-sub] for a ?tab= / # deep link, which the shell's generated CSS reads — attribute-only, no DOM). Card
+	// pages: just the .js flag. rd.js sets the same flag, but it is a module and runs after first paint, so the no-JS
+	// layout would show first and then jump (a layout shift).
+	(docShell ? docShell.picker : `<script>document.documentElement.classList.add("js")</script>`) +
 	`<script data-site-theme>${themeRuntimeScript(true)}</script>` +
 	`</head>` +
 	`<body class="rd-body">` +

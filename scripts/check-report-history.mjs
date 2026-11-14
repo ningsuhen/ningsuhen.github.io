@@ -251,9 +251,11 @@ async function testPage(rel) {
 	for (let i = 0; i < meta.length; i++) {
 		if (!meta[i].toc) continue;
 		const { ctx, page } = await open(`${url}?tab=${meta[i].id}`);
-		// The Doc design's rail lists only the shown section's headings: take the first one it shows for this page.
+		// The Doc design's rail lists only the shown section's headings: the shell pre-renders one ol per section and the
+		// doc module hides the others (the lis are never hidden), so read only the shown section's ol. An empty ol keeps
+		// toc null and the check skips the section, as when the rail has nothing to list.
 		if (doc) {
-			meta[i].toc = await page.evaluate((id) => [...document.querySelectorAll(`.rd-doc__rail ol[data-for="${CSS.escape(id)}"] li:not([hidden]) a[href^="#"]`)].map((a) => a.getAttribute("href").slice(1))[0] ?? null, meta[i].id);
+			meta[i].toc = await page.evaluate((id) => [...document.querySelectorAll(`.rd-doc__rail ol[data-for="${CSS.escape(id)}"]:not([hidden]) li:not([hidden]) a[href^="#"]`)].map((a) => a.getAttribute("href").slice(1))[0] ?? null, meta[i].id);
 			if (!meta[i].toc) {
 				await ctx.close();
 				continue;
