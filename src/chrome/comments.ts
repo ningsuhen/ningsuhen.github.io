@@ -1,7 +1,7 @@
+import { metaOff } from "../../scripts/lib/meta.mjs";
 import { commentConfig } from "../config";
 
 export const COMMENTS_MARKER = "data-site-comments";
-export const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
 // Reports, playground demos and ideas get comments (one folder deep, e.g. /research/<slug>/). The design-system pages don't.
 export const COMMENTS_PAGE = /^\/(research|playground|ideas)\/[^/]+\/$/;
 
@@ -29,7 +29,7 @@ const COMMENTS_CSS = [
 // Comments for reports, playground demos and ideas: the same giscus repo and category as the posts (src/config.ts).
 // Nothing reaches giscus.app until the reader presses "Load comments"; then the client script is added, like the posts' one.
 export function commentsFor(html: string, urlPath: string): string {
-	if (!COMMENTS_PAGE.test(urlPath) || html.includes(COMMENTS_MARKER) || COMMENTS_OPT_OUT.test(html)) return "";
+	if (!COMMENTS_PAGE.test(urlPath) || html.includes(COMMENTS_MARKER) || metaOff(html, "rd-comments")) return "";
 	return buildComments();
 }
 

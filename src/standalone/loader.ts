@@ -89,6 +89,7 @@ const attr = (v: string | undefined): string | null =>
 		: v.replace(/&(?:#(\d+)|#x([0-9a-f]+)|(amp|lt|gt|quot|apos));/gi, (m, dec, hex, name) =>
 				dec ? String.fromCodePoint(+dec) : hex ? String.fromCodePoint(parseInt(hex, 16)) : (ENTITIES[name.toLowerCase()] ?? m),
 			);
+const escText = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const ICON_RE = /\bdata-rd-icon="([^"]+)"/;
 const GROUP_RE = /\bdata-rd-group="([^"]+)"/;
 const SUB_RE = /\bdata-rd-sub="([^"]+)"/;
@@ -112,14 +113,15 @@ function derive(body: string, inlineRail: boolean): { tabs: Tab[]; rails: Record
 		const rail: Rail = [...chunk.matchAll(/<h([23])\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g)].map((m) => ({
 			level: +m[1] as 2 | 3,
 			id: m[2],
-			text: m[3].replace(/<[^>]+>/g, "").trim(),
+			// Plain text (entities decoded, like the labels): every shell escapes it once when it renders it.
+			text: attr(m[3].replace(/<[^>]+>/g, "").trim()) ?? "",
 		}));
 		rails[s.id] = rail;
 		if (rail.length && inlineRail) {
 			// data-rd="rail": rd.js mounts the scroll-spy (shell pages have no inline rail script, so without it nothing is
 			// ever highlighted). Same disclosure markup as the public pages: open by default so no-JS sees every link.
 			const nav = `<nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>${rail
-				.map((r, n) => `<li class="rd-toc__l${r.level}"><a href="#${r.id}"><span class="rd-toc__badge">${n + 1}</span><span class="rd-toc__text">${r.text}</span></a></li>`)
+				.map((r, n) => `<li class="rd-toc__l${r.level}"><a href="#${r.id}"><span class="rd-toc__badge">${n + 1}</span><span class="rd-toc__text">${escText(r.text)}</span></a></li>`)
 				.join("")}</ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>`;
 			out = out.slice(0, s.end) + nav + out.slice(s.end);
 		}

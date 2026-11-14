@@ -3,6 +3,8 @@
 // --research: a report at /research/<slug>/ (src/data/research.json, tag Research), plus its standalone page.
 // --idea: a short write-up (src/data/ideas.json, tag Idea). The entry links to the post. Add --page for a standalone
 //   page at /ideas/<slug>/ (the entry links to the page, the post is its companion write-up).
+// The standalone page is a fragment (src/standalone/<kind>/<slug>/: meta.json + body.html, contract in
+// src/standalone/contract.json); the shell renders the navbar, hero, tabs, comments and footer around it.
 // Usage: pnpm new-playground [--research | --idea [--page]] <slug> "<Title>" ["<one-sentence summary>"]
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -20,27 +22,37 @@ if (!slug || !title || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || (page && !idea)
 const kind = idea ? "Idea" : research ? "Research" : "Playground"; // tag, category and eyebrow
 const section = idea ? "ideas" : research ? "research" : "playground";
 const jsonPath = idea ? "src/data/ideas.json" : research ? "src/data/research.json" : "src/data/playground.json";
-const hasPage = !idea || page; // a standalone page at public/<section>/<slug>/
+const hasPage = !idea || page; // a standalone page at /<section>/<slug>/
 const href = hasPage ? `/${section}/${slug}/` : `/posts/${slug}/`;
 const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
-const pagePath = path.join("public", section, slug, "index.html");
+const fragmentKind = idea ? "idea" : section; // the fragment folder kind ("idea" is served at /ideas/)
+const pageDir = path.join("src/standalone", fragmentKind, slug);
+const legacyPage = path.join("public", section, slug, "index.html"); // the old injection path: the slug must stay free
 const postDir = path.join("src/content/posts", slug);
 const postFile = path.join(postDir, POST_SOURCES[0]); // new posts are MDX
-if ((hasPage && existsSync(pagePath)) || existsSync(postDir)) {
-	console.error(`Refusing to overwrite: ${hasPage && existsSync(pagePath) ? pagePath : postDir} already exists.`);
+const taken = [hasPage && pageDir, hasPage && legacyPage, postDir].find((p) => p && existsSync(p));
+if (taken) {
+	console.error(`Refusing to overwrite: ${taken} already exists.`);
 	process.exit(1);
 }
 
-const fill = (s) =>
-	s
-		.replaceAll("{{TITLE}}", title)
-		.replaceAll("{{DATE}}", today)
-		.replaceAll("{{SUMMARY}}", summary)
-		.replaceAll("{{SLUG}}", slug)
-		.replaceAll("{{KIND}}", kind);
 if (hasPage) {
-	mkdirSync(path.dirname(pagePath), { recursive: true });
-	writeFileSync(pagePath, fill(readFileSync("public/design-system/template.html", "utf8")));
+	mkdirSync(pageDir, { recursive: true });
+	const meta = { contract: 1, kind: fragmentKind, slug, title, created: today, updated: today, summary, eyebrow: kind, width: "wide", layout: "tabbed" };
+	writeFileSync(path.join(pageDir, "meta.json"), `${JSON.stringify(meta, null, "\t")}\n`);
+	// One tab; each top-level <section data-rd-tab> is a tab, and its h2/h3 with an id form the "On this page" rail.
+	writeFileSync(
+		path.join(pageDir, "body.html"),
+		`<section class="rd-tabpanel rd-with-toc" id="summary" data-rd-tab="summary" data-rd-group="Overview" data-rd-label="Summary" data-rd-icon="file-text">
+<div class="rd-tab__body">
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-file-text"/></svg></span><h2 id="what-this-is">What this is</h2></header>
+    <p>TODO: the page content, built from the design system's rd-* components. Content only: the shell adds the navbar, hero, tabs, comments and footer.</p>
+  </section>
+</div>
+</section>
+`,
+	);
 }
 
 const linkLabel = idea ? "Open the idea" : research ? "Open the report" : "Open the demo";
@@ -73,6 +85,6 @@ data.items.unshift(entry);
 writeFileSync(jsonPath, `${JSON.stringify(data, null, 2)}\n`);
 
 console.log(`Created:
-  ${hasPage ? `${pagePath}                     (navbar + license are injected at build time)\n  ` : ""}${postFile}   (draft: true)
+  ${hasPage ? `${pageDir}/meta.json, body.html   (a fragment: the shell adds the chrome; check with pnpm check:export)\n  ` : ""}${postFile}   (draft: true)
   ${jsonPath}                 (status "Draft": hidden from /${section}/ until you set it to "Live")
-Next: ${hasPage ? "write the page and the post" : "write the post"}, then set its status to "Live" in ${jsonPath}; pnpm dev -> http://127.0.0.1:8050${href} (live reload); before the PR: pnpm build && pnpm check:standalone`);
+Next: ${hasPage ? "write the page and the post" : "write the post"}, then set its status to "Live" in ${jsonPath}; pnpm dev -> http://127.0.0.1:8050${href} (live reload); before the PR: pnpm check:export && pnpm build && pnpm check:standalone`);

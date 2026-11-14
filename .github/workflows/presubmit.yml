@@ -46,7 +46,10 @@ jobs:
           restore-keys: |
             vite-${{ runner.os }}-
       - name: unit tests
-        run: pnpm test:tts && pnpm test:drafts && pnpm test:markers && pnpm test:voice && pnpm test:dates
+        run: >-
+          pnpm test:tts && pnpm test:drafts && pnpm test:markers && pnpm test:voice && pnpm test:dates &&
+          pnpm test:design-system && pnpm test:pr-conflicts && pnpm test:leaks-embedded && pnpm test:split-fragment &&
+          pnpm test:hooks && pnpm test:merge-guard
       - name: script syntax
         if: ${{ !cancelled() }}
         run: pnpm check:syntax

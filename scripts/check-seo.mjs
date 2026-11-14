@@ -74,7 +74,8 @@ else {
 		const dis = line.match(/^Disallow:\s*(\S*)/i);
 		if (dis && agent) blocks[agent].push(dis[1]);
 	}
-	const fullyBlocked = (agent) => (blocks[agent] ?? []).some((d) => d === "/" || d === "");
+	// An empty `Disallow:` allows everything; only `Disallow: /` blocks the whole site.
+	const fullyBlocked = (agent) => (blocks[agent] ?? []).some((d) => d === "/");
 	if (fullyBlocked("*")) failures.push("robots.txt blocks all of the site for User-agent: *");
 	if (fullyBlocked("Googlebot")) failures.push("robots.txt blocks Googlebot");
 }

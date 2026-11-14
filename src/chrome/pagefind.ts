@@ -1,10 +1,11 @@
+import { metaOff } from "../../scripts/lib/meta.mjs";
+
 // Pagefind indexes the visible text of each standalone page. Left to its own devices it would index the
 // injected chrome too (navbar links, breadcrumb, license footer), so scope it to the page's content column
 // with data-pagefind-body on <main>. Large data tables (reference tables with many rows) are data, not prose;
 // mark them data-pagefind-ignore so their blobs don't pollute the index. Opt a whole page out with:
 // <meta name="pagefind" content="off"> — the page is then skipped entirely.
 const PAGEFIND_BODY = "data-pagefind-body";
-const OPT_OUT = /<meta[^>]+name=["']pagefind["'][^>]+content=["']off["']/i;
 // Tables with more rows than this are data blobs, not prose (reference tables top out around 20 rows).
 const DATA_TABLE_ROWS = 30;
 
@@ -14,7 +15,7 @@ export function addPagefindBody(html: string): string {
 	const masked = mask(html);
 
 	// Whole-page opt-out: mark <body> so Pagefind skips the page.
-	if (OPT_OUT.test(html)) return addAttr(html, masked, /<body(?=[\s>])[^>]*>/i, "data-pagefind-ignore");
+	if (metaOff(html, "pagefind")) return addAttr(html, masked, /<body(?=[\s>])[^>]*>/i, "data-pagefind-ignore");
 
 	// Scope indexing to the content column, then ignore the large data tables inside it.
 	return ignoreDataTables(addAttr(html, masked, /<main\b[^>]*>/i, PAGEFIND_BODY));

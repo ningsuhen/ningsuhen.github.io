@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { metaOff } from "./lib/meta.mjs";
 import { pageSource, shellPages, standalonePages } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
@@ -55,7 +56,7 @@ const failures = [];
 const pages = [...standalonePages(), ...shellPages()];
 for (const rel of pages) {
 	const src = pageSource(rel);
-	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
+	const optedOut = metaOff(src, "site-navbar");
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const vp of VIEWPORTS) {
 		const ctx = await browser.newContext({ viewport: vp });
@@ -650,13 +651,12 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 // is pressed; after it the client script loads, the section keeps the column and the footer order, and a theme change
 // reaches the giscus frame. giscus.app is stubbed here (no network), so this checks our side of the contract only.
 const COMMENTS_PAGE = /^\/(research|playground|ideas)\/[^/]+\/$/;
-const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
 const commentsSrc = readFileSync("src/config.ts", "utf8");
 const commentCfg = (key) => commentsSrc.match(new RegExp(`\\b${key}: "([^"]+)"`))?.[1];
 const GISCUS_STUB = "(function(){var s=document.currentScript;var f=document.createElement('iframe');f.className='giscus-frame';f.src='about:blank';s.parentElement.appendChild(f);f.contentWindow.postMessage=function(m,o){(window.__posted=window.__posted||[]).push([m,o])};})();";
 for (const rel of pages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
-	const expected = COMMENTS_PAGE.test(urlPath) && !COMMENTS_OPT_OUT.test(pageSource(rel));
+	const expected = COMMENTS_PAGE.test(urlPath) && !metaOff(pageSource(rel), "rd-comments");
 	const built = readFileSync(path.join(DIST, rel), "utf8");
 	const has = built.includes("data-site-comments");
 	if (has !== expected) failures.push(`${urlPath}: comments section ${has ? "present" : "missing"}, expected ${expected ? "present" : "absent"}`);

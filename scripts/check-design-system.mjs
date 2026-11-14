@@ -383,38 +383,6 @@ const probeStructure = (canon) => {
 			hasFill: !!el.querySelector(".rd-meter__fill"),
 			accessible: el.getAttribute("role") === "progressbar" ? el.hasAttribute("aria-valuenow") : !!el.getAttribute("aria-label"),
 		})),
-		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
-		// A div/span styled as a button is not focusable and breaks keyboard use.
-		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
-			operable: el.matches("button") || el.getAttribute("role") === "button",
-		})),
-		// Filters: every .rd-filter is a keyboard-operable toggle with an explicit aria-pressed state.
-		filters: [...document.querySelectorAll(".rd-filter")].map((el) => ({
-			operable: el.matches("button") || el.getAttribute("role") === "button",
-			pressed: el.hasAttribute("aria-pressed"),
-		})),
-		// Buttons: every .rd-btn must be a real, keyboard-operable control (a <button>, or role=button).
-		// A div/span styled as a button is not focusable and breaks keyboard use.
-		btns: [...document.querySelectorAll(".rd-btn")].map((el) => ({
-			operable: el.matches("button") || el.getAttribute("role") === "button",
-		})),
-		// Fields: every .rd-input / .rd-select must be associated with a label — a <label for>,
-		// aria-label, aria-labelledby, or a wrapping <label>. An unlabelled control is unusable by
-		// screen readers and most users.
-		fields: [...document.querySelectorAll(".rd-input, .rd-select")].map((el) => {
-			const id = el.id;
-			const labelledBy = el.getAttribute("aria-labelledby");
-			const hasFor = id && !!document.querySelector(`label[for="${CSS.escape(id)}"]`);
-			return {
-				labelled:
-					hasFor ||
-					!!el.getAttribute("aria-label") ||
-					!!labelledBy ||
-					!!el.closest("label"),
-			};
-		}),
-		// Fullscreen: each data-rd=fullscreen container must carry an operable, accessible toggle
-		// (a [data-rd-fullscreen-toggle] button with aria-pressed). The container's focusability
 		// (tabindex=-1, for wheel-only-after-focus) is added by rd.js at mount, so it is not checked here.
 		fullscreen: [...document.querySelectorAll('[data-rd="fullscreen"]')].map((el) => {
 			const t = el.querySelector("[data-rd-fullscreen-toggle]");

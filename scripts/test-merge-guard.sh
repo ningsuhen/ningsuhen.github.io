@@ -14,6 +14,8 @@ eval "$(awk '/^branch_at_head\(\) \{/{f=1} f{print} f&&/^\}/{exit}' "$top/script
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 cd "$work"
+# Hermetic: no global hooks (a machine's pre-push hooks would run on the throwaway pushes) and no global identity.
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 git init -q --bare origin.git
 # Populate the bare repo from a throwaway seed, then work in a real CLONE so refs/remotes/origin/* exist.
 git init -q seed && cd seed
@@ -29,6 +31,7 @@ git push -q ../origin.git other
 git checkout -q feature
 cd ..
 git clone -q --branch feature origin.git work && cd work
+git config user.name t && git config user.email t@t.t # the clone has no identity (global config is off)
 
 # safe <label> <head>: branch_at_head must return 0.
 safe() {

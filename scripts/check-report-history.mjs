@@ -362,6 +362,8 @@ for (const rel of tabbedPages()) {
 
 await browser.close();
 server.close();
+// Nothing tested is a broken discovery (a renamed class, a moved page), not a pass.
+if (tested.length === 0) check("tabbed report pages found", false, "no tabbed report page was found to test");
 if (failures.length) {
 	console.error(`report history: ${failures.length} of ${checks} checks failed`);
 	for (const f of failures) console.error(`  FAIL ${f}`);

@@ -22,8 +22,10 @@ const TICK_MS = 100;
 export interface PipelineHooks {
 	/** Called with the sentence whose audio is playing now (from the scheduled timeline). */
 	onSentence: (index: number) => void;
-	/** Called once per chunk, after it is accepted for scheduling. `ahead` is scheduled audio in seconds. */
+	/** Called once per chunk as it arrives, before any wait for room. `ahead` is scheduled audio in seconds. */
 	onChunk?: (durationS: number, ahead: number, first: boolean) => void;
+	/** Called when push() hands control back to the producer, so its synthesis time excludes the wait for room. */
+	onReady?: () => void;
 }
 
 interface Scheduled {
@@ -37,7 +39,6 @@ export class Pipeline {
 	private readonly timeline: Scheduled[] = [];
 	private readonly sources: AudioBufferSourceNode[] = [];
 	private produced = 0;
-	private finished = false;
 	private timer: ReturnType<typeof setInterval> | null = null;
 	private wake: (() => void) | null = null;
 	private lastSentence = -1;
@@ -53,14 +54,15 @@ export class Pipeline {
 
 	/** Schedules one chunk. Waits (without blocking the producer's own work) while too much audio is queued. */
 	async push(chunk: AudioChunk, sentence: number): Promise<void> {
+		if (this.signal.aborted) return;
+		this.hooks.onChunk?.(chunk.samples.length / chunk.sampleRate, this.ahead(), this.produced === 0);
 		while (!this.signal.aborted && this.ahead() > LOOKAHEAD_S) {
 			await this.pause();
 		}
 		if (this.signal.aborted) return;
-		const duration = chunk.samples.length / chunk.sampleRate;
-		this.hooks.onChunk?.(duration, this.ahead(), this.produced === 0);
 		this.schedule(chunk, sentence);
 		this.produced += 1;
+		this.hooks.onReady?.();
 	}
 
 	/** Schedules silence after the audio so far: a punctuation pause, attributed to the sentence it follows. */
@@ -72,7 +74,6 @@ export class Pipeline {
 
 	/** Resolves when every scheduled chunk has played, or on abort. */
 	async drain(): Promise<void> {
-		this.finished = true;
 		while (!this.signal.aborted && this.ahead() > 0) {
 			await this.pause(this.ahead() * 1000);
 		}

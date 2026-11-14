@@ -54,8 +54,6 @@ export default defineConfig({
 	trailingSlash: "always",
 	// Astro 7 defaults to JSX whitespace rules; keep the Astro 5 HTML output.
 	compressHTML: true,
-	// Keeps src/content/config.ts (slug, entry.render()) working; migrate to src/content.config.ts with loaders later.
-	legacy: { collectionsBackwardsCompat: true },
 	redirects: {
 		"/ai-economy/": "/research/ai-economy/",
 		"/brev-tree-benchmark/": "/research/brev-tree-benchmark/",
@@ -206,8 +204,6 @@ export default defineConfig({
 		}),
 	},
 	vite: {
-		// Source maps would publish build-machine source paths; keep them off in every build.
-		build: { sourcemap: false },
 		server: {
 			// Only `pnpm dev:agent` (npm_lifecycle_event) may fall back to the next free port.
 			strictPort: process.env.npm_lifecycle_event !== "dev:agent",
@@ -219,6 +215,8 @@ export default defineConfig({
 			},
 		},
 		build: {
+			// Source maps would publish build-machine source paths; keep them off in every build.
+			sourcemap: false,
 			rollupOptions: {
 				onwarn(warning, warn) {
 					// temporarily suppress this warning
