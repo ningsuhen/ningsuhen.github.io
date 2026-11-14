@@ -149,7 +149,7 @@ async function probe(url) {
 		let res = await fetch(url, { ...opts, method: "HEAD" });
 		if (res.status === 405) res = await fetch(url, { ...opts, method: "GET" }); // HEAD rejected
 		res.body?.cancel(); // don't download
-		if (res.status >= 500 || res.status === 404) return { url, status: res.status, kind: "broken" };
+		if (res.status >= 500 || res.status === 404 || res.status === 410) return { url, status: res.status, kind: "broken" };
 		if (res.status === 403 || res.status === 429) return { url, status: res.status, kind: "blocked" };
 		return { url, status: res.status, kind: "ok" };
 	} catch (e) {

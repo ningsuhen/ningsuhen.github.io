@@ -15,6 +15,12 @@ let mode: LIGHT_DARK_MODE = DEFAULT_THEME;
 
 onMount(() => {
 	mode = getStoredTheme();
+	// Another tab changed the theme: the runtime re-applies it (theme-runtime.ts); keep this control in step.
+	const sync = (e: StorageEvent) => {
+		if (e.key === null || e.key === "theme") mode = getStoredTheme();
+	};
+	addEventListener("storage", sync);
+	return () => removeEventListener("storage", sync);
 });
 
 function switchScheme(newMode: LIGHT_DARK_MODE) {

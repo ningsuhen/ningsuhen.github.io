@@ -8,7 +8,7 @@
 			"page.css": "optional",
 			"page.js": "optional"
 		},
-		"runtimeAssets": "public/<kind>/<slug>/ (no index.html here; the shell owns the URL)"
+		"runtimeAssets": "public/<segment>/<slug>/, where segment is the URL folder (research, playground, ideas for kind idea); no index.html here, the shell owns the URL"
 	},
 	"meta": {
 		"required": ["contract", "kind", "slug", "title", "created", "updated", "summary"],

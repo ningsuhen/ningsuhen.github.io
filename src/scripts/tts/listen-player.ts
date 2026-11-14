@@ -14,7 +14,7 @@ import {
 	type Pronunciations,
 } from "./pronounce";
 import type { FileSpec, KokoroVariant, Manifest } from "./kokoro-cache";
-import { pauseAfter, scaledPause } from "./pauses";
+import { PAUSE_S, pauseAfter, scaledPause } from "./pauses";
 
 /**
  * The neural-voice cluster (Kokoro engine, its download/cache, and the streamed-audio pipeline) loads after the
@@ -54,7 +54,6 @@ declare global {
 }
 
 const PREFS_KEY = "listen-prefs";
-const CONSENT_KEY = "listen-kokoro-consent";
 const DEFAULT_VOICE = "af_heart";
 const RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
 const FOLLOW_PAUSE_MS = 4000;
@@ -107,7 +106,6 @@ class SpeedMonitor {
 	/** Called as each chunk arrives. `queueEmpty` means playback had caught up; `first` marks the first chunk. */
 	chunk(durationS: number, queueEmpty: boolean, first: boolean): void {
 		const waitedMs = performance.now() - this.requestedAt;
-		this.requestedAt = performance.now();
 		if (this.reported) return;
 		if (first && waitedMs > SLOW_FIRST_AUDIO_MS) return this.report();
 		this.stalls = queueEmpty && !first ? this.stalls + 1 : 0;
@@ -115,6 +113,11 @@ class SpeedMonitor {
 		this.ratios = [...this.ratios.slice(-3), waitedMs / 1000 / Math.max(durationS, 0.01)];
 		const average = this.ratios.reduce((a, b) => a + b, 0) / this.ratios.length;
 		if (this.ratios.length >= 3 && average > SLOW_RTF) this.report();
+	}
+
+	/** The producer asks for the next chunk: only synthesis time counts, not the wait for room in the queue. */
+	ready(): void {
+		this.requestedAt = performance.now();
 	}
 
 	private report(): void {
@@ -522,7 +525,6 @@ class ListenPlayer extends HTMLElement {
 		} finally {
 			this.downloadAbort = null;
 		}
-		writeStorage(CONSENT_KEY, variant);
 		void n.requestPersistence();
 		this.renderDownload();
 		return true;
@@ -606,7 +608,6 @@ class ListenPlayer extends HTMLElement {
 		neuralReady = false;
 		await n.removeDownload();
 		await (await n.loadOrtRuntime(this.ttsSrc())).removeOrtRuntime();
-		writeStorage(CONSENT_KEY, null);
 		this.status("Neural voice download removed. Press play to download it again.");
 		this.renderDownload();
 	}
@@ -618,8 +619,6 @@ class ListenPlayer extends HTMLElement {
 	}
 
 	private async confirmDownload(): Promise<KokoroVariant | null> {
-		const saved = readStorage<KokoroVariant | null>(CONSENT_KEY, null);
-		if (saved) return saved;
 		const dialog = this.querySelector<HTMLDialogElement>("[data-consent]");
 		if (!dialog || typeof dialog.showModal !== "function") return null;
 		// The GPU variant is only offered when this browser has a WebGPU adapter.
@@ -713,6 +712,7 @@ class ListenPlayer extends HTMLElement {
 				if (id === this.runId) this.setIndex(i, true);
 			},
 			onChunk: (durationS, ahead, first) => monitor.chunk(durationS, ahead < n.UNDERRUN_S && !first, first),
+			onReady: () => monitor.ready(),
 		});
 		try {
 			for (let i = from; i < this.sentences.length; i++) {
@@ -727,6 +727,8 @@ class ListenPlayer extends HTMLElement {
 						await pipeline.push(chunk, i);
 					}
 					if (id !== this.runId) return;
+					// A long sentence split at a clause gets a short breath (the chunker marks it, see chunk.ts).
+					if (unit.pause === "clause") pipeline.silence(scaledPause(PAUSE_S.clause, this.rate), i);
 				}
 				// Punctuation pause after the sentence, from the text and its block (see pauses.ts).
 				const next = this.sentences[i + 1];
@@ -752,6 +754,8 @@ class ListenPlayer extends HTMLElement {
 	}
 
 	private fail(err: unknown): void {
+		// Stop what is already scheduled, or it keeps playing under a "stopped" status.
+		this.stopPlayback();
 		this.state = "paused";
 		this.setState("paused");
 		const blocked = errorText(err).includes("not-allowed");
@@ -987,7 +991,10 @@ class ListenPlayer extends HTMLElement {
 			artist: author,
 		});
 		const handlers: Partial<Record<MediaSessionAction, () => void>> = {
-			play: () => void this.play(),
+			// play() toggles (the button); a headset or lock-screen Play must never pause.
+			play: () => {
+				if (this.state !== "playing") void this.play();
+			},
 			pause: () => this.pause(),
 			previoustrack: () => this.seek(this.index - 1),
 			nexttrack: () => this.seek(this.index + 1),

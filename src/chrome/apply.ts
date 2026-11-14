@@ -10,12 +10,12 @@ import { commentsFor } from "./comments";
 import { addBreadcrumb } from "./breadcrumb";
 import { buildSocialMeta, pageDescription } from "./social";
 import { withThemeScript } from "./theme";
+import { metaOff } from "../../scripts/lib/meta.mjs";
 import { esc } from "./util";
 import { siteConfig } from "../config";
 import { A11Y_MARKER, buildA11yScript } from "./a11y";
 import { RAIL_BAR_MARKER, buildRailBarScript } from "./rail-bar";
 
-const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
 const SHARED_CSS = /<link\b[^>]*\bhref=["']\/design-system\/(?:research|rd)\.css/i;
 
 /** Navbar, breadcrumb and meta fixes for one standalone HTML document. `extra` is appended before </body>. */
@@ -24,7 +24,7 @@ export function applyChrome(html: string, script: string, extra: string, footer:
 	const a11y = html.includes(A11Y_MARKER) ? "" : buildA11yScript();
 	// The rail script pairs with the shared CSS (layout.css "Narrow, with JS"): a page with a frozen inline copy keeps its open list.
 	const railBar = html.includes(RAIL_BAR_MARKER) || !html.includes("rd-toc") || !SHARED_CSS.test(html) ? "" : buildRailBarScript();
-	const navbar = html.includes(MARKER) || OPT_OUT.test(html) ? "" : script;
+	const navbar = html.includes(MARKER) || metaOff(html, "site-navbar") ? "" : script;
 	const parts = [comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, railBar, extra].join("");
 	const tail = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
 	const body = navbar ? atBodyStart(tail, navbar) : tail;

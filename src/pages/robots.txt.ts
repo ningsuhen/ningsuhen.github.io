@@ -46,7 +46,7 @@ ${AI_AGENTS.map((agent) => `User-agent: ${agent}`).join("\n")}
 Disallow: /
 
 User-agent: *
-Disallow: /_astro/
+Allow: /
 
 Sitemap: ${new URL("sitemap-index.xml", import.meta.env.SITE).href}
 `.trim();

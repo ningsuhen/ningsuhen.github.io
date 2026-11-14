@@ -48,10 +48,14 @@ const removeNode = (n) => {
 	if (!p) return;
 	p.childNodes = (p.childNodes ?? []).filter((c) => c !== n);
 };
-const insertBefore = (n, ref) => {
-	const p = n.parentNode ?? ref.parentNode;
-	const i = (p?.childNodes ?? []).indexOf(ref);
+// Moves n (out of wherever it is, e.g. the fragment it was parsed into) before ref. ref undefined (an empty
+// parent): n is appended to `into`.
+const insertBefore = (n, ref, into) => {
+	const p = ref?.parentNode ?? into;
+	removeNode(n);
+	const i = p.childNodes.indexOf(ref);
 	p.childNodes.splice(i === -1 ? p.childNodes.length : i, 0, n);
+	n.parentNode = p;
 };
 
 // ---- meta.json --------------------------------------------------------------------------------
@@ -258,7 +262,7 @@ function convertBody(doc) {
 	if (chips.length && sections.length) {
 		const frag = parseFragment(`<div class="rd-hero__meta">${chips.join("")}</div>`);
 		const wrap = frag.childNodes[0];
-		insertBefore(wrap, sections[0].childNodes[0]);
+		insertBefore(wrap, sections[0].childNodes[0], sections[0]);
 	}
 
 	// 7. Scripts: tag the JSON data script with data-rd-data; collect the executable ones.

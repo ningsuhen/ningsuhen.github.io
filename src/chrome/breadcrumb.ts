@@ -1,3 +1,4 @@
+import { metaOff } from "../../scripts/lib/meta.mjs";
 import { esc } from "./util";
 
 // Breadcrumb band (.rd-crumb-band) and trail (.rd-breadcrumb) in research.css. Every page on the design system gets the
@@ -5,7 +6,6 @@ import { esc } from "./util";
 // (opt-out or no title) gets an empty band, so the content never shows through the gap. Pages without the design
 // system stylesheet get neither (their own shell). Opt out of the trail with: <meta name="rd-breadcrumb" content="off">
 export const CRUMB_MARKER = "data-site-breadcrumb";
-const OPT_OUT_CRUMB = /<meta[^>]+name=["']rd-breadcrumb["'][^>]+content=["']off["']/i;
 // Section label by first path segment. A page at the section's own URL (/design-system/) is its own current item.
 const SECTIONS: Record<string, string> = { research: "Research", playground: "Playground", ideas: "Ideas", "design-system": "Design system" };
 const DATE_SUFFIX = /\s*·\s*created\s+\d{4}-\d{2}-\d{2}\s*·\s*updated\s+\d{4}-\d{2}-\d{2}\s*$/;
@@ -27,7 +27,7 @@ export function addBreadcrumb(html: string, urlPath: string, base: string, site:
 	const wide = !tabbed && /\brd-container--wide\b/.test(mainTag);
 	const own = !tabbed && !/\brd-container\b/.test(mainTag);
 	const title = pageTitle(html);
-	const crumb = OPT_OUT_CRUMB.test(html) || !title ? "" : trailMarkup(urlPath, title, base, site);
+	const crumb = metaOff(html, "rd-breadcrumb") || !title ? "" : trailMarkup(urlPath, title, base, site);
 	const cls = ["rd-crumb-band", wide ? "rd-crumb-band--wide" : "", tabbed ? "rd-crumb-band--tabbed" : "", own ? "rd-crumb-band--page" : "", crumb ? "" : "rd-crumb-band--empty"].filter(Boolean).join(" ");
 	return html.slice(0, at) + `<div class="${cls}" ${CRUMB_MARKER}>${crumb}</div>` + html.slice(at);
 }

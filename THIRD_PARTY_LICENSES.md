@@ -35,6 +35,17 @@ Source: https://github.com/saicaca/fuwari. Licensed under the MIT License, repro
 - JavaScript loader committed in `public/tts/vendor/ort/` (LICENSE-onnxruntime.txt there).
 - WebAssembly binary fetched at runtime from https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0 (pinned commit c25145ab811e50c175798b09cd6da3fc272d9411), with the NOTICE and MIT LICENSE of that repository: https://huggingface.co/ningsuhen/onnxruntime-web-1.27.0/tree/c25145ab811e50c175798b09cd6da3fc272d9411
 
+## Kokoro-82M and misaki (neural voice)
+
+The full list of files served for the Listen player is in `public/tts/LICENSES.txt`. Besides ONNX Runtime:
+
+- Kokoro-82M model weights, voices and tokenizer (hexgrad; ONNX export by onnx-community), Apache-2.0. Fetched from
+  Hugging Face after the visitor consents, not stored here. Training data includes Koniwa (CC BY 3.0) and SIWIS (CC BY 4.0).
+- `public/tts/lexicon-en-us.txt`: derived from misaki's us_gold and us_silver dictionaries (hexgrad/misaki), Apache-2.0.
+- `public/tts/kokoro_glue.js` and `kokoro_bg.wasm`: a port of misaki's lexicon logic, Apache-2.0.
+
+No GPL code (espeak-ng) ships with the neural voice.
+
 ## Dependencies
 
 npm packages installed through `pnpm install` (Astro, Tailwind CSS, Svelte, Expressive Code, and others)

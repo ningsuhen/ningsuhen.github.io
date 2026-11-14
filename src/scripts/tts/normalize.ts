@@ -241,9 +241,15 @@ const SCALE_WORD: Readonly<Record<string, string>> = {
 	bn: "billion",
 	T: "trillion",
 	tn: "trillion",
+	thousand: "thousand",
+	million: "million",
+	billion: "billion",
+	trillion: "trillion",
 };
+/** A scale after an amount: a letter ("$5M") or a word ("$5 million", read "five million dollars"). */
+const MONEY_SCALE = "thousand|million|billion|trillion|bn|tn|[KkMBT]";
 const MONEY = new RegExp(
-	String.raw`([$€£¥₹])\s?(${NUM})\s?(bn|tn|[KkMBT])?(?:\s*[–-]\s*[$€£¥₹]?(${NUM})\s?(bn|tn|[KkMBT])?)?(?![A-Za-z])`,
+	String.raw`([$€£¥₹])\s?(${NUM})\s?(${MONEY_SCALE})?(?:\s*[–-]\s*[$€£¥₹]?(${NUM})\s?(${MONEY_SCALE})?)?(?![A-Za-z])`,
 	"g",
 );
 /** "7B", "100k", "1.5M": a number with a scale letter and nothing after it. */
