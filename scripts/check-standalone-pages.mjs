@@ -567,13 +567,14 @@ const navState = () => {
 	const root = host ? host.shadowRoot : document;
 	const bar = host ? root.querySelector("header") : document.querySelector("#navbar .card-base");
 	const controls = {};
+	const brand = bar.querySelector("a"); // the site-title link; its styling may differ, so it is flagged rather than named
 	for (const el of bar.querySelectorAll("a, button")) {
 		if (el.closest(".closed, .float-panel-closed")) continue;
 		const r = el.getBoundingClientRect();
 		const cs = getComputedStyle(el);
 		if (cs.display === "none" || r.width === 0) continue;
 		const name = (el.getAttribute("aria-label") || el.textContent || "").trim();
-		controls[name] = { x: r.left, w: r.width, h: r.height, color: cs.color, fs: cs.fontSize, fw: cs.fontWeight };
+		controls[name] = { x: r.left, w: r.width, h: r.height, color: cs.color, fs: cs.fontSize, fw: cs.fontWeight, brand: el === brand };
 	}
 	const br = bar.getBoundingClientRect();
 	return { bar: { x: br.left, w: br.width, h: br.height, bg: getComputedStyle(bar).backgroundColor }, controls, sbw: innerWidth - document.documentElement.clientWidth, scrollable: document.documentElement.scrollHeight > innerHeight };
@@ -640,7 +641,7 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 			const sc = std.controls[name];
 			if (!sc) { failures.push(`${tag}: "${name}" missing from the standalone navbar`); continue; }
 			if (!near(mc.x, sc.x) || !near(mc.w, sc.w) || !near(mc.h, sc.h)) failures.push(`${tag}: "${name}" at ${sc.x}/${sc.w}x${sc.h}, main ${mc.x}/${mc.w}x${mc.h}`);
-			if (name !== "Ning Waikhom" && (mc.color !== sc.color || mc.fs !== sc.fs || mc.fw !== sc.fw)) failures.push(`${tag}: "${name}" is ${sc.color} ${sc.fs} ${sc.fw}, main ${mc.color} ${mc.fs} ${mc.fw}`);
+			if (!mc.brand && (mc.color !== sc.color || mc.fs !== sc.fs || mc.fw !== sc.fw)) failures.push(`${tag}: "${name}" is ${sc.color} ${sc.fs} ${sc.fw}, main ${mc.color} ${mc.fs} ${mc.fw}`);
 		}
 		for (const name of Object.keys(std.controls)) if (!main.controls[name]) failures.push(`${tag}: "${name}" only in the standalone navbar`);
 	}
