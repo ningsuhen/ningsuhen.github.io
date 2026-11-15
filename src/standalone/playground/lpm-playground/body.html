@@ -1,0 +1,387 @@
+<section class="rd-tabpanel rd-with-toc" data-rd-tab="model" data-rd-group="Setup" data-rd-label="Model" data-rd-icon="cpu" id="model">
+  <div class="rd-tab__body">
+  <p><span class="rd-chip rd-chip--good"><svg class="rd-icon" aria-hidden="true"><use href="#i-shield-check"/></svg>Runs in this tab, on your GPU</span> <span class="rd-chip rd-chip--warn"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg>Fictional example data</span></p>
+  <section class="rd-tabsec" id="model-load">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-cpu"></use></svg></span><h2>Load the model once, use it in every tab</h2></header>
+    <p>Qwen3-0.6B (Apache-2.0), 1.5 GB. Nothing downloads until you press the button. Your browser then keeps a copy, so the next visit does not download it again. <span id="lp-gpu-status"><span class="rd-chip rd-chip--neutral">checking...</span></span> <span id="lp-adapter" class="lp-muted"></span></p>
+    <div class="lp-actions">
+      <button type="button" class="rd-btn rd-btn--primary" id="lp-load-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-download"></use></svg><span class="lp-btn-text">Download and load model</span></button>
+      <button type="button" class="rd-btn" id="lp-load-file-btn" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-hard-drive"></use></svg>Use a file I already have</button><input type="file" id="lp-load-file" accept=".lpm1,application/octet-stream" hidden="" aria-hidden="true" tabindex="-1">
+      <button type="button" class="rd-btn" id="lp-load-cancel" hidden=""><svg class="rd-icon" aria-hidden="true"><use href="#i-square"></use></svg>Cancel download</button>
+    </div>
+    <p class="lp-muted lp-stage" id="lp-stage" role="status">Checking your graphics card...</p>
+    <div class="rd-meter" id="lp-load-meter" role="progressbar" aria-label="Model load progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden=""><span class="rd-meter__fill lp-fill" id="lp-load-fill" style="--w:0%"></span></div>
+    <dl class="lp-facts" id="lp-load-facts" hidden=""></dl>
+    <div class="rd-callout rd-callout--bad lp-msg" id="lp-load-msg" role="alert" hidden=""></div>
+  </section>
+  <section class="rd-tabsec" id="model-about">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg></span><h2>What to expect, and how this page works</h2></header>
+    <p class="lp-explain"><strong>Your text is never sent anywhere.</strong> The model download is the only large request, and only when you press the button. Each tab counts the network requests made during a call so you can check.</p>
+    <p class="lp-explain"><strong>A 0.6-billion-parameter model makes mistakes.</strong> Each tab's accuracy card says how many, on test items it was not shown. The example texts are fictional, written by an AI model.</p>
+    <details class="rd-fold">
+      <summary>Details: size, source, network, how this page works</summary>
+      <dl class="lp-facts">
+        <dt>Model</dt><dd>Qwen3-0.6B, 16-bit, about 600 million parameters</dd>
+        <dt>Size</dt><dd>1,503,264,868 bytes (1.5 GB)</dd>
+        <dt>Comes from</dt><dd>huggingface.co, the model's public host</dd>
+        <dt>SHA-256</dt><dd><code>21fc4c8985fadea4adf9c32d6f55686562fadb8d951cc088fe8bddbc2577119d</code></dd>
+        <dt>Licence</dt><dd>Apache-2.0 (<a href="./lpm/tok/QWEN3-LICENSE">licence text</a>)</dd>
+      </dl>
+      <ul class="rd-icon-list">
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Pressing the button first fetches the engine (about 0.3 MB) and a word list for the tokenizer (about 4.4 MB) from this site, then the model from huggingface.co, unless your browser already has it or you pick a file.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The engine is LPM, compiled to WebAssembly. It runs the model on your graphics card through WebGPU. There is no server and no fallback to software: without a real GPU you get a message, not a result.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Each call asks the model one closed question: given the instruction, the options and a few solved examples, which option letter comes next? Only the winner and the runner-up leave the GPU.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Margin is how far ahead the winner is over the runner-up, in the model's own units (a logit gap). Bigger means surer. It is not a percentage.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The prompt window is 2048 tokens. Every prompt uses all of the dataset's solved examples. Whether the answers are described by name, by definition or by both was picked per demo by accuracy on the dev split only; the test split never chose anything.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Dev and test are two separate sets of labelled items. The dev set picks the threshold. The test set is only used to report.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The keyword and regex baselines are hand-written rules, written from the label definitions before the dev and test texts were read. They run in your browser, like the model.</li>
+        <li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The test sets are small and the items are fictional. Treat the numbers as a demonstration, not a guarantee.</li>
+      </ul>
+    </details>
+  </section>
+  </div>
+</section>
+
+<section class="rd-tabpanel rd-with-toc" data-rd-tab="email" data-rd-group="Business demos" data-rd-label="Email triage" data-rd-icon="mail" id="email">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="email-what">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"></use></svg></span><h2>What this replaces</h2></header>
+    <p>Today a person, or a pile of fixed mail rules, opens each incoming email and drags it to a folder: reply needed, meeting request, invoice or receipt, promo or newsletter, or FYI. Here the model picks the folder and three lines of code move the email.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The model only sorts into folders. Code never deletes, archives or auto-replies to any email, whatever the label.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Low-confidence predictions go to a 'Needs a look' folder for a human instead of a label folder.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="email-try">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg></span><h2>Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own email. Then press Classify. </p>
+    <div class="lp-examples" id="email-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="email-text">Email to sort</label>
+    <textarea class="rd-input lp-ta" id="email-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="email-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg>Classify</button><span class="lp-muted" id="email-hint" role="status"></span></div>
+    <p class="rd-field__error" id="email-msg" hidden="" role="alert"></p>
+    <p class="lp-muted lp-explain" id="email-promptinfo"></p>
+    <ol class="lp-trace" id="email-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="email-seen">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"></use></svg></span><h2>What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="email-proof"></div>
+    <p class="lp-muted lp-explain" id="email-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="email-accuracy">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg></span><h2>How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 95 labelled emails on your GPU. The 47 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 48 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="email-eval" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg>Run evaluation</button><button type="button" class="rd-btn" id="email-stop" hidden=""><svg class="rd-icon" aria-hidden="true"><use href="#i-square"></use></svg>Stop</button></div>
+    <div class="lp-progress" id="email-eval-progress" hidden=""><span class="lp-muted" id="email-eval-status" role="status"></span><div class="rd-meter" id="email-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill lp-fill" id="email-eval-fill" style="--w:0%"></span></div></div>
+    <p class="rd-field__error" id="email-eval-msg" hidden="" role="alert"></p>
+    <div id="email-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="email-bar">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span><h2>Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="email-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="email-thr-box" hidden="">
+      <label class="rd-field__label" for="email-thr">Margin threshold: <output id="email-thr-readout">2.0</output> <span class="lp-muted" id="email-thr-src"></span></label>
+      <input type="range" class="lp-range" id="email-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="email-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="email-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="email-wrong">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg></span><h2>Where it goes wrong</h2></header>
+    <p class="lp-muted" id="email-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="email-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="email-use">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"></use></svg></span><h2>Use it in a program</h2></header>
+    <p>Call the model when an email arrives. It gives back one label and a margin. If the margin reaches your threshold, file the email in that label's folder. If not, put it in a "Needs a look" folder for a person.</p>
+    <p>Email is private. The text stays on the machine that runs the model, there is no fee per email, and the time shown in the proof strip is the whole delay.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>What it must not be used for</p>Never let the label delete, archive or answer an email: code only files it. Do not rely on it for mail where a miss is costly, such as legal notices or payment disputes, without a person. It was tested on fictional English emails only.</div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel rd-with-toc" data-rd-tab="ticket" data-rd-group="Business demos" data-rd-label="Support tickets" data-rd-icon="life-buoy" id="ticket">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="ticket-what">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"></use></svg></span><h2>What this replaces</h2></header>
+    <p>Today a support lead or a first-line agent reads each new ticket and sends it to billing, bug reports, account access, how-to, feature requests or cancellations. Here the model suggests the queue. Cancellations always go to a person.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Any message labelled cancellation always goes to a human retention agent, whatever the model's confidence.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Low-confidence predictions go to the general queue instead of a team queue.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="ticket-try">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg></span><h2>Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own ticket. Then press Classify. </p>
+    <div class="lp-examples" id="ticket-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="ticket-text">Customer message to route</label>
+    <textarea class="rd-input lp-ta" id="ticket-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="ticket-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg>Classify</button><span class="lp-muted" id="ticket-hint" role="status"></span></div>
+    <p class="rd-field__error" id="ticket-msg" hidden="" role="alert"></p>
+    <p class="lp-muted lp-explain" id="ticket-promptinfo"></p>
+    <ol class="lp-trace" id="ticket-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="ticket-seen">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"></use></svg></span><h2>What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="ticket-proof"></div>
+    <p class="lp-muted lp-explain" id="ticket-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="ticket-accuracy">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg></span><h2>How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 102 labelled tickets on your GPU. The 51 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 51 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="ticket-eval" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg>Run evaluation</button><button type="button" class="rd-btn" id="ticket-stop" hidden=""><svg class="rd-icon" aria-hidden="true"><use href="#i-square"></use></svg>Stop</button></div>
+    <div class="lp-progress" id="ticket-eval-progress" hidden=""><span class="lp-muted" id="ticket-eval-status" role="status"></span><div class="rd-meter" id="ticket-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill lp-fill" id="ticket-eval-fill" style="--w:0%"></span></div></div>
+    <p class="rd-field__error" id="ticket-eval-msg" hidden="" role="alert"></p>
+    <div id="ticket-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="ticket-bar">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span><h2>Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="ticket-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="ticket-thr-box" hidden="">
+      <label class="rd-field__label" for="ticket-thr">Margin threshold: <output id="ticket-thr-readout">2.0</output> <span class="lp-muted" id="ticket-thr-src"></span></label>
+      <input type="range" class="lp-range" id="ticket-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="ticket-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="ticket-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="ticket-wrong">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg></span><h2>Where it goes wrong</h2></header>
+    <p class="lp-muted" id="ticket-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="ticket-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="ticket-use">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"></use></svg></span><h2>Use it in a program</h2></header>
+    <p>Run the model on each new ticket. A cancellation skips the margin test: a human retention agent always gets it. For the rest, if the margin reaches your threshold, assign the team queue for that label; otherwise use the general queue.</p>
+    <p>Tickets hold names, order numbers and complaints. The text stays on the machine that runs the model, there is no fee per ticket, and the time shown in the proof strip is the whole delay.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>What it must not be used for</p>Do not use it to refuse, auto-answer or refund anything: it routes, a person resolves. Do not treat the cancellation label as a churn detector. It reads the words of one ticket and nothing else.</div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel rd-with-toc" data-rd-tab="doc" data-rd-group="Business demos" data-rd-label="Document sorting" data-rd-icon="file-text" id="doc">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="doc-what">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"></use></svg></span><h2>What this replaces</h2></header>
+    <p>Today a clerk opens each scanned or pasted document and files it as an invoice, receipt, purchase order, quote, shipping notice or other, before anyone reads the details. Here the model picks the type. It never reads an amount, date or total.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The model only picks the document type. It never reads, extracts or checks any amount, date or total in the text.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Low-confidence predictions go to a manual-sort pile instead of a type folder.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="doc-try">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg></span><h2>Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own document. Then press Classify. </p>
+    <div class="lp-examples" id="doc-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="doc-text">Document text to sort</label>
+    <textarea class="rd-input lp-ta" id="doc-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="doc-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg>Classify</button><span class="lp-muted" id="doc-hint" role="status"></span></div>
+    <p class="rd-field__error" id="doc-msg" hidden="" role="alert"></p>
+    <p class="lp-muted lp-explain" id="doc-promptinfo"></p>
+    <ol class="lp-trace" id="doc-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="doc-seen">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"></use></svg></span><h2>What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="doc-proof"></div>
+    <p class="lp-muted lp-explain" id="doc-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="doc-accuracy">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg></span><h2>How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 102 labelled documents on your GPU. The 51 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 51 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="doc-eval" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg>Run evaluation</button><button type="button" class="rd-btn" id="doc-stop" hidden=""><svg class="rd-icon" aria-hidden="true"><use href="#i-square"></use></svg>Stop</button></div>
+    <div class="lp-progress" id="doc-eval-progress" hidden=""><span class="lp-muted" id="doc-eval-status" role="status"></span><div class="rd-meter" id="doc-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill lp-fill" id="doc-eval-fill" style="--w:0%"></span></div></div>
+    <p class="rd-field__error" id="doc-eval-msg" hidden="" role="alert"></p>
+    <div id="doc-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="doc-bar">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span><h2>Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="doc-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="doc-thr-box" hidden="">
+      <label class="rd-field__label" for="doc-thr">Margin threshold: <output id="doc-thr-readout">2.0</output> <span class="lp-muted" id="doc-thr-src"></span></label>
+      <input type="range" class="lp-range" id="doc-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="doc-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="doc-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="doc-wrong">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg></span><h2>Where it goes wrong</h2></header>
+    <p class="lp-muted" id="doc-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="doc-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="doc-use">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"></use></svg></span><h2>Use it in a program</h2></header>
+    <p>Run the model on the document's text (the first lines are enough). If the margin reaches your threshold, file it under that type; otherwise put it on a manual-sort pile. Amounts, dates and totals still need their own checks: the model only says what kind of document it is.</p>
+    <p>Documents hold prices, names and addresses. The text stays on the machine that runs the model, and there is no fee per page.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>What it must not be used for</p>Do not use the type to approve a payment. Do not send long documents: the model's prompt window is 2048 tokens including the fixed examples, so a text that does not fit is refused rather than cut silently.</div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel rd-with-toc" data-rd-tab="lead" data-rd-group="Business demos" data-rd-label="Sales leads" data-rd-icon="users" id="lead">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="lead-what">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"></use></svg></span><h2>What this replaces</h2></header>
+    <p>Today a sales assistant reads each website contact-form message and decides what the sender wants: to buy, to look around, to get support, to partner, or to sell something or find a job. Here the model tags the lead and sets the queue order. A person decides what to do.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Low confidence reorders the human review queue (uncertain leads move up for a person to look at). Code never rejects, deletes or auto-replies to a lead.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>The label only sets queue order and routing; a person decides what to do with every lead.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="lead-try">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg></span><h2>Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own lead. Then press Classify. </p>
+    <div class="lp-examples" id="lead-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="lead-text">Contact-form message</label>
+    <textarea class="rd-input lp-ta" id="lead-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="lead-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg>Classify</button><span class="lp-muted" id="lead-hint" role="status"></span></div>
+    <p class="rd-field__error" id="lead-msg" hidden="" role="alert"></p>
+    <p class="lp-muted lp-explain" id="lead-promptinfo"></p>
+    <ol class="lp-trace" id="lead-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="lead-seen">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"></use></svg></span><h2>What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="lead-proof"></div>
+    <p class="lp-muted lp-explain" id="lead-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="lead-accuracy">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg></span><h2>How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 95 labelled leads on your GPU. The 47 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 48 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="lead-eval" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg>Run evaluation</button><button type="button" class="rd-btn" id="lead-stop" hidden=""><svg class="rd-icon" aria-hidden="true"><use href="#i-square"></use></svg>Stop</button></div>
+    <div class="lp-progress" id="lead-eval-progress" hidden=""><span class="lp-muted" id="lead-eval-status" role="status"></span><div class="rd-meter" id="lead-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill lp-fill" id="lead-eval-fill" style="--w:0%"></span></div></div>
+    <p class="rd-field__error" id="lead-eval-msg" hidden="" role="alert"></p>
+    <div id="lead-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="lead-bar">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span><h2>Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="lead-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="lead-thr-box" hidden="">
+      <label class="rd-field__label" for="lead-thr">Margin threshold: <output id="lead-thr-readout">2.0</output> <span class="lp-muted" id="lead-thr-src"></span></label>
+      <input type="range" class="lp-range" id="lead-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="lead-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="lead-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="lead-wrong">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg></span><h2>Where it goes wrong</h2></header>
+    <p class="lp-muted" id="lead-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="lead-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="lead-use">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"></use></svg></span><h2>Use it in a program</h2></header>
+    <p>Run the model on each message. The label tags the lead and routes it. The margin sets the order: uncertain leads move to the front of the review queue so a person looks at them first. Code never rejects, deletes or answers a lead.</p>
+    <p>Contact-form messages hold names, emails and company details. The text stays on the machine that runs the model, and there is no fee per message.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>What it must not be used for</p>Do not drop leads the model calls vendor or job seeker without a person looking: a miss can cost a sale. Do not use it to score a person. It reads one message and nothing else.</div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel rd-with-toc" data-rd-tab="sens" data-rd-group="Business demos" data-rd-label="Sensitive-text check" data-rd-icon="shield-alert" id="sens">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="sens-what">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-replace"></use></svg></span><h2>What this replaces</h2></header>
+    <p>Today, often nobody checks: people paste emails, customer records and keys into a cloud chatbot and hope. Here a check runs first on your own machine, a plain regex check and the model, and the text may be pasted only if both say it is clean.</p>
+    <p class="lp-lead">The rules this demo follows:</p>
+    <ul class="rd-icon-list"><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>Fail closed: the text is sent to the cloud assistant only when the model says clean with high confidence; anything else (personal-data, secret-or-credential, or low confidence) is blocked and the user is told why.</li><li><svg class="rd-icon" aria-hidden="true"><use href="#i-info"></use></svg>This is a speed bump to catch accidents, not a compliance control, and it must never be described as one.</li></ul>
+  </section>
+  <section class="rd-tabsec" id="sens-try">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg></span><h2>Try it</h2></header>
+    <p>Pick an example from the held-out test split, or type your own text. Then press Classify. Both checks run: the plain regex check and the model.</p>
+    <div class="lp-examples" id="sens-examples" role="group" aria-label="Examples"></div>
+    <p class="lp-muted lp-explain">An example gets a "tricky" tag after you run the evaluation below, if the model got it wrong there.</p>
+    <label class="rd-field__label" for="sens-text">Text you are about to paste into a cloud assistant</label>
+    <textarea class="rd-input lp-ta" id="sens-text" rows="5" spellcheck="false" placeholder="Type or pick an example"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="sens-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg>Classify</button><span class="lp-muted" id="sens-hint" role="status"></span></div>
+    <p class="rd-field__error" id="sens-msg" hidden="" role="alert"></p>
+    <p class="lp-muted lp-explain" id="sens-promptinfo"></p>
+    <ol class="lp-trace" id="sens-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="sens-seen">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"></use></svg></span><h2>What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="sens-proof"></div>
+    <p class="lp-muted lp-explain" id="sens-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="sens-accuracy">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg></span><h2>How often is it right?</h2></header>
+    <p>One example proves nothing. This runs the model on 108 labelled texts on your GPU. The 54 dev items pick the bar for acting alone: the lowest margin at which the answers the program would handle alone are at least 90% right (and at least 5 items). The 54 test items were not used to pick anything, so they give the honest numbers. The examples inside the prompt belong to neither set.</p>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="sens-eval" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-column"></use></svg>Run evaluation</button><button type="button" class="rd-btn" id="sens-stop" hidden=""><svg class="rd-icon" aria-hidden="true"><use href="#i-square"></use></svg>Stop</button></div>
+    <div class="lp-progress" id="sens-eval-progress" hidden=""><span class="lp-muted" id="sens-eval-status" role="status"></span><div class="rd-meter" id="sens-eval-meter" role="progressbar" aria-label="Evaluation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="rd-meter__fill lp-fill" id="sens-eval-fill" style="--w:0%"></span></div></div>
+    <p class="rd-field__error" id="sens-eval-msg" hidden="" role="alert"></p>
+    <div id="sens-acc-out" class="lp-acc"><p class="lp-muted">No numbers yet. Press Run evaluation (load the model first). Everything here comes from that run, nothing is stored or pre-filled.</p></div>
+  </section>
+  <section class="rd-tabsec" id="sens-bar">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-sliders-horizontal"></use></svg></span><h2>Choose how careful to be</h2></header>
+    <p>The margin threshold is the bar for letting the program act alone. At or above it, the program acts. Below it, a person looks. Raise the bar and fewer items are handled alone, and the chart shows whether those are more accurate. Lower it and more are handled alone, with more mistakes nobody sees.</p>
+    <p class="lp-muted" id="sens-thr-empty">Run the evaluation first: the slider works on its real results.</p>
+    <div id="sens-thr-box" hidden="">
+      <label class="rd-field__label" for="sens-thr">Margin threshold: <output id="sens-thr-readout">2.0</output> <span class="lp-muted" id="sens-thr-src"></span></label>
+      <input type="range" class="lp-range" id="sens-thr" min="0" max="8" step="0.1" value="2">
+      <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="sens-thr-reset">Back to the dev-chosen value</button></div>
+      <div id="sens-thr-out"></div>
+    </div>
+  </section>
+  <section class="rd-tabsec" id="sens-wrong">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg></span><h2>Where it goes wrong</h2></header>
+    <p class="lp-muted" id="sens-wrong-empty">Run the evaluation first. Then every wrong answer appears here, word for word, with the ones a person would catch and the ones that would get through.</p>
+    <div id="sens-wrong-out"></div>
+  </section>
+  <section class="rd-tabsec" id="sens-use">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"></use></svg></span><h2>Use it in a program</h2></header>
+    <p>Run both checks. Block the text when either finds personal data or a secret, or when the model's margin is low. That is failing closed: doubt means no. Regular expressions are good at exact formats such as card numbers and keys. The model can read meaning. The table in the accuracy card shows what each one caught on the test split.</p>
+    <p>The text being checked is the sensitive thing, so the check cannot send it anywhere. Running on the same machine is what makes it possible to check the text before it leaves.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>What it must not be used for</p>This is a speed bump for accidents, not a compliance control. It will miss things. Do not describe it to anyone as data-loss prevention or as proof that a text is safe.</div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel rd-with-toc" data-rd-tab="own" data-rd-group="Your own" data-rd-label="Your own" data-rd-icon="wand-sparkles" id="own">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="own-setup">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-pencil"></use></svg></span><h2>Describe your decision</h2></header>
+    <p>Describe your own decision: one instruction, the possible answers (two to eight) and a few examples of each. The model reads them once, then picks one answer for every text you give it. It starts with a non-business case, sorting kitchen notes, so you can see the idea before trying your own.</p>
+    <div class="rd-field"><label class="rd-field__label" for="own-instruction">Instruction</label><input class="rd-input" id="own-instruction" type="text" maxlength="200" value="Sort this kitchen note into one pile."></div>
+    <h3>Answers <span class="lp-muted" id="own-label-count">3 of 8 answers</span></h3>
+    <p class="lp-muted lp-explain">Each answer needs its own name. The description is optional but tells the model what the name means.</p>
+    <div id="own-labels" class="lp-rows"><div class="lp-row lp-row--label"><input class="rd-input" type="text" aria-label="Answer name" placeholder="name, e.g. shopping" maxlength="30" value="shopping"><input class="rd-input" type="text" aria-label="What it means (optional)" placeholder="what it means (optional)" value="things to buy at the shop"><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this answer"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--label"><input class="rd-input" type="text" aria-label="Answer name" placeholder="name, e.g. shopping" maxlength="30" value="recipe"><input class="rd-input" type="text" aria-label="What it means (optional)" placeholder="what it means (optional)" value="cooking steps or ingredients for a dish"><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this answer"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--label"><input class="rd-input" type="text" aria-label="Answer name" placeholder="name, e.g. shopping" maxlength="30" value="reminder"><input class="rd-input" type="text" aria-label="What it means (optional)" placeholder="what it means (optional)" value="something to remember to do at a certain time"><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this answer"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div></div>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="own-add-label"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"></use></svg>Add an answer</button></div>
+    <h3>Examples <span class="lp-muted" id="own-shot-count">6 of 12 examples</span></h3>
+    <p class="lp-muted lp-explain">Short texts with the right answer. The prompt window is 2048 tokens in total (instruction, answers, examples and your text). A text that does not fit is refused, never cut.</p>
+    <div id="own-shots" class="lp-rows"><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Buy oats, two lemons and a bag of rice"><select class="rd-select" aria-label="Its answer" data-want="shopping"><option value="shopping" selected="">shopping</option><option value="recipe">recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="We are out of olive oil again"><select class="rd-select" aria-label="Its answer" data-want="shopping"><option value="shopping" selected="">shopping</option><option value="recipe">recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Fry the onions until soft, add the tomatoes and simmer for 20 minutes"><select class="rd-select" aria-label="Its answer" data-want="recipe"><option value="shopping">shopping</option><option value="recipe" selected="">recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Pancakes: 200g flour, 2 eggs, 300ml milk, pinch of salt. Whisk, rest, fry."><select class="rd-select" aria-label="Its answer" data-want="recipe"><option value="shopping">shopping</option><option value="recipe" selected="">recipe</option><option value="reminder">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Take the bread out of the freezer tonight"><select class="rd-select" aria-label="Its answer" data-want="reminder"><option value="shopping">shopping</option><option value="recipe">recipe</option><option value="reminder" selected="">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div><div class="lp-row lp-row--shot"><input class="rd-input" type="text" aria-label="Example text" placeholder="an example text" value="Descale the kettle on Sunday"><select class="rd-select" aria-label="Its answer" data-want="reminder"><option value="shopping">shopping</option><option value="recipe">recipe</option><option value="reminder" selected="">reminder</option></select><button type="button" class="rd-btn rd-btn--icon" aria-label="Remove this example"><svg class="rd-icon" aria-hidden="true"><use href="#i-trash"></use></svg></button></div></div>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--sm" id="own-add-shot"><svg class="rd-icon" aria-hidden="true"><use href="#i-plus"></use></svg>Add an example</button></div>
+    <p class="rd-field__error" id="own-form-error" hidden="" role="alert"></p>
+    <details class="rd-fold"><summary>The exact text the model reads</summary><pre class="lp-code"><code id="own-prompt"></code></pre></details>
+    <div class="rd-field lp-thr-own"><label class="rd-field__label" for="own-thr-own">Margin below which a person looks</label><input class="rd-input" id="own-thr-own" type="number" min="0" max="20" step="0.1" value="2"><p class="rd-field__hint">A starter value, not tuned. This tab has no answer key, so it cannot choose one for you.</p></div>
+  </section>
+  <section class="rd-tabsec" id="own-try">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg></span><h2>Try it</h2></header>
+    <p>Type a text, or pick one of these, and press Classify.</p>
+    <div class="lp-examples" id="own-examples" role="group" aria-label="Examples"></div>
+    <label class="rd-field__label" for="own-text">Text to sort</label>
+    <textarea class="rd-input lp-ta" id="own-text" rows="4" spellcheck="false" placeholder="Type a text"></textarea>
+    <div class="lp-actions"><button type="button" class="rd-btn rd-btn--primary" id="own-go" disabled=""><svg class="rd-icon" aria-hidden="true"><use href="#i-play"></use></svg>Classify</button><span class="lp-muted" id="own-hint" role="status"></span></div>
+    <p class="rd-field__error" id="own-msg" hidden="" role="alert"></p>
+    <ol class="lp-trace" id="own-trace" aria-live="polite" aria-label="What the model did with your text"></ol>
+  </section>
+  <section class="rd-tabsec" id="own-seen">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-gauge"></use></svg></span><h2>What happened on your machine</h2></header>
+    <p>These numbers are read from the call you just made, in this browser. Nothing is filled in until you press Classify.</p>
+    <div class="rd-stats lp-proof" id="own-proof"></div>
+    <p class="lp-muted lp-explain" id="own-proof-note"></p>
+  </section>
+  <section class="rd-tabsec" id="own-use">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-code"></use></svg></span><h2>Use it in a program</h2></header>
+    <p>The pattern is the same as in the other tabs: call the model, read the label and the margin, and let ordinary code decide. A low margin means a person looks. Changing an answer or an example changes the prompt, so the engine reads it onto the GPU again on the next call (the one-time setup shown in the proof strip).</p>
+    <p>There is no accuracy card here because there is no answer key. To know how often your setup is right you need a few dozen texts you have labelled yourself, set aside and never used as examples. The other tabs do exactly that.</p>
+    <div class="rd-callout rd-callout--warn"><p class="rd-callout__title"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"></use></svg>What it must not be used for</p>A margin from one setup does not carry over to another. Do not act on answers alone for anything that matters until you have measured the setup on labelled texts.</div>
+  </section>
+  </div>
+  </section>

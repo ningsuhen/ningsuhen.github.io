@@ -9,6 +9,7 @@
 //   data-rd="rail"       on <nav class="rd-toc">       → "On this page" rail
 //   data-rd="fullscreen" on the container (+ a [data-rd-fullscreen-toggle] button)
 //   data-rd="tabs"       on <nav class="rd-expnav" role="tablist"> → ?tab= tabs + history
+//   data-rd="doc"        on the .rd-doc frame (Doc design) → sidebars, bar, rail, pager, search
 //
 // Exposes window.rd with the module functions and a small event bus. Pages that adopt the fragment
 // contract call init({ root, data, rd }); rd.on('tabshow', cb) is how a chart in a hidden tab learns
@@ -18,6 +19,7 @@ import { mountExpnav } from "./expnav.js";
 import { mountRail } from "./rail.js";
 import { mountFullscreen } from "./fullscreen.js";
 import { mountTabs } from "./tabs.js";
+import { mountDoc } from "./doc.js";
 
 // Minimal event bus: rd.on(type, cb) registers; rd.emit(type, detail) fires. T4's tabs module emits
 // 'tabshow' when a panel becomes visible. Kept dependency-free and synchronous.
@@ -35,6 +37,8 @@ function mount(root = document) {
 	root.querySelectorAll('[data-rd="expnav"]').forEach((el) => mountExpnav(el));
 	root.querySelectorAll('[data-rd="rail"]').forEach((el) => mountRail(el));
 	root.querySelectorAll('[data-rd="fullscreen"]').forEach((el) => mountFullscreen(el));
+	// The Doc design before the tabs: its page list is the tab list, and it updates the bar, rail and pager on 'tabshow'.
+	root.querySelectorAll('[data-rd="doc"]').forEach((el) => mountDoc(el, { on }));
 	// Tabs last: their initial activation flips [hidden] on the panels, and the rails (mounted above) watch
 	// that attribute, so the observers are live before the first show().
 	root.querySelectorAll('[data-rd="tabs"]').forEach((el) => mountTabs(el, { emit }));
@@ -49,6 +53,20 @@ const rd = {
 	rail: mountRail,
 	fullscreen: mountFullscreen,
 	tabs: mountTabs,
+	doc: mountDoc,
+	// A widget's own state in the hash (a walker's #m=5&s=2), the one history write a fragment may make. hash(h, { push, state })
+	// writes the current path and query plus h: push adds one entry (state { k, y } like the tabs' own entries, so scroll
+	// restore works, plus the widget's own keys), otherwise the current entry is replaced. back() is history.back().
+	// The hash must not be an element id: put data-rd-hash on the widget so the Doc design keeps its section shown.
+	nav: {
+		hash(h, { push = false, state = {} } = {}) {
+			const url = location.pathname + location.search + h;
+			if (url === location.pathname + location.search + location.hash) return;
+			if (push) history.pushState({ k: Date.now(), y: Math.round(scrollY), ...state }, "", url);
+			else history.replaceState({ ...history.state, ...state }, "", url);
+		},
+		back: () => history.back(),
+	},
 	// Fragment-contract entry point: init({ root, data, rd }). Mounts the opt-in behaviours in root, including
 	// ?tab= tabs + history (data-rd="tabs").
 	init({ root, data, rd: self } = {}) {

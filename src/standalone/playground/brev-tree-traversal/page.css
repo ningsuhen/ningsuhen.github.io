@@ -1,0 +1,33 @@
+[data-page="brev-tree-traversal"] .tt-card,[data-page="brev-tree-traversal"] .gs-card{background:var(--rd-page-bg);border-radius:var(--rd-radius);padding:var(--rd-pad-card);margin:var(--rd-space-3) 0}
+[data-page="brev-tree-traversal"] .tt-pick{display:grid;gap:var(--rd-space-3)}
+[data-page="brev-tree-traversal"] .tt-msg{margin:var(--rd-space-3) 0 0;padding:var(--rd-space-3);border-left:var(--rd-space-1) solid var(--rd-primary);background:var(--rd-btn-bg);font-size:var(--rd-fs-lede);color:var(--rd-text-strong)}
+[data-page="brev-tree-traversal"] .tt-meta,[data-page="brev-tree-traversal"] .tt-ctl,[data-page="brev-tree-traversal"] .gs-ctl,[data-page="brev-tree-traversal"] .gs-dl,[data-page="brev-tree-traversal"] .tt-path,[data-page="brev-tree-traversal"] .tt-name{display:flex;flex-wrap:wrap;gap:var(--rd-space-2);align-items:center}
+[data-page="brev-tree-traversal"] .tt-meta,[data-page="brev-tree-traversal"] .tt-step,[data-page="brev-tree-traversal"] .tt-node,[data-page="brev-tree-traversal"] .tt-crit,[data-page="brev-tree-traversal"] .gs-part p{font-size:var(--rd-fs-xs);color:var(--rd-text-muted);margin:0}
+[data-page="brev-tree-traversal"] .tt-step{margin-left:auto}
+[data-page="brev-tree-traversal"] .tt-sr{position:absolute;clip-path:inset(50%)}
+[data-page="brev-tree-traversal"] .tt-path{list-style:none;padding:0}
+[data-page="brev-tree-traversal"] .tt-path li+li::before{content:"/"}
+[data-page="brev-tree-traversal"] .tt-stage{display:grid;gap:var(--rd-space-3);margin-top:var(--rd-space-3)}
+[data-page="brev-tree-traversal"] .tt-q,[data-page="brev-tree-traversal"] .tt-big,[data-page="brev-tree-traversal"] .tt-name,[data-page="brev-tree-traversal"] .tt-pct{font-size:var(--rd-fs-lede);font-weight:700;color:var(--rd-text-strong);margin:0}
+[data-page="brev-tree-traversal"] .tt-big{font-size:var(--rd-fs-stat)}
+[data-page="brev-tree-traversal"] .tt-opts{list-style:none;padding:0;margin:0;display:grid;gap:var(--rd-space-2)}
+[data-page="brev-tree-traversal"] .tt-opt{display:grid;grid-template-columns:1fr auto;gap:var(--rd-space-1) var(--rd-space-2);padding:var(--rd-space-2);margin:0;max-width:none;border-left:var(--rd-space-1) solid transparent}
+[data-page="brev-tree-traversal"] .tt-opt.is-gold{border-left-color:var(--rd-good)}
+[data-page="brev-tree-traversal"] .tt-opt.is-chosen{border-left-color:var(--rd-accent);background:var(--rd-btn-bg)}
+[data-page="brev-tree-traversal"] .tt-crit{grid-column:1/-1}
+[data-page="brev-tree-traversal"] .tt-bar,[data-page="brev-tree-traversal"] .tt-acc-bar,[data-page="brev-tree-traversal"] .gs-bar{height:var(--rd-space-2);background:var(--rd-line-soft);border-radius:var(--rd-radius-sm);overflow:hidden}
+[data-page="brev-tree-traversal"] .tt-bar i,[data-page="brev-tree-traversal"] .tt-acc-bar i,[data-page="brev-tree-traversal"] .gs-bar i{display:block;height:100%;width:calc(var(--w,0)*1%);background:var(--rd-seq-4)}
+[data-page="brev-tree-traversal"] .is-chosen .tt-bar i,[data-page="brev-tree-traversal"] tr.tt-hl .tt-acc-bar i,[data-page="brev-tree-traversal"] .gs-bar i{background:var(--rd-accent)}
+[data-page="brev-tree-traversal"] .tt-stack{display:flex;height:var(--rd-space-5);border-radius:var(--rd-radius-sm);overflow:hidden;background:var(--rd-line-soft)}
+[data-page="brev-tree-traversal"] .tt-stack span{height:100%;width:calc(var(--w)*1%)}
+[data-page="brev-tree-traversal"] .gs-fs{border:0;padding:0}
+[data-page="brev-tree-traversal"] .gs-part{display:grid;grid-template-columns:auto 1fr;gap:var(--rd-space-2) var(--rd-space-3);padding:var(--rd-space-2) 0}
+[data-page="brev-tree-traversal"] .gs-err{color:var(--rd-bad)}
+[data-page="brev-tree-traversal"] .gs-pre{white-space:pre-wrap;overflow-wrap:anywhere}
+[data-page="brev-tree-traversal"] li>span{min-width:0;overflow-wrap:anywhere}
+[data-page="brev-tree-traversal"] [hidden]{display:none}
+@media (min-width:640px){[data-page="brev-tree-traversal"] .tt-pick{grid-template-columns:1fr 1fr}
+[data-page="brev-tree-traversal"] .tt-wide{grid-column:1/-1}
+}
+@media (min-width:1100px){[data-page="brev-tree-traversal"] .tt-opts{grid-template-columns:1fr 1fr}
+}

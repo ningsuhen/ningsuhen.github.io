@@ -118,7 +118,9 @@ for (const [view, vp] of Object.entries(VIEWS)) {
 		const m = { lcp: median(samples.map((s) => s.lcp)), cls: median(samples.map((s) => s.cls)), tbt: median(samples.map((s) => s.tbt)) };
 		const b = BUDGET.budgets[view];
 		const problems = [];
-		if (m.lcp > b.lcp) problems.push(`LCP ${m.lcp}ms > ${b.lcp}ms`);
+		// LCP 0 means no LCP entry was observed: the budget would pass without measuring anything.
+		if (m.lcp === 0) problems.push("LCP not observed (no largest-contentful-paint entry)");
+		else if (m.lcp > b.lcp) problems.push(`LCP ${m.lcp}ms > ${b.lcp}ms`);
 		if (m.cls > b.cls) problems.push(`CLS ${m.cls} > ${b.cls}`);
 		if (m.tbt > b.tbt) problems.push(`TBT ${m.tbt}ms > ${b.tbt}ms`);
 		checks++;

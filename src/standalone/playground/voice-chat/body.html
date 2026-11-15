@@ -1,0 +1,91 @@
+<section class="rd-tabpanel rd-with-toc" data-rd-tab="talk" data-rd-group="Demo" data-rd-label="Talk to it" data-rd-icon="mic" id="talk">
+  <div class="rd-tab__body">
+  <p><span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-cpu"/></svg>On-device</span> <span class="rd-chip rd-chip--neutral"><svg class="rd-icon" aria-hidden="true"><use href="#i-zap"/></svg>WebGPU</span></p>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-mic"/></svg></span><h2 id="demo">Talk to it</h2></header>
+  <!-- The gate: nothing downloads before this click, and the size is shown. -->
+  <div class="vc-card vc-gate" id="gate">
+    <p class="vc-gate__note">This downloads the models to your browser and keeps them in Cache Storage. First load is <span class="vc-gate__size" id="gate-size">about 1.3&nbsp;GB</span> (less if you have used the Listen player, which already caches Kokoro and the ONNX Runtime). It needs a microphone and a GPU (WebGPU) for voice replies.</p>
+    <div>
+      <button class="rd-btn rd-btn--primary" id="start-btn" type="button"><svg class="rd-icon" aria-hidden="true"><use href="#i-play"/></svg>Start</button>
+    </div>
+    <p class="vc-gate__note" id="gate-status" hidden></p>
+  </div>
+
+  <!-- The live panel, hidden until Start. -->
+  <div class="vc-card" id="live" hidden>
+    <div class="vc-status" id="status">
+      <span class="vc-chip" id="chip-gpu"><svg class="rd-icon" aria-hidden="true"><use href="#i-cpu"/></svg>GPU</span>
+      <span class="vc-chip" id="chip-vad"><svg class="rd-icon" aria-hidden="true"><use href="#i-audio-lines"/></svg>VAD</span>
+      <span class="vc-chip" id="chip-turn"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Turn</span>
+      <span class="vc-chip" id="chip-llm"><svg class="rd-icon" aria-hidden="true"><use href="#i-brain"/></svg>LLM</span>
+      <span class="vc-chip" id="chip-tts"><svg class="rd-icon" aria-hidden="true"><use href="#i-volume-2"/></svg>Speaking</span>
+    </div>
+    <canvas class="vc-wave" id="wave" width="600" height="72" aria-label="Live microphone waveform"></canvas>
+    <p class="vc-transcript" id="transcript" aria-live="polite"></p>
+    <p class="vc-llm" id="llm" aria-live="polite"></p>
+    <div class="vc-err" id="err" hidden></div>
+    <div class="rd-table-wrap vc-lat">
+      <table class="rd-table vc-lat-t" id="latency" hidden>
+        <caption>Per-stage latency for the last turn (ms).</caption>
+        <thead><tr><th>Stage</th><th class="rd-num">ms</th></tr></thead>
+        <tbody>
+          <tr><td>VAD (per frame)</td><td class="vc-num" data-l="vad">–</td></tr>
+          <tr><td>Turn detection</td><td class="vc-num" data-l="turn">–</td></tr>
+          <tr><td>ASR (final)</td><td class="vc-num" data-l="asr">–</td></tr>
+          <tr><td>LLM (first token)</td><td class="vc-num" data-l="llmFirstToken">–</td></tr>
+          <tr><td>TTS (first chunk)</td><td class="vc-num" data-l="ttsFirstChunk">–</td></tr>
+          <tr class="rd-table__ref"><td>Time to first audio</td><td class="vc-num" data-l="timeToFirstAudio">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="vc-row">
+      <button class="rd-btn" id="stop-btn" type="button"><svg class="rd-icon" aria-hidden="true"><use href="#i-square"/></svg>Stop</button>
+    </div>
+  </div>
+  </section>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-keyboard"/></svg></span><h2 id="text">Type instead</h2></header>
+  <p class="vc-prose">No microphone? Type a message and the LLM answers it, spoken by Kokoro. This skips the VAD, turn and ASR stages.</p>
+  <div class="vc-card">
+    <textarea class="vc-text" rows="3" id="text-input" placeholder="Say something to the model…"></textarea>
+    <div class="vc-row">
+      <button class="rd-btn rd-btn--primary" id="text-send" type="button"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Send</button>
+    </div>
+    <p class="vc-llm" id="text-llm" aria-live="polite"></p>
+  </div>
+  </section>
+  </div>
+</section>
+<section class="rd-tabpanel rd-with-toc" data-rd-tab="about" data-rd-group="About" data-rd-label="How it works" data-rd-icon="audio-lines" id="about">
+  <div class="rd-tab__body">
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-audio-lines"/></svg></span><h2 id="how">How it works</h2></header>
+  <p class="vc-prose">The pipeline is one direction, with a loop back for barge-in. Each stage runs in your browser on ONNX Runtime Web; the audio path, the voice-activity and turn state machines, and the sentence splitter are Rust compiled to WebAssembly.</p>
+  <div class="vc-pipe" id="pipe">
+    <span class="vc-stage" data-stage="mic"><svg class="rd-icon" aria-hidden="true"><use href="#i-mic"/></svg>Mic</span>
+    <span class="vc-arrow"><svg class="rd-icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+    <span class="vc-stage" data-stage="vad"><svg class="rd-icon" aria-hidden="true"><use href="#i-audio-lines"/></svg>VAD</span>
+    <span class="vc-arrow"><svg class="rd-icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+    <span class="vc-stage" data-stage="turn"><svg class="rd-icon" aria-hidden="true"><use href="#i-message-circle"/></svg>Turn</span>
+    <span class="vc-arrow"><svg class="rd-icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+    <span class="vc-stage" data-stage="asr"><svg class="rd-icon" aria-hidden="true"><use href="#i-keyboard"/></svg>ASR</span>
+    <span class="vc-arrow"><svg class="rd-icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+    <span class="vc-stage" data-stage="llm"><svg class="rd-icon" aria-hidden="true"><use href="#i-brain"/></svg>LLM</span>
+    <span class="vc-arrow"><svg class="rd-icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+    <span class="vc-stage" data-stage="tts"><svg class="rd-icon" aria-hidden="true"><use href="#i-volume-2"/></svg>Kokoro</span>
+  </div>
+  <p class="vc-prose">Barge-in: while Kokoro is speaking, the microphone stays open on a stricter threshold. If you start talking, playback stops at once, the speech engine is cancelled, the in-flight answer is discarded, and the state shows <em>interrupted</em>.</p>
+  </section>
+  <section class="rd-tabsec">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2 id="caveats">Caveats &amp; sources</h2></header>
+  <ul class="vc-prose">
+    <li><strong>WebGPU is required for voice replies.</strong> Without it, the VAD, turn detector and ASR still run (on the WASM backend), but the language model is too slow on a single thread to be usable, so the page says so and offers the text fallback.</li>
+    <li><strong>Echo.</strong> Your speaker's output re-enters the microphone. The page uses the browser's echo cancellation and a stricter VAD threshold while speaking, but headphones are more reliable for barge-in.</li>
+    <li><strong>Size.</strong> About 1.3&nbsp;GB on first load. It is stored in Cache Storage, which has a quota on some browsers (notably Safari); the page tells you before it downloads.</li>
+    <li><strong>Latency.</strong> The per-stage numbers are measured in your browser, not a fixed target. They depend on your GPU.</li>
+  </ul>
+  <p class="vc-prose">Models (all fetched from public Hugging Face repositories at runtime, nothing committed to this site): Silero VAD v5, Smart Turn v3.2, Moonshine base (ASR), LFM2.5-1.2B-Instruct (LLM), and Kokoro-82M (the site's shared Listen engine). The ONNX Runtime is the site's shared pinned loader.</p>
+  </section>
+  </div>
+</section>

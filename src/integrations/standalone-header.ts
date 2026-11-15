@@ -37,7 +37,12 @@ export default function standaloneHeader(): AstroIntegration {
 					if (file.startsWith(publicDir) && file.endsWith(".html")) server.ws.send({ type: "full-reload" });
 				});
 				server.middlewares.use(async (req, res, next) => {
-					const pathname = decodeURIComponent((req.url ?? "/").split("?")[0]);
+					let pathname: string;
+					try {
+						pathname = decodeURIComponent((req.url ?? "/").split("?")[0]);
+					} catch {
+						return next(); // malformed %-escape: not a page of ours
+					}
 					const rel = pathname.endsWith("/") ? `${pathname}index.html` : pathname;
 					const file = path.join(publicDir, path.normalize(rel));
 					if (!rel.endsWith(".html") || !file.startsWith(publicDir)) return next();
@@ -59,6 +64,8 @@ export default function standaloneHeader(): AstroIntegration {
 				// folders (page and data) are removed here, before pagefind indexes the output.
 				const drafts = draftHrefs();
 				for (const href of drafts) {
+					// An idea without a page links to its post, which is draft: true itself and never built.
+					if (/^\/posts\/[^/]+\/$/.test(href)) continue;
 					if (!/^\/(research|playground|ideas)\/[^/]+\/$/.test(href)) throw new Error(`Draft href is not a standalone page folder: ${href}`);
 					await rm(path.join(outDir, href), { recursive: true, force: true });
 				}

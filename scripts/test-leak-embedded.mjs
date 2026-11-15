@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { deflateSync, gzipSync } from "node:zlib";
 import { decodePayload, scanEmbedded } from "./check-public-leaks.mjs";
+import { sanitizeText } from "./sanitize-embedded.mjs";
 
 // A fake build path. "alice" is a stand-in, never the owner's real username.
 const FAKE_HOME = "/Users/alice/git/secret-project";
@@ -69,4 +70,21 @@ test("scanEmbedded: an opaque data URI (font) is not decoded, even if it could h
 	const blob = Buffer.from(`font ${FAKE_HOME}\n`.padEnd(4096, "x")).toString("base64");
 	const html = `<style>@font-face{src:url(data:font/woff2;base64,${blob})}</style>`;
 	assert.equal(scanEmbedded(html, "fixture.html", { docs: false }).length, 0, "opaque media types are not treated as payloads");
+});
+
+test("sanitizeText: scrubs embedded build and home paths in place; same length, still a valid wasm", async () => {
+	// A real minimal module: one memory and one active data segment holding the fake paths (panic-location strings).
+	const data = Buffer.from(`${FAKE_HOME}|${FAKE_RUSTC}|${FAKE_CARGO}`);
+	const seg = Buffer.concat([Buffer.from([0x01, 0x00, 0x41, 0x00, 0x0b, data.length]), data]);
+	const wasm = Buffer.concat([Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x05, 0x03, 0x01, 0x00, 0x01, 0x0b, seg.length]), seg]);
+	await WebAssembly.compile(wasm);
+	const page = embed(gzipSync(wasm).toString("base64"));
+	assert.ok(scanEmbedded(page, "page.html", { docs: false }).length > 0, "the fixture carries leaks");
+	const { text, changes } = await sanitizeText(page);
+	assert.equal(changes.length, 1, "one payload cleaned");
+	assert.deepEqual(scanEmbedded(text, "page.html", { docs: false }), [], "no leak left after cleaning");
+	const out = decodePayload(text.match(/WASM_B64 = "([^"]+)"/)[1]);
+	assert.equal(out.length, wasm.length, "same length: no offset moves");
+	await WebAssembly.compile(out);
+	assert.equal((await sanitizeText(text)).changes.length, 0, "idempotent");
 });

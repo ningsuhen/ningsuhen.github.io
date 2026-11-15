@@ -1,4 +1,4 @@
-// Public-leak guard. Scans what the site publishes (dist/, public/, src/content/, src/data/) and the
+// Public-leak guard. Scans what the site publishes (dist/, public/, src/content/, src/data/, src/standalone/) and the
 // public docs for local paths, machine and host names, personal contact details, secrets, `../` links
 // that escape the site root, source maps, OS junk files and image metadata.
 // Extra private terms (never committed): scripts/leak-denylist.local.txt, one literal per line.
@@ -13,7 +13,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
 const DENYLIST = path.join(HERE, "leak-denylist.local.txt");
 const EMBED_ALLOWLIST = path.join(HERE, "leak-embedded-allowlist.json");
-const SCAN_DIRS = ["dist", "public", "src/content", "src/data"].map((d) => path.join(ROOT, d));
+// src/standalone: page fragments; a Draft one is never built, so dist/ alone would miss it.
+const SCAN_DIRS = ["dist", "public", "src/content", "src/data", "src/standalone"].map((d) => path.join(ROOT, d));
 const DOC_FILES = ["CLAUDE.md", "README.md", "THIRD_PARTY_LICENSES.md", "LICENSE"].map((f) => path.join(ROOT, f));
 const IMAGE_EXT = /\.(png|jpe?g|webp|gif)$/i;
 const FONT_EXT = /\.(woff2?|ttf|otf|eot)$/i; // binary glyph data: no text to scan
@@ -34,7 +35,8 @@ const redact = (s) => `${s.slice(0, 4)}...(${s.length} chars)`;
 
 /** textOnly rules skip binary files (random bytes match them). @type {{id: string, re: RegExp, docs: boolean, textOnly?: boolean, allow?: (m: string, file: string) => boolean, canary: string}[]} */
 const RULES = [
-	{ id: "home-path", re: /\/Users\/[\w.-]+|\/home\/[a-z][\w.-]*\/|\b[A-Za-z]:\\+(?:Users|Documents)\b|file:\/\/\/?[A-Za-z]/g, docs: true, allow: (m, file) => /^\/(?:Users|home)\/runner\/?$/.test(m) && VENDOR_DIR.test(file), canary: "/Users/alice/git" },
+	// macOS also exposes the user's machine through mounted volumes and its per-user temp folders.
+	{ id: "home-path", re: /\/Users\/[\w.-]+|\/home\/[a-z][\w.-]*\/|\/Volumes\/[\w.-]+|\/private\/(?:var|tmp)\/|\/var\/folders\/|\b[A-Za-z]:\\+(?:Users|Documents)\b|file:\/\/\/?[A-Za-z]/g, docs: true, allow: (m, file) => /^\/(?:Users|home)\/runner\/?$/.test(m) && VENDOR_DIR.test(file), canary: "/Users/alice/git" },
 	// Compiler paths baked into Rust wasm (panic locations, registry sources): they name the builder's home and toolchain.
 	{ id: "build-path", re: /\/rustc\/[0-9a-f]{12,}|\.cargo\/registry|\.rustup\/toolchains/g, docs: true, allow: (_m, file) => VENDOR_DIR.test(file), canary: "/rustc/0123456789abcdef0123456789abcdef01234567/library/core" },
 	{ id: "home-tilde", re: /(?<=[\s"'`(=,>])~\/[\w.-]/g, docs: true, textOnly: true, allow: (_m, file) => BPE_TOKENIZER.test(file), canary: "open ~/git/app" },
@@ -51,7 +53,11 @@ const RULES = [
 	},
 	{
 		id: "email",
-		re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g,
+		// Linear-time: the local part is capped (RFC 5321's 255-octet limit) and the domain's
+		// labels partition unambiguously (each iteration ends at its dot). The unbounded local part
+		// plus the ambiguous label repetition backtracked O(L^2) on long base64-like runs (a shipped
+		// 200 KB data field cost 3 min with zero hits).
+		re: /[A-Za-z0-9._%+-]{1,254}@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}/g,
 		docs: true,
 		textOnly: true,
 		allow: (m, file) => {
@@ -102,6 +108,21 @@ function imageMetadata(buf) {
 			if (marker === 0xda) break; // start of scan: image data follows
 			if (banned.has(marker)) out.push(`jpeg ${banned.get(marker)}`);
 			i += 2 + buf.readUInt16BE(i + 2);
+		}
+	} else if (buf.toString("latin1", 0, 4) === "GIF8") {
+		// Walk the blocks: a comment extension (0x21 0xFE) or an XMP application extension is metadata.
+		const skipSubBlocks = (i) => {
+			while (i < buf.length && buf[i] !== 0) i += buf[i] + 1;
+			return i + 1;
+		};
+		const table = (flags) => (flags & 0x80 ? 3 * 2 ** ((flags & 0x07) + 1) : 0);
+		for (let i = 13 + table(buf[10]); i < buf.length; ) {
+			if (buf[i] === 0x21) {
+				if (buf[i + 1] === 0xfe) out.push("gif comment");
+				if (buf[i + 1] === 0xff && buf.toString("latin1", i + 3, i + 11) === "XMP Data") out.push("gif XMP");
+				i = skipSubBlocks(i + 2);
+			} else if (buf[i] === 0x2c) i = skipSubBlocks(i + 11 + table(buf[i + 9]));
+			else break; // 0x3b trailer, or not a block we know
 		}
 	}
 	return out;
@@ -359,6 +380,7 @@ function main() {
 	const files = new Set(found.map((p) => p.file)).size;
 	if (found.length) {
 		console.log(`\n${found.length} leak finding(s) in ${files} file(s). Fix the source, or add a generic replacement; never allowlist a private term.`);
+		if (found.some((p) => p.embedded)) console.log("Embedded payload findings (a wasm or bundle in base64): node scripts/sanitize-embedded.mjs <file> replaces them in place with same-length generic text; still ask the exporting project to fix its build.");
 		process.exit(1);
 	}
 	console.log(`PASS: ${scanned} file(s) clean (${existsSync(DENYLIST) ? "denylist applied" : "no local denylist"}${allowedPayloads.size ? `, ${allowedPayloads.size} embedded payload exception(s) active` : ""}).`);
@@ -367,4 +389,4 @@ function main() {
 // Run only when invoked directly, so the decoder can be imported by the unit test without scanning the repo.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
 
-export { decodePayload, scanEmbedded, scanLines, scanFile, B64_BLOBS };
+export { decodePayload, scanEmbedded, scanLines, scanFile, B64_BLOBS, RULES };

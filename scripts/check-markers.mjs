@@ -8,6 +8,7 @@ import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
 import { isOpenMarker, MARKER_TYPES, parseOwnerMarkers } from "../src/plugins/owner-markers.mjs";
+import { postSource } from "./lib/posts.mjs";
 
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
@@ -70,8 +71,8 @@ if (
 }
 
 const posts = readdirSync(POSTS)
-	.map((slug) => ({ slug, file: path.join(POSTS, slug, "index.md") }))
-	.filter((p) => existsSync(p.file))
+	.map((slug) => ({ slug, file: postSource(path.join(POSTS, slug)) }))
+	.filter((p) => p.file)
 	.map((p) => {
 		const src = readFileSync(p.file, "utf8");
 		return {

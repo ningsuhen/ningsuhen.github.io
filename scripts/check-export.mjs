@@ -75,6 +75,10 @@ function validateMeta(meta, kind, slug) {
 		p.push(`meta.width "${meta.width}" must be "post" or "wide"`);
 	if (meta.layout !== undefined && !["tabbed", "scroll"].includes(meta.layout))
 		p.push(`meta.layout "${meta.layout}" must be "tabbed" or "scroll"`);
+	if (meta.shell !== undefined && !["card", "doc"].includes(meta.shell))
+		p.push(`meta.shell "${meta.shell}" must be "card" or "doc"`);
+	if (meta.shell === "doc" && meta.layout !== "tabbed")
+		p.push('meta.shell "doc" needs layout "tabbed": its page list is the tabs');
 	if (meta.comments !== undefined && typeof meta.comments !== "boolean")
 		p.push("meta.comments must be a boolean");
 	if (meta.search !== undefined && typeof meta.search !== "boolean")
@@ -328,6 +332,14 @@ function validateIcons(body, problems) {
 // refs (/…) against public/. External http(s)/mailto/tel, in-page #anchors and same-page ?query
 // navigations (e.g. ?tab=…#… — always the fragment's own URL) are navigations, not subresources, and
 // are allowed.
+// A link to another standalone page the shell renders from a fragment (/research/<slug>/, /ideas/<slug>/ …):
+// it has no file under public/, its route is src/pages/<segment>/[slug].astro over src/standalone/<kind>/<slug>/.
+const SEGMENT_KIND = { research: "research", playground: "playground", ideas: "idea" };
+function shellRendered(ref) {
+	const m = ref.match(/^\/(research|playground|ideas)\/([a-z0-9-]+)\/?$/);
+	return !!m && existsSync(path.join(ROOT, "src/standalone", SEGMENT_KIND[m[1]], m[2], "meta.json"));
+}
+
 function validateLinks(body, kind, slug) {
 	const p = [];
 	const base = path.join(ROOT, "public", kind, slug);
@@ -337,10 +349,12 @@ function validateLinks(body, kind, slug) {
 		),
 	)) {
 		if (/^(?:https?:|mailto:|tel:|#|\?)/.test(ref)) continue;
-		let target = ref.startsWith("/")
-			? path.join(ROOT, "public", ref)
-			: path.resolve(base, ref);
-		if (ref.endsWith("/")) target = path.join(target, "index.html");
+		const file = ref.replace(/[?#].*$/, ""); // a page's own ?tab=…#… is a place on that page, not part of its file
+		if (shellRendered(file)) continue;
+		let target = file.startsWith("/")
+			? path.join(ROOT, "public", file)
+			: path.resolve(base, file);
+		if (file.endsWith("/")) target = path.join(target, "index.html");
 		if (!existsSync(target))
 			p.push(
 				`link/asset "${ref}" does not resolve (${path.relative(ROOT, target)})`,

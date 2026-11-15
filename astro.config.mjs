@@ -1,3 +1,4 @@
+import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { fileURLToPath } from "node:url";
 import svelte from "@astrojs/svelte";
@@ -14,6 +15,7 @@ import rehypeComponents from "rehype-components"; /* Render the custom directive
 import { h } from "hastscript";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
+import remarkComment from "remark-comment"; /* <!-- --> comments, also in MDX (which rejects them otherwise) */
 import remarkDirective from "remark-directive"; /* Handle directives */
 import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-directives";
 import remarkMath from "remark-math";
@@ -26,6 +28,7 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import standaloneHeader from "./src/integrations/standalone-header.ts";
 import { standalonePages } from "./scripts/lib/standalone-pages.mjs";
+import { draftHrefs } from "./scripts/lib/draft-pages.mjs";
 import { remarkOwnerMarkers } from "./src/plugins/owner-markers.mjs";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 import { remarkSourceMap } from "./src/plugins/remark-source-map.mjs";
@@ -42,17 +45,15 @@ function standaloneSitemapPages() {
 // https://astro.build/config
 export default defineConfig({
 	site: SITE,
-	// Dev port is 4321 and fails loudly if taken (vite strictPort below). `pnpm dev:agent` overrides it to 4400+.
+	// Dev port: 8050 by default (override with ASTRO_DEV_PORT); fails loudly if taken (vite strictPort below). `pnpm dev:agent` overrides it to 4400+.
 	server: {
 		host: "127.0.0.1",
-		port: 4321,
+		port: Number(process.env.ASTRO_DEV_PORT) || 8050,
 	},
 	base: "/",
 	trailingSlash: "always",
 	// Astro 7 defaults to JSX whitespace rules; keep the Astro 5 HTML output.
 	compressHTML: true,
-	// Keeps src/content/config.ts (slug, entry.render()) working; migrate to src/content.config.ts with loaders later.
-	legacy: { collectionsBackwardsCompat: true },
 	redirects: {
 		"/ai-economy/": "/research/ai-economy/",
 		"/brev-tree-benchmark/": "/research/brev-tree-benchmark/",
@@ -110,7 +111,7 @@ export default defineConfig({
 			},
 			styleOverrides: {
 				codeBackground: "var(--codeblock-bg)",
-				borderRadius: "0.75rem",
+				borderRadius: "var(--radius-large)",
 				borderColor: "none",
 				codeFontSize: "0.875rem",
 				codeFontFamily: "'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
@@ -136,14 +137,19 @@ export default defineConfig({
 				showCopyToClipboardButton: false,
 			}
 		}),
-        svelte(),
-		sitemap({ customPages: standaloneSitemapPages() }),
+		// After expressiveCode (its code blocks must reach .mdx too). .mdx inherits markdown.processor below.
+		mdx(),
+		svelte(),
+		// Draft pages are not shipped (the build removes their folder), but a shell-rendered Draft is still an Astro route.
+		sitemap({ customPages: standaloneSitemapPages(), filter: (page) => !draftHrefs().has(new URL(page).pathname) }),
 	],
 	markdown: {
 		// Astro 7 default processor is Satteri; keep the unified (remark/rehype) pipeline the site was built on.
 		processor: unified({
 		remarkPlugins: [
-			remarkOwnerMarkers, // first: hidden owner markers never reach the HTML, excerpt or reading time
+			// First: comments (owner markers included) never reach the HTML, excerpt or reading time, in .md and .mdx alike.
+			remarkComment,
+			remarkOwnerMarkers, // guard for a marker remark-comment cannot parse as a comment
 			remarkMath,
 			remarkReadingTime,
 			remarkExcerpt,
@@ -198,8 +204,6 @@ export default defineConfig({
 		}),
 	},
 	vite: {
-		// Source maps would publish build-machine source paths; keep them off in every build.
-		build: { sourcemap: false },
 		server: {
 			// Only `pnpm dev:agent` (npm_lifecycle_event) may fall back to the next free port.
 			strictPort: process.env.npm_lifecycle_event !== "dev:agent",
@@ -211,6 +215,8 @@ export default defineConfig({
 			},
 		},
 		build: {
+			// Source maps would publish build-machine source paths; keep them off in every build.
+			sourcemap: false,
 			rollupOptions: {
 				onwarn(warning, warn) {
 					// temporarily suppress this warning

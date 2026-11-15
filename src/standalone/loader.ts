@@ -22,6 +22,10 @@ export const metaSchema = z.object({
 	eyebrow: z.string().optional(),
 	width: z.enum(["post", "wide"]).default("post"),
 	layout: z.enum(["tabbed", "scroll"]).default("scroll"),
+	// The design the content renders in: "doc" (the document shell: pages in a left sidebar, the page's sections in the
+	// bar, "On this page" in a right sidebar) or "card" (the content card: hero, tab bar, rail beside the content). Same
+	// body. A doc needs tabs (its pages); a fragment without them renders as card.
+	shell: z.enum(["card", "doc"]).default("doc"),
 	comments: z.boolean().default(true),
 	search: z.boolean().default(true),
 	source: z.object({ project: z.string(), build: z.string() }).optional(),
@@ -32,7 +36,9 @@ export const metaSchema = z.object({
 });
 export type Meta = z.infer<typeof metaSchema>;
 
-export type Tab = { id: string; label: string; icon: string | null };
+// group and sub are optional (data-rd-group, data-rd-sub): the Doc design groups its page list by group and shows sub
+// under the page title. The Card design ignores both.
+export type Tab = { id: string; label: string; icon: string | null; group: string | null; sub: string | null };
 export type Rail = { id: string; text: string; level: 2 | 3 }[];
 
 const ROOT = path.resolve("src/standalone");
@@ -65,7 +71,7 @@ export function load(kind: string, slug: string): Fragment {
 	const body = readFileSync(path.join(dir, "body.html"), "utf8");
 	const css = existsSync(path.join(dir, "page.css")) ? readFileSync(path.join(dir, "page.css"), "utf8") : "";
 	const js = existsSync(path.join(dir, "page.js")) ? readFileSync(path.join(dir, "page.js"), "utf8") : "";
-	const { tabs, rails, body: withRails } = derive(body);
+	const { tabs, rails, body: withRails } = derive(body, meta.shell === "card");
 	return { meta, body: withRails, css, js, tabs, rails };
 }
 
@@ -74,14 +80,29 @@ export function load(kind: string, slug: string): Fragment {
 // the tab's start tag (works without JS).
 const TAB_RE = /<section\b[^>]*\bdata-rd-tab="([^"]+)"[^>]*>/g;
 const LABEL_RE = /\bdata-rd-label="([^"]+)"/;
+// An attribute value as written in the markup is HTML ("Caveats &amp; sources"); the tabs carry plain text, which the
+// shells escape once when they render it. Without decoding, a label showed a literal "&amp;".
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+const attr = (v: string | undefined): string | null =>
+	v === undefined
+		? null
+		: v.replace(/&(?:#(\d+)|#x([0-9a-f]+)|(amp|lt|gt|quot|apos));/gi, (m, dec, hex, name) =>
+				dec ? String.fromCodePoint(+dec) : hex ? String.fromCodePoint(parseInt(hex, 16)) : (ENTITIES[name.toLowerCase()] ?? m),
+			);
+const escText = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const ICON_RE = /\bdata-rd-icon="([^"]+)"/;
+const GROUP_RE = /\bdata-rd-group="([^"]+)"/;
+const SUB_RE = /\bdata-rd-sub="([^"]+)"/;
 
-function derive(body: string): { tabs: Tab[]; rails: Record<string, Rail>; body: string } {
+// inlineRail: put each tab's rail inside its panel (the Card design). The Doc design renders the rails in its right sidebar.
+function derive(body: string, inlineRail: boolean): { tabs: Tab[]; rails: Record<string, Rail>; body: string } {
 	const starts = [...body.matchAll(TAB_RE)].map((m) => ({ id: m[1], at: m.index!, end: m.index! + m[0].length, tag: m[0] }));
 	const tabs: Tab[] = starts.map((s) => ({
 		id: s.id,
-		label: s.tag.match(LABEL_RE)?.[1] ?? s.id,
-		icon: s.tag.match(ICON_RE)?.[1] ?? null,
+		label: attr(s.tag.match(LABEL_RE)?.[1]) ?? s.id,
+		icon: attr(s.tag.match(ICON_RE)?.[1]),
+		group: attr(s.tag.match(GROUP_RE)?.[1]),
+		sub: attr(s.tag.match(SUB_RE)?.[1]),
 	}));
 	const rails: Record<string, Rail> = {};
 	let out = body;
@@ -92,14 +113,15 @@ function derive(body: string): { tabs: Tab[]; rails: Record<string, Rail>; body:
 		const rail: Rail = [...chunk.matchAll(/<h([23])\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g)].map((m) => ({
 			level: +m[1] as 2 | 3,
 			id: m[2],
-			text: m[3].replace(/<[^>]+>/g, "").trim(),
+			// Plain text (entities decoded, like the labels): every shell escapes it once when it renders it.
+			text: attr(m[3].replace(/<[^>]+>/g, "").trim()) ?? "",
 		}));
 		rails[s.id] = rail;
-		if (rail.length) {
+		if (rail.length && inlineRail) {
 			// data-rd="rail": rd.js mounts the scroll-spy (shell pages have no inline rail script, so without it nothing is
 			// ever highlighted). Same disclosure markup as the public pages: open by default so no-JS sees every link.
 			const nav = `<nav class="rd-toc" aria-label="On this page" data-rd="rail"><details open><summary><svg class="rd-icon" aria-hidden="true"><use href="#i-list"/></svg>On this page</summary><ol>${rail
-				.map((r, n) => `<li class="rd-toc__l${r.level}"><a href="#${r.id}"><span class="rd-toc__badge">${n + 1}</span><span class="rd-toc__text">${r.text}</span></a></li>`)
+				.map((r, n) => `<li class="rd-toc__l${r.level}"><a href="#${r.id}"><span class="rd-toc__badge">${n + 1}</span><span class="rd-toc__text">${escText(r.text)}</span></a></li>`)
 				.join("")}</ol></details><div class="rd-toc__indicator" aria-hidden="true"></div></nav>`;
 			out = out.slice(0, s.end) + nav + out.slice(s.end);
 		}

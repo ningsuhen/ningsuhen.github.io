@@ -1,7 +1,7 @@
 /**
  * Text normaliser for speech: turns written text into what a narrator would say, before any engine sees it.
  *
- * This is the single pre-pass for both engines. The Web Speech engine gets this output as is. The neural engine
+ * This is the single pre-pass before the engine. The neural engine
  * (public/tts/kokoro.js) runs Brev's Rust port of the original rules inside speak(); that second pass is a no-op
  * on this output because no digits, symbols or unspoken acronyms survive (test:tts pins it on every golden).
  * Keep this file dependency-free so the node:test suite can import it directly.
@@ -241,9 +241,15 @@ const SCALE_WORD: Readonly<Record<string, string>> = {
 	bn: "billion",
 	T: "trillion",
 	tn: "trillion",
+	thousand: "thousand",
+	million: "million",
+	billion: "billion",
+	trillion: "trillion",
 };
+/** A scale after an amount: a letter ("$5M") or a word ("$5 million", read "five million dollars"). */
+const MONEY_SCALE = "thousand|million|billion|trillion|bn|tn|[KkMBT]";
 const MONEY = new RegExp(
-	String.raw`([$€£¥₹])\s?(${NUM})\s?(bn|tn|[KkMBT])?(?:\s*[–-]\s*[$€£¥₹]?(${NUM})\s?(bn|tn|[KkMBT])?)?(?![A-Za-z])`,
+	String.raw`([$€£¥₹])\s?(${NUM})\s?(${MONEY_SCALE})?(?:\s*[–-]\s*[$€£¥₹]?(${NUM})\s?(${MONEY_SCALE})?)?(?![A-Za-z])`,
 	"g",
 );
 /** "7B", "100k", "1.5M": a number with a scale letter and nothing after it. */
@@ -408,7 +414,7 @@ export const SPELL: Readonly<Record<string, string>> = {
 	AMD: "A M D",
 	ARM: "arm",
 };
-/** Acronyms read as words, respelled so both engines say them the way people do. */
+/** Acronyms read as words, respelled so the voice says them the way people do. */
 export const SAY: Readonly<Record<string, string>> = {
 	JSON: "Jason",
 	ONNX: "onyx",

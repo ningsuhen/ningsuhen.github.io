@@ -1,0 +1,159 @@
+<section class="rd-tabpanel" data-rd-tab="summary" data-rd-group="Overview" data-rd-label="Summary" data-rd-icon="file-text" id="summary">
+    
+  <div class="rd-tab__body">
+  <ul class="rd-legend" aria-label="Colour key">
+    <li><span class="rd-legend__swatch" style="--c: var(--rd-cat-2)"></span>laya + tree (RTX 4060, 8 GB)</li>
+    <li><span class="rd-legend__swatch" style="--c: var(--rd-cat-1)"></span>Qwen3.8-27B, thinking off (vLLM)</li>
+    <li><span class="rd-legend__swatch" style="--c: var(--rd-cat-4)"></span>Qwen3-4B, Q4_K_M (llama.cpp, same RTX 4060)</li>
+  </ul>
+  <section class="rd-tabsec" id="h-top">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-trophy"/></svg></span><h2>Top results</h2></header>
+    <p>Goal: can a small model plus a tree or router match a large LLM on accuracy without losing speed? Short answer: yes for the headline pipeline, and a cheap trained head in front of it improves both accuracy and cost. Learning new classes from a few examples is the weak part. H5, 196 intents, 1,960 sealed rows (1,728 after removing near-duplicates where stated); 4B = Qwen3-4B-Instruct Q4_K_M on an 8 GB GPU. Curated summary, refreshed by hand; the ledger below is the source of truth.</p>
+    <div class="rd-table-wrap"><table class="rd-table">
+      <tbody><tr><th>#</th><th>Hypothesis</th><th>Result</th><th class="rd-num">Accuracy</th><th class="rd-num">p50 / p95</th><th>Status</th></tr>
+      <tr><td>1</td><td><span class="armid">H108</span><span class="sub">TF-IDF 3-5 char n-gram head in front of the headline pipeline, 50 labeled examples per class</span></td><td>Head answers 65% of rows locally at 97% precision; escalation falls from 32.5% to 14.2%; hosted spend per 1k falls from $0.29 to $0.13 (down 56%)</td><td class="rd-num">91.3% vs 88.5%<span class="sub">paired CI +1.7 to +3.9 pts</span></td><td class="rd-num">~8 ms / 463 ms<span class="sub">vs 219 / 511 ms</span></td><td><span class="rd-chip rd-chip--good">supported</span></td></tr>
+      <tr><td>2</td><td><span class="armid">H95</span><span class="sub">4B + retrieved names + escalate the least confident 32% to a hosted classifier</span></td><td>2.1 pts under the hosted classifier alone at the same median latency; 3x faster than the 27B (685 ms, the same 1,960-row run)</td><td class="rd-num">88.9% vs 91.0% (Jev), 90.4% (27B)</td><td class="rd-num">219 / 509 ms<span class="sub">Jev 212 / 299, 27B 685 / 1,852</span></td><td><span class="rd-chip rd-chip--warn">mixed</span><span class="sub">p95 worse than Jev</span></td></tr>
+      <tr><td>3</td><td><span class="armid">H96</span><span class="sub">CPU fast path, replayed against the real headline</span></td><td>Head covers 35% of rows at 98% precision; Jev spend down 29%</td><td class="rd-num">89.5% vs 88.9%</td><td class="rd-num">195 / 494 ms<span class="sub">vs 219 / 509 ms</span></td><td><span class="rd-chip rd-chip--good">supported</span><span class="sub">superseded by H108</span></td></tr>
+      <tr><td>4</td><td><span class="armid">Retrieval</span><span class="sub">15 retrieved names after the question, rank order, cached rules prefix</span></td><td>Plain cached prefix to retrieved shortlist; names after the question keep the cache</td><td class="rd-num">77.1% to 83.6%</td><td class="rd-num">~196 ms</td><td><span class="rd-chip rd-chip--good">supported</span></td></tr>
+      <tr><td>5</td><td><span class="armid">H89</span><span class="sub">Append-only prefix</span></td><td>Appending a rule invalidates 2% of the cache; inserting mid-prompt 51 to 99%</td><td class="rd-num">n/a</td><td class="rd-num">589 ms vs 5.5 to 9.4 s</td><td><span class="rd-chip rd-chip--good">supported</span></td></tr>
+      <tr><td>6</td><td><span class="armid">H104</span><span class="sub">How many rule tokens a 4B can carry</span></td><td>About 40k tokens on this card; accuracy falls 2.7 pts and latency rises 1.6x; 60k spills VRAM and is 5x slower</td><td class="rd-num">83.6% to 80.8%</td><td class="rd-num">193 to 307 ms</td><td><span class="rd-chip rd-chip--bad">refuted</span><span class="sub">for bigger prefixes</span></td></tr>
+    </tbody></table></div>
+  </section>
+  <section class="rd-tabsec" id="h-fail">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-circle-x"/></svg></span><h2>What did not work</h2></header>
+    <ul>
+      <li><strong>Self-improving router (H87, refuted).</strong> With a deployable escalation rule it escalates 83 to 94% of queries and reaches about 50% top-1 after 1,500 queries (5 examples per class, char n-grams). Earlier 13 to 17% escalation numbers used the gold label and are void.</li>
+      <li><strong>Laya embeddings as the few-shot head.</strong> 46.7% vs 62.1% for char n-grams at 5 examples per class; worse than TF-IDF at every training size (H108).</li>
+      <li><strong>Walking the tree node by node.</strong> Recall 40% vs 98% for flat retrieval at 196 to 605 intents.</li>
+      <li><strong>Constrained decoding (H100, refuted)</strong>, <strong>contrast lines (H99, null)</strong>, <strong>learned escalation gate (H97)</strong>, <strong>early hedge (H98)</strong>: none beat the simple version.</li>
+      <li><strong>Learn-as-you-go loop (H109/H110, supported on a simulated teacher).</strong> The first run collapsed escalation because the threshold was calibrated on training examples; that bug is fixed. Over 3 seeds and 12 runs, a head taught by a 90% accurate simulated teacher reaches 50% local coverage at 97% precision within 4.4k to 8.4k teacher calls and ends at 60 to 67% coverage after 22k queries, with last-window escalation 27 to 48%. Seeding 5 examples per class cuts calls-to-50% to 4.4 to 5.4k. 10% audit sampling is mixed and always costs more total calls. The teacher is simulated, not a real 27B, so treat it as a strong sign, not proof.</li>
+      <li><strong>Poisoned teacher labels (H101/H102).</strong> Three seeds. At 10% wrong labels the router loses nothing outside noise; at 30% the stream answers lose about 6 points because served labels are wrong, while held-out router accuracy moves little. Neither gate helps: they catch about 0 of the injected labels. Injected errors are consistent, so a three-sample check cannot see them. Whether disagreement flags real 27B mistakes is still untested.</li>
+    </ul>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="results" data-rd-group="Findings" data-rd-label="Results" data-rd-icon="chart-column" id="results">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-board">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-table"/></svg></span><h2>Scoreboard</h2></header>
+    <p>3,080 test messages, 40 per intent, none seen by the tree's author. Latency is wall time per message at batch 1, measured from the client: laya on the GPU host, the 27B over HTTP.</p>
+    <div class="rd-table-wrap rd-table-wrap--tall"><table class="rd-table" id="board"></table></div>
+  </section>
+  <section class="rd-tabsec" id="h-plot">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-chart-spline"/></svg></span><h2>Accuracy against latency</h2></header>
+          <figure class="rd-figure"><svg id="scatter" viewBox="0 0 720 320" role="img" aria-label="Accuracy against median latency per arm"></svg>
+        <figcaption>Each arm at its median latency. Up and to the left is better.</figcaption></figure>
+      <figure class="rd-figure"><svg id="frontier" viewBox="0 0 720 320" role="img" aria-label="Accuracy as more low-margin walks are handed to a resolver"></svg>
+        <figcaption>Hold the lowest-margin walks and hand them to a resolver. Oracle is the ceiling; the 27B lines use its real answers on the held messages.</figcaption></figure>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="scale" data-rd-group="Findings" data-rd-label="Scaling" data-rd-icon="layers" id="scale">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-scale">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-layers"/></svg></span><h2>Scaling to 196 intents</h2></header>
+    <p>H5. Banking77 plus CLINC150 without its banking and credit-card domains (and its duplicate exchange_rate): 196 intents, 10 test messages each. Each intent now carries a rich routing rule of up to 70 words, about 18k tokens across all of them. The LLMs either read all of it on every message or read only the rules of laya's shortlist.</p>
+    <div class="rd-table-wrap rd-table-wrap--tall"><table class="rd-table" id="scaling"></table></div>
+    <div class="rd-table-wrap rd-table-wrap--tall"><table class="rd-table" id="board-h5"></table></div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="comparisons" data-rd-group="Findings" data-rd-label="Comparisons" data-rd-icon="scale" id="comparisons">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-diffs">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-scale"/></svg></span><h2>Paired differences</h2></header>
+    <p>Same messages on both sides; 95% interval from 2,000 paired bootstrap resamples. Positive means the first arm is more accurate.</p>
+    <div class="rd-table-wrap rd-table-wrap--tall"><table class="rd-table" id="diffs"></table></div>
+  </section>
+  <section class="rd-tabsec" id="h-tree">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-git-branch"/></svg></span><h2>Inside the walk</h2></header>
+    <div class="grid2">
+      <div class="rd-table-wrap"><table class="rd-table" id="policies"></table></div>
+      <div class="rd-table-wrap"><table class="rd-table" id="levels"></table></div>
+    </div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="method" data-rd-group="Evidence" data-rd-label="Method" data-rd-icon="flask-conical" id="method">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-method">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-flask-conical"/></svg></span><h2>Method</h2></header>
+    <ul>
+      <li id="m-data"><b>Data.</b> Banking77 (PolyAI): 77 intents with confusable siblings, such as <i>card_arrival</i> against <i>card_delivery_estimate</i>. Train 10,003, test 3,080.</li>
+      <li id="m-tree"><b>Tree.</b> Authored by gpt-oss-120b, a third model, from the 77 label names and 5 seeded train examples each, in two asks: group the labels, then write each node's question and one criterion of at most 12 words per option. It was frozen before any test message was scored: 7 groups, 23 question nodes, depth 2 to 3, fanout at most 8. claude-sonnet-5-5 was the first choice of author; its API quota had run out.</li>
+      <li id="m-laya"><b>laya arms.</b> laya-typed-decisions (laya 0.3.28, CUDA, its own mixed precision). Every node was scored for every message once, and greedy, beam and hold policies were replayed from those posteriors. Latency comes from 300 real greedy walks at batch 1.</li>
+      <li id="m-27b"><b>27B arms.</b> <code>the 27B model</code> (Qwen3.8-27B on vLLM, thinking off, temperature 0, at most 32 tokens out). The knowledge sits in the system message so the prefix cache can reuse it. Accuracy ran 4 in flight; latency is a separate pass of 300 calls, one at a time.</li>
+      <li id="m-ablations"><b>Ablations.</b> <i>names</i> drops every criterion. <i>shuf</i> gives each option a sibling's criterion. <i>opaque</i> replaces every name with an id such as <code>o014</code>, so only the criteria carry meaning, on both sides.</li>
+    </ul>
+  </section>
+  <section class="rd-tabsec" id="h-progress">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-activity"/></svg></span><h2>Run progress</h2></header>
+    <div class="progress" id="progress"></div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="hypotheses" data-rd-group="Evidence" data-rd-label="Hypotheses" data-rd-icon="list-checks" id="hypotheses">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-ledger">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-list-checks"/></svg></span><h2>Hypotheses</h2></header>
+    <p>From the brainstorm rounds. Each card carries the test that would falsify it, and its status moves as runs land. Killed cards were dropped by a round without a run; the card says why.</p>
+    <div class="tools" id="ledger-tools" hidden="">
+      <div class="tools-row" id="ledger-filters" role="group" aria-label="Filter by status"></div>
+      <p class="tools-count" id="ledger-count" aria-live="polite"></p>
+      <div class="tools-row"><a class="chip" id="ledger-more" href="?tab=hypotheses#ledger-count">Show 8 more</a><a class="chip" id="ledger-all" href="?tab=hypotheses#ledger-count">Show all</a></div>
+    </div>
+    <div class="ledger" id="ledger"></div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="synthesis" data-rd-group="Evidence" data-rd-label="Brainstorm" data-rd-icon="lightbulb" id="synthesis">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-bs">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-lightbulb"/></svg></span><h2>Brainstorm synthesis</h2></header>
+    <div id="brainstorm"></div>
+  </section>
+  </div>
+  </section>
+
+  <section class="rd-tabpanel" data-rd-tab="caveats" data-rd-group="Evidence" data-rd-label="Caveats and sources" data-rd-icon="triangle-alert" id="caveats">
+    
+  <div class="rd-tab__body">
+  <section class="rd-tabsec" id="h-caveats">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg></span><h2>Caveats</h2></header>
+    <p class="rd-callout rd-callout--warn">Caveats. Banking77 is public, so both models may have seen it in training; the opaque arms are the control for that. The 27B is a shared endpoint, so its latency includes queueing behind other work. Every 4B number comes from llama.cpp on the same RTX 4060 as laya. An earlier run on the Mac was too loaded to time (load average 77) and is not shown. laya in the G- arms runs in fp16, because fp32 does not fit beside the 4B. laya's latency excludes network, because it runs on the machine that asks.</p>
+  </section>
+  <section class="rd-tabsec" id="h-rw">
+    <header class="rd-section__head"><span class="rd-section__icon"><svg class="rd-icon" aria-hidden="true"><use href="#i-book-open"/></svg></span><h2>Related work</h2></header>
+    <p>Found by web search on 2026-10-17 from abstracts and secondary summaries; the papers themselves were not read, so check a claim before leaning on it.</p>
+    <ul>
+      <li><a href="https://arxiv.org/pdf/2309.10954">In-Context Learning for Text Classification with Many Labels</a> (Milios et al.): a dense retriever shortlists the labels and examples shown to the LLM, on Banking77, HWU64 and CLINC150. This is our shortlist cascade (H15, H18, H20). We add that a cached flat prompt of written rules beats it while the whole base fits.</li>
+      <li><a href="https://arxiv.org/html/2506.00210v1">REIC: RAG-Enhanced Intent Classification at Scale</a>: retrieval for industrial intent taxonomies that keep growing, with a hierarchy per vertical. The closest match to our scaling question (H27, H30); it reports gains over fine-tuned and few-shot baselines.</li>
+      <li><a href="https://arxiv.org/html/2507.16217v2">Towards Compute-Optimal Many-Shot In-Context Learning</a>: a few demonstrations chosen per query, plus a large cached random set, cut inference cost by up to an order of magnitude. This is our two-tier cache (H23), found independently.</li>
+      <li><a href="https://arxiv.org/pdf/2503.08640">Efficient Many-Shot In-Context Learning with Dynamic Block-Sparse Attention</a>: retrieves cached groups of demonstrations to reach fine-tuning-level latency at over 95% of the best baseline's accuracy. A kernel-level version of H23.</li>
+      <li><a href="https://arxiv.org/pdf/2404.11018">Many-Shot In-Context Learning</a>: notes that attention over a cached many-shot prompt still costs time even with the KV cache. Matches our concurrency question (H24).</li>
+      <li><a href="https://arxiv.org/pdf/2401.12178">In-Context Learning for Extreme Multi-Label Classification</a>: a training-free pipeline for label spaces too large for a prompt. Relevant to the 600 to 10,000 intent tests (H27).</li>
+      <li><a href="https://arxiv.org/html/2510.13217v1">LATTICE: LLM-guided Hierarchical Retrieval</a>: an LLM walks a semantic tree with a beam, scoring each node by aggregating calibrated local scores along the path. The same recipe as our path-product and geometric-mean policies and the beam-2 repair (H3, H29).</li>
+      <li><a href="https://arxiv.org/pdf/2606.18381">SproutRAG</a>: beam search over a binary tree of sentence groups, scored by embedding similarity. An encoder-driven walk like laya's.</li>
+      <li><a href="https://www.meilisearch.com/blog/raptor-rag">RAPTOR</a> (summary article): recursive clustering and summarizing builds a tree whose upper levels abstract the lower ones. The model for H29's interior criteria, which summarize the subtree and what separates it from its siblings.</li>
+      <li><a href="https://arxiv.org/abs/2307.12950">RLCD</a>: contrasting positive/negative prompts yields preference pairs without post-hoc scoring, then a reward model and PPO. Our H71 drops the reward model and PPO for a plain contrastive/triplet loss on the encoder, using sibling confusions as the pairs.</li>
+      <li><a href="https://arxiv.org/abs/2507.19457">GEPA</a>: reflective prompt evolution beat GRPO by 6-10% with up to 35x fewer rollouts. The model for H70's evolution of criteria and descriptions against dev errors, at zero inference cost.</li>
+      <li><a href="https://arxiv.org/abs/2406.18665">RouteLLM</a>: a router trained on preference data thresholds on cost, cutting cost more than 2x at equal quality. The model for H69's escalation cascade from the local reader to the hosted reader on low confidence.</li>
+      <li>Tree-GRPO / IGRPO: tree-structured rollouts with budget allocated to high information-gain branches. The RL traversal we deliberately avoid at inference (H75) — our budget and gold-label regime make a supervised head cheaper.</li>
+      <li><a href="https://arxiv.org/abs/2411.00744">CARROT</a>: cost-constrained retrieval selection as a policy tree searched with MCTS. The model for H72's tree-structure-and-budget-as-a-search-problem framing.</li>
+    </ul>
+    <p class="rd-callout rd-callout--warn">What none of these covers, as far as the abstracts show: small-model-with-written-rules against a larger model's short prompt at matched latency, token-budgeted fanout per reader, and leaves as knowledge chunks (H30, H31).</p>
+  </section>
+  </div>
+  </section>

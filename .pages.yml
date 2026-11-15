@@ -10,7 +10,8 @@ content:
     label: Projects
     type: collection
     path: src/content/posts
-    filename: "{primary}/index.md"
+    # New posts are MDX (Pages CMS reads one extension per collection; older .md posts are under "Projects (Markdown)").
+    filename: "{primary}/index.mdx"
     view:
       fields: [title, published, category]
       primary: title
@@ -35,7 +36,44 @@ content:
         type: image
         options: { media: false }
       - { name: tags, label: Tags, type: string, list: true }
-      - { name: category, label: Category, type: string }
+      # One list for both collections; check:frontmatter reads it, so a post outside it fails CI.
+      - { name: category, label: Category, type: select, options: { values: [Research, Playground, Idea, Programming, Thoughts, Dev Automation] } }
+      - { name: draft, label: Draft, type: boolean, default: false }
+      # Source editor, not rich text: rich text would mangle MDX components and drop comments (owner markers).
+      - { name: body, label: Body, type: code, options: { format: mdx } }
+  - name: posts-md
+    label: Projects (Markdown)
+    type: collection
+    path: src/content/posts
+    filename: "{primary}/index.md"
+    # Older posts stay Markdown; new ones go in "Projects" as MDX.
+    operations: { create: false }
+    view:
+      fields: [title, published, category]
+      primary: title
+      sort: [published]
+      default:
+        sort: published
+        order: desc
+    fields:
+      - { name: title, label: Title, type: string, required: true }
+      - { name: published, label: Date, type: date, required: true }
+      - { name: updated, label: Updated, type: date }
+      - { name: description, label: Description, type: text }
+      - name: image
+        label: Cover image
+        type: image
+        # Covers live in the post folder (./cover.png) and are resolved by Fuwari
+        # via import.meta.glob. Disable the media picker so the value is written
+        # verbatim instead of being forced under the media root.
+        options: { media: false }
+      - name: thumbnail
+        label: Card thumbnail, required when published (square 800x800, ONE focal element, no text; if the post has no image, generate one from its content)
+        type: image
+        options: { media: false }
+      - { name: tags, label: Tags, type: string, list: true }
+      # One list for both collections; check:frontmatter reads it, so a post outside it fails CI.
+      - { name: category, label: Category, type: select, options: { values: [Research, Playground, Idea, Programming, Thoughts, Dev Automation] } }
       - { name: draft, label: Draft, type: boolean, default: false }
       - { name: body, label: Body, type: rich-text }
   - name: playground
@@ -55,7 +93,7 @@ content:
           - { name: post, label: Write-up URL, type: string }
           - { name: started, label: Started, type: string, required: true }
           - { name: updated, label: Updated, type: string }
-          - { name: status, label: Status, type: string, required: true }
+          - { name: status, label: Status, type: select, required: true, options: { values: [Live, Coming soon, Draft] } }
           - { name: tags, label: Tags, type: string, list: true }
   - name: research
     label: Research
@@ -74,7 +112,7 @@ content:
           - { name: post, label: Write-up URL, type: string }
           - { name: started, label: Started, type: string, required: true }
           - { name: updated, label: Updated, type: string }
-          - { name: status, label: Status, type: string, required: true }
+          - { name: status, label: Status, type: select, required: true, options: { values: [Live, Coming soon, Draft] } }
           - { name: tags, label: Tags, type: string, list: true }
   - name: ideas
     label: Ideas
@@ -89,10 +127,11 @@ content:
         fields:
           - { name: title, label: Title, type: string, required: true }
           - { name: summary, label: Summary, type: text, required: true }
-          - { name: href, label: Post URL, type: string, required: true }
+          - { name: href, label: Page or post URL, type: string, required: true }
+          - { name: post, label: Write-up URL, type: string }
           - { name: started, label: Started, type: string, required: true }
           - { name: updated, label: Updated, type: string }
-          - { name: status, label: Status, type: string, required: true }
+          - { name: status, label: Status, type: select, required: true, options: { values: [Live, Coming soon, Draft] } }
           - { name: tags, label: Tags, type: string, list: true }
   - name: about
     label: About

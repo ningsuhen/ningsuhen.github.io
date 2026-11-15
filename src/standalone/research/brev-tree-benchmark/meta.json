@@ -1,0 +1,12 @@
+{
+	"contract": 1,
+	"kind": "research",
+	"slug": "brev-tree-benchmark",
+	"title": "Brev Tree Benchmark",
+	"created": "2026-10-16",
+	"updated": "2026-10-24",
+	"summary": "Can a decision tree hold the knowledge, so a 400M encoder that reads only the criteria on its path matches a 27B model given a short instruction, without its latency? laya walks the tree on an RTX 4060; Qwen3.8-27B answers through a shared model gateway.",
+	"eyebrow": "Brev research · experiment E1 · Banking77",
+	"width": "wide",
+	"layout": "tabbed"
+}

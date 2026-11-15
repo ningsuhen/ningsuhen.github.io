@@ -157,7 +157,9 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : new URL(url("/image
 				if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
 				const url = new URL(a.href, location.href);
 				if (url.origin !== location.origin) return;
-				const p = url.pathname.endsWith("/") || url.pathname.endsWith(".html") ? url.pathname : `${url.pathname}/`;
+				// "/research/x/index.html" is the same page as "/research/x/", the form standalonePaths holds.
+				const path = url.pathname.replace(/\/index\.html$/, "/");
+				const p = path.endsWith("/") || path.endsWith(".html") ? path : `${path}/`;
 				if (standalonePaths.includes(p)) e.stopPropagation();
 			}, true);
 		</script>
@@ -556,7 +558,7 @@ let pswpModule: typeof import("photoswipe")
 let lightboxClass: typeof import("photoswipe/lightbox").default
 let lightboxReady = false
 
-let loadPromise: Promise<void> | undefined
+let loadPromise: Promise<boolean> | undefined
 function loadLightbox() {
 	if (!loadPromise) {
 		loadPromise = Promise.all([
@@ -573,6 +575,12 @@ function loadLightbox() {
 			lightboxClass = lightboxModule.default
 			createPhotoSwipe()
 			lightboxReady = true
+			return true
+		}, (err) => {
+			// A failed chunk fetch (offline, a new deploy) must not stick: the next click tries again.
+			console.warn("lightbox failed to load", err)
+			loadPromise = undefined
+			return false
 		})
 	}
 	return loadPromise
@@ -622,7 +630,7 @@ document.addEventListener("focusin", (e) => inGallery(e.target) && loadLightbox(
 document.addEventListener("click", (e) => {
 	const img = inGallery(e.target)
 	if (!img || lightboxReady) return
-	loadLightbox().then(() => img.click())
+	loadLightbox().then((ok) => ok && img.click())
 }, true)
 
 const setup = () => {

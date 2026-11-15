@@ -95,8 +95,15 @@ const CODE = "pre, .expressive-code";
 
 const BLOCK =
 	"p, h1, h2, h3, h4, h5, h6, li, figcaption, blockquote, dd, dt, .katex-display";
+// Case-sensitive: "the answer is no." or "on the st." must still end a sentence.
 const ABBREVIATION_END =
-	/(\b(?:Dr|Mr|Mrs|Ms|Prof|Jr|Sr|St|Fig|Figs|Eq|Eqs|No|vol|pp|vs|al|cf|approx|e\.g|i\.e|etc|U\.S|U\.K|a\.m|p\.m|Inc|Ltd)\.)\s*$/i;
+	/(\b(?:Dr|Mr|Mrs|Ms|Prof|Jr|Sr|St|Fig|Figs|Eq|Eqs|vol|pp|vs|al|cf|approx|e\.g|i\.e|etc|U\.S|U\.K|a\.m|p\.m|Inc|Ltd)\.)\s*$/;
+/** "No. 5" is an abbreviation only before a number; "No." alone is an answer. */
+const NUMBER_ABBREVIATION_END = /\bNo\.\s*$/;
+/** Marks an inline :say spoken form in the block text, so the pronunciation pass leaves it alone (inline wins). */
+const SAY_OPEN = "\uE000";
+const SAY_CLOSE = "\uE001";
+const SAY_SPAN = /\uE000([^\uE001]*)\uE001/;
 
 type Piece = { text: string; node: Text } | { text: string; el: Element };
 
@@ -111,7 +118,7 @@ function gather(parent: Node, out: Piece[]): void {
 		// Hidden pronunciation (:say[term]{as="..."}): the spoken form replaces the text; the highlight still covers the term.
 		const say = child.getAttribute("data-say")?.trim();
 		if (say) {
-			out.push({ text: say, el: child });
+			out.push({ text: `${SAY_OPEN}${say}${SAY_CLOSE}`, el: child });
 			continue;
 		}
 		// Nested blocks, tables and code are read as their own sentences.
@@ -171,7 +178,12 @@ function splitSentences(text: string, lang: string): Array<[number, number]> {
 	const merged: Array<[number, number]> = [];
 	for (const [s, e] of raw) {
 		const last = merged[merged.length - 1];
-		if (last && ABBREVIATION_END.test(text.slice(last[0], last[1])))
+		const prev = last ? text.slice(last[0], last[1]) : "";
+		if (
+			last &&
+			(ABBREVIATION_END.test(prev) ||
+				(NUMBER_ABBREVIATION_END.test(prev) && /^\s*\d/.test(text.slice(s, e))))
+		)
 			last[1] = e;
 		else merged.push([s, e]);
 	}
@@ -215,7 +227,7 @@ function blockPrefix(block: HTMLElement): string {
 	if (block.tagName === "LI" && block.parentElement?.tagName === "OL") {
 		const list = block.parentElement as HTMLOListElement;
 		const items = Array.from(list.children).filter((c) => c.tagName === "LI");
-		return listItemPrefix((list.start || 1) + items.indexOf(block));
+		return listItemPrefix((list.hasAttribute("start") ? list.start : 1) + items.indexOf(block));
 	}
 	if (block.tagName === "FIGCAPTION")
 		return captionPrefix(block.textContent ?? "");
@@ -232,8 +244,14 @@ export function extractSentences(
 	root: HTMLElement,
 	pronounce: Pronunciations = {},
 ): Sentence[] {
+	// Odd parts of the split are inline :say forms: they skip the lexicon and front-matter pronunciations.
 	const speakable = (text: string): string =>
-		normalizeForSpeech(applyPronunciations(text, pronounce));
+		normalizeForSpeech(
+			text
+				.split(SAY_SPAN)
+				.map((part, i) => (i % 2 ? part : applyPronunciations(part, pronounce)))
+				.join(""),
+		);
 	const lang =
 		root.closest("[lang]")?.getAttribute("lang") ??
 		document.documentElement.lang;
@@ -275,7 +293,7 @@ export function extractSentences(
 		if (!blockText.trim()) continue;
 
 		if (block.matches(".admonition")) {
-			const label = admonitionSpeech(blockText);
+			const label = admonitionSpeech(blockText.replace(/[\uE000\uE001]/g, ""));
 			if (label)
 				drafts.push({
 					block,

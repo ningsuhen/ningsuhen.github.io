@@ -10,12 +10,12 @@ import { commentsFor } from "./comments";
 import { addBreadcrumb } from "./breadcrumb";
 import { buildSocialMeta, pageDescription } from "./social";
 import { withThemeScript } from "./theme";
+import { metaOff } from "../../scripts/lib/meta.mjs";
 import { esc } from "./util";
 import { siteConfig } from "../config";
 import { A11Y_MARKER, buildA11yScript } from "./a11y";
 import { RAIL_BAR_MARKER, buildRailBarScript } from "./rail-bar";
 
-const OPT_OUT = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i;
 const SHARED_CSS = /<link\b[^>]*\bhref=["']\/design-system\/(?:research|rd)\.css/i;
 
 /** Navbar, breadcrumb and meta fixes for one standalone HTML document. `extra` is appended before </body>. */
@@ -24,10 +24,23 @@ export function applyChrome(html: string, script: string, extra: string, footer:
 	const a11y = html.includes(A11Y_MARKER) ? "" : buildA11yScript();
 	// The rail script pairs with the shared CSS (layout.css "Narrow, with JS"): a page with a frozen inline copy keeps its open list.
 	const railBar = html.includes(RAIL_BAR_MARKER) || !html.includes("rd-toc") || !SHARED_CSS.test(html) ? "" : buildRailBarScript();
-	const parts = [html.includes(MARKER) || OPT_OUT.test(html) ? "" : script, comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, railBar, extra].join("");
-	const body = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
+	const navbar = html.includes(MARKER) || metaOff(html, "site-navbar") ? "" : script;
+	const parts = [comments, html.includes(LICENSE_MARKER) ? "" : footer, a11y, railBar, extra].join("");
+	const tail = parts ? (() => { const at = html.lastIndexOf("</body>"); return at === -1 ? html + parts : html.slice(0, at) + parts + html.slice(at); })() : html;
+	const body = navbar ? atBodyStart(tail, navbar) : tail;
 	const withCrumbs = addBreadcrumb(body, urlPath, base, site);
 	return withThemeScript(ensureHead(versionedBundle(withSearchBody(withCrumbs)), new URL(base.replace(/\/$/, "") + urlPath, site).href, site));
+}
+
+// The navbar script runs where it stands and mounts the bar before <body>: at the top of <body> the bar is there from the
+// first paint. At the end of <body> the page painted first and then moved down by the bar's height (a layout shift on
+// every standalone page). A document with no <body> tag keeps it at the end, where document.body exists.
+function atBodyStart(html: string, script: string): string {
+	const masked = html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<!--[\s\S]*?-->/gi, (m) => " ".repeat(m.length));
+	const body = masked.match(/<body(?=[\s>])[^>]*>/i);
+	if (body?.index === undefined) return html + script;
+	const at = body.index + body[0].length;
+	return html.slice(0, at) + script + html.slice(at);
 }
 
 // Index the page's content in the site search: Pagefind indexes elements marked data-pagefind-body.

@@ -30,14 +30,15 @@ if (!token) {
 }
 
 const api = (path, init = {}) =>
+	// `init` first: its own `headers` must add to the auth headers, not replace them.
 	fetch(`https://api.github.com${path}`, {
+		...init,
 		headers: {
 			Authorization: `Bearer ${token}`,
 			"User-Agent": "external-link-check",
 			Accept: "application/vnd.github+json",
 			...init.headers,
 		},
-		...init,
 	}).then(async (res) => {
 		if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
 		return res.status === 204 ? null : res.json();

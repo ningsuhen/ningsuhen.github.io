@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
+import { metaOff } from "./lib/meta.mjs";
 import { pageSource, shellPages, standalonePages } from "./lib/standalone-pages.mjs";
 
 const DIST = path.resolve("dist");
@@ -55,7 +56,7 @@ const failures = [];
 const pages = [...standalonePages(), ...shellPages()];
 for (const rel of pages) {
 	const src = pageSource(rel);
-	const optedOut = /<meta[^>]+name=["']site-navbar["'][^>]+content=["']off["']/i.test(src);
+	const optedOut = metaOff(src, "site-navbar");
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
 	for (const vp of VIEWPORTS) {
 		const ctx = await browser.newContext({ viewport: vp });
@@ -566,13 +567,14 @@ const navState = () => {
 	const root = host ? host.shadowRoot : document;
 	const bar = host ? root.querySelector("header") : document.querySelector("#navbar .card-base");
 	const controls = {};
+	const brand = bar.querySelector("a"); // the site-title link; its styling may differ, so it is flagged rather than named
 	for (const el of bar.querySelectorAll("a, button")) {
 		if (el.closest(".closed, .float-panel-closed")) continue;
 		const r = el.getBoundingClientRect();
 		const cs = getComputedStyle(el);
 		if (cs.display === "none" || r.width === 0) continue;
 		const name = (el.getAttribute("aria-label") || el.textContent || "").trim();
-		controls[name] = { x: r.left, w: r.width, h: r.height, color: cs.color, fs: cs.fontSize, fw: cs.fontWeight };
+		controls[name] = { x: r.left, w: r.width, h: r.height, color: cs.color, fs: cs.fontSize, fw: cs.fontWeight, brand: el === brand };
 	}
 	const br = bar.getBoundingClientRect();
 	return { bar: { x: br.left, w: br.width, h: br.height, bg: getComputedStyle(bar).backgroundColor }, controls, sbw: innerWidth - document.documentElement.clientWidth, scrollable: document.documentElement.scrollHeight > innerHeight };
@@ -639,7 +641,7 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 			const sc = std.controls[name];
 			if (!sc) { failures.push(`${tag}: "${name}" missing from the standalone navbar`); continue; }
 			if (!near(mc.x, sc.x) || !near(mc.w, sc.w) || !near(mc.h, sc.h)) failures.push(`${tag}: "${name}" at ${sc.x}/${sc.w}x${sc.h}, main ${mc.x}/${mc.w}x${mc.h}`);
-			if (name !== "Ning Waikhom" && (mc.color !== sc.color || mc.fs !== sc.fs || mc.fw !== sc.fw)) failures.push(`${tag}: "${name}" is ${sc.color} ${sc.fs} ${sc.fw}, main ${mc.color} ${mc.fs} ${mc.fw}`);
+			if (!mc.brand && (mc.color !== sc.color || mc.fs !== sc.fs || mc.fw !== sc.fw)) failures.push(`${tag}: "${name}" is ${sc.color} ${sc.fs} ${sc.fw}, main ${mc.color} ${mc.fs} ${mc.fw}`);
 		}
 		for (const name of Object.keys(std.controls)) if (!main.controls[name]) failures.push(`${tag}: "${name}" only in the standalone navbar`);
 	}
@@ -650,13 +652,12 @@ if (standaloneUrls.has(PARITY_PAGE)) {
 // is pressed; after it the client script loads, the section keeps the column and the footer order, and a theme change
 // reaches the giscus frame. giscus.app is stubbed here (no network), so this checks our side of the contract only.
 const COMMENTS_PAGE = /^\/(research|playground|ideas)\/[^/]+\/$/;
-const COMMENTS_OPT_OUT = /<meta[^>]+name=["']rd-comments["'][^>]+content=["']off["']/i;
 const commentsSrc = readFileSync("src/config.ts", "utf8");
 const commentCfg = (key) => commentsSrc.match(new RegExp(`\\b${key}: "([^"]+)"`))?.[1];
 const GISCUS_STUB = "(function(){var s=document.currentScript;var f=document.createElement('iframe');f.className='giscus-frame';f.src='about:blank';s.parentElement.appendChild(f);f.contentWindow.postMessage=function(m,o){(window.__posted=window.__posted||[]).push([m,o])};})();";
 for (const rel of pages) {
 	const urlPath = `/${rel.replace(/index\.html$/, "").split(path.sep).join("/")}`;
-	const expected = COMMENTS_PAGE.test(urlPath) && !COMMENTS_OPT_OUT.test(pageSource(rel));
+	const expected = COMMENTS_PAGE.test(urlPath) && !metaOff(pageSource(rel), "rd-comments");
 	const built = readFileSync(path.join(DIST, rel), "utf8");
 	const has = built.includes("data-site-comments");
 	if (has !== expected) failures.push(`${urlPath}: comments section ${has ? "present" : "missing"}, expected ${expected ? "present" : "absent"}`);
@@ -690,15 +691,22 @@ for (const rel of pages) {
 				frames: document.querySelectorAll("iframe.giscus-frame, script[src*='giscus']").length,
 				cw: document.documentElement.clientWidth,
 				sw: document.documentElement.scrollWidth,
+				// The Doc design's column (.rd-doc__main): its comments span the column, not the post column.
+				doc: document.querySelector(".rd-doc__main")?.getBoundingClientRect().width ?? null,
 			};
 		});
 		if (!pre.sec || !pre.button) failures.push(`${tag}: section or "Load comments" button not found`);
 		else {
 			if (pre.lic !== null && pre.sec.bottom > pre.lic + 1) failures.push(`${tag}: section ends below the license card top`);
 			if (pre.mainBottom !== null && pre.mainBottom > pre.sec.top + 1) failures.push(`${tag}: section starts above the end of the content`);
-			// 872px (54.5rem) column, narrower when the page's own body gutter is in the way; never wider.
-			if (pre.sec.w > Math.min(872, pre.cw) + 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px is wider than 872px or the viewport`);
-			if (width >= 1000 && Math.abs(pre.sec.w - 872) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected 872px (54.5rem)`);
+			if (pre.doc !== null) {
+				// Doc design: as wide as the document column, so the comment box spans the content's text width.
+				if (Math.abs(pre.sec.w - pre.doc) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected the document column ${Math.round(pre.doc)}px`);
+			} else {
+				// 872px (54.5rem) column, narrower when the page's own body gutter is in the way; never wider.
+				if (pre.sec.w > Math.min(872, pre.cw) + 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px is wider than 872px or the viewport`);
+				if (width >= 1000 && Math.abs(pre.sec.w - 872) > 1) failures.push(`${tag}: column ${Math.round(pre.sec.w)}px, expected 872px (54.5rem)`);
+			}
 		}
 		if (before.length) failures.push(`${tag}: request(s) to giscus.app before the click: ${[...new Set(before)].slice(0, 3).join(", ")}`);
 		if (pre.frames) failures.push(`${tag}: giscus script or frame present before the click`);

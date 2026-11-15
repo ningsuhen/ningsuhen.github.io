@@ -9,7 +9,7 @@
 //   - title:        present and non-empty.
 //   - description:  present, non-empty, and a real sentence (not a bare fragment).
 //   - tags:         a non-empty list.
-//   - category:     present and in the current set (the categories in use across the posts).
+//   - category:     present and one of the CMS category list in .pages.yml.
 //   - published:    a valid YYYY-MM-DD calendar date.
 //   - thumbnail:    present and conforming (800x800, < 60 KB) whenever draft is not true.
 //
@@ -18,6 +18,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { postSource } from "./lib/posts.mjs";
 
 const ROOT = path.resolve(".");
 const POSTS = path.join(ROOT, "src/content/posts");
@@ -64,20 +65,22 @@ async function thumbnailProblems(label, slug, rel) {
 }
 
 // ---- run ----------------------------------------------------------------------------------------------
-const slugs = readdirSync(POSTS, { withFileTypes: true })
+const posts = readdirSync(POSTS, { withFileTypes: true })
 	.filter((e) => e.isDirectory())
-	.map((e) => e.name);
+	.map((e) => ({ slug: e.name, file: postSource(path.join(POSTS, e.name)) }))
+	.filter((p) => p.file);
 
-// The current set of categories: every category in use across the posts. A new post must reuse one.
-const categories = new Set();
-for (const slug of slugs) {
-	const c = field(frontmatter(path.join(POSTS, slug, "index.md")), "category");
-	if (c) categories.add(c);
-}
-
+// The allowed categories: the CMS select list in .pages.yml (both post collections must list the same values).
+const categoryLists = [...readFileSync(path.join(ROOT, ".pages.yml"), "utf8").matchAll(/name: category\b.*values: \[([^\]]*)\]/g)].map(
+	(m) => m[1].split(",").map((v) => v.trim()).filter(Boolean),
+);
+const categories = new Set(categoryLists[0] ?? []);
 const failures = [];
-for (const slug of slugs) {
-	const file = path.join(POSTS, slug, "index.md");
+if (categoryLists.length === 0) failures.push(".pages.yml: no `category` select list (options: { values: [...] }) found");
+else if (new Set(categoryLists.map((l) => l.join("|"))).size > 1)
+	failures.push(".pages.yml: the post collections list different categories; keep one list");
+
+for (const { slug, file } of posts) {
 	const fm = frontmatter(file);
 	const label = `src/content/posts/${slug}`;
 	const problems = [];
@@ -95,7 +98,7 @@ for (const slug of slugs) {
 	const category = field(fm, "category");
 	if (!category) problems.push("missing `category`");
 	else if (categories.size && !categories.has(category))
-		problems.push(`category "${category}" is not in the current set (${[...categories].join(", ")})`);
+		problems.push(`category "${category}" is not one of ${[...categories].join(", ")} (add a new one to .pages.yml first)`);
 
 	const published = field(fm, "published");
 	if (!published) problems.push("missing `published` date");
@@ -110,7 +113,7 @@ for (const slug of slugs) {
 	if (problems.length) failures.push(`${label}:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
 }
 
-console.log(`check:frontmatter: ${slugs.length} post(s) scanned`);
+console.log(`check:frontmatter: ${posts.length} post(s) scanned`);
 if (failures.length) {
 	console.error(`\ncheck:frontmatter: ${failures.length} post(s) need fixing:\n`);
 	for (const f of failures) console.error(f + "\n");

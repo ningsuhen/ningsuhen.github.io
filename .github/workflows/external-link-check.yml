@@ -13,7 +13,7 @@ permissions:
 # A scheduled sweep, not a PR gate: external links are flaky (bot throttling, API endpoints that 404
 # to HEAD), so it never blocks a merge. It builds the site, checks every off-site link, and opens or
 # updates ONE issue ("Broken external links") with the broken ones so the owner can triage. The
-# deterministic part (404 page + rss.xml) is separate and runs in the PR gate via the `static` leg.
+# deterministic part (404 page + rss.xml) is separate and runs in the PR gate (presubmit `verify`).
 jobs:
   build:
     runs-on: ubuntu-latest

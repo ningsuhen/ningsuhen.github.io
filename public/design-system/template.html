@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TITLE}} · created {{DATE}} · updated {{DATE}}</title>
 <meta name="description" content="{{SUMMARY}}">
-<!-- Page template. Start a new playground page with:  pnpm new-playground <slug> "<Title>"
+<!-- Self-contained page template, for pages exported from other projects. New site pages are fragments instead:
+     pnpm new-playground <slug> "<Title>" scaffolds src/standalone/<kind>/<slug>/ (see src/standalone/contract.json).
      The site build injects, on every page under public/, with no markup needed here:
        - the site navbar + light/dark toggle (mounted on <html> before <body>, so nothing here can offset it)
        - the "All rights reserved, no reuse without permission" footer

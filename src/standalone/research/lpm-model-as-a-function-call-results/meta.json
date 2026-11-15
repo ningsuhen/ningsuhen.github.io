@@ -1,0 +1,12 @@
+{
+	"contract": 1,
+	"kind": "research",
+	"slug": "lpm-model-as-a-function-call-results",
+	"title": "LPM: a small model as a function call, performance and results so far",
+	"created": "2026-10-26",
+	"updated": "2026-10-26",
+	"summary": "LPM is a Rust engine that runs a small language model on the GPU as a primitive you call from a program. Its WGSL shaders run unchanged on native Metal and in Chrome WebGPU. This page reports what I measured in the first three milestones, the eight lessons that cost time getting there, and which numbers were taken on a busy machine.",
+	"eyebrow": "Research · lpm-model-as-a-function-call-results",
+	"width": "wide",
+	"layout": "tabbed"
+}

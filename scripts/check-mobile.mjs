@@ -213,6 +213,7 @@ const bad = (r) =>
 	r.overflowPx > 0 || r.smallTap?.length || r.smallText?.length || r.clipped?.length;
 const rows = report.map((r) => {
 	const issues = [];
+	if (r.error) issues.push(`failed to load: ${r.error.split("\n")[0]}`);
 	if (r.overflowPx > 0) issues.push(`overflow +${r.overflowPx}px`);
 	if (r.smallTap?.length) issues.push(`${r.smallTap.length} tap<${TAP_MIN}`);
 	if (r.smallText?.length) issues.push(`${r.smallText.length} text<${TEXT_MIN}`);

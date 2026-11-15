@@ -4,7 +4,8 @@ Personal site built with [Astro](https://astro.build) + the [Fuwari](https://git
 
 ## Layout
 
-- **Projects** (posts): `src/content/posts/<slug>/index.md` + `cover.png`
+- **Projects** (posts): `src/content/posts/<slug>/index.mdx` (older posts: `index.md`), with `thumb.webp` (the card thumbnail, required when published) and an optional `cover.png`
+- **Research, Playground, Ideas** (standalone pages): fragments in `src/standalone/<kind>/<slug>/`, listed in `src/data/{research,playground,ideas}.json`
 - **About / Skills / Experience / Contact**: `src/content/spec/about.md`
 - **Site config** (title, subtitle, banner, profile, links, theme): `src/config.ts`
 - **Legacy redirects**: `astro.config.mjs` → `redirects`
@@ -25,7 +26,9 @@ Requires Node 22+ and pnpm (the repo pins `packageManager: pnpm@9.14.4`).
 
 Open the repo in [Pages CMS](https://pagescms.org) (or edit the files directly). `.pages.yml` defines:
 
-- `posts` — the project posts (folder-per-entry, `image` is the `./cover.png` in the post folder).
+- `posts` — the project posts, MDX (folder-per-entry, `image` is the `./cover.png` in the post folder). The body is a source editor, so components and owner-marker comments survive a save.
+- `posts-md` — the older Markdown posts (edit only; new posts go in `posts`).
+- `research`, `playground`, `ideas` — the card lists on those pages.
 - `about` — the About page body.
 - `site` — `src/config.ts` as a code editor.
 - `uploads` — media library at `public/uploads`.

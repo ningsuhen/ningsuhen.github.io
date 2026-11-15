@@ -152,6 +152,8 @@ const RULES: ReadonlyArray<readonly [string, string, string]> = [
 	["squared", "Area is x² here.", "Area is x squared here."],
 	// currency
 	["money-scale", "It raised $2.5M.", "It raised two point five million dollars."],
+	["money-scale-word", "It raised $5 million.", "It raised five million dollars."],
+	["money-scale-word-range", "It cost $2-3 billion.", "It cost two to three billion dollars."],
 	["money-cents", "It costs $5.99.", "It costs five dollars and ninety-nine cents."],
 	["money-cents-only", "Just $0.50 each.", "Just fifty cents each."],
 	["money-one", "Only $1 today.", "Only one dollar today."],
