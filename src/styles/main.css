@@ -154,7 +154,7 @@
   position: relative;
   display: block;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-large);
   background: var(--btn-regular-bg);
 }
 .skeleton::after {

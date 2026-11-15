@@ -12,7 +12,7 @@ export function buildLicenseScript(base: string): string {
 		`:host{all:initial;display:block;--hue:${hue};--bg:#fff;--strong:#1d2228;--body:#3d444d;--muted:#5b626b;--accent:oklch(.5 .12 var(--hue));--hover:oklch(.95 .03 var(--hue));--line:rgba(0,0,0,.1)}` +
 		":host([data-theme=dark]){--bg:oklch(.23 .015 var(--hue));--strong:rgba(255,255,255,.92);--body:#c9ced6;--muted:#a7aeb8;--accent:oklch(.75 .1 var(--hue));--hover:oklch(.3 .04 var(--hue));--line:rgba(255,255,255,.1)}" +
 		// Small print, full width of the navbar card (73rem = 1168px, same rule as the navbar's header).
-		"footer{box-sizing:border-box;width:min(var(--rd-footer-width,73rem),calc(100% - 2rem));margin:2rem auto 2.5rem;padding:.75rem 1rem;border:1px solid var(--line);border-radius:1rem;background:var(--bg);" +
+		"footer{box-sizing:border-box;width:min(var(--rd-footer-width,73rem),calc(100% - 2rem));margin:2rem auto 2.5rem;padding:.75rem 1rem;border:1px solid var(--line);border-radius:.25rem;background:var(--bg);" +
 		"font:400 0.75rem/1.5 Roboto,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--muted);overflow-wrap:anywhere}" +
 		"p{margin:0;max-width:90ch}p+p{margin-top:.25rem}" +
 		".copy{font-weight:600;color:var(--strong)}" +
