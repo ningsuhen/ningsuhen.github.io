@@ -13,6 +13,14 @@ module.exports = {
       fontSize: {
         xs: ["max(0.75rem, 12px)", { lineHeight: "1rem" }],
       },
+      // One small corner radius for the whole theme: every rounded-md/lg/xl/2xl is --radius-large (src/styles/variables.styl).
+      // rounded-sm, rounded and rounded-full keep Tailwind's values.
+      borderRadius: {
+        md: "var(--radius-large)",
+        lg: "var(--radius-large)",
+        xl: "var(--radius-large)",
+        "2xl": "var(--radius-large)",
+      },
     },
   },
   plugins: [
