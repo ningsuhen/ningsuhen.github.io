@@ -9,7 +9,7 @@ import type {
 import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
-	title: "Ning Waikhom",
+	title: "Notes By Ning",
 	subtitle: "AI | ML | Rust | Python | TypeScript",
 	lang: "en", // Language code, e.g. 'en', 'zh_CN', 'ja', etc.
 	themeColor: {

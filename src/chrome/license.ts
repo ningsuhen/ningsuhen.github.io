@@ -1,4 +1,4 @@
-import { siteConfig } from "../config";
+import { profileConfig, siteConfig } from "../config";
 import { esc } from "./util";
 
 export const LICENSE_MARKER = "data-site-license";
@@ -25,7 +25,7 @@ export function buildLicenseScript(base: string): string {
 		'<path d="M12 3v18m7-13l3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2a17 17 0 0 0 8 2h1M5 8l3 8a5 5 0 0 1-6 0zV7m2 14h10"/></svg>';
 	const markup =
 		`<style>${css}</style><footer>` +
-		`<p class="copy">© ${new Date().getFullYear()} ${esc(siteConfig.title)}. All rights reserved.</p>` +
+		`<p class="copy">© ${new Date().getFullYear()} ${esc(profileConfig.name)}. All rights reserved.</p>` +
 		`<p>Research, playground demos and ideas on this site may not be reused, copied, republished or used to train AI models without my written permission.</p>` +
 		`<p>Short quotes with attribution and a link are fine.</p>` +
 		`<p class="links"><a href="${esc(prefix)}/license/">${icon}License</a> &middot; <a href="${esc(prefix)}/rss.xml">RSS</a> &middot; <a href="${esc(prefix)}/sitemap-index.xml">Sitemap</a></p>` +
