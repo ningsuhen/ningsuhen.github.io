@@ -48,6 +48,7 @@ Personal site for Ning Waikhom: Astro + Fuwari theme, deployed to GitHub Pages f
 This repo holds the site and the compiled output that research and experiments need to run. Everything else lives in its own repo.
 
 - Allowed: the Astro site source, posts and their images, and for each report or experiment its built files only (`index.html`, minified JS, WASM, CSS, fonts, data the page loads, thumbnails).
+- Also allowed: the SDLC document in `docs/site/` (owner decision 2026-11-21). Edit, check and publish it with `arta sdlc` (run from `docs/site/`); it is never built into the site (`dist/` under it is gitignored) and `check:leaks` scans it.
 - Not allowed: source code of experiments, games or simulations (Rust, Python, TypeScript sources, generators, notebooks, build scripts for them), model weights, raw datasets, logs, intermediate or debug outputs, unminified bundles when a minified build exists, duplicate versions of an artifact (keep the current one; history has the rest).
 - Build and develop in the owning project's repo, then copy in only the compiled result. Record where it came from (project name and a build hash) in the PR, never a local path.
 - Keep payloads small: strip source maps and unused assets, prefer gzip-friendly formats, and ask before adding anything over 1 MB. Large models are fetched from their public host at runtime, never committed.

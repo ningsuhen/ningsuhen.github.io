@@ -1,0 +1,21 @@
+# Plain-English names for the Code Plan. Written by `arta sdlc codeplan name PATH "name"`, not by hand.
+".githooks":
+  name: "Git hooks"
+  purpose: "Secret scan and push guards run before commit and push"
+  shape: "545c38b0922d"
+".github":
+  name: "CI"
+  purpose: "Presubmit workflow, link check and PR conflict labelling"
+  shape: "dc1c805c8aed"
+"public":
+  name: "Static assets"
+  purpose: "Design system, built standalone pages, speech engine files and images, served as-is"
+  shape: "140cab701de5"
+"scripts":
+  name: "Site scripts"
+  purpose: "Scaffolds, checks (leaks, design system, markers) and git helpers"
+  shape: "f4ae0428c7b4"
+"src":
+  name: "Site source"
+  purpose: "Astro pages, layouts, components, posts and standalone fragments"
+  shape: "68bbbe9b5103"

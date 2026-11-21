@@ -1,0 +1,2 @@
+records/*.md merge=sdlc-records diff=sdlc-records
+perf/*.jsonl merge=union
