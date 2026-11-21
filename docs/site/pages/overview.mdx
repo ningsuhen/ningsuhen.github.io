@@ -1,0 +1,46 @@
+---
+id: overview
+title: Overview
+icon: layout-dashboard
+summary: What this is, where it stands, and where to start.
+---
+
+## Verdict
+
+**A live personal site with two open fixes and no written vision yet.** The site is built and deployed on every merge to `master`. This document tracks its open work. The one thing needed from the owner is the vision: see [Q-1](#Q-1).
+
+### The verdict in five lines
+
+1. The site is live: posts, research reports, playground demos and ideas ([Plan](#plan)).
+2. Two fixes are open: broken links on one report, and page CSS leaking onto every page ([Plan](#plan)).
+3. The vision is the owner's to write, so it waits on [Q-1](#Q-1).
+4. Agents write the code; the owner approves posts in their own voice.
+5. Every change passes CI, including a leak scan, before it merges.
+
+### Status and caveats
+
+<Good title="Built">
+The site, its CI checks (build, browser checks, leak scan, secret scan) and deployment to GitHub Pages.
+</Good>
+
+<Warn title="Not written yet">
+The vision, readers and success measures. Requirements, architecture and the other design pages are marked not applicable until the vision exists.
+</Warn>
+
+### How to read this
+
+- Short on time: read this page.
+- Picking up work: read [Plan](#plan) and [Status](#status).
+
+## What changes
+
+<NA reason="First version: nothing has changed yet." />
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| Report | A static analysis or benchmark under /research/. |
+| Playground | A live demo under /playground/, played with in the browser. |
+| Idea | A short write-up of something that may be built or tested later. |
+| Fragment | A standalone page's source (meta, body, optional CSS and JS) that the site shell wraps. |

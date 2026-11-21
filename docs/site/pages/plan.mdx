@@ -1,0 +1,73 @@
+---
+id: plan
+title: Plan
+icon: git-branch
+summary: Stages that each produce evidence, and the condition that stops the work.
+---
+
+## Stages
+
+### Stages
+
+<Cards>
+| Stage | Build | Measure | Stop if |
+|---|---|---|---|
+| 1. Open fixes | W-1 and W-2 | The weekly link check is clean; no Fuwari page carries fragment CSS | A fix breaks a CI check that passed before |
+| 2. Vision | The owner answers Q-1; the design pages follow from it | The overview states the vision in the owner's words | The owner decides the doc is not worth keeping |
+</Cards>
+
+### Dates
+
+The stages have no dates. Stage 1 runs as fixes land; stage 2 waits on the owner.
+
+## Work packages
+
+### Packages
+
+The current stages, broken into stories: each one reviewable change, with `phase:` naming its stage. A story too big for one change is split into tasks, W-n.1 and W-n.2, and finishes when they do. Later stages are broken down when the data from earlier ones exists. The document is the epic. Live state is on [Status](#status). Add a story with `sdlc new work "title"`.
+
+Any story or task may name its Jira issue with `jira: PAY-12`, and `jira_epic: "PAY-1"` in `sdlc.yaml` names the document's epic. Readers turn the links on from the Ledger tab with the project's URL; `jira:` in `sdlc.yaml` turns them on for everyone, at the cost of putting the Jira site's address in the page.
+
+<Records kind="work" view="cards" />
+
+## How the work is run
+
+### Built by agents, decided by people
+
+- Agents write the code and the tests.
+- A person approves each stage gate and every change to the trusted base.
+- Agents decide every call they can, after a cross-model brainstorm recorded as a decision. They ask the owner only for what needs the owner's authority (scope, preferences, money, accounts, legal, anything irreversible outside the repo), with options, recommended first.
+- Every work item names the requirements it covers.
+- An item is done when its "done when" test passes and the evidence is recorded. A claim with no evidence is not done.
+- Reviews are cross-model: the model that wrote a change does not review it.
+- A change that adds a trusted component or a number to this document updates the trusted-base table or a claim record in the same change.
+
+### One coordinator, self-driven builders
+
+Builders run the work; the coordinator only decides what the ladder sends it.
+
+- **Take**: a builder that finishes an item takes the next in the same turn. Only a builder with nothing ready is woken, once per item handed to it.
+- **Split**: a builder splits an item it holds into at most four children, two levels deep, inside the parent's `where`, at most 1.5 times its weight. Children are W-n.1, W-n.2. The parent stays as a milestone.
+- **Find**: work found outside an item is filed as proposed, and is scheduled once another builder acks it.
+- **Scope**: `where` is the write scope. Free paths are granted by the artifact server's task API. A held path gets one offer to its holder by hook line; with no answer in ten minutes, the later item parks behind it.
+- **Prove**: a change check fails on the base and passes on the candidate; keep checks pass on both. A builder who is not the author reviews M, L and contract items.
+
+| Level | Who | Budget | Goes up when |
+|---|---|---|---|
+| L0 | The builder | One attempt plus one fix after a bounce | The second bounce, or a path another claim holds |
+| L1 | One peer | One offer, one counter, ten minutes, no wake | A cycle, the critical path, or the same dispute twice |
+| L2 | Coordinator | Batched, at most three wakes an hour | A decision beyond its delegated authority |
+| L3 | Owner | Only the items that list the question wait | Nowhere: the owner decides |
+
+An escalation carries the item, the evidence, what was tried, two options and a recommendation. A bare "stuck" is refused.
+
+### Definition of done for a stage
+
+1. Every package's test passes.
+2. The stage's measurements are recorded as claims.
+3. No stop condition is met, or one is met and the owner decides.
+4. This document is updated: decisions, owner questions, claims.
+
+### The ids
+
+R requirement, D decision, K risk, W story, Q owner question, C claim. A task under story W-n is W-n.k, made by splitting W-n; work found outside an item is a new story. Ids are never reused or renumbered. Each has an anchor, so a link to `#` plus the id goes straight to it.

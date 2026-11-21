@@ -1,0 +1,22 @@
+schema: 2
+name: "site"
+title: "ningsuhen.github.io"
+lede: "Plan and open work for the personal site: posts, research reports, playground demos and ideas, built with Astro and served by GitHub Pages."
+created: "2026-11-21"
+artifact: "91813619f757"  # pragma: allowlist secret
+# The sidebar: groups in order, pages in order. A page file missing here still builds, under Unlisted.
+# `sdlc new page <id> "Title"` adds one. A page that does not apply stays: add `status: na` to its front matter and
+# readers no longer see it. A page nobody has written is hidden the same way until it is.
+# A design part that needs three or more sub pages gets its own page under Design.
+# codeplan: on shows the Code Plan, a map of the code as it is. off removes it for good. To scan another folder or
+# leave some out, write a mapping: root (relative to this folder) and exclude (globs).
+codeplan: on
+nav:
+  - group: "Define"
+    pages: ["overview", "requirements"]
+  - group: "Design"
+    pages: ["ui", "architecture", "codeplan", "security"]
+  - group: "Deliver"
+    pages: ["decisions", "plan", "status", "perf", "validation", "operations"]
+  - group: "Evidence"
+    pages: ["review", "brainstorm", "sources"]

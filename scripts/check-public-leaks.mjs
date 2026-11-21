@@ -14,7 +14,8 @@ const ROOT = path.resolve(HERE, "..");
 const DENYLIST = path.join(HERE, "leak-denylist.local.txt");
 const EMBED_ALLOWLIST = path.join(HERE, "leak-embedded-allowlist.json");
 // src/standalone: page fragments; a Draft one is never built, so dist/ alone would miss it.
-const SCAN_DIRS = ["dist", "public", "src/content", "src/data", "src/standalone"].map((d) => path.join(ROOT, d));
+// docs: the SDLC document; never built into the site, but public in the repo and published as an artifact.
+const SCAN_DIRS = ["dist", "public", "src/content", "src/data", "src/standalone", "docs"].map((d) => path.join(ROOT, d));
 const DOC_FILES = ["CLAUDE.md", "README.md", "THIRD_PARTY_LICENSES.md", "LICENSE"].map((f) => path.join(ROOT, f));
 const IMAGE_EXT = /\.(png|jpe?g|webp|gif)$/i;
 const FONT_EXT = /\.(woff2?|ttf|otf|eot)$/i; // binary glyph data: no text to scan
