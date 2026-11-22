@@ -1,33 +1,33 @@
 ---
 title: "I tested small models for Brev's generative tier"
 published: 2026-10-27
-description: "We ran four small models (1.7B–4B) against Brev's generative tier on the same 1,960-row classification arm. The 4B models tie at ~84%; the 1.7B LFM3 collapses to 12%. The current 4B tiers stay."
+description: "I ran four small models (1.7B to 4B) on the same 1,960-row classification arm for Brev's generative tier. The 4B models tie around 84%, and LFM3-1.7B drops to 12%, so the current 4B tiers stay."
 tags: [AI, Benchmark, Research]
 category: Research
 thumbnail: ./thumb.webp
 draft: false
 ---
 
-Brev's generative tier is the second-opinion step. laya, the small router, decides most messages, and the model re-classifies the ones it is unsure about, roughly 6% of traffic. It runs in the browser as ONNX on WebGPU. The current tiers are Qwen3.5-4B and FrogNano-4B.
+Brev's generative tier acts as a second opinion. laya, the small router, handles most messages, and the generative model re-classifies the uncertain ones, roughly 6% of traffic. It runs in the browser as ONNX on WebGPU, and the current tiers are Qwen3.5-4B and FrogNano-4B.
 
-I wanted to know if a smaller or newer model could do the job. So I ran four: Spark-X2.6-4B, Qwen3.5-4B, FrogNano-4B, and LiquidAI's LFM3-1.7B.
+I wanted to see if a smaller or newer model could take over that job, so I tested four: Spark-X2.6-4B, Qwen3.5-4B, FrogNano-4B and LiquidAI's LFM3-1.7B.
 
-Same arm for all of them: 1,960 real support messages, 196 intents, every rule in the prompt, about 19k tokens in, a few tokens out. The three 4B models ran as Q4_K_M via llama.cpp on the same machine. LFM3 had to run via transformers on MPS, because no llama.cpp or MLX build supports its architecture yet.
+Every model ran on the same arm: 1,960 real support messages, 196 intents, all rules in the prompt, roughly 19k tokens in and a few tokens out. The three 4B models ran as Q4_K_M on llama.cpp on the same machine. LFM3 had to run through transformers on MPS because neither llama.cpp nor MLX supports its architecture yet.
 
-The 4B models tie. Spark got 84.6%, Qwen3.5-4B got 84.4%, FrogNano got 83.9%. On 1,960 rows that is noise. The 27B teacher sits at 90.4%, so all three leave about 5.7 points on the table.
+The three 4B models basically tied: Spark scored 84.6%, Qwen3.5-4B scored 84.4%, and FrogNano scored 83.9%. Across 1,960 rows those differences are within noise. All three sit about 5.7 points behind the 27B teacher at 90.4%.
 
-LFM3-1.7B is a clear non-starter. It got 12.1%, with 78% of the rows unparsed. The reason is visible in the raw outputs: it narrates its reasoning ("We need to classify the user's message…") and runs out of its 32-token budget before ever emitting the label. The harness's no-thinking flag is a Qwen-specific kwarg that LFM3's chat template ignores, so it thinks out loud and never answers. It is also an order of magnitude slower, running unoptimized on MPS.
+LFM3-1.7B didn't work at all here. It scored 12.1% with 78% of rows failing to parse. Looking at the raw outputs, it starts narrating its reasoning ("We need to classify the user's message…") and hits its 32-token cap before printing a label. The test runner turns off thinking with a Qwen-specific kwarg that LFM3's chat template ignores, so it keeps thinking out loud and never outputs an answer. Running unoptimized on MPS also made it an order of magnitude slower.
 
-For Spark, the decisive problem is not the accuracy. It is the shipping path. Brev ships the tier as ONNX q4f16 on WebGPU. No such build of Spark exists, and the exporter I use has no builder for its architecture. Its attention is a hybrid of sliding-window and full layers with a per-head output gate, which the closest existing builder does not cover. Shipping it means writing a new model builder and validating the WebGPU execution provider from scratch. I hit a graph-size buffer-aliasing bug on a 7B model before, and this would likely hit it too.
+For Spark, the real blocker is shipping it. Brev delivers this tier as ONNX q4f16 on WebGPU, and no ONNX build of Spark exists yet. The exporter I use doesn't have a builder for Spark's architecture, which mixes sliding-window and full attention layers with a per-head output gate. Shipping Spark would mean writing a new model builder and validating the WebGPU execution provider from scratch, and I'd likely run into the same graph-size buffer-aliasing bug I already hit on a 7B model.
 
-So the current tiers stay. If the goal is to close the gap to the 27B, the lever is a better 4B, not a smaller one.
+So I'm keeping the current tiers. Closing the gap to the 27B means finding a stronger 4B model rather than going smaller.
 
 ## What I don't trust yet
 
-- The latency is llama.cpp (4B) and transformers on MPS (LFM3), CPU-bound. It is a fair relative number within each runtime, not the shipped WebGPU path.
-- The arm is harder than the real prompt. The product prompt has about 12 categories, not 196 rules. The gap between the models would be even smaller there.
-- The card's benchmarks are thinking-mode, agentic and coding. They do not transfer to a no-thinking classification task, and the local run shows it.
-- LFM3's 12.1% is partly a token-budget artifact. A larger budget or a fixed chat template could change it, but the base capability on this task is clearly insufficient.
-- The 1,960 rows are real, but they are one domain. I would want a second domain before trusting any of these numbers.
+- Latency was measured on CPU-bound llama.cpp (for the 4B models) and transformers on MPS (for LFM3). Those numbers work for relative comparisons within a runtime, and they don't reflect the shipped WebGPU path.
+- This benchmark arm is harder than the real product prompt, which has about 12 categories instead of 196 rules, so the gap between models should be even smaller in production.
+- The model card benchmarks test thinking-mode coding and agentic tasks, and this local run shows they don't carry over to no-thinking classification.
+- Part of LFM3's 12.1% comes from the 32-token cap. A higher token budget or a fixed chat template would help, though its base capability on this task still looks too weak.
+- All 1,960 rows are real messages from a single domain, so I'd want a second domain before putting too much weight on the numbers.
 
 [Open the report](/research/spark-x2-6-4b/)
