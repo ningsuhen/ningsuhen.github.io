@@ -1,7 +1,7 @@
 ---
 title: "I tested small models for Brev's generative tier"
 published: 2026-10-27
-description: "We ran four small models (1.7B–4B) against Brev's generative tier on the same 1,960-row classification arm. The 4B models tie at ~84%; the 1.7B LFM3 collapses to 12%. The current 4B tiers stay."
+description: "I ran four small models (1.7B to 4B) against Brev's generative tier on the same 1,960-row classification arm. The 4B models tie at ~84%; the 1.7B LFM3 drops to 12%. The current 4B tiers stay."
 tags: [AI, Benchmark, Research]
 category: Research
 thumbnail: ./thumb.webp
@@ -16,9 +16,9 @@ Same arm for all of them: 1,960 real support messages, 196 intents, every rule i
 
 The 4B models tie. Spark got 84.6%, Qwen3.5-4B got 84.4%, FrogNano got 83.9%. On 1,960 rows that is noise. The 27B teacher sits at 90.4%, so all three leave about 5.7 points on the table.
 
-LFM3-1.7B is a clear non-starter. It got 12.1%, with 78% of the rows unparsed. The reason is visible in the raw outputs: it narrates its reasoning ("We need to classify the user's message…") and runs out of its 32-token budget before ever emitting the label. The harness's no-thinking flag is a Qwen-specific kwarg that LFM3's chat template ignores, so it thinks out loud and never answers. It is also an order of magnitude slower, running unoptimized on MPS.
+LFM3-1.7B does not work here. It got 12.1%, with 78% of the rows unparsed. In the raw outputs it narrates its reasoning ("We need to classify the user's message…") and runs out of its 32-token budget before ever emitting the label. The test runner's no-thinking flag is a Qwen-specific kwarg that LFM3's chat template ignores, so it thinks out loud and never answers. It is also an order of magnitude slower, running unoptimized on MPS.
 
-For Spark, the decisive problem is not the accuracy. It is the shipping path. Brev ships the tier as ONNX q4f16 on WebGPU. No such build of Spark exists, and the exporter I use has no builder for its architecture. Its attention is a hybrid of sliding-window and full layers with a per-head output gate, which the closest existing builder does not cover. Shipping it means writing a new model builder and validating the WebGPU execution provider from scratch. I hit a graph-size buffer-aliasing bug on a 7B model before, and this would likely hit it too.
+For Spark, the problem is the shipping path. Brev ships the tier as ONNX q4f16 on WebGPU. No such build of Spark exists, and the exporter I use has no builder for its architecture. Its attention is a hybrid of sliding-window and full layers with a per-head output gate, which the closest existing builder does not cover. Shipping it means writing a new model builder and validating the WebGPU execution provider from scratch. I hit a graph-size buffer-aliasing bug on a 7B model before, and this would likely hit it too.
 
 So the current tiers stay. If the goal is to close the gap to the 27B, the lever is a better 4B, not a smaller one.
 

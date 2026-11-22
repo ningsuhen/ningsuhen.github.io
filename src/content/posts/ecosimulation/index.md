@@ -24,7 +24,7 @@ These are shares of simulated paths, not forecasts. The seed is 20261017, so a r
 
 <!-- owner:fact The disclosed 2026 figures (760bn big-4 capex guidance, 152bn direct AI revenue) have no source link. Link them, or point to the report as the source? -->
 
-The bill is the part that matters. In the first simulated year the four biggest spenders put \$748bn into AI capex against \$243bn of direct AI revenue. That is a big gap between spend and directly measured revenue. The disclosed 2026 figures point the same way: \$760bn of big-4 capex guidance against \$152bn of disclosed direct AI revenue. Of \$970bn of total AI capex, the model puts 42% outside the US.
+In the first simulated year the four biggest spenders put \$748bn into AI capex against \$243bn of direct AI revenue. That is a big gap between spend and directly measured revenue. The disclosed 2026 figures point the same way: \$760bn of big-4 capex guidance against \$152bn of disclosed direct AI revenue. Of \$970bn of total AI capex, the model puts 42% outside the US.
 
 <!-- owner:scene "The gap is the number I keep checking." Is there a reaction behind it (surprised, worried, sceptical)? Only if you want to say it. -->
 

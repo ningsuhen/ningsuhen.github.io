@@ -24,7 +24,7 @@ I tested on Banking77 (77 intents), then on 196 intents, then on a 478-intent se
 
 It has three stages. A TF-IDF head answers the rows it is sure about: 225 of 300 in the live run, and 96.9% of those are right. Qwen3-4B (Q4_K_M) takes the rest with 8 retrieved examples. The 27B only sees the rows the 4B is least sure about, 27 of 300, which is 9%. There it gets a short prompt, the top 30 candidates and 16 examples.
 
-Measured live, end to end, the chain got 93.3% on the 300 rows. The 27B scored 93.9% on all 4,938 rows of that set. Per query the chain averaged 49 ms, and one 27B call took about 10 s. At 300 rows the intervals are wide, so I can't tell the two accuracies apart. Close, not equal.
+Measured live, end to end, the chain got 93.3% on the 300 rows. The 27B scored 93.9% on all 4,938 rows of that set. Per query the chain averaged 49 ms, and one 27B call took about 10 s. At 300 rows the intervals are wide, so I can't tell the two accuracies apart.
 
 ![Accuracy against median latency for each arm, and accuracy as more low-margin walks are handed to a resolver](./accuracy-latency.webp)
 
@@ -50,7 +50,7 @@ Rule order matters for that cache. Appending a rule invalidated 2% of it (first 
 
 ## The boring part carries it
 
-A TF-IDF character n-gram head in front of the pipeline answers about 65% of rows locally at 97% precision. It cuts hosted-classifier spend by 56% at k=50, from \$0.29 to \$0.13 per 1k. And accuracy goes up too: 91.3% against 88.5% for my headline pipeline (paired CI +1.7 to +3.9 points). Its p50 is about 8 ms, against 219 ms. The report's short answer: the headline pipeline holds up, and a cheap trained head in front improves both accuracy and cost.
+A TF-IDF character n-gram head in front of the pipeline answers about 65% of rows locally at 97% precision. It cuts hosted-classifier spend by 56% at k=50, from \$0.29 to \$0.13 per 1k. And accuracy goes up too: 91.3% against 88.5% for my headline pipeline (paired CI +1.7 to +3.9 points). Its p50 is about 8 ms, against 219 ms. So the headline pipeline holds up, and a cheap trained head in front improves both accuracy and cost.
 
 The retrieved examples are what make the 4B useful. On 4,948 rows and 478 intents, the head alone scored 89.6%. The 4B with only candidate names scored 78.6%, worse than the head. With the 8 nearest labelled examples it scored 94.0%, but those had gold labels. With simulated 27B-style label noise the same stage scored 91.6%.
 

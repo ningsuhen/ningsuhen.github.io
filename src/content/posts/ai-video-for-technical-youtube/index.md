@@ -8,14 +8,16 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
-This report compares the tools for making technical YouTube videos with AI as of October 2026: avatar clones against filming yourself, slides and diagrams written as code, AI-generated B-roll, voice cloning, and editing and captions.
+<!-- owner:scene Why did you make this report? Are you planning to make technical YouTube videos? -->
 
-The short version: film the talking head, clone the voice for fixes, build slides as code, and buy AI B-roll by the second. Under the report's assumptions, a finished 10-minute video costs about \$0 to \$10 on the cheapest pipeline, \$60 to \$75 on the best-value one, and \$122 to \$230 on the top-quality one. B-roll seconds are the largest cost in every paid pipeline.
+I compared the tools for making technical YouTube videos with AI as of October 2026: avatar clones against filming yourself, slides and diagrams written as code, AI B-roll, voice cloning, editing and captions.
 
-The report also sets out a two-tier workflow: iterate the script, timing and shots with a cheap draft voice (such as Kokoro) and draft video modes, then render the final voice and only the chosen shots once. Under its assumptions, drafting B-roll breaks even within two review rounds for every pair it models. Tiering the voice saves time more than money.
+Film the talking head yourself, clone the voice for fixes, build slides as code, and buy AI B-roll by the second. Under my assumptions, a finished 10-minute video costs about \$0 to \$10 on the cheapest pipeline, \$60 to \$75 on the best-value one, and \$122 to \$230 on the top-quality one. B-roll seconds are the largest cost in every paid pipeline.
 
-Every price was read on the vendor's own page on 2026-10-25, and each claim is in a table in the report with its source. No video, avatar or voice was generated, so quality is not measured. Where the report gives a quality view, it labels it as judgment.
+I also set out a two-tier workflow: iterate the script, timing and shots with a cheap draft voice (such as Kokoro) and draft video modes, then render the final voice and only the chosen shots once. Under the same assumptions, drafting B-roll breaks even within two review rounds for every pair modeled. Tiering the voice saves time more than money.
 
-It also covers what changed this year (Sora is gone, and the Veo 3.1 preview on the Gemini API has closed), YouTube's rules on disclosing synthetic content, and the prices that could not be verified.
+I read every price on the vendor's page on 2026-10-25, and each claim is in a table in the report with its source. I did not generate any video, avatar or voice, so quality is not measured. Quality views in the report are labelled as judgment.
+
+The report also covers what changed this year (Sora is gone, and the Veo 3.1 preview on the Gemini API has closed), YouTube's rules on disclosing synthetic content, and the prices I could not verify.
 
 [Open the report](/research/ai-video-for-technical-youtube/)

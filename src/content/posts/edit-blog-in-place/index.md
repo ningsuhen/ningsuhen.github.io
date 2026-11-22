@@ -8,7 +8,7 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
-This blog is Markdown in a GitHub repo. Astro builds it and GitHub Pages serves it. When I spot a typo in a post, fixing it is a small trip. I find the repo, then the file, then the line. I edit the Markdown, open a pull request, wait for the checks and the deploy, and look at the page again. GitHub's web editor (press `.` on a repo) helps with the editing, but I'm still somewhere else from where I saw the typo.
+This blog is Markdown in a GitHub repo. Astro builds it and GitHub Pages serves it. When I spot a typo in a post, I find the repo, file and line, edit the Markdown, open a pull request, wait for the checks and the deploy, and look at the page again. GitHub's web editor (press `.` on a repo) helps with the editing, but I'm still somewhere else from where I saw the typo.
 
 So I wrote an [idea page](/ideas/edit-blog-in-place/) for a browser extension that lets me edit a post where I'm reading it. I'm building a rough version for this site. It isn't finished, and I haven't measured anything.
 

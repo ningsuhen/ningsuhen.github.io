@@ -1,16 +1,16 @@
 ---
 title: "Wikipedia, but in the age of AI"
 published: 2026-10-25
-description: "An idea, not a product: an encyclopedia where each claim keeps its own sources, people sign what they checked, and machine drafts stay labelled. Nothing is built or measured."
+description: "An idea for an encyclopedia where each claim keeps its own sources, people sign what they checked, and machine drafts stay labelled. Nothing is built or measured."
 tags: [Idea, Wikipedia, AI, Licensing]
 category: Idea
 thumbnail: ./thumb.webp
 draft: false
 ---
 
-Recently, I have been thinking about how AI will change or replace many of the existing products on the internet - decentralized office software, open source versions of almost all major proprietary softwares and so on. One of them is how Wikipedia is still like the old simple text based internet. What if AI could make a new version of Wikipedia that is interactive , visual and easy to learn? What if you don't need an expensive book or AI to learn about history or science for free?
+Recently, I have been thinking about how AI will change or replace many of the existing products on the internet - decentralized office software, open source versions of almost all major proprietary softwares and so on. One of them is how Wikipedia is still like the old simple text based internet. What if AI could make a new version of Wikipedia that is interactive, visual and easy to learn? What if you don't need an expensive book or AI to learn about history or science for free?
 
-So, I created an [idea page](/ideas/wikipedia-ai-age/)  for a Wikipedia in the age of AI. 
+So, I created an [idea page](/ideas/wikipedia-ai-age/) for a Wikipedia in the age of AI.
 
 ## The idea
 

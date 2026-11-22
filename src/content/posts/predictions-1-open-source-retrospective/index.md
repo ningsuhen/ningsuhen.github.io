@@ -66,11 +66,11 @@ My prediction: the gap is still under six months on the next Epoch update, if th
 
 ## What I will check
 
-- **By 30 June 2027:** the next Epoch open-weight gap figure. Prediction: under six months.
-- **By 31 December 2027:** the next Stack Overflow survey after 2025. Prediction: Rust above 14.8% for all respondents. Wrong if equal or lower.
-- **By 31 December 2027:** the next Octoverse report. Prediction: Python still leads AI repositories. Wrong if another language does.
-- **By 24 October 2027:** WordCraft's README. Prediction: still labelled alpha. Wrong if it is not.
-- **By 24 October 2027:** the license of the StoryTold repos. Prediction: still MIT or Apache-2.0. Wrong if any changes.
+- By 30 June 2027: the next Epoch open-weight gap figure. Prediction: under six months.
+- By 31 December 2027: the next Stack Overflow survey after 2025. Prediction: Rust above 14.8% for all respondents. Wrong if equal or lower.
+- By 31 December 2027: the next Octoverse report. Prediction: Python still leads AI repositories. Wrong if another language does.
+- By 24 October 2027: WordCraft's README. Prediction: still labelled alpha. Wrong if it is not.
+- By 24 October 2027: the license of the StoryTold repos. Prediction: still MIT or Apache-2.0. Wrong if any changes.
 
 ## Sources
 

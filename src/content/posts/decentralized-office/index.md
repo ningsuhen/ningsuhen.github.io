@@ -10,8 +10,8 @@ draft: false
 
 <!-- owner:scene Why this idea? The post gives the problem (providers can read hosted files) but no personal reason. What made you care about it? -->
 
-Hosted office suites keep your work where the provider can read it. This idea turns that around: mail and documents stay on your own devices, and the cloud holds only encrypted copies. Collaboration still has to work, though, so the explainer covers offline edits, merging, recovery and what leaks anyway.
+Hosted office suites keep your work where the provider can read it. My idea flips that. Mail and documents stay on your own devices, and the cloud holds only encrypted copies. Collaboration still has to work, though, so the explainer covers offline edits, merging, recovery and what leaks anyway.
 
 <!-- owner:question Which part do you think is hardest? The description promises "where it gets hard", but the body does not pick one. -->
 
-It's an idea, not a product. Nothing in it is built or measured. The [idea page](/ideas/decentralized-office/) has the diagrams, a quiz and a question box.
+This is only an idea. Nothing in it is built or measured. The [idea page](/ideas/decentralized-office/) has the diagrams, a quiz and a question box.

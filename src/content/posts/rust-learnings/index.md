@@ -8,7 +8,7 @@ category: Thoughts
 draft: false
 ---
 
-Python was the primary choice for a lot of tools I created when I first started using claude code. But as the code base became larger , it became slower and slower, and it was easy to break something when there's a change in another. There were periods of frustration feeling like the codebase is a complete bust of AI Slop. 
+Python was the primary choice for a lot of tools I created when I first started using claude code. But as the code base became larger, it became slower and slower, and it was easy to break something when there's a change in another. There were periods of frustration feeling like the codebase is a complete bust of AI Slop.
 
 <!-- owner:manual -->
 
@@ -40,7 +40,7 @@ Dates were the worst. I sent them as ISO strings at first, and formatting the st
 
 *Illustrative sample, not real output. The call stacks and percentages are invented.*
 
-So count the boundary before you count the compute.
+Measure the boundary before the compute.
 
 ## The biggest wins were not the language
 
@@ -120,12 +120,12 @@ ML training, pandas workflows, the React and TypeScript front ends, shell glue, 
 
 ### Decision checklist
 
-- **Short-lived process that starts many times:** strong case.
-- **Long-running service:** no whole-service timing from me. The case rests on reliability and packaging, and those are my judgments.
-- **Numeric loop:** only if the loop stays inside Rust.
-- **Mostly waiting on the network or a database:** expect little speed gain. The gain is fewer error paths and simpler packaging.
-- **Packaging pain** (virtualenvs, interpreter drift): a single binary removed a real chore for me.
-- **Budget for a parity audit.** One of mine found well over a hundred gaps between the Python reference and the Rust code.
+- Short-lived process that starts many times: strong case.
+- Long-running service: no whole-service timing from me. The case rests on reliability and packaging, and those are my judgments.
+- Numeric loop: only if the loop stays inside Rust.
+- Mostly waiting on the network or a database: expect little speed gain. The gain is fewer error paths and simpler packaging.
+- Packaging pain (virtualenvs, interpreter drift): a single binary removed a real chore for me.
+- Budget for a parity audit. One of mine found well over a hundred gaps between the Python reference and the Rust code.
 
 ### Migration path that worked
 
@@ -140,7 +140,7 @@ If agents write the code, run `cargo check`, clippy with warnings as errors and 
 
 ### Pitfalls and fixes
 
-- **Dates across the boundary:** send `toordinal()` integers, not strings.
+For dates across the boundary, send `toordinal()` integers instead of strings:
 
 ```python
 # slow: strings cross the boundary and get parsed on both sides
@@ -149,7 +149,7 @@ days = [d.isoformat() for d in dates]
 days = [d.toordinal() for d in dates]
 ```
 
-- **Blocking locks on async threads:** give the lock a deadline, and move blocking work off the async threads.
+For blocking locks on async threads, give the lock a deadline and move blocking work off the async threads:
 
 ```rust
 // parking_lot mutex: give up instead of parking an async worker forever
@@ -160,7 +160,7 @@ let Some(guard) = db.try_lock_for(Duration::from_secs(2)) else {
 let rows = tokio::task::spawn_blocking(move || load_rows(path)).await?;
 ```
 
-- **Fallbacks that hide failures:** log the exception before you fall back. My bare except hid a fallback failure until I added a logged warning.
+For fallbacks that hide failures, log the exception before falling back. My bare except hid a fallback failure until I added a logged warning:
 
 ```python
 try:
@@ -170,9 +170,9 @@ except Exception:
     value = reference(data)
 ```
 
-- **Float drift:** some Rust and SciPy sums differed by 1 to 3 ULPs. My tolerances ranged from 1e-9 to 1e-6.
-- **Silent defaults:** one Rust helper returned 0.5 for AUC on degenerate input, where the reference returns nan. Another ignored labels other than 0 and 1. The type system caught neither, so write the degenerate cases as tests.
-- **Panic policy:** decide it before you start. Unwrap calls in request handlers were a real risk in my code, and one commit converted them to error returns by hand. Make the rule a lint if you want it enforced.
+- Float drift: some Rust and SciPy sums differed by 1 to 3 ULPs. My tolerances ranged from 1e-9 to 1e-6.
+- Silent defaults: one Rust helper returned 0.5 for AUC on degenerate input, where the reference returns nan. Another ignored labels other than 0 and 1. The type system caught neither, so write the degenerate cases as tests.
+- Panic policy: decide it before you start. Unwrap calls in request handlers were a real risk in my code, and one commit converted them to error returns by hand. Make the rule a lint if you want it enforced.
 
 ### Tooling that paid off
 
@@ -181,8 +181,4 @@ except Exception:
 - `clippy.toml` `disallowed-methods` to ban risky calls. I banned task spawning outside one module, so tasks drain on shutdown, and banned cache connections without timeouts.
 - `--locked` builds, and a CI check that rejects a lockfile that no longer matches the manifest.
 
-## Where I am
-
-Rust made a few short processes much faster, and some numeric loops faster until the boundary ate part of the gain. The biggest real wins were algorithm changes.
-
-The reliability gain is narrow. Some type errors moved to compile time and guarded resources stopped leaking, but hangs, timeouts and panics did not go away, and the memory problem I hit was a design problem. I still do not have a clean Python-versus-Rust number for a whole service. That is the next thing I want to measure, with the same agents on both sides.
+I still do not have a clean Python-versus-Rust number for a whole service. That is the next thing I want to measure, with the same agents on both sides.

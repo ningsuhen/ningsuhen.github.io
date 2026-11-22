@@ -40,12 +40,12 @@ The money is a lot more than the revenue. The report counts \$1,113.6B committed
 
 The report reads the bubble indicators as a stretched level with calm momentum. Four of five sit above their 90th historical percentile, CAPE is 40.6x and credit spreads are tight. The gauge reads Alert at 98.4 for October 2026, which the report links to its full-bust cluster. But the stress it finds sits in three AI-exposed names, CoreWeave, SoftBank and Oracle, not across the market.
 
-The 10,000 exported paths group into four clusters, four stories the model keeps telling (shares of paths):
+The 10,000 exported paths group into four clusters:
 
-- **The build that still breaks, 49%.** The AI succeeds, but the build is financed so hard that a recession is the most common outcome.
-- **The credit stretch, 29%.** Credit stretches and the labs go public, but the economy holds.
-- **The AI disappointment, 15%.** The payoff disappoints. Capex cools, both labs are distressed, and a rescue is likely.
-- **The full bust, 7%.** Creative work is displaced, the AI index halves and the credit complex unwinds together.
+- The build that still breaks (49%): AI succeeds, but the build is financed so hard that a recession is the most common outcome.
+- The credit stretch (29%): credit stretches and the labs go public, while the economy holds.
+- The AI disappointment (15%): the payoff disappoints, capex cools, both labs are distressed, and a rescue is likely.
+- The full bust (7%): creative work is displaced, the AI index halves and the credit complex unwinds together.
 
 And the fan charts across the exported paths:
 

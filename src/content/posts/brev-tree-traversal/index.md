@@ -25,7 +25,7 @@ I wrote the tree myself, from the label names and five training examples per lab
 
 ## How to use the page
 
-Pick a message by intent, by kind, or by number. The kinds are: correct, wrong at the root, wrong lower down, lowest margin, and shortest.
+Pick a message by intent, number, or kind (correct, wrong at the root, wrong lower down, lowest margin, or shortest).
 
 Step through the walk with Next, Back, the arrow keys or Auto-play. Each step shows the question, every option with laya's probability, the option it chose, and the gold option when the walk is still on the gold path. The URL changes with each step, so Back works and a step can be linked.
 
