@@ -1,0 +1,33 @@
+/* AI Boom Trajectories page helpers (tokens only). */
+[data-page="ai-economy"]{--u:var(--rd-space-6)}
+[data-page="ai-economy"] [hidden]{display:none!important}
+[data-page="ai-economy"] .ae-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(calc(var(--u)*9),100%),1fr));gap:var(--rd-space-3);margin:var(--rd-gap-block) 0}
+[data-page="ai-economy"] .ae-grid>*{margin:0;min-width:0}
+[data-page="ai-economy"] .ae-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--rd-space-1) var(--rd-space-2);margin:var(--rd-space-1) 0}
+[data-page="ai-economy"] .ae-split{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--rd-space-1) var(--rd-space-3)}
+[data-page="ai-economy"] .ae-cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(calc(var(--u)*2),1fr));gap:var(--rd-space-2);margin:var(--rd-space-2) 0}
+[data-page="ai-economy"] .ae-cells .ae-big{display:block;font-size:var(--rd-fs-h3)}
+[data-page="ai-economy"] .ae-title{display:block;font-weight:700;color:var(--rd-text-strong)}
+[data-page="ai-economy"] span.ae-title{display:inline}
+[data-page="ai-economy"] .ae-big{font-weight:700;color:var(--rd-accent);white-space:nowrap}
+[data-page="ai-economy"] .ae-dot{display:inline-block;width:var(--rd-space-2);height:var(--rd-space-2);border-radius:50%;background:var(--c,var(--rd-text-faint));margin-inline-end:var(--rd-space-1)}
+[data-page="ai-economy"] .ae-hl td{background:var(--rd-btn-bg-hover)}
+[data-page="ai-economy"] .ae-strip{position:relative;height:var(--rd-space-5);margin:var(--rd-space-1) 0;border-radius:var(--rd-radius-sm);background:var(--rd-surface-inset);overflow:hidden}
+[data-page="ai-economy"] .ae-strip>*{position:absolute;inset-block:0;left:var(--x,0);width:var(--w,var(--rd-space-1));background:var(--c,var(--rd-accent))}
+[data-page="ai-economy"] .ae-stack{display:flex;min-width:calc(var(--u)*6);height:var(--rd-space-4);border-radius:var(--rd-radius-sm);overflow:hidden}
+[data-page="ai-economy"] .ae-stack>*{flex:var(--f,1) 1 0;background:var(--c);color:var(--rd-on-accent);font-size:var(--rd-fs-xs);text-align:center;overflow:hidden}
+[data-page="ai-economy"] .ae-bar{display:inline-block;vertical-align:middle;height:var(--rd-space-2);width:var(--w,0);max-width:100%;border-radius:var(--rd-radius-sm);background:var(--c,var(--rd-accent))}
+[data-page="ai-economy"] .ae-bar--track{width:calc(var(--u)*4);background:var(--rd-line);overflow:hidden}
+[data-page="ai-economy"] .ae-bar--track>*{display:block;height:100%;width:var(--w);background:var(--rd-accent)}
+[data-page="ai-economy"] .ae-ind{display:grid;grid-template-columns:minmax(0,calc(var(--u)*7)) minmax(0,1fr) auto;gap:var(--rd-space-1) var(--rd-space-4);align-items:center;padding:var(--rd-space-3) 0;border-bottom:thin solid var(--rd-line-soft)}
+[data-page="ai-economy"] .ae-ind>details{grid-column:1/-1}
+[data-page="ai-economy"] .ae-ind>div{display:flex;flex-direction:column;min-width:0}
+[data-page="ai-economy"] .ae-ind>div:last-of-type{align-items:flex-end}
+[data-page="ai-economy"] .ae-fan{margin:var(--rd-space-2) 0;min-width:0}
+[data-page="ai-economy"] .ae-svg{display:block;max-width:100%;height:auto}
+[data-page="ai-economy"] svg text:not([fill]){fill:var(--rd-text-muted)}
+[data-page="ai-economy"] .ae-pop{max-width:min(var(--rd-measure),90%);padding:var(--rd-pad-card);border:thin solid var(--rd-line);border-radius:var(--rd-radius);background:var(--rd-card-bg);color:var(--rd-text);font-size:var(--rd-fs-sm)}
+[data-page="ai-economy"] .ae-tip{display:inline-flex;align-items:center;justify-content:center;min-width:var(--rd-space-6);min-height:var(--rd-space-6);padding:0;border:0;background:none;color:var(--rd-accent);cursor:pointer;vertical-align:middle}
+[data-page="ai-economy"] .ae-sr{position:absolute;width:0;height:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+[data-page="ai-economy"] .ae-out{text-decoration:line-through}
+@media (max-width:40rem){[data-page="ai-economy"] .ae-ind{grid-template-columns:minmax(0,1fr) auto}[data-page="ai-economy"] .ae-ind>.ae-strip{grid-column:1/-1;grid-row:2}}

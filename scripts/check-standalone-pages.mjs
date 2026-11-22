@@ -63,14 +63,11 @@ for (const rel of pages) {
 		const page = await ctx.newPage();
 		// Standalone pages must be self-contained: no cross-origin subresource requests (script/css/font/
 		// image/fetch). Outbound <a href> navigations are user-initiated and are not subresources.
-		// blob: URLs are in-page workers/eval (not network), and the in-flight ai-economy report still loads
-		// d3 from a CDN until its re-export lands — both are exempt, mirroring SCRIPT_ROUTED_HASHES elsewhere.
-		const EXEMPT_EXTERNAL = new Set(["/research/ai-economy/"]);
+		// blob: URLs are in-page workers/eval (not network), so they are exempt.
 		const externalReqs = [];
 		page.on("request", (rq) => {
 			const u = rq.url();
 			if (u.startsWith(base) || u.startsWith("blob:") || rq.resourceType() === "document") return;
-			if (EXEMPT_EXTERNAL.has(urlPath)) return;
 			externalReqs.push(`${rq.resourceType()} ${u}`);
 		});
 		await page.goto(base + urlPath, { waitUntil: "load" });
@@ -415,9 +412,7 @@ for (const rel of barPages) {
 const mainTocPage = "/posts/rust-learnings/";
 // Known rail-style drifts on third-party exports, baselined with an owner (mirrors design-system-baseline.json).
 // A site-owned page must not be baselined here — fix it. An entry that stops firing fails (delete it in the PR).
-const TOC_DRIFT_BASELINE = [
-	{ page: "/research/ai-economy/", owner: "EcoSimulation", reason: "Own palette: the rail badge and text colours differ from the design system. Re-export on the design system." },
-];
+const TOC_DRIFT_BASELINE = [];
 if (tabbed.length && existsSync(path.join(DIST, "posts/rust-learnings/index.html"))) {
 	const urlOf = (p) => "/" + p.replace(/index\.html$/, "").split(path.sep).join("/");
 	const grab = async (width, urlPath, sel) => {

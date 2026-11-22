@@ -1,0 +1,23 @@
+{
+	"contract": 1,
+	"kind": "research",
+	"slug": "ai-economy",
+	"title": "AI Boom Trajectories",
+	"created": "2026-10-17",
+	"updated": "2026-11-21",
+	"summary": "Across the exported 10,000 paths, the model puts recession odds at 24% within 12 months, 45% within 24 months and 81% within 60 months.",
+	"eyebrow": "Research · AI economy · scenario model",
+	"width": "wide",
+	"layout": "tabbed",
+	"shell": "doc",
+	"source": {
+		"project": "EcoSimulation",
+		"build": "235c157fc574"
+	},
+	"icons": [
+		"rotate-ccw",
+		"play",
+		"x",
+		"filter"
+	]
+}
