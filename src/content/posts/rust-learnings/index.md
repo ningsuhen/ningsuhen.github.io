@@ -1,7 +1,7 @@
 ---
 title: Rewriting python code with Rust, here's what I learned
 published: 2026-10-24
-description: "What I learned rewriting several Python programs in Rust this year: startup speed, the FFI cost, which bugs actually went away, how coding agents fit in, and a checklist for deciding."
+description: "What I learned rewriting several Python programs in Rust this year: the startup win, the FFI tax, which bugs moved and which did not, whether coding agents changed the answer, and a checklist for deciding."
 thumbnail: ./thumb.webp
 tags: [Rust, Python, Performance, Opinion]
 category: Thoughts
@@ -16,7 +16,7 @@ At the same time, claude code was doing a very good job of generating code. It n
 
 ## What I did not measure
 
-I didn't run before-and-after benchmarks for most of this work. For the full rewrites I have no Python-versus-Rust timings at all, so I'm not claiming any speedup there. The numbers below come from commit messages, a couple of benchmark files and specific performance fixes, and I've noted where each one came from.
+Most of this work has no before-and-after benchmark. For the full rewrites I have no Python-versus-Rust timing at all, so I claim no speedup for them. The numbers below come from commit messages, a couple of benchmark files and performance fixes, and each says where it came from.
 
 ![Invented terminal output of a benchmark command for a made-up service, with a table of stages, baseline and candidate times, and speedups.](./terminal.webp)
 
@@ -24,37 +24,37 @@ I didn't run before-and-after benchmarks for most of this work. For the full rew
 
 ## Startup was the clearest win
 
-One small Python helper got spawned on every call inside a long-running process. Just importing its dependencies took 7.5 seconds, and when 30 to 40 of them started at once the machine went past 150 percent CPU. Replacing it with a self-contained Rust binary dropped startup to about 12 ms according to my commit message.
+A small Python helper ran on every call inside a long-running process. Its import took 7.5 seconds, and with 30 to 40 of them starting at once the machine went past 150 percent CPU. I replaced it with a self-contained Rust binary. My commit message says it starts in about 12 ms.
 
-That's still an observation rather than a controlled benchmark, and it bundles the language together with the import tree. A lazy-import Python rewrite would tell you how much came from the language itself. For a long-running server, I still have no Python-versus-Rust timing.
+That is not a benchmark, and it mixes the language with the import tree. A lazy-import Python version would show how much of the gap is the language. For a long-running server I have no Python-versus-Rust timing.
 
 ## The FFI boundary took a lot back
 
-For numeric loops I used PyO3 and kept the Python implementation as a fallback. A day-by-day loop did well, running 6.9 times faster on a 2,000-day input (8 ms against 55 ms including marshalling). A metrics function scaled much worse: 5.1 times faster on 200 items, dropping to 2.3 times on 1,000 items because copying each column across the boundary grew with the input size.
+For the numeric parts I used PyO3 and kept the Python code as a fallback. A day-by-day loop looked great: 6.9 times faster per run on a 2,000-day input, 8 ms against 55 ms with marshalling included. A metrics function did not hold up. It was 5.1 times faster on 200 items but only 2.3 times on 1,000, because the cost of passing each column across grows with the input.
 
 <!-- owner:scene Was there a moment you found the date regression across the boundary? A sentence of what you saw, only if it happened. -->
 
-Dates were the worst case. At first I passed them across as ISO strings, and formatting and parsing those strings dominated the boundary cost so badly that the faster Rust core became a 7 times regression. Switching to integer day ordinals was about 35 times cheaper to marshal and also let me drop a dependency.
+Dates were the worst. I sent them as ISO strings at first, and formatting the strings dominated the boundary cost, turning the faster core into a 7 times regression. Integer day ordinals were about 35 times cheaper to marshal, and they removed a dependency.
 
 ![Invented sampled call-stack view for a made-up service, with function widths as shares of samples.](./flame.webp)
 
 *Illustrative sample, not real output. The call stacks and percentages are invented.*
 
-It taught me to measure the boundary cost before getting excited about the compute speedup.
+Measure the boundary before the compute.
 
-## The biggest speedups came from algorithms
+## The biggest wins were not the language
 
-My largest documented speedup was a git history scan. A cold call fell from 2,195 ms to 832 ms, and a memo hit still takes 308 ms under real load (mostly listing refs). That came from filtering before parsing and caching per ref snapshot, which would have worked in any language. Similarly, a lookup behind a status endpoint was doing around 1,000 connection checkouts per call; replacing that with a single query brought 512 pairs down to 28 ms on the production database.
+My largest documented speedup is a git history scan. A cold call dropped from 2,195 ms to 832 ms, and a memo hit still takes 308 ms under real load, mostly listing refs. It came from filtering before parsing and caching per ref snapshot, which any language would need. A lookup behind a status call made about 1,000 connection checkouts per call. One query replaced them and measured 28 ms for 512 pairs on the production database. Again, an algorithm change.
 
-A per-step loop went the opposite direction at first. My initial Rust version was actually slower than the code it replaced, and my commit message notes that fixing the per-step work dropped a run from 132 ms to 11 ms. Moving to Rust didn't make slow code fast automatically.
+A per-step loop went the other way. The first Rust version was slower than the code it replaced, and my commit message says fixing its per-step work took a run from 132 ms to 11 ms. Rust was not fast on its own.
 
-Switching one Rust service to mimalloc cut peak memory by 23 percent on a rerun with identical output, though that's Rust against Rust and says nothing about Python.
+Switching a service to mimalloc cut its peak memory by 23 percent on a rerun with identical output. That is Rust against Rust, so it says nothing about Python.
 
 ## How the bug classes moved
 
-I wanted to see whether porting to Rust eliminated entire classes of bugs or just shifted them around. For each class I looked at when it last showed up in Python, whether it came back after the port, and what actually changed the failure mode (using relative timeline positions rather than exact dates).
+I wanted to know if the rewrite removed a class of bug or only moved it. For each class I checked when it last showed up in Python, whether it came back after the port, and what changed the mechanism. Positions are relative, not dates.
 
-Starting with rough commit-subject counts from one repository: about 50 Python-only fix commits mentioned a runtime error (`AttributeError`, `TypeError`, `NoneType`, `KeyError`). About one Rust-only fix commit did, while around 20 mentioned `panic` or `unwrap`. Event-loop or blocking words matched about 260 Python-only fix subjects and about 65 Rust-only ones. These are just subject-line matches with different word lists per language, so don't treat them as defect rates. In one Rust codebase, about 7,000 lines contain `unwrap`, about 2,700 contain `expect`, and about 500 contain `panic!`, including tests.
+Some rough counts from one repository first. About 50 Python-only fix commits had a runtime-error word in the subject (AttributeError, TypeError, NoneType, KeyError). About one Rust-only fix commit did, and about 20 had panic or unwrap. Event-loop or blocking words matched about 260 Python-only fix subjects and about 65 Rust-only ones. These are subject-line counts with different word lists per language, not defect rates. In one Rust codebase, about 7,000 lines contain unwrap, about 2,700 expect and about 500 panic!, test code included.
 
 | Class | Last Python-era case | After the port | Mechanism now | Went away? |
 |---|---|---|---|---|
@@ -65,29 +65,33 @@ Starting with rough commit-subject counts from one repository: about 50 Python-o
 | Deadlocks and blocking | About 260 Python-only fix subjects touched event-loop or blocking work. | A logging layer re-entered its own writer lock. A writer lock was held across slow work. | Thread locks, not the event loop. A plain mutex deadlocks when its own thread takes it again. | Changed form. |
 | Log floods | Flood fixes in the Python period. | Three always-on logs, one writing tens of thousands of lines a day. | The same. | Did not change. |
 
-My read is that explicit types and error returns drove most of the drop in runtime-error fixes, though I can't separate that cleanly from the churn of the rewrite itself. None of these bug classes vanished completely. I did see fewer CI memory failures in Rust-only commits than in Python-era ones, though the counts are too noisy to conclude they are gone.
+My judgment is that most of the drop in runtime-error fixes came from explicit types and error returns, but I cannot separate that from the rewrite's own churn.
 
-## A calculation engine that missed its targets
+So no class went away everywhere. I found CI memory failures in Python-era commits and fewer in Rust-only ones, but the count is too rough to say they went away.
 
-One calculation engine built on a Rust formula library missed most of its performance targets. On a 100,000-row sheet, a full recompute took about 15.6 seconds against a 1.5 second target, and a single edit took about 1.6 seconds against a 30 ms target. Only loading a snapshot (19 ms) came in well under target.
+## A miss
 
-Because the pinned library has no partial-evaluation API, every single edit forces a full pass over 400,000 formula cells. On top of that, the regression gate only alerts on a 20 percent slowdown versus the last baseline instead of checking the actual target. I haven't fixed this yet.
+A calculation engine I built on a formula library missed most of its targets. On a 100,000-row sheet a full recompute took about 15.6 seconds against a 1.5 second target, and a single edit about 1.6 seconds against 30 ms. Only loading a snapshot, at 19 ms, was well inside its target.
 
-## Bugs that had nothing to do with the borrow checker
+The pinned library has no partial-evaluation API, so every edit is a full pass over 400,000 formula cells. And the regression gate only checks for a 20 percent slowdown against the last baseline, not against the target. I have not fixed it.
 
-The borrow checker slowed me down a bit, though the bugs that actually hurt were three other things.
+## Bugs that were not the borrow checker
+
+The borrow checker cost me some time, but not the kind that mattered. Three other bugs did.
 
 <!-- owner:scene How did you find the silent server (workers parked on the database mutex)? A sentence of what you saw, only if it happened. -->
 
-First, async worker threads were taking a blocking database mutex, so under load the server went quiet with most workers parked on the same lock. I put in a bounded lock and a watchdog thread as a stopgap; the real fix, a writer actor, is still pending. Second, a cache cleanup step on a shared CI runner deleted the cargo home while other jobs were using it, breaking unrelated builds until I made that cache opt-in on shared runners. Third, `cargo test` runs tests inside one shared process, so a test mutating an environment variable broke its neighbours until I switched to injecting paths instead. The float drift and bare-except bugs I hit are down in the pitfalls section.
+A blocking database mutex was taken on async worker threads, and under load the server went silent with most workers parked on the same lock. The fix was a bounded lock and a watchdog thread. The proper fix, a writer actor, is still pending. A cache cleanup step on a shared CI runner pruned the cargo home other jobs were using, so unrelated builds failed, and I made the cache opt-in on shared runners. And `cargo test` runs every test in one process, so a test that changes an environment variable breaks its neighbours. The fix was to inject paths instead.
 
-## What changed with coding agents
+The float drift and the bare except are in the pitfalls below.
 
-With coding agents, Rust paid off mainly for the checks an agent can't reliably run on its own, while the case for fewer overall bugs was much less clear.
+## Did agentic coding change the answer?
 
-This isn't a clean comparison of hand-written Python against agent-written Rust, since I couldn't measure agent share cleanly in either period. In one repository, about 1 in 8 Python-only commits carries an explicit co-author trailer naming an AI model, compared with about 1 in 100 Rust-only commits. Using a broader signal like a trailer or a task id breaks down because human commits carry task ids too. Since those two markers disagree, I can't claim both eras had the same mix of agent code, and the Rust history is shorter and mixed with other work anyway.
+Partly. Rust was worth it for the checks an agent cannot run itself. It was not clearly worth it for fewer bugs overall.
 
-What the Rust compiler gave agents was a specific error inside their own loop instead of a production failure later. In a two-caller toy Rust crate, changing a function signature immediately produced one compile error per caller. Here is how different failure modes showed up across both languages:
+This is not hand-written Python against agent-written Rust, because I could not measure agent use cleanly in either era. In one repository, about 1 in 8 Python-only commits has an explicit co-author trailer naming an AI model, against about 1 in 100 Rust-only commits. A broader marker, a trailer or a task id, does not measure AI use, since the repo also puts task ids on human commits. The two markers disagree, so I cannot say the eras had matched agent shares. The Rust history is also shorter and mixed with other work.
+
+What the compiler gave an agent was a precise error inside its own loop instead of an incident later. In a two-caller toy Rust crate, changing one function signature gave one compile error per caller. Here is where each kind of bug surfaced:
 
 | Bug | Python | Rust |
 |---|---|---|
@@ -98,40 +102,45 @@ What the Rust compiler gave agents was a specific error inside their own loop in
 | Lint drift | Ruff and mypy red on main. One change waited until the mypy errors were fixed. | Clippy with warnings as errors red across every open pull request for a while, about forty lints. |
 | Borrow error | Not applicable | A lifetime error in a test was caught by the compiler and "fixed" with unwrap. |
 
-Some things got worse with Rust. In CI on one repository, the verify job jumped from a median of 1.9 minutes to 16.3 minutes, and the test job went from 8.2 to 39.2 minutes across 200 successful runs per side, although the runner labels changed around the same time so I can't separate language from hardware. Agents also reach for `unwrap` and `clone` freely (I only counted the `unwrap` lines, not `clone`). I also saw new modules that were never wired into the entry point, a merge that silently dropped whole call paths, and concurrent pull requests that merged cleanly in git and still broke the build.
+Some things got worse. In CI on one repo the verify job went from a median of 1.9 minutes to 16.3, and the test job from 8.2 to 39.2 (200 successful runs per side), but the runner labels changed along with the language, so I cannot separate the two. Agents reach for unwrap and clone; the unwrap line count is my only evidence, and I did not count clones. Some new modules were never reached from the entry point, a merge dropped whole call paths, and concurrent pull requests merged cleanly in git and still broke the build.
 
-For scripts, glue, ML code and tests running against real objects, Python agent loops worked well and ran fast enough to iterate quickly. Python still brought real runtime errors and documented asyncio blocking, though in my experience the loop held up whenever tests used real objects, and the mock outage was a test-design mistake.
+Python agent loops were fine for scripts, glue, ML code and tests against real objects, and a Python test run is fast enough to loop on many times. Python had its own trouble: real runtime errors and documented asyncio blocking. My read is that the Python loop worked when tests ran real objects, and the mock case was a test design failure, not a Python one.
 
-I also checked the most recent 300 CI runs in one repository: about three in four had at least one failing job. Lint and spec failed in about 73 percent of runs, web UI and security audit in about 64 percent, Rust tests in about 61 percent, and end-to-end tests in about 22 percent. Because the lint job also runs `cargo build` alongside advisory Python checkers, I can't split compile failures from test failures. I also have no count of how many agent loops ended in compiler errors since the repo doesn't log per-iteration runs.
+I also tallied CI failures. Of the most recent 300 CI runs in one repository, about three in four had at least one failing job. Lint and spec failed in about 73 percent of those runs, web UI and security audit in about 64, Rust tests in about 61 and end-to-end in about 22. The lint job also runs a cargo build and advisory Python checkers, so I cannot split compile errors from test failures. I did not measure how many agent iterations ended in compiler errors; the repo keeps no per-iteration log.
 
-Two public papers line up with that narrow point. FeedbackEval (arXiv 2504.06939) tested code repair across five language models and found 49.2 percent success with compiler feedback alone, 57.9 percent with test feedback, and 63.6 percent with both combined (though it isn't a Rust study or a Python comparison). A 2026 preprint (arXiv 2607.13921) feeds compiler diagnostics during generation on repository-level Rust tasks, though its abstract gives no numbers I could check. Taken together, feedback type matters and compiler errors alone aren't enough for the loop.
+Two public papers are relevant. FeedbackEval (arXiv 2504.06939) found that on code repair tasks, across five language models, compiler feedback alone gave 49.2 percent success, test feedback 57.9 percent and both together 63.6 percent. It is not a Rust study and not a Python comparison. A 2026 preprint (arXiv 2607.13921) gives compiler feedback during generation on repository-level Rust tasks, but its abstract gives no figures I could check. Together they support one narrow point: feedback type matters, and compiler feedback alone is not the whole loop.
 
-The compiler never caught the design-level memory growth, the dependency hang or the dropped audit calls. I would still choose Rust for a long-running service with tight resource constraints, just not under the assumption that agents can ship it unsupervised. What would change my mind is a whole-service comparison with the same agent setup in both languages, timed to a correct green change.
+The compiler did not catch the design memory problem, the hang or the dropped audit calls. I would still pick Rust for a long-running service with strict resource rules, but not because an agent can write it unsupervised. What would change my mind is a whole-service comparison with the same agent setup in both languages, measured as time to a correct, green change.
 
 ## What stayed in Python
 
-I kept ML training, pandas workflows, the React and TypeScript front ends, shell glue, and the GPU model workers (which a Rust process launches) where they were, and I don't plan to rewrite them.
+ML training, pandas workflows, the React and TypeScript front ends, shell glue, and the GPU model workers, which a Rust process starts. I did not rewrite those and I do not plan to.
 
-## Practical guide
+## A practical guide
 
-### When it makes sense
+### Decision checklist
 
-Short-lived processes that get spawned repeatedly are the easiest yes. For long-running services I have no whole-service timing comparison, so my case for Rust there is purely my judgment on reliability and simpler packaging. Numeric loops are only worth porting if the whole loop stays inside Rust. If a service mostly waits on the network or a database, don't expect much speed gain; the value is fewer error paths and shipping a single binary instead of wrestling with virtualenvs and interpreter drift. Whatever you port, budget time for a parity audit: one of mine turned up well over a hundred differences between the Python reference and the Rust port.
+- Short-lived process that starts many times: strong case.
+- Long-running service: no whole-service timing from me. The case rests on reliability and packaging, and those are my judgments.
+- Numeric loop: only if the loop stays inside Rust.
+- Mostly waiting on the network or a database: expect little speed gain. The gain is fewer error paths and simpler packaging.
+- Packaging pain (virtualenvs, interpreter drift): a single binary removed a real chore for me.
+- Budget for a parity audit. One of mine found well over a hundred gaps between the Python reference and the Rust code.
 
 ### Migration path that worked
 
-1. Benchmark the old code on real inputs and record the machine: cold start of the actual entry point, per-call time at real input sizes with marshalling included, and memory after a long run instead of just a single-run peak.
-2. Count how often data crosses the language boundary on each call.
-3. Port leaf functions first behind the existing Python signature, keeping the Python version as a fallback.
-4. Write tests first, including degenerate inputs, then run both versions on the same inputs with one parity test per helper and count every output difference.
-5. Verify that every rewritten module is actually called from the real entry point (some of mine sat unreachable for a while), and inspect merges for calls that disappeared.
-6. Keep the Python reference around until the parity audit passes, then delete it in one commit.
+1. Benchmark the old version on the same input and note the machine: cold start of the real entry point, time per call at the real input size with marshalling, and memory after a long run, not only the peak of one run.
+2. Count how many times data crosses the boundary per call.
+3. Rewrite leaf functions first, behind the same Python signature, with the Python version kept as a fallback.
+4. Write tests first, including the degenerate inputs. Run both versions on the same inputs, one parity test per helper, and count the output differences.
+5. Check that every rewritten module is reachable from the real entry point (some of mine were not, for a while), and read merges for calls that went missing.
+6. Keep the Python reference until the audit passes, then delete it in one commit.
 
-When agents are writing the code, put `cargo check`, clippy with warnings as errors and `cargo deny` inside the agent loop and in the pre-merge gate (checking after merge catches breaks too late). Add a lint against `unwrap` and `expect` in non-test code so exceptions have to be explicit, keep pull requests small, and check diffs for deleted lines too.
+If agents write the code, run `cargo check`, clippy with warnings as errors and `cargo deny` in the agent loop and again in the gate that blocks a merge; a gate after the merge catches the break too late. Lint against `unwrap` and `expect` in non-test code, with each exception explicit. Keep pull requests small, and read diffs for removed lines, not only added ones.
 
 ### Pitfalls and fixes
 
-Send dates across the FFI boundary as `toordinal()` integers instead of strings:
+For dates across the boundary, send `toordinal()` integers instead of strings:
 
 ```python
 # slow: strings cross the boundary and get parsed on both sides
@@ -140,7 +149,7 @@ days = [d.isoformat() for d in dates]
 days = [d.toordinal() for d in dates]
 ```
 
-Put a deadline on blocking locks touched from async threads, and move blocking work onto the blocking pool:
+For blocking locks on async threads, give the lock a deadline and move blocking work off the async threads:
 
 ```rust
 // parking_lot mutex: give up instead of parking an async worker forever
@@ -151,7 +160,7 @@ let Some(guard) = db.try_lock_for(Duration::from_secs(2)) else {
 let rows = tokio::task::spawn_blocking(move || load_rows(path)).await?;
 ```
 
-Always log the exception before falling back to the reference path. A bare `except` in my code quietly hid a fallback failure until I added a warning log:
+For fallbacks that hide failures, log the exception before falling back. My bare except hid a fallback failure until I added a logged warning:
 
 ```python
 try:
@@ -161,17 +170,15 @@ except Exception:
     value = reference(data)
 ```
 
-Three smaller things to watch for:
-
-- Float drift: some Rust and SciPy sums differed by 1 to 3 ULPs, so my parity tolerances sat between 1e-9 and 1e-6.
-- Silent defaults: one Rust helper returned 0.5 for AUC on degenerate input where the reference returned `nan`, and another ignored labels other than 0 and 1. The type system caught neither, so put degenerate cases in tests.
-- Panic policy: decide it up front. `unwrap` calls in request handlers were a real hazard in my code, and I had to convert them to error returns by hand in one commit; enforce it with a lint if you want it to stick.
+- Float drift: some Rust and SciPy sums differed by 1 to 3 ULPs. My tolerances ranged from 1e-9 to 1e-6.
+- Silent defaults: one Rust helper returned 0.5 for AUC on degenerate input, where the reference returns nan. Another ignored labels other than 0 and 1. The type system caught neither, so write the degenerate cases as tests.
+- Panic policy: decide it before you start. Unwrap calls in request handlers were a real risk in my code, and one commit converted them to error returns by hand. Make the rule a lint if you want it enforced.
 
 ### Tooling that paid off
 
-- Pin one exact toolchain version in the toolchain file and in CI. Mine used "stable" locally and an older pinned release in CI, so local and CI builds disagreed.
-- Run `cargo fmt --check`, `cargo clippy -D warnings`, `cargo deny` (advisories and licences) and `cargo machete` (unused dependencies) in one CI gate.
-- Use `clippy.toml` `disallowed-methods` to block risky APIs. I banned spawning tasks outside a single module so shutdown drains cleanly, and banned cache connections without timeouts.
-- Build with `--locked` and reject pull requests where the lockfile drifts from the manifest.
+- One exact toolchain in the toolchain file and in CI. Mine said "stable" locally and pinned an older release in CI, so builds could disagree.
+- `cargo fmt --check`, `cargo clippy -D warnings`, `cargo deny` (advisories and licences) and `cargo machete` (unused dependencies), in one CI gate.
+- `clippy.toml` `disallowed-methods` to ban risky calls. I banned task spawning outside one module, so tasks drain on shutdown, and banned cache connections without timeouts.
+- `--locked` builds, and a CI check that rejects a lockfile that no longer matches the manifest.
 
-I still don't have a clean Python-versus-Rust measurement for a whole service, so that's the next thing I want to test using the same agents on both sides.
+I still do not have a clean Python-versus-Rust number for a whole service. That is the next thing I want to measure, with the same agents on both sides.
