@@ -8,12 +8,12 @@ thumbnail: ./thumb.webp
 draft: false
 ---
 
-<!-- owner:scene Why did you want to call a small language model like a Rust function in the first place? -->
+<!-- owner:scene Why did you want to call a small language model like a Rust function? -->
 
-LPM is a Rust engine I'm building to run a small language model on the GPU so a program can call it like a normal function. I wrote the GPU kernels once in WGSL and run the same shader code on both native Metal and Chrome WebGPU. The report collects the numbers from the first three milestones along with what tripped me up along the way.
+LPM runs a small language model on the GPU so a Rust program can call it like a function. I wrote the kernels once in WGSL and run them on native Metal and in Chrome WebGPU. The report has the numbers and the lessons.
 
-On accuracy and browser memory, both models match a float32 reference on both targets, and a 1.4 GiB model loads in Chrome while keeping the wasm heap at 17.3 MiB. Latency is still way off. My target for a decision call is 10 ms, and the fastest I have right now is 135 ms. Quite a few timings were also collected on a shared GPU while machine load average sat between 100 and 330, and the report flags which runs those are.
+Both models match a float32 reference on both targets, and a 1.4 GiB model loads in Chrome with the wasm heap at 17.3 MiB. The decision latency target is 10 ms and the best I have is 135 ms. Many timings were taken on a shared GPU at a load average of 100 to 330, and the page says which.
 
-Getting one WGSL shader set working across both targets took longer than expected, and the report walks through eight things that ate time, with the evidence for each. That includes a wait call that quietly slept for 1 ms, a missing browser feature that disguised itself as bugs in three other places, a kernel DSL I ended up dropping, an upload call that kept the wasm heap flat, and a few habits I picked up for measuring on a busy machine.
+Eight things cost time getting the one shader set to run on both targets: the wait call that slept for 1 ms, a missing browser feature that looked like a bug in three other places, a kernel DSL I dropped, an upload call that kept the wasm heap flat, and a few measuring habits for a busy machine. Each lesson has its evidence.
 
 [Open the report](/research/lpm-model-as-a-function-call-results/)
