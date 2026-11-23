@@ -59,8 +59,7 @@ const body = [
 		.map((r) => r.url)
 		.join(", ") || "none"}._`,
 	``,
-	`---`,
-	`<sub>Ning›🤖›</sub>`,
+	`<p align="right"><sub>‹∞ Automation› · update-link-issue</sub></p>`,
 ].join("\n");
 
 // Find the existing issue by title.

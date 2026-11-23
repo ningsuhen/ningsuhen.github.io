@@ -77,7 +77,8 @@ This repo holds the site and the compiled output that research and experiments n
 ## Git and PR flow
 
 - `master` is protected. Work on a branch in a worktree under `.worktrees/` only. Open PRs with `gh pr create --base master`; merge with squash (`pnpm merge-pr <n>`). CI is one workflow, `presubmit.yml` (Presubmit): `verify` (unit tests, build, static checks), `test` (the browser checks in two shards), `gitleaks`, and `check` (the aggregate of verify and test). Branch protection requires the `check` and `gitleaks` jobs (keep both names), so a merge waits for both; GitHub auto-merge is allowed (the in-place editor arms it on its PRs) and merged branches are deleted.
-- PR body ends with a blank line, `---`, then `<sub>Ning›🤖›</sub>`.
+- PR body ends with a blank line, then `<p align="right"><sub>‹∆ Author agent› · <model></sub></p>` (global signature rule; the old footer is retired).
+- One PR at a time (owner rule): work lands on the `integration` branch; the only PR is integration -> master, squash-merged on green.
 - `pr-conflicts.yml` labels open PRs that conflict with master (`conflict`), keeps one bot comment per PR, and clears both on resolve; logic in `.github/scripts/pr-conflicts.mjs` (`pnpm test:pr-conflicts`); API-only, never checks out PR code.
 - Git hooks: `pnpm install` runs `prepare`, which installs `.githooks/` into the repo. Needs `gitleaks` (`brew install gitleaks`); pre-commit and pre-push scan for secrets.
 - `dev/next` is a LOCAL-ONLY branch. It mirrors `origin/master` so the dev server previews merged work (`pnpm sync` keeps it at origin/master, checks it out in the primary checkout when that is clean, and deletes local branches already merged). It is never a PR base, never pushed (pre-push refuses it), and it refuses to move if it has local commits.
