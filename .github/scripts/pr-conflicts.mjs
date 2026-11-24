@@ -3,7 +3,7 @@
 // PR-controlled text (branch and file names) is stripped of markup before use.
 
 export const MARKER = '<!-- pr-conflict-bot -->';
-export const FOOTER = '\n\n---\n<sub>Ning›🤖›</sub>';
+export const FOOTER = '\n\n<p align="right"><sub>‹∞ Automation› · pr-conflicts</sub></p>';
 export const RESOLVED_HEADLINE = 'Conflict resolved';
 export const OWNER_MENTION = '@ningsuhen';
 export const LABEL = { name: 'conflict', color: 'd73a4a', description: 'Conflicts with master' };
