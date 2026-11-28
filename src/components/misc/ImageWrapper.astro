@@ -29,7 +29,12 @@ const isPublic = src.startsWith("/");
 // biome-ignore lint/suspicious/noImplicitAnyLet: <check later>
 let img;
 if (isLocal) {
-	const files = import.meta.glob<ImageMetadata>("../../**", {
+	// The map covers every file under src/ (as before) but excludes the standalone fragments
+	// (src/standalone/<kind>/<slug>/). Those fragments' page.css must not enter this module graph:
+	// matched here, each one is inlined into every Fuwari page that uses this component. The
+	// fragments are served by their own route through StandaloneShell (which reads page.css from
+	// disk), so they stay out of this glob.
+	const files = import.meta.glob<ImageMetadata>(["../../**", "!../../standalone/**"], {
 		import: "default",
 	});
 	let normalizedPath = path
